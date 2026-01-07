@@ -6,10 +6,12 @@ import DailyHubPreview from '@/components/landing/DailyHubPreview'
 import SocialProof from '@/components/landing/SocialProof'
 import FAQ from '@/components/landing/FAQ'
 import Footer from '@/components/landing/Footer'
+import AuthRedirectHandler from '@/components/AuthRedirectHandler'
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-white">
+      <AuthRedirectHandler />
       <Nav />
       <Hero />
       <FeatureGrid />

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 type CEFRLevel =
   | "A2-"
@@ -57,6 +57,7 @@ const STORAGE_KEY = "pending_topic_island_request";
 
 export default function OnboardingTopicIslandPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
 
   const [state, setState] = useState<WizardState>({
@@ -90,11 +91,24 @@ export default function OnboardingTopicIslandPage() {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingRequest));
 
+    // Pass redirectTo WITHOUT query parameters (Supabase validates exact match)
+    const redirectTo = `${location.origin}/auth/callback`;
+
+    // Store the next path separately (will be read from cookie in callback)
+    const nextPath = pathname || "/app";
+    localStorage.setItem("oauth_next", nextPath);
+    document.cookie = `oauth_next=${nextPath}; path=/; max-age=600; SameSite=Lax`;
+
+    // Store the origin in both localStorage AND cookie (cookie is more reliable across redirects)
+    localStorage.setItem("oauth_origin", location.origin);
+    // Set cookie that expires in 10 minutes (enough for OAuth flow)
+    document.cookie = `oauth_origin=${location.origin}; path=/; max-age=600; SameSite=Lax`;
+
     // Start Google OAuth
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback?next=/app`,
+        redirectTo,
       },
     });
 

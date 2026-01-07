@@ -1,17 +1,32 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/browser";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
 
   const handleGoogleLogin = async () => {
+    // Pass redirectTo WITHOUT query parameters (Supabase validates exact match)
+    const redirectTo = `${location.origin}/auth/callback`;
+
+    // Store the next path separately (will be read from cookie in callback)
+    // Don't redirect back to /login - default to /app instead
+    const nextPath = pathname && pathname !== "/login" ? pathname : "/app";
+    localStorage.setItem("oauth_next", nextPath);
+    document.cookie = `oauth_next=${nextPath}; path=/; max-age=600; SameSite=Lax`;
+
+    // Store the origin in both localStorage AND cookie (cookie is more reliable across redirects)
+    localStorage.setItem("oauth_origin", location.origin);
+    // Set cookie that expires in 10 minutes (enough for OAuth flow)
+    document.cookie = `oauth_origin=${location.origin}; path=/; max-age=600; SameSite=Lax`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback`,
+        redirectTo,
       },
     });
 
