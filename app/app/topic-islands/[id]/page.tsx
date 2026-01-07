@@ -417,10 +417,61 @@ export default function TopicIslandDetailPage() {
 
         {/* Error Message */}
         {island.status === "error" && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
-            <p className="text-red-700">
-              Error generating words. Please try creating a new island.
-            </p>
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-6 shadow-sm">
+            <div className="mb-4">
+              <p className="mb-2 text-base font-medium text-red-900">
+                Error generating words
+              </p>
+              <p className="text-sm text-red-700">
+                There was an issue generating words for this topic island. You
+                can try again or create a new island.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    // Reset status to draft and retry generation
+                    const response = await fetch(
+                      `/api/topic-islands/${islandId}/generate-batch`,
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ batchSize: 5 }),
+                      }
+                    );
+
+                    if (!response.ok) {
+                      const errorData = await response.json().catch(() => ({}));
+                      throw new Error(
+                        errorData.message ||
+                          errorData.error ||
+                          "Failed to retry generation"
+                      );
+                    }
+
+                    // Reload island to show updated status
+                    await loadIsland();
+                  } catch (error) {
+                    console.error("Error retrying generation:", error);
+                    alert(
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to retry generation. Please try again."
+                    );
+                  }
+                }}
+                className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+              >
+                Retry Generation
+              </button>
+              <button
+                onClick={() => router.push("/app/topic-islands")}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Create New Island
+              </button>
+            </div>
           </div>
         )}
 

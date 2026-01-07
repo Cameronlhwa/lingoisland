@@ -10,8 +10,12 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const islandId = params.id
+  let supabase: Awaited<ReturnType<typeof createClient>> | null = null
+  let userId: string | null = null
+
   try {
-    const supabase = await createClient()
+    supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -20,7 +24,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const islandId = params.id
+    userId = user.id
 
     // Get island and verify ownership
     const { data: island, error: islandError} = await supabase  
@@ -248,8 +252,34 @@ export async function POST(
     })
   } catch (error) {
     console.error('Error in POST /api/topic-islands/[id]/generate-batch:', error)
+    
+    // Ensure island status is updated to error if we have the islandId and user
+    if (islandId && userId && supabase) {
+      try {
+        // Verify ownership before updating status
+        const { data: island } = await supabase
+          .from('topic_islands')
+          .select('id')
+          .eq('id', islandId)
+          .eq('user_id', userId)
+          .single()
+
+        if (island) {
+          await supabase
+            .from('topic_islands')
+            .update({ status: 'error' })
+            .eq('id', islandId)
+        }
+      } catch (statusError) {
+        console.error('Error updating island status to error:', statusError)
+      }
+    }
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
