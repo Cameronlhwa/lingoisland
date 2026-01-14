@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -49,11 +49,18 @@ interface WizardState {
   cefrLevel: CEFRLevel | null;
   topic: string;
   wordCount: number;
-  grammarCount: 1 | 2 | 3;
+  grammarCount: 0 | 1 | 2 | 3;
   wantsGrammar: boolean;
 }
 
 const STORAGE_KEY = "pending_topic_island_request";
+
+const ROTATING_PLACEHOLDERS = [
+  "Teach me words related to movies and music",
+  "Teach me business vocabulary",
+  "Teach me cooking terms",
+  "Teach me travel phrases",
+];
 
 export default function OnboardingTopicIslandPage() {
   const router = useRouter();
@@ -65,9 +72,84 @@ export default function OnboardingTopicIslandPage() {
     cefrLevel: null,
     topic: "",
     wordCount: 12,
-    grammarCount: 2,
-    wantsGrammar: true,
+    grammarCount: 0,
+    wantsGrammar: false,
   });
+
+  const [displayedText, setDisplayedText] = useState("");
+  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Check if user is already authenticated - if so, redirect to app
+  useEffect(() => {
+    checkAuthAndRedirect();
+  }, []);
+
+  const checkAuthAndRedirect = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    setCheckingAuth(false);
+
+    // If user is authenticated and has a pending request, redirect to /app
+    // so it can be processed
+    if (user) {
+      const pendingRequest = localStorage.getItem(STORAGE_KEY);
+      if (pendingRequest) {
+        router.replace("/app");
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Only animate placeholder when on step 2 and input is empty
+    if (state.step !== 2 || state.topic.trim() !== "") {
+      setDisplayedText("");
+      return;
+    }
+
+    const currentText = ROTATING_PLACEHOLDERS[currentPlaceholderIndex];
+    let timeout: NodeJS.Timeout;
+
+    if (isDeleting) {
+      // Delete characters
+      if (displayedText.length > 0) {
+        timeout = setTimeout(() => {
+          setDisplayedText((prev) => prev.slice(0, -1));
+        }, 30);
+      } else {
+        // Finished deleting, move to next placeholder
+        setIsDeleting(false);
+        setCurrentPlaceholderIndex(
+          (prev) => (prev + 1) % ROTATING_PLACEHOLDERS.length
+        );
+      }
+    } else {
+      // Type characters
+      if (displayedText.length < currentText.length) {
+        timeout = setTimeout(() => {
+          setDisplayedText(currentText.slice(0, displayedText.length + 1));
+        }, 60);
+      } else {
+        // Finished typing, wait then start deleting
+        timeout = setTimeout(() => {
+          setIsDeleting(true);
+        }, 2000);
+      }
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [
+    state.step,
+    state.topic,
+    displayedText,
+    currentPlaceholderIndex,
+    isDeleting,
+  ]);
 
   const handleLevelSelect = (level: CEFRLevel) => {
     setState({ ...state, cefrLevel: level, step: 2 });
@@ -86,16 +168,16 @@ export default function OnboardingTopicIslandPage() {
       cefrLevel: state.cefrLevel,
       topic: state.topic.trim(),
       wordCount: state.wordCount,
-      grammarCount: state.grammarCount,
-      wantsGrammar: state.wantsGrammar,
+      grammarCount: 0,
+      wantsGrammar: false,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingRequest));
 
     // Pass redirectTo WITHOUT query parameters (Supabase validates exact match)
     const redirectTo = `${location.origin}/auth/callback`;
 
-    // Store the next path separately (will be read from cookie in callback)
-    const nextPath = pathname || "/app";
+    // Always redirect to /app after auth - it will handle the pending request
+    const nextPath = "/app";
     localStorage.setItem("oauth_next", nextPath);
     document.cookie = `oauth_next=${nextPath}; path=/; max-age=600; SameSite=Lax`;
 
@@ -117,6 +199,15 @@ export default function OnboardingTopicIslandPage() {
       alert("Failed to sign in. Please try again.");
     }
   };
+
+  // Show loading while checking auth
+  if (checkingAuth) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-white px-6 py-12">
+        <div className="text-gray-600">Loading...</div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-white px-6 py-12">
@@ -193,79 +284,31 @@ export default function OnboardingTopicIslandPage() {
               anything
             </p>
             <form onSubmit={handleTopicSubmit}>
-              <div className="mb-8">
+              <div className="mb-8 relative">
                 <input
                   type="text"
                   value={state.topic}
                   onChange={(e) =>
                     setState({ ...state, topic: e.target.value })
                   }
-                  placeholder="e.g., Cooking, Travel, Business"
-                  className="w-full border border-gray-300 bg-white px-4 py-3 text-base focus:border-gray-900 focus:outline-none"
+                  className="w-full border border-gray-300 bg-white px-4 py-3 text-base transition-all focus:border-gray-900 focus:outline-none"
                   required
                 />
-              </div>
-
-              <div className="mb-8">
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900">
-                      Focus on new grammar?
-                    </label>
-                    <p className="mt-1 text-sm text-gray-600">
-                      If enabled, some example sentences will highlight new
-                      patterns.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setState({ ...state, wantsGrammar: !state.wantsGrammar })
-                    }
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      state.wantsGrammar ? "bg-gray-900" : "bg-gray-300"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                        state.wantsGrammar ? "translate-x-5" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {state.wantsGrammar && (
-                  <div className="mt-4">
-                    <p className="mb-2 text-sm font-medium text-gray-900">
-                      How many grammar patterns to focus on?
-                    </p>
-                    <p className="mb-3 text-sm text-gray-600">
-                      Grammar patterns will appear naturally in some example
-                      sentences.
-                    </p>
-                    <div className="flex gap-3">
-                      {([1, 2, 3] as const).map((count) => (
-                        <button
-                          key={count}
-                          type="button"
-                          onClick={() =>
-                            setState({ ...state, grammarCount: count })
-                          }
-                          className={`flex-1 rounded-lg border px-6 py-3 text-base font-medium transition-colors ${
-                            state.grammarCount === count
-                              ? "border-gray-900 bg-gray-900 text-white"
-                              : "border-gray-300 bg-white text-gray-900 hover:border-gray-900"
-                          }`}
-                        >
-                          {count}
-                        </button>
-                      ))}
-                    </div>
+                {state.topic.trim() === "" && (
+                  <div className="absolute left-4 top-3 pointer-events-none text-gray-400">
+                    <span>
+                      {displayedText}
+                      <span className="animate-pulse">|</span>
+                    </span>
                   </div>
                 )}
               </div>
 
               <div className="mb-8">
+                <p className="mb-3 text-md text-black font-semibold">
+                  How many new words related to this topic would you like to
+                  learn?
+                </p>
                 <label className="mb-2 block text-sm font-medium text-gray-900">
                   Word count: {state.wordCount} words
                 </label>

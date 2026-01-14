@@ -19,52 +19,45 @@ export default function Sidebar() {
   const navItems = [
     { href: "/app", label: "Daily Review" },
     { href: "/app/topic-islands", label: "Topic Islands" },
-    { href: "/app/decks", label: "Decks & Quiz" },
+    { href: "/app/quiz", label: "Quiz" },
     { href: "/app/chat", label: "Chat" },
   ];
 
   return (
     <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
       <div className="flex-1 overflow-y-auto p-6">
-      <div className="mb-8">
+        <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900">Lingo Island</h2>
-      </div>
+        </div>
 
-      <nav className="space-y-2">
-        {navItems.map((item) => {
-          // More precise active state detection
-          let isActive = false;
-          if (item.href === "/app") {
-            // For home, only match exactly or if no other routes match
-            isActive = pathname === "/app";
-            } else if (item.href === "/app/decks") {
-              // For Decks & Quiz, also match quiz routes
-              isActive =
-                pathname === item.href ||
-                pathname.startsWith(item.href + "/") ||
-                pathname === "/app/quiz" ||
-                pathname.startsWith("/app/quiz");
-          } else {
-            // For other routes, check if pathname starts with the href
+        <nav className="space-y-2">
+          {navItems.map((item) => {
+            // More precise active state detection
+            let isActive = false;
+            if (item.href === "/app") {
+              // For home, only match exactly or if no other routes match
+              isActive = pathname === "/app";
+            } else {
+              // For other routes, check if pathname starts with the href
               isActive =
                 pathname === item.href || pathname.startsWith(item.href + "/");
-          }
-          
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
+            }
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
                 className={`block rounded-lg border px-4 py-3 text-left text-base font-medium text-gray-900 transition-colors ${
-                isActive
-                  ? "border-gray-900 bg-white"
-                  : "border-gray-300 bg-white hover:bg-gray-50"
-              }`}
-            >
+                  isActive
+                    ? "border-gray-900 bg-white"
+                    : "border-gray-300 bg-white hover:bg-gray-50"
+                }`}
+              >
                 {t(item.label)}
-            </Link>
-          );
-        })}
-      </nav>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
       {/* Always visible footer with settings and sign out */}
@@ -89,12 +82,12 @@ export default function Sidebar() {
           </button>
         </div>
 
-      <button
-        onClick={handleSignOut}
+        <button
+          onClick={handleSignOut}
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50"
-      >
+        >
           {t("Sign Out")}
-      </button>
+        </button>
       </div>
     </aside>
   );
