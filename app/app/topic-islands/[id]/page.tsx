@@ -43,18 +43,29 @@ export default function TopicIslandDetailPage() {
   const [loading, setLoading] = useState(true);
   const [markingKnown, setMarkingKnown] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [decks, setDecks] = useState<Array<{ id: string; name: string }>>([]);
-  const [showAddToDeckModal, setShowAddToDeckModal] = useState(false);
-  const [selectedDeckId, setSelectedDeckId] = useState<string>("");
-  const [addingToDeck, setAddingToDeck] = useState(false);
-  const [addToDeckContext, setAddToDeckContext] = useState<{
+  const [quizIslands, setQuizIslands] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+  const [showAddToQuizModal, setShowAddToQuizModal] = useState(false);
+  const [selectedQuizIslandId, setSelectedQuizIslandId] = useState<string>("");
+  const [addingToQuiz, setAddingToQuiz] = useState(false);
+  const [addToQuizContext, setAddToQuizContext] = useState<{
     type: "word" | "sentence";
     sourceId: string;
   } | null>(null);
+  const [showCreateNew, setShowCreateNew] = useState(false);
+  const [newQuizIslandName, setNewQuizIslandName] = useState("");
+  const [creatingQuizIsland, setCreatingQuizIsland] = useState(false);
+  const [addedItems, setAddedItems] = useState<Set<string>>(new Set()); // Track added items
 
   useEffect(() => {
     loadIsland();
-    loadDecks();
+    loadQuizIslands();
+    // Load last used quiz island from localStorage
+    const lastUsed = localStorage.getItem("lastUsedQuizIslandId");
+    if (lastUsed) {
+      setSelectedQuizIslandId(lastUsed);
+    }
     // Poll for updates if status is generating
     const interval = setInterval(() => {
       if (island?.status === "generating") {
@@ -65,14 +76,26 @@ export default function TopicIslandDetailPage() {
     return () => clearInterval(interval);
   }, [islandId, island?.status]);
 
-  const loadDecks = async () => {
+  const loadQuizIslands = async () => {
     try {
-      const response = await fetch("/api/decks");
-      if (!response.ok) throw new Error("Failed to load decks");
+      const response = await fetch("/api/quiz-islands");
+      if (!response.ok) throw new Error("Failed to load quiz islands");
       const data = await response.json();
-      setDecks(data.decks || []);
+      setQuizIslands(data.quizIslands || []);
+
+      // If we have a last used ID, check if it still exists
+      const lastUsed = localStorage.getItem("lastUsedQuizIslandId");
+      if (
+        lastUsed &&
+        data.quizIslands?.some((qi: { id: string }) => qi.id === lastUsed)
+      ) {
+        setSelectedQuizIslandId(lastUsed);
+      } else if (data.quizIslands && data.quizIslands.length > 0) {
+        // Default to first quiz island if no last used or it doesn't exist
+        setSelectedQuizIslandId(data.quizIslands[0].id);
+      }
     } catch (error) {
-      console.error("Error loading decks:", error);
+      console.error("Error loading quiz islands:", error);
     }
   };
 
@@ -168,48 +191,116 @@ export default function TopicIslandDetailPage() {
     }
   };
 
-  const handleAddToDeckClick = (
+  const handleAddToQuizClick = (
     type: "word" | "sentence",
     sourceId: string
   ) => {
-    if (decks.length === 0) {
-      alert("Please create a deck first in the Decks section.");
+    // Check if already added
+    if (addedItems.has(`${type}-${sourceId}`)) {
+      return; // Already added, don't show modal
+    }
+
+    if (quizIslands.length === 0) {
+      // Show create modal if no quiz islands exist
+      setShowCreateNew(true);
+      setAddToQuizContext({ type, sourceId });
+      setShowAddToQuizModal(true);
       return;
     }
-    setAddToDeckContext({ type, sourceId });
-    setShowAddToDeckModal(true);
+
+    setAddToQuizContext({ type, sourceId });
+    setShowAddToQuizModal(true);
   };
 
-  const handleAddToDeckConfirm = async () => {
-    if (!selectedDeckId || !addToDeckContext) return;
+  const handleCreateNewQuizIsland = async () => {
+    if (!newQuizIslandName.trim()) return;
 
-    setAddingToDeck(true);
+    setCreatingQuizIsland(true);
     try {
-      const response = await fetch("/api/topic-islands/add-to-deck", {
+      const response = await fetch("/api/quiz-islands", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          deckId: selectedDeckId,
-          type: addToDeckContext.type,
-          sourceId: addToDeckContext.sourceId,
+          name: newQuizIslandName.trim(),
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to add to deck");
+        throw new Error(error.error || "Failed to create quiz island");
       }
 
-      // Show success message
-      alert("Added 2 cards to deck!");
-      setShowAddToDeckModal(false);
-      setSelectedDeckId("");
-      setAddToDeckContext(null);
+      const data = await response.json();
+      const newQuizIsland = data.quizIsland;
+
+      // Add to list and select it
+      setQuizIslands((prev) => [newQuizIsland, ...prev]);
+      setSelectedQuizIslandId(newQuizIsland.id);
+      setShowCreateNew(false);
+      setNewQuizIslandName("");
+
+      // Save to localStorage
+      localStorage.setItem("lastUsedQuizIslandId", newQuizIsland.id);
+
+      // Now proceed to add the item
+      await handleAddToQuizConfirm(newQuizIsland.id);
     } catch (error) {
-      console.error("Error adding to deck:", error);
-      alert(error instanceof Error ? error.message : "Failed to add to deck");
+      console.error("Error creating quiz island:", error);
+      alert(
+        error instanceof Error ? error.message : "Failed to create quiz island"
+      );
     } finally {
-      setAddingToDeck(false);
+      setCreatingQuizIsland(false);
+    }
+  };
+
+  const handleAddToQuizConfirm = async (quizIslandIdOverride?: string) => {
+    const quizIslandId = quizIslandIdOverride || selectedQuizIslandId;
+    if (!quizIslandId || !addToQuizContext) return;
+
+    setAddingToQuiz(true);
+    try {
+      const response = await fetch("/api/quiz-islands/add-from-topic-item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quizIslandId,
+          type: addToQuizContext.type,
+          sourceId: addToQuizContext.sourceId,
+          createReverse: addToQuizContext.type === "word", // Words create reverse by default
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to add to quiz");
+      }
+
+      const data = await response.json();
+
+      // Mark as added
+      const itemKey = `${addToQuizContext.type}-${addToQuizContext.sourceId}`;
+      setAddedItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(itemKey);
+        return newSet;
+      });
+
+      // Save last used quiz island to localStorage
+      localStorage.setItem("lastUsedQuizIslandId", quizIslandId);
+
+      // Show success (non-blocking, subtle)
+      // The button state will update automatically via addedItems
+
+      setShowAddToQuizModal(false);
+      setSelectedQuizIslandId(quizIslandId);
+      setAddToQuizContext(null);
+      setShowCreateNew(false);
+    } catch (error) {
+      console.error("Error adding to quiz:", error);
+      alert(error instanceof Error ? error.message : "Failed to add to quiz");
+    } finally {
+      setAddingToQuiz(false);
     }
   };
 
@@ -497,10 +588,13 @@ export default function TopicIslandDetailPage() {
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handleAddToDeckClick("word", word.id)}
-                      className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+                      onClick={() => handleAddToQuizClick("word", word.id)}
+                      disabled={addedItems.has(`word-${word.id}`)}
+                      className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
                     >
-                      {t("Add to deck")}
+                      {addedItems.has(`word-${word.id}`)
+                        ? "✓ In quiz"
+                        : t("Add to quiz")}
                     </button>
                     <button
                       onClick={() => handleMarkKnown(word.id)}
@@ -540,11 +634,14 @@ export default function TopicIslandDetailPage() {
                           </div>
                           <button
                             onClick={() =>
-                              handleAddToDeckClick("sentence", sentence.id)
+                              handleAddToQuizClick("sentence", sentence.id)
                             }
-                            className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+                            disabled={addedItems.has(`sentence-${sentence.id}`)}
+                            className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
                           >
-                            {t("Add to deck")}
+                            {addedItems.has(`sentence-${sentence.id}`)
+                              ? "✓ In quiz"
+                              : t("Add to quiz")}
                           </button>
                         </div>
                       </div>
@@ -590,48 +687,115 @@ export default function TopicIslandDetailPage() {
           </div>
         )}
 
-        {/* Add to Deck Modal */}
-        {showAddToDeckModal && (
+        {/* Add to Quiz Modal */}
+        {showAddToQuizModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
               <h3 className="mb-2 text-xl font-semibold text-gray-900">
-                {t("Add to Deck")}
+                Add to Quiz
               </h3>
               <p className="mb-6 text-sm text-gray-600">
-                This will create 2 cards: one with Chinese on the front, and one
-                with English on the front.
+                {addToQuizContext?.type === "word"
+                  ? "This will create 2 cards: Chinese → English and English → Chinese."
+                  : "This will create 1 card: Chinese → English."}
               </p>
-              <select
-                value={selectedDeckId}
-                onChange={(e) => setSelectedDeckId(e.target.value)}
-                className="mb-6 w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-              >
-                <option value="">{t("Select a deck...")}</option>
-                {decks.map((deck) => (
-                  <option key={deck.id} value={deck.id}>
-                    {deck.name}
-                  </option>
-                ))}
-              </select>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowAddToDeckModal(false);
-                    setSelectedDeckId("");
-                    setAddToDeckContext(null);
-                  }}
-                  className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                >
-                  {t("Cancel")}
-                </button>
-                <button
-                  onClick={handleAddToDeckConfirm}
-                  disabled={addingToDeck || !selectedDeckId}
-                  className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
-                >
-                  {addingToDeck ? t("Adding...") : t("Add")}
-                </button>
-              </div>
+
+              {showCreateNew ? (
+                /* Create New Quiz Island Inline */
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Quiz Island Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newQuizIslandName}
+                      onChange={(e) => setNewQuizIslandName(e.target.value)}
+                      placeholder="e.g., Basic Vocabulary"
+                      className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      autoFocus
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Quiz islands are for Chinese practice only
+                    </p>
+                  </div>
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      onClick={() => {
+                        setShowCreateNew(false);
+                        setNewQuizIslandName("");
+                        if (quizIslands.length > 0) {
+                          // Show select existing instead
+                        } else {
+                          setShowAddToQuizModal(false);
+                          setAddToQuizContext(null);
+                        }
+                      }}
+                      className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleCreateNewQuizIsland}
+                      disabled={creatingQuizIsland || !newQuizIslandName.trim()}
+                      className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      {creatingQuizIsland ? "Creating..." : "Create & Add"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Select Existing Quiz Island */
+                <>
+                  <div className="mb-6">
+                    <select
+                      value={selectedQuizIslandId}
+                      onChange={(e) => setSelectedQuizIslandId(e.target.value)}
+                      className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    >
+                      {quizIslands.length === 0 ? (
+                        <option value="">No quiz islands yet</option>
+                      ) : (
+                        quizIslands.map((island) => (
+                          <option key={island.id} value={island.id}>
+                            {island.name}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                  {quizIslands.length > 0 && (
+                    <button
+                      onClick={() => setShowCreateNew(true)}
+                      className="mb-6 w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      + Create new quiz island
+                    </button>
+                  )}
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      onClick={() => {
+                        setShowAddToQuizModal(false);
+                        setSelectedQuizIslandId(
+                          localStorage.getItem("lastUsedQuizIslandId") || ""
+                        );
+                        setAddToQuizContext(null);
+                        setShowCreateNew(false);
+                      }}
+                      className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleAddToQuizConfirm()}
+                      disabled={addingToQuiz || !selectedQuizIslandId}
+                      className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      {addingToQuiz ? "Adding..." : "Add"}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

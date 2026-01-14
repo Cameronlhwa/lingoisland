@@ -25,6 +25,8 @@ export default function AppPage() {
   const { t } = useLanguage();
   const [topicIslands, setTopicIslands] = useState<TopicIsland[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processingPendingRequest, setProcessingPendingRequest] =
+    useState(false);
   const [selectedIslandId, setSelectedIslandId] = useState<string | null>(
     searchParams.get("island")
   );
@@ -33,8 +35,14 @@ export default function AppPage() {
   const [touchEnd, setTouchEnd] = useState(0);
 
   useEffect(() => {
-    loadTopicIslands();
-    handlePendingRequest();
+    // Check for pending request first, before loading islands
+    const pendingRequestStr = localStorage.getItem(STORAGE_KEY);
+    if (pendingRequestStr) {
+      setProcessingPendingRequest(true);
+      handlePendingRequest();
+    } else {
+      loadTopicIslands();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -60,10 +68,21 @@ export default function AppPage() {
   const handlePendingRequest = async () => {
     // Check for pending topic island request from onboarding
     const pendingRequestStr = localStorage.getItem(STORAGE_KEY);
-    if (!pendingRequestStr) return;
+    if (!pendingRequestStr) {
+      setProcessingPendingRequest(false);
+      loadTopicIslands();
+      return;
+    }
 
     try {
       const pendingRequest = JSON.parse(pendingRequestStr);
+
+      // Skip if already processing
+      if (pendingRequest.processing) {
+        setProcessingPendingRequest(false);
+        loadTopicIslands();
+        return;
+      }
 
       // Mark as processing immediately to avoid duplicate handling in rare re-mount cases
       localStorage.setItem(
@@ -74,9 +93,15 @@ export default function AppPage() {
       // Get current user
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser();
 
-      if (!user) return;
+      if (userError || !user) {
+        console.error("[APP PAGE] Error getting user:", userError);
+        setProcessingPendingRequest(false);
+        loadTopicIslands();
+        return;
+      }
 
       // Update user profile with CEFR level if provided
       if (pendingRequest.cefrLevel) {
@@ -87,16 +112,6 @@ export default function AppPage() {
       }
 
       // Create topic island via API
-
-      const toBaseLevel = (
-        level: string | null | undefined
-      ): "A2" | "B1" | "B2" => {
-        if (!level) return "B1";
-        if (level.startsWith("A2")) return "A2";
-        if (level.startsWith("B1")) return "B1";
-        return "B2";
-      };
-
       const grammarTarget =
         pendingRequest.wantsGrammar && pendingRequest.grammarCount
           ? pendingRequest.grammarCount
@@ -114,10 +129,22 @@ export default function AppPage() {
       });
 
       if (!createResponse.ok) {
-        throw new Error("Failed to create topic island");
+        const errorData = await createResponse.json().catch(() => ({}));
+        throw new Error(
+          errorData.error ||
+            errorData.details ||
+            "Failed to create topic island"
+        );
       }
 
       const { islandId } = await createResponse.json();
+
+      if (!islandId) {
+        throw new Error("No island ID returned from API");
+      }
+
+      // Clear pending request before redirecting
+      localStorage.removeItem(STORAGE_KEY);
 
       // Start generation in the background (fire-and-forget).
       // The island detail page will show a loading state while content is generated.
@@ -129,13 +156,14 @@ export default function AppPage() {
         console.error("Error starting topic island generation:", err)
       );
 
-      // Clear pending request
-      localStorage.removeItem(STORAGE_KEY);
-
-      // Redirect to island detail page
-      router.push(`/app/topic-islands/${islandId}`);
+      // Redirect to island detail page using replace to avoid adding to history
+      router.replace(`/app/topic-islands/${islandId}`);
     } catch (error) {
       console.error("Error handling pending request:", error);
+      // Clear the pending request on error to avoid infinite loops
+      localStorage.removeItem(STORAGE_KEY);
+      setProcessingPendingRequest(false);
+      loadTopicIslands();
     }
   };
 
@@ -143,10 +171,14 @@ export default function AppPage() {
     (island) => island.id === selectedIslandId
   );
 
-  if (loading) {
+  if (loading || processingPendingRequest) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
+        <div className="text-gray-600">
+          {processingPendingRequest
+            ? "Creating your topic island..."
+            : "Loading..."}
+        </div>
       </div>
     );
   }

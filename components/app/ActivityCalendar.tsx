@@ -160,7 +160,7 @@ export default function ActivityCalendar() {
         </div>
 
         {/* Calendar days */}
-        <div className="grid grid-cols-7 gap-0.5">
+        <div className="relative grid grid-cols-7 gap-0.5">
           {/* Empty cells for days before the first day of the month */}
           {Array.from({ length: firstDayOfMonth }).map((_, index) => (
             <div key={`empty-${index}`} className="aspect-square"></div>
@@ -177,19 +177,23 @@ export default function ActivityCalendar() {
               currentMonth === today.getMonth();
             const isFuture = date > today;
 
+            const isLightBackground = count === 0 || count === 1;
+            
             return (
               <div
                 key={day}
-                className={`aspect-square rounded ${getIntensityClass(
+                className={`relative aspect-square rounded ${getIntensityClass(
                   count
                 )} ${isToday ? "ring-1 ring-gray-900" : ""} ${
                   isFuture ? "opacity-30" : ""
-                } transition-transform hover:scale-110`}
+                } cursor-pointer transition-all hover:scale-110 hover:z-10 hover:shadow-md`}
                 title={`${monthNames[currentMonth]} ${day}, ${currentYear}: ${getIntensityLabel(
                   count
                 )}`}
               >
-                <div className="flex h-full items-center justify-center text-[10px] font-medium text-white">
+                <div className={`flex h-full items-center justify-center text-[10px] font-medium ${
+                  isLightBackground ? "text-gray-700" : "text-white"
+                }`}>
                   {day}
                 </div>
               </div>
