@@ -41,6 +41,14 @@ export async function POST(
       )
     }
 
+    const apiKey = process.env.DEEPSEEK_API_KEY?.trim()
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'DEEPSEEK_API_KEY not configured' },
+        { status: 500 }
+      )
+    }
+
     // Prevent concurrent generation jobs for the same island
     if (island.status === 'generating') {
       return NextResponse.json({
