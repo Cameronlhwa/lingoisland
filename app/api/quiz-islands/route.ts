@@ -38,10 +38,11 @@ export async function GET() {
     // Get card counts efficiently using aggregation
     const islandIds = islands.map((island) => island.id)
     const { data: cardCounts, error: cardsError } = await supabase
-      .from('quiz_cards')
-      .select('quiz_island_id')
+      .from('card_collections')
+      .select('collection_id')
       .eq('user_id', user.id)
-      .in('quiz_island_id', islandIds)
+      .eq('collection_type', 'quiz_island')
+      .in('collection_id', islandIds)
 
     if (cardsError) {
       console.error('Error fetching card counts:', cardsError)
@@ -54,7 +55,10 @@ export async function GET() {
     // Count cards per island
     const countsMap = new Map<string, number>()
     for (const card of cardCounts || []) {
-      countsMap.set(card.quiz_island_id, (countsMap.get(card.quiz_island_id) || 0) + 1)
+      countsMap.set(
+        card.collection_id,
+        (countsMap.get(card.collection_id) || 0) + 1
+      )
     }
 
     // Attach card counts to islands

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { QuizMasteryStats } from "@/components/app/QuizMasteryStats";
 
 interface QuizIsland {
   id: string;
@@ -123,11 +124,7 @@ export default function QuizIslandDetailPage() {
                 Ready to practice?
               </h2>
               <button
-                onClick={() => {
-                  // TODO: Implement quiz runner for quiz islands
-                  // For now, show a message
-                  alert("Quiz runner for quiz islands coming soon! For now, you can practice cards manually in the Manage page.");
-                }}
+                onClick={() => router.push(`/app/quiz/${quizIslandId}/session`)}
                 className="mb-4 w-full rounded-lg border border-gray-900 bg-gray-900 px-6 py-4 text-center text-base font-medium text-white transition-colors hover:bg-gray-800"
               >
                 Start Quiz
@@ -147,6 +144,8 @@ export default function QuizIslandDetailPage() {
                 </Link>
               </div>
             </div>
+
+            <QuizMasteryStats quizIslandId={quizIslandId} />
           </div>
         )}
       </div>

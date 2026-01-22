@@ -38,18 +38,19 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const direction = searchParams.get('direction') // 'ZH_EN', 'EN_ZH', or null for all
 
+    // Get cards via card_collections
     let query = supabase
-      .from('quiz_cards')
-      .select('*')
-      .eq('quiz_island_id', params.id)
+      .from('card_collections')
+      .select(`
+        card_id,
+        cards (*)
+      `)
+      .eq('collection_type', 'quiz_island')
+      .eq('collection_id', params.id)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
-    if (direction && (direction === 'ZH_EN' || direction === 'EN_ZH')) {
-      query = query.eq('direction', direction)
-    }
-
-    const { data: cards, error } = await query
+    const { data: collections, error } = await query
 
     if (error) {
       console.error('Error fetching cards:', error)
@@ -57,6 +58,22 @@ export async function GET(
         { error: 'Failed to fetch cards' },
         { status: 500 }
       )
+    }
+
+    // Extract cards from collections
+    let cards = (collections || [])
+      .map((c: any) => c.cards)
+      .filter((card: any) => card !== null)
+
+    // Filter by direction if specified
+    if (direction && (direction === 'ZH_EN' || direction === 'EN_ZH')) {
+      cards = cards.filter((card: any) => {
+        if (direction === 'ZH_EN') {
+          return card.front_lang === 'zh' && card.back_lang === 'en'
+        } else {
+          return card.front_lang === 'en' && card.back_lang === 'zh'
+        }
+      })
     }
 
     return NextResponse.json({ cards: cards || [] })
@@ -119,48 +136,66 @@ export async function POST(
       )
     }
 
+    // Determine languages based on direction
+    const frontLang = direction === 'ZH_EN' ? 'zh' : 'en'
+    const backLang = direction === 'ZH_EN' ? 'en' : 'zh'
+
     const cardsToInsert = [
       {
         user_id: user.id,
-        quiz_island_id: params.id,
-        direction,
         front: front.trim(),
         back: back.trim(),
+        front_lang: frontLang,
+        back_lang: backLang,
         pinyin: pinyin || null,
+        source_type: 'quiz_island',
+        source_ref_id: params.id,
       },
     ]
 
     // Create reverse card if requested
     if (createReverse) {
-      const reverseDirection = direction === 'ZH_EN' ? 'EN_ZH' : 'ZH_EN'
       cardsToInsert.push({
         user_id: user.id,
-        quiz_island_id: params.id,
-        direction: reverseDirection,
         front: back.trim(),
         back: front.trim(),
+        front_lang: backLang,
+        back_lang: frontLang,
         pinyin: null, // Reverse cards don't need pinyin
+        source_type: 'quiz_island',
+        source_ref_id: params.id,
       })
     }
 
-    const { data: cards, error } = await supabase
-      .from('quiz_cards')
+    // Insert cards
+    const { data: cards, error: cardsError } = await supabase
+      .from('cards')
       .insert(cardsToInsert)
       .select()
 
-    if (error) {
-      console.error('Error creating cards:', error)
-      // Handle unique constraint violation
-      if (error.code === '23505') {
-        return NextResponse.json(
-          { error: 'Card already exists' },
-          { status: 409 }
-        )
-      }
+    if (cardsError) {
+      console.error('Error creating cards:', cardsError)
       return NextResponse.json(
         { error: 'Failed to create cards' },
         { status: 500 }
       )
+    }
+
+    // Create card_collections entries
+    const collectionsToInsert = (cards || []).map((card) => ({
+      user_id: user.id,
+      collection_type: 'quiz_island',
+      collection_id: params.id,
+      card_id: card.id,
+    }))
+
+    const { error: collectionsError } = await supabase
+      .from('card_collections')
+      .insert(collectionsToInsert)
+
+    if (collectionsError) {
+      console.error('Error creating card collections:', collectionsError)
+      // Cards were created, but collections failed - not ideal but continue
     }
 
     return NextResponse.json({

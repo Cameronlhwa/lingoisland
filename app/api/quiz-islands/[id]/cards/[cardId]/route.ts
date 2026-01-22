@@ -34,27 +34,30 @@ export async function DELETE(
       )
     }
 
-    // Verify card belongs to user and quiz island
-    const { data: card } = await supabase
-      .from('quiz_cards')
-      .select('id')
-      .eq('id', params.cardId)
-      .eq('quiz_island_id', params.id)
+    // Verify card belongs to user and is in this quiz island
+    const { data: collection } = await supabase
+      .from('card_collections')
+      .select('card_id')
+      .eq('card_id', params.cardId)
+      .eq('collection_type', 'quiz_island')
+      .eq('collection_id', params.id)
       .eq('user_id', user.id)
       .single()
 
-    if (!card) {
+    if (!collection) {
       return NextResponse.json(
-        { error: 'Card not found or access denied' },
+        { error: 'Card not found in this quiz island' },
         { status: 404 }
       )
     }
 
-    // Delete the card
+    // Delete the card_collection entry (card itself remains for other collections)
     const { error } = await supabase
-      .from('quiz_cards')
+      .from('card_collections')
       .delete()
-      .eq('id', params.cardId)
+      .eq('card_id', params.cardId)
+      .eq('collection_type', 'quiz_island')
+      .eq('collection_id', params.id)
       .eq('user_id', user.id)
 
     if (error) {
