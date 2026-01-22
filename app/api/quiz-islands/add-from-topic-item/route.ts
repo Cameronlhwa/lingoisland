@@ -100,75 +100,128 @@ export async function POST(request: Request) {
       english = sentence.english
     }
 
-    // Check for existing cards (using unique constraint on source_topic_item_id)
+    // Check for existing cards from this source
     const { data: existingCards } = await supabase
-      .from('quiz_cards')
-      .select('id, direction')
-      .eq('quiz_island_id', quizIslandId)
+      .from('cards')
+      .select('id, front_lang, back_lang')
       .eq('user_id', user.id)
-      .eq('source_topic_item_id', sourceId)
+      .eq('source_type', type === 'word' ? 'topic_word' : 'topic_sentence')
+      .eq('source_ref_id', sourceId)
 
     // Determine which cards to create
     const cardsToCreate = []
     const shouldCreateReverse = type === 'word' && (createReverse !== false) // Default true for words
 
     // Always create ZH_EN for both words and sentences
-    const hasZH_EN = existingCards?.some((c) => c.direction === 'ZH_EN')
+    const hasZH_EN = existingCards?.some(
+      (c) => c.front_lang === 'zh' && c.back_lang === 'en'
+    )
     if (!hasZH_EN) {
       cardsToCreate.push({
         user_id: user.id,
-        quiz_island_id: quizIslandId,
-        direction: 'ZH_EN',
         front: hanzi,
         back: english,
+        front_lang: 'zh',
+        back_lang: 'en',
         pinyin: pinyin,
-        source_topic_item_id: sourceId,
+        source_type: type === 'word' ? 'topic_word' : 'topic_sentence',
+        source_ref_id: sourceId,
       })
     }
 
     // Create EN_ZH only for words (if requested)
     if (shouldCreateReverse) {
-      const hasEN_ZH = existingCards?.some((c) => c.direction === 'EN_ZH')
+      const hasEN_ZH = existingCards?.some(
+        (c) => c.front_lang === 'en' && c.back_lang === 'zh'
+      )
       if (!hasEN_ZH) {
         cardsToCreate.push({
           user_id: user.id,
-          quiz_island_id: quizIslandId,
-          direction: 'EN_ZH',
           front: english,
           back: hanzi,
+          front_lang: 'en',
+          back_lang: 'zh',
           pinyin: null,
-          source_topic_item_id: sourceId,
+          source_type: type === 'word' ? 'topic_word' : 'topic_sentence',
+          source_ref_id: sourceId,
         })
       }
     }
 
     if (cardsToCreate.length === 0) {
-      // Cards already exist
+      // Cards already exist - check if they're in this quiz island
+      const existingCardIds = existingCards?.map((c) => c.id) || []
+      const { data: existingCollections } = await supabase
+        .from('card_collections')
+        .select('card_id')
+        .eq('user_id', user.id)
+        .eq('collection_type', 'quiz_island')
+        .eq('collection_id', quizIslandId)
+        .in('card_id', existingCardIds)
+
+      if (existingCollections && existingCollections.length > 0) {
+        return NextResponse.json({
+          message: 'Cards already exist in this quiz island',
+          cardCount: existingCollections.length,
+        })
+      }
+
+      // Cards exist but not in this quiz island - add them
+      const collectionsToInsert = existingCardIds.map((cardId) => ({
+        user_id: user.id,
+        collection_type: 'quiz_island',
+        collection_id: quizIslandId,
+        card_id: cardId,
+      }))
+
+      const { error: collectionsError } = await supabase
+        .from('card_collections')
+        .insert(collectionsToInsert)
+
+      if (collectionsError) {
+        console.error('Error adding cards to collection:', collectionsError)
+        return NextResponse.json(
+          { error: 'Failed to add cards to quiz island' },
+          { status: 500 }
+        )
+      }
+
       return NextResponse.json({
-        message: 'Cards already exist in this quiz island',
-        cardCount: existingCards?.length || 0,
+        message: `Added ${existingCardIds.length} card(s)`,
+        cardCount: existingCardIds.length,
+        cardIds: existingCardIds,
       })
     }
 
     // Insert new cards
     const { data: cards, error: cardsError } = await supabase
-      .from('quiz_cards')
+      .from('cards')
       .insert(cardsToCreate)
       .select()
 
     if (cardsError) {
       console.error('Error creating cards:', cardsError)
-      // Handle unique constraint violation (shouldn't happen due to check above, but just in case)
-      if (cardsError.code === '23505') {
-        return NextResponse.json(
-          { error: 'One or more cards already exist' },
-          { status: 409 }
-        )
-      }
       return NextResponse.json(
         { error: 'Failed to create cards' },
         { status: 500 }
       )
+    }
+
+    // Create card_collections entries
+    const collectionsToInsert = (cards || []).map((card) => ({
+      user_id: user.id,
+      collection_type: 'quiz_island',
+      collection_id: quizIslandId,
+      card_id: card.id,
+    }))
+
+    const { error: collectionsError } = await supabase
+      .from('card_collections')
+      .insert(collectionsToInsert)
+
+    if (collectionsError) {
+      console.error('Error creating card collections:', collectionsError)
+      // Cards were created but collections failed - not ideal but continue
     }
 
     return NextResponse.json({

@@ -95,7 +95,7 @@ export async function generateIslandBatch({
     : ''
 
   const grammarSection = grammarTarget && grammarTarget > 0
-    ? `\n\nGRAMMAR FOCUS:\n- Internally choose ${grammarTarget} appropriate grammar pattern(s) for ${actualDetailedLevel} (e.g., result complements, 把-structure, passive 被).\n- For each word, AT MOST ONE sentence should strongly highlight a target pattern.\n- Other sentences should use familiar grammar so the focus stays on vocabulary.\n- In your JSON, include a root "grammarTags" array with the names of patterns you used.\n- For each sentence, include an optional "grammarTag" field (the pattern name or null).`
+    ? `\n\nGRAMMAR FOCUS:\n- Choose ${grammarTarget} HIGH-VALUE grammar pattern(s) for ${actualDetailedLevel} that fit this topic.\n- IMPORTANT: Do NOT default to 把. Only use 把 when it is truly the most natural fit; otherwise pick other useful patterns.\n- Prefer patterns that learners will actually use in daily conversation.\n\nSuggested pattern pool (pick from these; you can rename tags as natural Chinese-friendly names):\n- A2/A2+: 了 (change of state), 过 (experience), 在/正在 (progressive), 会/能/可以 (ability), 要/得/应该 (need/should)\n- B1/B1+: 比 (comparison), 把 (only if natural), 被 (passive), 结果补语 (e.g., 好/完/到), 起来/下去/出来 (directional), 一边…一边…, 先…再…\n- B2/B2+: 连…都…, 即使…也…, 既然…就…, 不但…而且…, 越…越…, 反正…, 干脆…\n\nRules:\n- For each word, AT MOST ONE sentence should strongly highlight a target pattern.\n- Other sentences should use familiar grammar so the focus stays on vocabulary.\n- Include a root "grammarTags" array with the pattern names you actually used.\n- For each sentence, include an optional "grammarTag" field (the pattern name or null).`
     : ''
 
   const prompt = `You are a Mandarin Chinese learning assistant. Generate Chinese vocabulary words with example sentences for a topic island.
@@ -136,12 +136,12 @@ Output ONLY valid JSON (no markdown, no code blocks, no explanation). Format:
       "word": {"hanzi": "...", "pinyin": "...", "english": "..."},
       "sentences": [
         {"tier": "easy", "hanzi": "...", "pinyin": "...", "english": "...", "grammarTag": null},
-        {"tier": "same", "hanzi": "...", "pinyin": "...", "english": "...", "grammarTag": "把-structure"},
+        {"tier": "same", "hanzi": "...", "pinyin": "...", "english": "...", "grammarTag": "comparison 比"},
         {"tier": "hard", "hanzi": "...", "pinyin": "...", "english": "...", "grammarTag": null}
       ]
     }
   ],
-  "grammarTags": ["把-structure", "..."]
+  "grammarTags": ["comparison 比", "..."]
 }`
 
   // CRITICAL CONSTRAINTS:

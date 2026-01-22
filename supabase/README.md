@@ -73,18 +73,26 @@ Follow these steps to set up your Supabase project and configure Google OAuth.
 ## Step 4: Configure Redirect URLs
 
 1. In Supabase dashboard, go to **Authentication** → **URL Configuration**
-2. Set **Site URL** to:
+2. Set **Site URL** to your production domain:
    ```
-   http://localhost:3000
+   https://yourdomain.com
    ```
+   (This is used as a fallback when redirectTo doesn't match allowed URLs)
+
 3. Add **Redirect URLs** (one per line):
    ```
    http://localhost:3000
    http://localhost:3000/auth/callback
+   http://localhost:3002
+   http://localhost:3002/auth/callback
    https://yourdomain.com
    https://yourdomain.com/auth/callback
    ```
-   (Add your production domain when ready)
+   
+   **IMPORTANT**: 
+   - Add **ALL ports** you use for local development (3000, 3002, etc.)
+   - If your `redirectTo` URL is not in this list, Supabase will **ignore it** and redirect to the Site URL instead
+   - The middleware will catch these cases and fix the redirect, but it's better to add all ports upfront
 
 ## Step 5: Run Database Schema
 

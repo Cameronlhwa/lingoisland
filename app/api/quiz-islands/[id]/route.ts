@@ -35,10 +35,11 @@ export async function GET(
 
     // Get card count
     const { count, error: countError } = await supabase
-      .from('quiz_cards')
+      .from('card_collections')
       .select('*', { count: 'exact', head: true })
-      .eq('quiz_island_id', params.id)
       .eq('user_id', user.id)
+      .eq('collection_type', 'quiz_island')
+      .eq('collection_id', params.id)
 
     if (countError) {
       console.error('Error counting cards:', countError)
