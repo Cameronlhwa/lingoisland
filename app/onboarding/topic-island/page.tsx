@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/browser";
+import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import { useRouter, usePathname } from "next/navigation";
 
 type CEFRLevel =
@@ -173,18 +174,17 @@ export default function OnboardingTopicIslandPage() {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingRequest));
 
-    // Pass redirectTo WITHOUT query parameters (Supabase validates exact match)
-    const redirectTo = `${location.origin}/auth/callback`;
+    const { origin, redirectTo, cookieOptions } = getOAuthRedirectConfig();
 
     // Always redirect to /app after auth - it will handle the pending request
     const nextPath = "/app";
     localStorage.setItem("oauth_next", nextPath);
-    document.cookie = `oauth_next=${nextPath}; path=/; max-age=600; SameSite=Lax`;
+    document.cookie = `oauth_next=${nextPath}; ${cookieOptions}`;
 
     // Store the origin in both localStorage AND cookie (cookie is more reliable across redirects)
-    localStorage.setItem("oauth_origin", location.origin);
+    localStorage.setItem("oauth_origin", origin);
     // Set cookie that expires in 10 minutes (enough for OAuth flow)
-    document.cookie = `oauth_origin=${location.origin}; path=/; max-age=600; SameSite=Lax`;
+    document.cookie = `oauth_origin=${origin}; ${cookieOptions}`;
 
     // Start Google OAuth
     const { error } = await supabase.auth.signInWithOAuth({
