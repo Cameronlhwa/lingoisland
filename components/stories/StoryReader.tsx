@@ -262,7 +262,11 @@ export default function StoryReader({
         throw new Error(error.error || "Failed to add to quiz");
       }
       const itemKey = `word-${addToQuizContext.sourceId}`;
-      setAddedItems((prev) => new Set([...prev, itemKey]));
+      setAddedItems((prev) => {
+        const next = new Set(prev);
+        next.add(itemKey);
+        return next;
+      });
       localStorage.setItem("lastUsedQuizIslandId", quizIslandId);
       setShowAddToQuizModal(false);
       setSelectedQuizIslandId(quizIslandId);
@@ -630,4 +634,3 @@ export default function StoryReader({
     </div>
   );
 }
-
