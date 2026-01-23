@@ -141,7 +141,7 @@ export async function POST(request: Request) {
           back: hanzi,
           front_lang: 'en',
           back_lang: 'zh',
-          pinyin: null,
+          pinyin: pinyin,
           source_type: type === 'word' ? 'topic_word' : 'topic_sentence',
           source_ref_id: sourceId,
         })

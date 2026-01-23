@@ -32,6 +32,10 @@ interface Island {
   word_target: number;
   grammar_target: number;
   status: string;
+  words_selected?: number;
+  sentences_generated?: number;
+  sentence_attempts?: number;
+  sentence_tasks?: number;
 }
 
 export default function TopicIslandDetailPage() {
@@ -72,9 +76,9 @@ export default function TopicIslandDetailPage() {
     if (lastUsed) {
       setSelectedQuizIslandId(lastUsed);
     }
-    // Poll for updates if status is generating
+    // Poll for updates if status is selecting or generating
     const interval = setInterval(() => {
-      if (island?.status === "generating") {
+      if (island?.status === "generating" || island?.status === "selecting") {
         loadIsland();
       }
     }, 2000);
@@ -348,8 +352,36 @@ export default function TopicIslandDetailPage() {
     );
   }
 
+  const totalSentenceTasks =
+    island.sentence_tasks || Math.max(island.word_target * 3, 1);
+  const wordsSelected = Math.min(
+    island.words_selected ?? words.length,
+    island.word_target
+  );
+  const sentenceAttempts = Math.min(
+    island.sentence_attempts ??
+      words.reduce((total, word) => total + word.sentences.length, 0),
+    totalSentenceTasks
+  );
+
+  const wordProgress = island.word_target
+    ? Math.min(wordsSelected / island.word_target, 1)
+    : 0;
+  const sentenceProgress = Math.min(sentenceAttempts / totalSentenceTasks, 1);
+
   const progressPercentage =
-    island.status === "ready" ? 100 : (words.length / island.word_target) * 100;
+    island.status === "ready"
+      ? 100
+      : wordProgress < 1
+      ? Math.round(30 * wordProgress)
+      : Math.round(30 + 70 * sentenceProgress);
+
+  const progressLabel =
+    island.status === "ready"
+      ? "Ready"
+      : wordProgress < 1
+      ? `Selecting words (${wordsSelected}/${island.word_target})`
+      : `Generating sentences (${sentenceAttempts}/${totalSentenceTasks}) — 5 workers`;
 
   // Group sentences by grammar pattern (if any)
   const grammarMap = new Map<
@@ -405,9 +437,7 @@ export default function TopicIslandDetailPage() {
               <div className="mb-2">
                 <div className="mb-2 flex justify-between text-sm font-medium text-gray-600">
                   <span>Progress</span>
-                  <span>
-                    {words.length} / {island.word_target} words
-                  </span>
+                  <span>{progressLabel}</span>
                 </div>
                 <div className="h-2.5 w-full rounded-full bg-gray-200">
                   <div
@@ -490,7 +520,8 @@ export default function TopicIslandDetailPage() {
             )}
 
             {/* Generating Message */}
-            {island.status === "generating" && (
+            {(island.status === "generating" ||
+              island.status === "selecting") && (
               <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="mb-3">
                   <p className="text-base font-medium text-gray-900">
@@ -501,9 +532,7 @@ export default function TopicIslandDetailPage() {
                       }`}{" "}
                     for "{island.topic}" at {island.level}...
                   </p>
-                  <p className="mt-1 text-sm text-gray-600">
-                    {words.length} of {island.word_target} words completed
-                  </p>
+                  <p className="mt-1 text-sm text-gray-600">{progressLabel}</p>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
                   <div

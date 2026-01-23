@@ -15,43 +15,26 @@ export default function ActivityCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
 
   useEffect(() => {
-    // Load activity from localStorage (mock data for now)
     loadActivityData();
   }, [currentYear, currentMonth]);
 
-  const loadActivityData = () => {
-    // Get activity from localStorage or generate mock data
-    const stored = localStorage.getItem("activity_calendar");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setActivityData(parsed);
-        return;
-      } catch (e) {
-        console.error("Error parsing activity data:", e);
+  const loadActivityData = async () => {
+    try {
+      const month = currentMonth + 1;
+      const tzOffset = new Date().getTimezoneOffset();
+      const response = await fetch(
+        `/api/quiz-activity?year=${currentYear}&month=${month}&tzOffset=${tzOffset}`,
+        { cache: "no-store" }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to load activity");
       }
+      const data = await response.json();
+      setActivityData(data.activity || []);
+    } catch (error) {
+      console.error("Error loading activity data:", error);
+      setActivityData([]);
     }
-
-    // Generate some mock activity for the current month
-    const mockData: ActivityData[] = [];
-    const today = new Date();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day);
-      if (date <= today) {
-        // Random activity for past days
-        const count = Math.floor(Math.random() * 5); // 0-4 reviews
-        if (count > 0) {
-          mockData.push({
-            date: date.toISOString().split("T")[0],
-            count,
-          });
-        }
-      }
-    }
-
-    setActivityData(mockData);
   };
 
   const getActivityForDate = (date: Date): number => {
@@ -62,16 +45,16 @@ export default function ActivityCalendar() {
 
   const getIntensityClass = (count: number): string => {
     if (count === 0) return "bg-gray-100";
-    if (count === 1) return "bg-gray-300";
-    if (count === 2) return "bg-gray-500";
-    if (count === 3) return "bg-gray-700";
+    if (count < 25) return "bg-gray-300";
+    if (count < 50) return "bg-gray-500";
+    if (count < 100) return "bg-gray-700";
     return "bg-gray-900";
   };
 
   const getIntensityLabel = (count: number): string => {
     if (count === 0) return "No activity";
-    if (count === 1) return "1 review";
-    return `${count} reviews`;
+    if (count === 1) return "1 card";
+    return `${count} cards`;
   };
 
   // Get all days in the current month
@@ -170,12 +153,13 @@ export default function ActivityCalendar() {
           {Array.from({ length: daysInMonth }).map((_, index) => {
             const day = index + 1;
             const date = new Date(currentYear, currentMonth, day);
-            const count = getActivityForDate(date);
+            const rawCount = getActivityForDate(date);
             const isToday =
               date.toDateString() === today.toDateString() &&
               currentYear === today.getFullYear() &&
               currentMonth === today.getMonth();
             const isFuture = date > today;
+            const count = isFuture ? 0 : rawCount;
 
             const isLightBackground = count === 0 || count === 1;
             
@@ -216,7 +200,7 @@ export default function ActivityCalendar() {
           <span>{t("More")}</span>
         </div>
         <div className="text-xs text-gray-600">
-          <span className="font-medium">{totalActivity}</span> {t("reviews in")}{" "}
+          <span className="font-medium">{totalActivity}</span> {t("cards in")}{" "}
           <span className="font-medium">{activeDays}</span> {t("days")}
         </div>
       </div>
