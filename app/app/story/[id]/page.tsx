@@ -42,7 +42,7 @@ export default function StoryDetailPage() {
           .in("id", data.target_word_ids);
 
         if (!wordsError && wordsData) {
-          const orderMap = new Map(
+          const orderMap = new Map<string, number>(
             data.target_word_ids.map((id: string, idx: number) => [id, idx])
           );
           const sorted = [...wordsData].sort(
