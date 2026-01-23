@@ -58,7 +58,7 @@ export default function QuizSessionPage() {
   const getPinyinForText = (text: string | null | undefined) => {
     if (!text || !containsChinese(text)) return null;
     try {
-      const result = pinyinPro(text, { toneType: "mark" });
+      const result = pinyinPro(text, { toneType: "symbol" });
       return Array.isArray(result) ? result.join(" ") : result;
     } catch (error) {
       console.error("Error generating pinyin:", error);

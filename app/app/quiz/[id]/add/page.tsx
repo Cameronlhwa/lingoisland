@@ -14,7 +14,7 @@ interface QuizIsland {
 const hasChinese = (value: string) => /[\u4e00-\u9fff]/.test(value);
 const generatePinyin = (chinese: string): string => {
   if (!hasChinese(chinese)) return "";
-  const result = pinyinPro(chinese, { toneType: "mark" });
+  const result = pinyinPro(chinese, { toneType: "symbol" });
   return Array.isArray(result) ? result.join(" ") : result;
 };
 
