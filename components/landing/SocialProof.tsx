@@ -14,9 +14,9 @@ export default function SocialProof() {
   return (
     <section className="border-b border-gray-100 bg-white px-6 py-20 md:px-12">
       <div className="mx-auto max-w-6xl">
-        <p className="mb-12 text-center font-serif text-lg italic text-gray-500">
+        <h2 className="mb-12 text-center font-serif text-lg italic text-gray-500">
           As featured in
-        </p>
+        </h2>
         <div className="flex flex-wrap items-center justify-center gap-12 md:gap-16">
           {logos.map((logo, index) => (
             <div

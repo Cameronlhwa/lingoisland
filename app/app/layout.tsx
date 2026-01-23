@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Sidebar from "@/components/app/Sidebar";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+
+export const metadata: Metadata = {
+  title: "App",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 /**
  * Layout for /app routes
@@ -24,9 +33,9 @@ export default async function AppLayout({
   return (
     <LanguageProvider>
       <div className="min-h-screen bg-white">
-      <Sidebar />
+        <Sidebar />
         <main className="ml-64">{children}</main>
-    </div>
+      </div>
     </LanguageProvider>
   );
 }
