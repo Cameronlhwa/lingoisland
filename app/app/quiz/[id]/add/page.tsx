@@ -69,7 +69,7 @@ export default function AddCardsPage() {
     }
   };
 
-  const handleSubmit = async (clearAfter: boolean = false) => {
+  const handleSubmit = async () => {
     if (!chinese.trim()) {
       alert("Chinese field is required");
       return;
@@ -114,17 +114,12 @@ export default function AddCardsPage() {
       // Show toast message
       alert(`Added ${cardCount} card${cardCount !== 1 ? "s" : ""}`);
 
-      if (clearAfter) {
-        // Clear form and refocus
-        setChinese("");
-        setEnglish("");
-        setPinyin("");
-        if (chineseInputRef.current) {
-          chineseInputRef.current.focus();
-        }
-      } else {
-        // Go back to quiz island detail
-        router.push(`/app/quiz/${quizIslandId}`);
+      // Always clear form and refocus to allow adding multiple cards
+      setChinese("");
+      setEnglish("");
+      setPinyin("");
+      if (chineseInputRef.current) {
+        chineseInputRef.current.focus();
       }
     } catch (error) {
       console.error("Error adding card:", error);
@@ -281,18 +276,11 @@ export default function AddCardsPage() {
                 {/* Buttons */}
                 <div className="flex gap-3 pt-4">
                   <button
-                    onClick={() => handleSubmit(false)}
+                    onClick={() => handleSubmit()}
                     disabled={submitting || !chinese.trim()}
                     className="flex-1 rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
                   >
                     {submitting ? "Adding..." : "Add card"}
-                  </button>
-                  <button
-                    onClick={() => handleSubmit(true)}
-                    disabled={submitting || !chinese.trim()}
-                    className="rounded-lg border border-gray-200 bg-white px-6 py-3 text-base font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Add & new
                   </button>
                 </div>
               </div>
@@ -331,7 +319,7 @@ export default function AddCardsPage() {
                   <li>• Chinese field is required</li>
                   <li>• English helps with understanding</li>
                   <li>• Reverse cards create English → Chinese practice</li>
-                  <li>• Use "Add & new" for quick batch entry</li>
+                  <li>• Form clears after each card for quick batch entry</li>
                 </ul>
               </div>
             </div>
