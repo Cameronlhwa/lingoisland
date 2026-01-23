@@ -2,11 +2,38 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import AuthRedirectHandler from "@/components/AuthRedirectHandler";
+import { getSiteUrl } from "@/lib/utils/site-url";
+
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
-  title: "Lingo Island - From textbook Mandarin to your Mandarin",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Lingo Island",
+    template: "Lingo Island — %s",
+  },
   description:
-    "Overcome the intermediate plateau. Daily review, stories, and topic-based vocab for A2-B2 learners.",
+    "Overcome the intermediate plateau with daily review, personalized stories, and topic-based vocabulary for A2–B2 learners.",
+  openGraph: {
+    title: {
+      default: "Lingo Island",
+      template: "Lingo Island — %s",
+    },
+    description:
+      "Overcome the intermediate plateau with daily review, personalized stories, and topic-based vocabulary for A2–B2 learners.",
+    url: siteUrl,
+    siteName: "Lingo Island",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: {
+      default: "Lingo Island",
+      template: "Lingo Island — %s",
+    },
+    description:
+      "Overcome the intermediate plateau with daily review, personalized stories, and topic-based vocabulary for A2–B2 learners.",
+  },
 };
 
 export default function RootLayout({
