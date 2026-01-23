@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { sidebarItems } from "@/components/app/sidebar-items";
 
 export default function Sidebar() {
   const router = useRouter();
@@ -16,12 +17,7 @@ export default function Sidebar() {
     router.push("/");
   };
 
-  const navItems = [
-    { href: "/app", label: "Daily Review" },
-    { href: "/app/topic-islands", label: "Topic Islands" },
-    { href: "/app/quiz", label: "Quiz" },
-    { href: "/app/chat", label: "Chat" },
-  ];
+  const navItems = sidebarItems;
 
   return (
     <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
@@ -47,12 +43,13 @@ export default function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block rounded-lg border px-4 py-3 text-left text-base font-medium text-gray-900 transition-colors ${
+                className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-base font-medium text-gray-900 transition-colors ${
                   isActive
                     ? "border-gray-900 bg-white"
                     : "border-gray-300 bg-white hover:bg-gray-50"
                 }`}
               >
+                {item.icon()}
                 {t(item.label)}
               </Link>
             );
