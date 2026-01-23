@@ -276,7 +276,7 @@ export default function AddCardsPage() {
                 {/* Buttons */}
                 <div className="flex gap-3 pt-4">
                   <button
-                    onClick={() => handleSubmit(true)}
+                    onClick={() => handleSubmit()}
                     disabled={submitting || !chinese.trim()}
                     className="flex-1 rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
                   >
