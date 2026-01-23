@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { pinyin as pinyinPro } from "pinyin-pro";
 
 interface QuizIsland {
   id: string;
@@ -10,11 +11,11 @@ interface QuizIsland {
   card_count: number;
 }
 
-// Simple pinyin helper (placeholder - can be enhanced later)
+const hasChinese = (value: string) => /[\u4e00-\u9fff]/.test(value);
 const generatePinyin = (chinese: string): string => {
-  // Placeholder: return empty string for now
-  // In a real implementation, you'd use a pinyin library
-  return "";
+  if (!hasChinese(chinese)) return "";
+  const result = pinyinPro(chinese, { toneType: "symbol" });
+  return Array.isArray(result) ? result.join(" ") : result;
 };
 
 export default function AddCardsPage() {

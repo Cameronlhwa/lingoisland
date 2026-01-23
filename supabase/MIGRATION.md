@@ -12,7 +12,11 @@ If you already ran the initial schema, you need to update it with the new tables
 -- Update topic_islands table
 ALTER TABLE public.topic_islands
   ADD COLUMN IF NOT EXISTS level text NOT NULL DEFAULT 'B1',
-  ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'draft';
+  ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'draft',
+  ADD COLUMN IF NOT EXISTS words_selected int NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS sentences_generated int NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS sentence_attempts int NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS sentence_tasks int NOT NULL DEFAULT 0;
 
 -- Rename word_count to word_target if it exists (safe version)
 DO $$

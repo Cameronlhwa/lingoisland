@@ -17,6 +17,10 @@ create table if not exists public.topic_islands (
   word_target int not null default 12,
   grammar_target int not null default 0,
   status text not null default 'draft',
+  words_selected int not null default 0,
+  sentences_generated int not null default 0,
+  sentence_attempts int not null default 0,
+  sentence_tasks int not null default 0,
   created_at timestamptz not null default now()
 );
 

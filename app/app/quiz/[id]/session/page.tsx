@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { pinyin as pinyinPro } from "pinyin-pro";
 
 interface Card {
   id: string;
@@ -10,22 +11,72 @@ interface Card {
   pinyin: string | null;
   front_lang: string | null;
   back_lang: string | null;
+  queue_bucket?: "due" | "review" | "new";
 }
 
 export default function QuizSessionPage() {
   const router = useRouter();
   const params = useParams();
   const quizIslandId = params.id as string;
+  const maxSessionCards = 10;
 
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [showPinyin, setShowPinyin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [grading, setGrading] = useState(false);
 
   useEffect(() => {
     loadQueue();
   }, [quizIslandId]);
+
+  const shuffleArray = <T,>(items: T[]) => {
+    const array = [...items];
+    for (let i = array.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  };
+
+  const interleaveQueues = <T,>(primary: T[], secondary: T[]) => {
+    const result: T[] = [];
+    let i = 0;
+    let j = 0;
+    while (i < primary.length || j < secondary.length) {
+      if (i < primary.length) result.push(primary[i++]);
+      if (j < secondary.length) result.push(secondary[j++]);
+    }
+    return result;
+  };
+
+  const isChinese = (lang: string | null | undefined) =>
+    typeof lang === "string" && lang.toLowerCase().startsWith("zh");
+  const containsChinese = (text: string | null | undefined) =>
+    typeof text === "string" && /[\u4e00-\u9fff]/.test(text);
+  const getPinyinForText = (text: string | null | undefined) => {
+    if (!text || !containsChinese(text)) return null;
+    try {
+      const result = pinyinPro(text, { toneType: "symbol" });
+      return Array.isArray(result) ? result.join(" ") : result;
+    } catch (error) {
+      console.error("Error generating pinyin:", error);
+      return null;
+    }
+  };
+
+  const buildStrategicQueue = (queue: Card[]) => {
+    const due = queue.filter((card) => card.queue_bucket === "due");
+    const newCards = queue.filter((card) => card.queue_bucket === "new");
+    const review = queue.filter(
+      (card) =>
+        card.queue_bucket === "review" || card.queue_bucket === undefined
+    );
+
+    const mixed = interleaveQueues(shuffleArray(due), shuffleArray(newCards));
+    return [...mixed, ...shuffleArray(review)].slice(0, maxSessionCards);
+  };
 
   const loadQueue = async () => {
     try {
@@ -38,7 +89,9 @@ export default function QuizSessionPage() {
         throw new Error("Failed to load queue");
       }
       const data = await response.json();
-      setCards(data.cards || []);
+      setCards(buildStrategicQueue(data.cards || []));
+      setCurrentIndex(0);
+      setShowAnswer(false);
     } catch (error) {
       console.error("Error loading queue:", error);
     } finally {
@@ -139,8 +192,16 @@ export default function QuizSessionPage() {
           >
             ← Exit Quiz
           </button>
-          <div className="text-sm text-gray-600">
-            Card {currentIndex + 1} of {cards.length}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowPinyin((prev) => !prev)}
+              className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              {showPinyin ? "Hide Pinyin" : "Show Pinyin"}
+            </button>
+            <div className="text-sm text-gray-600">
+              Card {currentIndex + 1} of {cards.length}
+            </div>
           </div>
         </div>
 
@@ -151,9 +212,13 @@ export default function QuizSessionPage() {
               {currentCard.front}
             </div>
 
-            {currentCard.pinyin && (
-              <div className="text-lg text-gray-500">{currentCard.pinyin}</div>
-            )}
+            {showPinyin &&
+              (isChinese(currentCard.front_lang) ||
+                containsChinese(currentCard.front)) && (
+                <div className="text-lg text-gray-500">
+                  {currentCard.pinyin || getPinyinForText(currentCard.front)}
+                </div>
+              )}
           </div>
 
           {!showAnswer ? (
@@ -169,6 +234,13 @@ export default function QuizSessionPage() {
             <>
               <div className="mb-8 border-t border-gray-200 pt-8 text-center">
                 <div className="text-2xl text-gray-700">{currentCard.back}</div>
+                {showPinyin &&
+                  (isChinese(currentCard.back_lang) ||
+                    containsChinese(currentCard.back)) && (
+                    <div className="mt-2 text-lg text-gray-500">
+                      {currentCard.pinyin || getPinyinForText(currentCard.back)}
+                    </div>
+                  )}
               </div>
 
               {/* Grade Buttons */}

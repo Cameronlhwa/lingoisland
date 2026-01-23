@@ -161,7 +161,7 @@ export async function POST(
         back: front.trim(),
         front_lang: backLang,
         back_lang: frontLang,
-        pinyin: null, // Reverse cards don't need pinyin
+        pinyin: pinyin || null,
         source_type: 'quiz_island',
         source_ref_id: params.id,
       })

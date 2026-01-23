@@ -65,6 +65,18 @@ export async function POST(
       )
     }
 
+    const { error: activityError } = await supabase
+      .from('quiz_activity_events')
+      .insert({
+        user_id: user.id,
+        card_id: cardId,
+        reviewed_at: new Date().toISOString(),
+      })
+
+    if (activityError) {
+      console.error('Error logging quiz activity:', activityError)
+    }
+
     return NextResponse.json({ success: true, reviewState: data })
   } catch (error) {
     console.error('Error in POST /api/quiz-islands/[id]/grade:', error)
