@@ -280,8 +280,8 @@ export default function OnboardingTopicIslandPage() {
               What topic do you want to learn?
             </h1>
             <p className="mb-8 text-lg text-gray-600">
-              Choose something you&apos;re interested in—work, travel, food,
-              anything
+              Choose something are interested in, like work, travel, food,
+              anything~
             </p>
             <form onSubmit={handleTopicSubmit}>
               <div className="mb-8 relative">
@@ -374,8 +374,7 @@ export default function OnboardingTopicIslandPage() {
                     Personalized daily review
                   </div>
                   <div className="text-sm text-gray-600">
-                    Spaced repetition that knows when you&apos;re about to
-                    forget
+                    Spaced repetition that knows when you are about to forget
                   </div>
                 </div>
               </div>

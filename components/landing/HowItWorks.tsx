@@ -29,7 +29,7 @@ export default function HowItWorks() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {steps.map((step, index) => (
             <div key={index} className="relative">
-              <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm transition-all hover:border-gray-300 hover:shadow-md">
+              <div className="flex h-full flex-col rounded-xl border border-gray-200 bg-white p-8 shadow-sm transition-all hover:border-gray-300 hover:shadow-md">
                 <div className="mb-6 text-6xl font-bold text-gray-200">
                   {step.number}
                 </div>

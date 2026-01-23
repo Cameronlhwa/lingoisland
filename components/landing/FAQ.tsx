@@ -18,12 +18,12 @@ export default function FAQ() {
     {
       question: "Do I need to review every single day?",
       answer:
-        "Not necessarily. The spaced repetition algorithm prioritizes words you&apos;re about to forget. Missing a day or two is fine, but consistency helps. Aim for 4–5 days per week to see progress.",
+        "Not necessarily. The spaced repetition algorithm prioritizes words you are about to forget. Missing a day or two is fine, but consistency helps. Aim for 4–5 days per week to see progress.",
     },
     {
       question: "Can I use this alongside other Mandarin resources?",
       answer:
-        "Absolutely. Lingo Island focuses on vocabulary retention and context. Use it with textbooks, classes, or apps. The daily review and stories complement any learning method.",
+        "Absolutely! Lingo Island focuses on vocabulary retention and context. A lot of our users use it with textbooks, classes, or even their friends, inserting thier new vocabulary in conversation.",
     },
   ];
 
