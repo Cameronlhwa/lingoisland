@@ -404,7 +404,7 @@ export default function IslandSideChat({
       {/* Floating button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-900 shadow-lg transition-all hover:shadow-xl ${
+        className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-lg transition-all hover:shadow-xl ${
           open ? "opacity-0 pointer-events-none" : ""
         }`}
         aria-label="Open AI chat"
@@ -418,6 +418,7 @@ export default function IslandSideChat({
         >
           <path d="M4.804 21.644A1.5 1.5 0 003 20.25V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v8.5A2.25 2.25 0 0118.75 17.5H9.664l-3.47 3.47a1.5 1.5 0 01-1.39.674z" />
         </svg>
+        <span className="text-sm font-medium">Ask AI</span>
       </button>
 
       {/* Desktop split-screen sidebar (normal flex child) */}
