@@ -50,7 +50,9 @@ export async function generateStory({
   }
 
   const targetWordList = targetWords.map((w) => w.hanzi).filter(Boolean);
-  const requiredWords = [...new Set([...targetWordList, ...requestedWords])];
+  const requiredWords = Array.from(
+    new Set([...targetWordList, ...requestedWords])
+  );
   const minLength = Math.max(50, lengthChars - 20);
   const maxLength = Math.min(500, lengthChars + 20);
 

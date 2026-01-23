@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/quiz/daily?deckId=...
  * Get 10-20 cards due for review (or fallback to recent created)
