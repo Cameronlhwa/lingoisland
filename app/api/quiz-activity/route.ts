@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/quiz-activity?year=YYYY&month=MM
  * Returns daily quiz activity counts for the given month.
