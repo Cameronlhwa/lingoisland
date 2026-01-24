@@ -20,7 +20,7 @@ export const sidebarItems: SidebarItem[] = [
         className={className}
         aria-hidden="true"
       >
-        <path d="M12 4a8 8 0 100 16 8 8 0 000-16zm.75 4.5a.75.75 0 00-1.5 0V12c0 .414.336.75.75.75h3a.75.75 0 000-1.5h-2.25V8.5z" />
+        <path d="M4.5 10.5L12 4l7.5 6.5v8.25A1.25 1.25 0 0118.25 20h-4.5v-4.5h-3V20h-4.5A1.25 1.25 0 014.5 18.75V10.5z" />
       </svg>
     ),
   },

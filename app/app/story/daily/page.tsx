@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
+import { getLocalDateKey } from "@/lib/utils/date";
 import StoryReader, {
   type StoryDetail,
   type StoryTargetWord,
@@ -17,7 +18,7 @@ export default function DailyStoryPreviewPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateKey();
 
   useEffect(() => {
     const loadPreview = async () => {
