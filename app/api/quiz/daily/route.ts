@@ -40,18 +40,19 @@ export async function GET(request: Request) {
     }
 
     // Build query for due cards
-    // First get card IDs that match the deck filter
+    // Use card_collections (deck) + cards as the canonical source of reviewable cards
     let cardIdsQuery = supabase
-      .from('flashcards')
-      .select('id')
+      .from('card_collections')
+      .select('card_id')
       .eq('user_id', user.id)
+      .eq('collection_type', 'deck')
 
     if (deckId) {
-      cardIdsQuery = cardIdsQuery.eq('deck_id', deckId)
+      cardIdsQuery = cardIdsQuery.eq('collection_id', deckId)
     }
 
     const { data: matchingCards } = await cardIdsQuery
-    const matchingCardIds = (matchingCards || []).map((c) => c.id)
+    const matchingCardIds = (matchingCards || []).map((c) => c.card_id)
 
     if (matchingCardIds.length === 0) {
       // No cards match, return empty
@@ -63,7 +64,7 @@ export async function GET(request: Request) {
       .from('card_review_state')
       .select(`
         *,
-        card:flashcards(*)
+        card:cards(*)
       `)
       .eq('user_id', user.id)
       .in('card_id', matchingCardIds)
@@ -100,19 +101,16 @@ export async function GET(request: Request) {
 
     // Fallback: get recent cards (created in last 7 days, not yet reviewed)
     let fallbackQuery = supabase
-      .from('flashcards')
+      .from('cards')
       .select(`
         *,
         reviewState:card_review_state(*)
       `)
       .eq('user_id', user.id)
+      .in('id', matchingCardIds)
       .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false })
       .limit(20)
-
-    if (deckId) {
-      fallbackQuery = fallbackQuery.eq('deck_id', deckId)
-    }
 
     const { data: recentCards, error: fallbackError } = await fallbackQuery
 

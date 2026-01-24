@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getLocalDateKey } from "@/lib/utils/date";
 
 type StoryRow = {
   id: string;
@@ -21,7 +22,7 @@ type IslandRow = { id: string; topic: string };
 type WordRow = { id: string; hanzi: string; pinyin: string; english: string };
 
 function getTodayDate() {
-  return new Date().toISOString().slice(0, 10);
+  return getLocalDateKey();
 }
 
 function sample<T>(items: T[], count: number) {
@@ -72,6 +73,8 @@ async function generateDailyStory({
   sourceIslandIds: string[];
   maxAttempts?: number;
 }) {
+  const minLength = Math.max(80, Math.round(lengthChars * 0.6));
+  const maxLength = Math.min(260, Math.round(lengthChars * 1.4));
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
     throw new Error("DEEPSEEK_API_KEY not configured");
@@ -91,8 +94,8 @@ Story requirements:
 - Conversational, not textbook, not repetitive
 - Use Simplified Chinese
 - Not all target words need to be used; include only what fits naturally
-- story_zh must be 100-200 characters and must not exceed 220 characters
-- If story_zh is too short, add a sentence or detail
+- story_zh must be between ${minLength}-${maxLength} characters
+- If story_zh is too short, add a sentence or detail to reach the minimum
 
 Output STRICT JSON only with this shape:
 {
@@ -175,12 +178,12 @@ Output STRICT JSON only with this shape:
     }
 
     const charCount = countStoryChars(parsed.story_zh);
-    if (charCount < 100 || charCount > 220) {
+    if (charCount < minLength || charCount > maxLength) {
       lastError = new Error(
         `story_zh length out of bounds: ${charCount} characters`
       );
       extraNote =
-        "Adjust story_zh length to 100-200 Chinese characters and never exceed 220. Count characters carefully.";
+        `Adjust story_zh length to ${minLength}-${maxLength} Chinese characters. Count characters carefully.`;
       continue;
     }
 

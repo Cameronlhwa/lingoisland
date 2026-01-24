@@ -17,6 +17,10 @@ function pickTargetCount(lengthChars: number) {
   return 12;
 }
 
+function hasCjk(value: string) {
+  return /[\u4e00-\u9fff]/.test(value);
+}
+
 function sample<T>(items: T[], count: number) {
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i -= 1) {
@@ -98,6 +102,13 @@ export async function POST(request: Request) {
         requestedSet.has(value.toLowerCase())
       );
     });
+    const requestedHanzi = matched
+      .map((word) => word.hanzi)
+      .filter(Boolean) as string[];
+    const requestedCjk = requestedWords.filter(hasCjk);
+    const requestedWordsForStory = Array.from(
+      new Set([...requestedHanzi, ...requestedCjk])
+    );
 
     const targetCount = pickTargetCount(length_chars);
     const remaining = words.filter(
@@ -118,7 +129,7 @@ export async function POST(request: Request) {
       level,
       lengthChars: length_chars,
       targetWords: selectedWords,
-      requestedWords,
+      requestedWords: requestedWordsForStory,
     });
 
     const { data: inserted, error: insertError } = await supabase

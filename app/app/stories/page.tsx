@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getLocalDateKey } from "@/lib/utils/date";
 import DailyStoryCard from "@/components/stories/DailyStoryCard";
 import StoriesList from "@/components/stories/StoriesList";
 import type { StorySummary } from "@/components/stories/StoryCard";
@@ -12,7 +13,7 @@ export default async function StoriesPage() {
 
   let dailyStory = null;
   if (user) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateKey();
     const { data } = await supabase
       .from("stories")
       .select("id, title, level, date, created_at, story_zh")
