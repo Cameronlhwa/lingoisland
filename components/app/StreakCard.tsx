@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   buttonIconClass,
   buttonSecondaryClass,
@@ -18,6 +19,7 @@ export default function StreakCard() {
   const [loading, setLoading] = useState(true);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const { t } = useLanguage();
 
   useEffect(() => {
     const load = async () => {
@@ -65,21 +67,26 @@ export default function StreakCard() {
 
   const monthLabel = useMemo(() => {
     const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
+      t("January"),
+      t("February"),
+      t("March"),
+      t("April"),
+      t("May"),
+      t("June"),
+      t("July"),
+      t("August"),
+      t("September"),
+      t("October"),
+      t("November"),
+      t("December"),
     ];
     return `${monthNames[currentMonth]} ${currentYear}`;
-  }, [currentMonth, currentYear]);
+  }, [currentMonth, currentYear, t]);
+
+  const dayLabels = useMemo(
+    () => [t("Sun"), t("Mon"), t("Tue"), t("Wed"), t("Thu"), t("Fri"), t("Sat")],
+    [t]
+  );
 
   const daysStudied = useMemo(
     () => activityData.filter((entry) => entry.count > 0).length,
@@ -156,16 +163,18 @@ export default function StreakCard() {
     <div className={`${cardBaseClass} ${cardHoverClass} p-5`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Activity</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {t("Activity")}
+          </h2>
           <p className="mt-1 text-sm text-gray-600">
-            Keep a steady learning rhythm.
+            {t("Keep a steady learning rhythm.")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigateMonth("prev")}
             className={buttonIconClass}
-            aria-label="Previous month"
+            aria-label={t("Previous month")}
           >
             ←
           </button>
@@ -176,7 +185,7 @@ export default function StreakCard() {
               currentMonth === today.getMonth()
             }
             className={`${buttonIconClass} disabled:cursor-not-allowed disabled:opacity-50`}
-            aria-label="Next month"
+            aria-label={t("Next month")}
           >
             →
           </button>
@@ -188,7 +197,7 @@ export default function StreakCard() {
           {monthLabel}
         </div>
         <div className="mb-1.5 grid grid-cols-7 gap-1 text-[10px] font-medium text-gray-500">
-          {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
+          {dayLabels.map((day, index) => (
             <div
               key={`${day}-${index}`}
               className="flex h-5 w-5 items-center justify-center"
@@ -215,7 +224,7 @@ export default function StreakCard() {
               currentYear === today.getFullYear() &&
               currentMonth === today.getMonth();
             const tooltip = `${monthLabel} ${day}: ${
-              count > 0 ? `${count} cards` : "No activity"
+              count > 0 ? `${count} ${t("cards")}` : t("No activity")
             }`;
 
             return (
@@ -237,7 +246,7 @@ export default function StreakCard() {
       <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-gray-600">
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-2">
           <div className="text-[10px] uppercase tracking-wide text-gray-500">
-            Days studied
+            {t("Days studied")}
           </div>
           <div className="text-sm font-semibold text-gray-900">
             {daysStudied}
@@ -245,7 +254,7 @@ export default function StreakCard() {
         </div>
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-2">
           <div className="text-[10px] uppercase tracking-wide text-gray-500">
-            Current streak
+            {t("Current streak")}
           </div>
           <div className="text-sm font-semibold text-gray-900">
             {currentStreak}
@@ -253,7 +262,7 @@ export default function StreakCard() {
         </div>
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-2">
           <div className="text-[10px] uppercase tracking-wide text-gray-500">
-            Best streak
+            {t("Best streak")}
           </div>
           <div className="text-sm font-semibold text-gray-900">
             {bestStreak}

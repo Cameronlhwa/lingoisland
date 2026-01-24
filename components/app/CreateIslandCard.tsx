@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   buttonPrimaryClass,
   cardBaseClass,
@@ -14,6 +15,7 @@ export default function CreateIslandCard({
 }) {
   const suggestedTopics = ["Dating", "Driving", "Work"];
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   return (
     <div
@@ -32,18 +34,18 @@ export default function CreateIslandCard({
               />
             </svg>
           </span>
-          Topic Islands
+          {t("Topic Islands")}
         </div>
 
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
-            Create a Topic Island
+            {t("Create a Topic Island")}
           </h2>
           <p className="mt-1 text-sm font-semibold text-gray-900">
-            2 min setup → instant vocab + examples
+            {t("2 min setup → instant vocab + examples")}
           </p>
           <p className="mt-2 text-sm text-gray-600">
-            Pick a topic. Learn words you'll actually use.
+            {t("Pick a topic. Learn words you'll actually use.")}
           </p>
         </div>
 
@@ -61,20 +63,22 @@ export default function CreateIslandCard({
                     : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
                 }`}
               >
-                {topic}
+                {t(topic)}
               </button>
             );
           })}
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500">Suggested topics</span>
+          <span className="text-xs text-gray-500">
+            {t("Suggested topics")}
+          </span>
           <button
             type="button"
             onClick={onCreate}
             className={`${buttonPrimaryClass} create-island-cta gap-2`}
           >
-            Create
+            {t("Create")}
             <svg viewBox="0 0 24 24" className="h-4 w-4">
               <path
                 fill="currentColor"
