@@ -100,7 +100,6 @@ const translations: Record<string, { en: string; zh: string }> = {
   // Topic Islands
   Level: { en: "Level", zh: "级别" },
   "Word target": { en: "Word target", zh: "目标单词数" },
-  words: { en: "words", zh: "个单词" },
   Status: { en: "Status", zh: "状态" },
   Created: { en: "Created", zh: "创建时间" },
   Ready: { en: "Ready", zh: "就绪" },
