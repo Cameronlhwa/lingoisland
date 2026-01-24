@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/LanguageContext";
 import DailyStoryCard, {
   type DailyStorySummary,
 } from "@/components/stories/DailyStoryCard";
@@ -64,6 +65,7 @@ export default function HomeDashboard({
 }) {
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLanguage();
   const [topicIslands, setTopicIslands] = useState<TopicIsland[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingPendingRequest, setProcessingPendingRequest] =
@@ -366,7 +368,7 @@ export default function HomeDashboard({
           : 0
       );
       const statusLabel =
-        dueCount > 8 ? "Review" : dueCount > 4 ? "Practice" : "New";
+        dueCount > 8 ? t("Review") : dueCount > 4 ? t("Practice") : t("New");
 
       return {
         ...deck,
@@ -401,18 +403,18 @@ export default function HomeDashboard({
   ].slice(0, treeCount);
   const islandStatus =
     treeCount >= 5
-      ? "The island is thriving!"
+      ? t("The island is thriving!")
       : treeCount > 0
-      ? "The island is growing, but still needs help..."
-      : "The island is dry with no resources";
+      ? t("The island is growing, but still needs help...")
+      : t("The island is dry with no resources");
   const cappedReviews = Math.min(100, todayReviewCount);
   const chips = useMemo(() => {
     const values: string[] = [];
-    if (hasDailyStory) values.push("Story");
-    if (hasFlashcardsDue) values.push("Flashcards");
-    if (topicIslands.length > 0) values.push("Island");
+    if (hasDailyStory) values.push(t("Story"));
+    if (hasFlashcardsDue) values.push(t("Flashcards"));
+    if (topicIslands.length > 0) values.push(t("Island"));
     return values.slice(0, 3);
-  }, [hasDailyStory, hasFlashcardsDue, topicIslands.length]);
+  }, [hasDailyStory, hasFlashcardsDue, topicIslands.length, t]);
 
   const handleContinueStart = () => {
     if (hasFlashcardsDue) {
@@ -455,8 +457,8 @@ export default function HomeDashboard({
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-gray-600">
           {processingPendingRequest
-            ? "Creating your topic island..."
-            : "Loading..."}
+            ? t("Creating your topic island...")
+            : t("Loading...")}
         </div>
       </div>
     );
@@ -471,8 +473,10 @@ export default function HomeDashboard({
             onStart={handleContinueStart}
             nextUpText={
               hasFlashcardsDue
-                ? `Next: Flashcards · 2 min · ${dueCardCount} due`
-                : "Next: Daily story · 2-3 min"
+                ? `${t("Next")}: ${t("Flashcards")} · 2 ${t(
+                    "min"
+                  )} · ${dueCardCount} ${t("due")}`
+                : `${t("Next")}: ${t("Daily story")} · 2-3 ${t("min")}`
             }
           />
           <DailyStoryCard
@@ -489,22 +493,24 @@ export default function HomeDashboard({
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
-                    Review your islands
+                    {t("Review your islands")}
                   </h2>
-                  <p className="mt-1 text-sm text-gray-600">Quick refreshes.</p>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {t("Quick refreshes.")}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleScrollIslands("left")}
                     className={buttonIconClass}
-                    aria-label="Scroll islands left"
+                    aria-label={t("Scroll islands left")}
                   >
                     ←
                   </button>
                   <button
                     onClick={() => handleScrollIslands("right")}
                     className={buttonIconClass}
-                    aria-label="Scroll islands right"
+                    aria-label={t("Scroll islands right")}
                   >
                     →
                   </button>
@@ -512,7 +518,7 @@ export default function HomeDashboard({
                     href="/app/topic-islands"
                     className={buttonSecondaryClass}
                   >
-                    View All
+                    {t("View All")}
                   </Link>
                 </div>
               </div>
@@ -531,7 +537,8 @@ export default function HomeDashboard({
                       )
                     );
                     const dueCount = (daysSince * 3 + index * 2) % 12;
-                    const statusLabel = dueCount > 6 ? "Due soon" : "On track";
+                    const statusLabel =
+                      dueCount > 6 ? t("Due soon") : t("On track");
                     const lastReviewed = Math.min(9, daysSince);
 
                     return (
@@ -548,18 +555,19 @@ export default function HomeDashboard({
                             : island.topic}
                         </h3>
                         <p className="mt-1.5 text-sm text-gray-600">
-                          {island.word_target} words / {island.level}
+                          {island.word_target} {t("words")} / {island.level}
                         </p>
                         <p className="mt-1.5 text-xs text-gray-500">
-                          {statusLabel} · {Math.max(1, dueCount)} due
+                          {statusLabel} · {Math.max(1, dueCount)} {t("due")}
                           {" · "}
-                          Last reviewed: {lastReviewed}d
+                          {t("Last reviewed")}: {lastReviewed}
+                          {t("day short")}
                         </p>
                         <Link
                           href={`/app/topic-islands/${island.id}`}
                           className={`${buttonPrimaryClass} mt-auto`}
                         >
-                          Review
+                          {t("Review")}
                         </Link>
                       </div>
                     );
@@ -567,7 +575,7 @@ export default function HomeDashboard({
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
-                  Create your first island to start reviewing words.
+                  {t("Create your first island to start reviewing words.")}
                 </div>
               )}
             </div>
@@ -576,27 +584,29 @@ export default function HomeDashboard({
               <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
-                    Flashcards
+                    {t("Flashcards")}
                   </h2>
-                  <p className="mt-1 text-sm text-gray-600">Decks ready.</p>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {t("Decks ready.")}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleScrollDecks("left")}
                     className={buttonIconClass}
-                    aria-label="Scroll decks left"
+                    aria-label={t("Scroll decks left")}
                   >
                     ←
                   </button>
                   <button
                     onClick={() => handleScrollDecks("right")}
                     className={buttonIconClass}
-                    aria-label="Scroll decks right"
+                    aria-label={t("Scroll decks right")}
                   >
                     →
                   </button>
                   <Link href="/app/quiz" className={buttonSecondaryClass}>
-                    View Decks
+                    {t("View Decks")}
                   </Link>
                 </div>
               </div>
@@ -620,15 +630,17 @@ export default function HomeDashboard({
                             {deck.name}
                           </div>
                           <span className="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
-                            {deck.dueCount} due
+                            {deck.dueCount} {t("due")}
                           </span>
                         </div>
                         <p className="mt-2 text-xs text-gray-600">
-                          {deck.statusLabel} · {deck.totalCount} cards
+                          {deck.statusLabel} · {deck.totalCount} {t("cards")}
                         </p>
                         <div className="mt-2">
                           <div className="flex items-center justify-between text-[11px] text-gray-500">
-                            <span>{deck.totalCount} cards</span>
+                            <span>
+                              {deck.totalCount} {t("cards")}
+                            </span>
                             <span>{deck.progressPercent}%</span>
                           </div>
                           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
@@ -642,14 +654,14 @@ export default function HomeDashboard({
                           href={`/app/quiz/${deck.id}`}
                           className={`${buttonPrimaryClass} mt-3`}
                         >
-                          Review Deck
+                          {t("Review Deck")}
                         </Link>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
-                    Add a deck to start reviewing flashcards.
+                    {t("Add a deck to start reviewing flashcards.")}
                   </div>
                 )}
               </div>
@@ -661,16 +673,18 @@ export default function HomeDashboard({
             <div className={`${cardBaseClass} ${cardHoverClass} p-4`}>
               <div className="mb-3">
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Your island
+                  {t("Your island")}
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
                   {islandLoading
-                    ? "Counting today's reviews..."
-                    : `Reviewed ${todayReviewCount} cards today · ${treeCount}/5 trees`}
+                    ? t("Counting today's reviews...")
+                    : `${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t(
+                        "today"
+                      )} · ${treeCount}/5 ${t("trees")}`}
                 </p>
                 {!islandLoading ? (
                   <p className="mt-1 text-xs text-slate-500">
-                    {islandStatus} · {cappedReviews}/100 reviews
+                    {islandStatus} · {cappedReviews}/100 {t("reviews")}
                   </p>
                 ) : null}
               </div>

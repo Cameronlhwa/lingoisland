@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   buttonPrimaryClass,
   buttonSecondaryClass,
@@ -12,13 +13,17 @@ export default function HeroContinueCard({
   chips,
   onStart,
   chooseHref = "/app/topic-islands",
-  nextUpText = "Next: Flashcards · 2 min · 12 due",
+  nextUpText,
 }: {
   chips: string[];
   onStart: () => void;
   chooseHref?: string;
   nextUpText?: string;
 }) {
+  const { t } = useLanguage();
+  const nextUpLabel =
+    nextUpText ?? `${t("Next")}: ${t("Flashcards")} · 2 ${t("min")} · 12 ${t("due")}`;
+
   return (
     <div
       className={`${cardBaseClass} ${cardHoverClass} group relative overflow-hidden p-8`}
@@ -27,13 +32,13 @@ export default function HeroContinueCard({
       <div className="relative flex flex-col gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            Continue learning
+            {t("Continue learning")}
           </h1>
           <p className="mt-1 text-sm text-gray-600">
-            A quick session to keep your streak going.
+            {t("A quick session to keep your streak going.")}
           </p>
           <p className="mt-2 text-sm font-semibold text-gray-900">
-            {nextUpText}
+            {nextUpLabel}
           </p>
         </div>
 
@@ -55,13 +60,13 @@ export default function HeroContinueCard({
             onClick={onStart}
             className={buttonPrimaryClass}
           >
-            Start
+            {t("Start")}
           </button>
           <Link
             href={chooseHref}
             className={buttonSecondaryClass}
           >
-            Choose
+            {t("Choose")}
           </Link>
         </div>
       </div>
