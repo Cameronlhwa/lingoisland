@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   buttonPrimaryClass,
   cardBaseClass,
@@ -30,10 +31,10 @@ function formatDate(value: string | null) {
   return parsed.toLocaleDateString();
 }
 
-function getTimeLabel(storyText: string | null | undefined) {
-  if (!storyText) return "2-3 min";
+function getTimeLabel(storyText: string | null | undefined, minLabel: string) {
+  if (!storyText) return `2-3 ${minLabel}`;
   const minutes = Math.min(4, Math.max(2, Math.round(storyText.length / 350)));
-  return `${minutes}-${minutes + 1} min`;
+  return `${minutes}-${minutes + 1} ${minLabel}`;
 }
 
 export default function DailyStoryCard({
@@ -47,10 +48,11 @@ export default function DailyStoryCard({
   previewHref?: string;
   loading?: boolean;
 }) {
+  const { t } = useLanguage();
   const today = getLocalDateKey();
 
   const dateLabel = formatDate(story?.date || story?.created_at || today);
-  const timeLabel = getTimeLabel(story?.story_zh);
+  const timeLabel = getTimeLabel(story?.story_zh, t("min"));
   const containerClass =
     variant === "home"
       ? `${cardBaseClass} ${cardHoverClass} p-6`
@@ -69,7 +71,9 @@ export default function DailyStoryCard({
             </svg>
           </span>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Daily story</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {t("Daily story")}
+            </h2>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
         </div>
@@ -78,7 +82,7 @@ export default function DailyStoryCard({
         <div className="space-y-3">
           {variant === "home" && (
             <p className="text-sm text-gray-600">
-              Review your vocab in a short story.
+              {t("Review your vocab in a short story.")}
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
@@ -89,7 +93,7 @@ export default function DailyStoryCard({
               {timeLabel}
             </span>
             <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
-              Today
+              {t("Today")}
             </span>
           </div>
           <h3 className="text-lg font-semibold text-gray-900">{story.title}</h3>
@@ -107,19 +111,19 @@ export default function DailyStoryCard({
             </p>
           )}
           <Link href={`/app/story/${story.id}`} className={buttonPrimaryClass}>
-            Read
+            {t("Read")}
           </Link>
         </div>
       ) : (
         <div className="flex flex-col items-start gap-3 text-sm text-gray-600">
           {variant === "home" && (
-            <span>Review your vocab in a short story.</span>
+            <span>{t("Review your vocab in a short story.")}</span>
           )}
           <span>
-            {loading ? "Generating..." : "Today's story is on the way."}
+            {loading ? t("Generating...") : t("Today's story is on the way.")}
           </span>
           <Link href={previewHref} className={buttonPrimaryClass}>
-            Read
+            {t("Read")}
           </Link>
         </div>
       )}
