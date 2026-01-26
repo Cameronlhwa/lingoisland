@@ -43,16 +43,10 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { topic, island_ids, requested_words, level, length_chars } = body;
+    const islandIds = Array.isArray(island_ids) ? island_ids : [];
 
     if (!topic || typeof topic !== "string") {
       return NextResponse.json({ error: "Topic is required" }, { status: 400 });
-    }
-
-    if (!Array.isArray(island_ids) || island_ids.length === 0) {
-      return NextResponse.json(
-        { error: "At least one topic island is required" },
-        { status: 400 }
-      );
     }
 
     if (!LEVELS.includes(level)) {
@@ -77,16 +71,28 @@ export async function POST(request: Request) {
       Array.isArray(requested_words) ? requested_words : []
     );
 
-    const { data: words, error: wordsError } = await supabase
-      .from("island_words")
-      .select("id, hanzi, pinyin, english, island_id")
-      .in("island_id", island_ids);
+    let words: {
+      id: string;
+      hanzi: string;
+      pinyin: string;
+      english: string;
+      island_id: string;
+    }[] = [];
 
-    if (wordsError || !words || words.length === 0) {
-      return NextResponse.json(
-        { error: "No words found for selected islands" },
-        { status: 400 }
-      );
+    if (islandIds.length > 0) {
+      const { data: wordsData, error: wordsError } = await supabase
+        .from("island_words")
+        .select("id, hanzi, pinyin, english, island_id")
+        .in("island_id", islandIds);
+
+      if (wordsError) {
+        return NextResponse.json(
+          { error: "Failed to load island words" },
+          { status: 400 }
+        );
+      }
+
+      words = wordsData || [];
     }
 
     const requestedSet = new Set(
@@ -145,7 +151,7 @@ export async function POST(request: Request) {
         story_zh: generated.story_zh,
         story_en: generated.story_en,
         story_pinyin: generated.story_pinyin,
-        source_island_ids: island_ids,
+        source_island_ids: islandIds,
         target_word_ids: selectedWords.map((word) => word.id),
         requested_words: requestedWords,
       })

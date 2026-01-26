@@ -2,3 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Add scroll margin to account for sticky nav */
+  section[id] {
+    scroll-margin-top: 6rem;
+  }
+}

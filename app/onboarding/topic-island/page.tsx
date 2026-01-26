@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 type CEFRLevel =
   | "A2-"
@@ -63,10 +63,11 @@ const ROTATING_PLACEHOLDERS = [
   "Teach me travel phrases",
 ];
 
-export default function OnboardingTopicIslandPage() {
+function OnboardingTopicIslandContent() {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+  const searchParams = useSearchParams();
 
   const [state, setState] = useState<WizardState>({
     step: 1,
@@ -153,7 +154,14 @@ export default function OnboardingTopicIslandPage() {
   ]);
 
   const handleLevelSelect = (level: CEFRLevel) => {
-    setState({ ...state, cefrLevel: level, step: 2 });
+    // Check if there's a topic in the URL query params
+    const topicFromUrl = searchParams.get("topic");
+    setState({
+      ...state,
+      cefrLevel: level,
+      step: 2,
+      topic: topicFromUrl || state.topic,
+    });
   };
 
   const handleTopicSubmit = (e: React.FormEvent) => {
@@ -401,5 +409,19 @@ export default function OnboardingTopicIslandPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function OnboardingTopicIslandPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-white px-6 py-12">
+          <div className="text-gray-600">Loading...</div>
+        </main>
+      }
+    >
+      <OnboardingTopicIslandContent />
+    </Suspense>
   );
 }

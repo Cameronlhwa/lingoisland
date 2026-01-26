@@ -1,38 +1,39 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import Nav from "@/components/landing/Nav";
 import Hero from "@/components/landing/Hero";
+import ProofDemo from "@/components/landing/ProofDemo";
 import FeatureGrid from "@/components/landing/FeatureGrid";
 import HowItWorks from "@/components/landing/HowItWorks";
-import DailyHubPreview from "@/components/landing/DailyHubPreview";
+import TopicsGrid from "@/components/landing/TopicsGrid";
 import SocialProof from "@/components/landing/SocialProof";
 import FAQ from "@/components/landing/FAQ";
+import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
-import AuthRedirectHandler from "@/components/AuthRedirectHandler";
 import { getSiteUrl } from "@/lib/utils/site-url";
+import { FAQ_ITEMS } from "@/lib/landing-content";
 
 const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
-  title: "Remember your Mandarin",
+  title: "Mandarin vocabulary by topic — with real-life example sentences",
   description:
-    "Overcome the intermediate plateau with daily review, personalized stories, and topic-based vocabulary for A2–B2 learners.",
+    "Learn Mandarin vocabulary by topic with authentic, level-tuned sentences, Daily Stories, quizzes, and flashcard decks built for real-life use.",
   alternates: {
     canonical: siteUrl,
   },
   openGraph: {
-    title: "Remember your Mandarin",
+    title: "Mandarin vocabulary by topic — with real-life example sentences",
     description:
-      "Overcome the intermediate plateau with daily review, personalized stories, and topic-based vocabulary for A2–B2 learners.",
+      "Learn Mandarin vocabulary by topic with authentic, level-tuned sentences, Daily Stories, quizzes, and flashcard decks built for real-life use.",
     url: siteUrl,
-    siteName: "Lingo Island",
+    siteName: "LingoIsland",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Remember your Mandarin",
+    title: "Mandarin vocabulary by topic — with real-life example sentences",
     description:
-      "Overcome the intermediate plateau with daily review, personalized stories, and topic-based vocabulary for A2–B2 learners.",
+      "Learn Mandarin vocabulary by topic with authentic, level-tuned sentences, Daily Stories, quizzes, and flashcard decks built for real-life use.",
   },
 };
 
@@ -41,22 +42,33 @@ const structuredData = {
   "@graph": [
     {
       "@type": "Organization",
-      name: "Lingo Island",
+      name: "LingoIsland",
       url: siteUrl,
     },
     {
       "@type": "WebSite",
-      name: "Lingo Island",
+      name: "LingoIsland",
       url: siteUrl,
     },
     {
       "@type": "SoftwareApplication",
-      name: "Lingo Island",
+      name: "LingoIsland",
       applicationCategory: "EducationalApplication",
       operatingSystem: "Web",
       url: siteUrl,
       description:
-        "Daily review, personalized stories, and topic-based vocabulary for Mandarin learners.",
+        "Mandarin vocabulary by topic with authentic, level-tuned sentences and daily stories.",
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQ_ITEMS.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: faq.answer,
+        },
+      })),
     },
   ],
 };
@@ -68,16 +80,22 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <Suspense fallback={null}>
-        <AuthRedirectHandler />
-      </Suspense>
       <Nav />
       <Hero />
-      <FeatureGrid />
+      {/* Proof demo */}
+      <ProofDemo />
+      {/* How it works loop */}
       <HowItWorks />
-      <DailyHubPreview />
+      {/* Feature highlights */}
+      <FeatureGrid />
+      {/* Browse topics */}
+      <TopicsGrid />
+      {/* Social proof */}
       <SocialProof />
+      {/* FAQ */}
       <FAQ />
+      {/* Final CTA */}
+      <FinalCTA />
       <Footer />
     </main>
   );

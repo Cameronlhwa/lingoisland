@@ -1,12 +1,22 @@
-import HeroCTA from "./HeroCTA";
+"use client";
+
+import { motion, useReducedMotion } from "framer-motion";
+import CTAButtonCard from "./CTAButtonCard";
 
 export default function Hero() {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
-    <section className="bg-gradient-to-b from-white to-gray-50 px-6 py-20 md:px-12 md:py-32">
+    <section className="bg-gradient-to-b from-white to-gray-50 px-6 py-20 md:px-12 md:py-28">
       <div className="mx-auto max-w-7xl">
-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-2 lg:gap-20">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-20">
           {/* Left: Headline */}
-          <div className="flex flex-col justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex max-w-xl flex-col justify-center"
+          >
             <h1 className="mb-8 text-5xl leading-tight tracking-tight md:text-6xl lg:text-7xl">
               <span className="font-serif italic text-gray-500">Remember</span>{" "}
               <span className="font-sans font-bold text-gray-900">
@@ -14,28 +24,37 @@ export default function Hero() {
               </span>
             </h1>
             <p className="mb-6 text-xl leading-relaxed text-gray-700 md:text-2xl">
-              Overcome the intermediate plateau with daily review, personalized
-              stories, and topic-based vocabulary.
+              Overcome the intermediate plateau with personalized stories, and
+              vocabulary about things you care about.
             </p>
             <p className="text-lg leading-relaxed text-gray-600 md:text-xl">
               For A2–B2 (HSK 3-6) learners who keep forgetting the words they
               learn.
             </p>
-          </div>
+          </motion.div>
 
-          {/* Right: CTA Boxes */}
+          {/* Right: CTAs + Visual */}
           <div className="flex flex-col gap-4 lg:justify-center">
-            <HeroCTA />
-
-            <button className="group rounded-xl border border-gray-200 bg-white p-8 text-left shadow-sm transition-all hover:border-gray-300 hover:shadow-md">
-              <h2 className="mb-3 text-2xl font-bold text-gray-900">
-                Chat with Your AI Companion
-              </h2>
-              <p className="text-base leading-relaxed text-gray-600">
-                Practice and improve your Mandarin immediately. Have real
-                conversations that build confidence and fluency.
-              </p>
-            </button>
+            <CTAButtonCard
+              href="/onboarding/topic-island"
+              title="Create a Topic Island"
+              microcopy={[
+                "Build vocabulary around topics you care about. 10–20 words with pinyin, examples, and translations.",
+              ]}
+              tooltip={{
+                label: "What's a Topic Island?",
+                content:
+                  "A focused set of 10–20 related words with authentic sentences tuned to your level.",
+              }}
+            />
+            <CTAButtonCard
+              href="/onboarding/story"
+              title="Create a Story"
+              microcopy={[
+                "Turn your vocab into a short story for easy comprehensible input. Practice reading in context.",
+              ]}
+              variant="secondary"
+            />
           </div>
         </div>
       </div>
