@@ -13,14 +13,14 @@ export const metadata: Metadata = {
     template: "Lingo Island — %s",
   },
   description:
-    "Overcome the intermediate plateau with daily review, personalized stories, and topic-based vocabulary for A2–B2 learners.",
+    "Mandarin vocabulary by topic with real-life example sentences, daily stories, and spaced repetition review.",
   openGraph: {
     title: {
       default: "Lingo Island",
       template: "Lingo Island — %s",
     },
     description:
-      "Overcome the intermediate plateau with daily review, personalized stories, and topic-based vocabulary for A2–B2 learners.",
+      "Mandarin vocabulary by topic with real-life example sentences, daily stories, and spaced repetition review.",
     url: siteUrl,
     siteName: "Lingo Island",
     type: "website",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
       template: "Lingo Island — %s",
     },
     description:
-      "Overcome the intermediate plateau with daily review, personalized stories, and topic-based vocabulary for A2–B2 learners.",
+      "Mandarin vocabulary by topic with real-life example sentences, daily stories, and spaced repetition review.",
   },
 };
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 type CEFRLevel =
   | "A2-"
@@ -67,6 +67,7 @@ export default function OnboardingTopicIslandPage() {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+  const searchParams = useSearchParams();
 
   const [state, setState] = useState<WizardState>({
     step: 1,
@@ -153,7 +154,14 @@ export default function OnboardingTopicIslandPage() {
   ]);
 
   const handleLevelSelect = (level: CEFRLevel) => {
-    setState({ ...state, cefrLevel: level, step: 2 });
+    // Check if there's a topic in the URL query params
+    const topicFromUrl = searchParams.get("topic");
+    setState({
+      ...state,
+      cefrLevel: level,
+      step: 2,
+      topic: topicFromUrl || state.topic,
+    });
   };
 
   const handleTopicSubmit = (e: React.FormEvent) => {

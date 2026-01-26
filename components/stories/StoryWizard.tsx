@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/browser";
 
 type TopicIsland = {
@@ -23,6 +24,8 @@ const topicSuggestions = [
   "Losing your wallet and asking for help",
   "A weekend hike that goes wrong",
 ];
+
+const STORAGE_KEY = "pending_story_request";
 
 function normalizeWords(value: string) {
   return value
@@ -47,6 +50,9 @@ export default function StoryWizard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingNotice, setPendingNotice] = useState(false);
+  const [autoSubmit, setAutoSubmit] = useState(false);
+  const autoSubmittedRef = useRef(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -83,6 +89,43 @@ export default function StoryWizard() {
     loadData();
   }, [supabase]);
 
+  useEffect(() => {
+    const pendingRequestStr = localStorage.getItem(STORAGE_KEY);
+    if (!pendingRequestStr) return;
+
+    try {
+      const pendingRequest = JSON.parse(pendingRequestStr);
+      if (typeof pendingRequest.topic === "string") {
+        setTopic(pendingRequest.topic);
+      }
+      if (Array.isArray(pendingRequest.requested_words)) {
+        setRequestedWords(pendingRequest.requested_words);
+      }
+      if (typeof pendingRequest.length_chars === "number") {
+        setLengthChars(pendingRequest.length_chars);
+      }
+      if (typeof pendingRequest.level === "string") {
+        setLevel(pendingRequest.level);
+      }
+      if (pendingRequest.auto_submit) {
+        setAutoSubmit(true);
+        setStep(4);
+      } else {
+        setStep(2);
+      }
+      setPendingNotice(true);
+    } catch (err) {
+      console.error("Failed to parse pending story request:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!loading && autoSubmit && !autoSubmittedRef.current) {
+      autoSubmittedRef.current = true;
+      handleSubmit();
+    }
+  }, [autoSubmit, loading]);
+
   const selectedIslandList = useMemo(
     () => Array.from(selectedIslands),
     [selectedIslands]
@@ -90,9 +133,9 @@ export default function StoryWizard() {
 
   const canProceed = useMemo(() => {
     if (step === 1) return topic.trim().length > 0;
-    if (step === 2) return selectedIslands.size > 0;
+    if (step === 2) return true;
     return true;
-  }, [step, topic, selectedIslands]);
+  }, [step, topic]);
 
   const addRequestedWords = (value: string) => {
     const next = normalizeWords(value);
@@ -133,6 +176,7 @@ export default function StoryWizard() {
         throw new Error("Story creation succeeded but no ID returned");
       }
 
+      localStorage.removeItem(STORAGE_KEY);
       router.push(`/app/story/${data.story.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create story");
@@ -181,6 +225,11 @@ export default function StoryWizard() {
             ))}
           </div>
         </div>
+        {pendingNotice && (
+          <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+            We saved your story request. Pick Topic Islands or skip to continue.
+          </div>
+        )}
 
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
           {step === 1 && (
@@ -221,6 +270,14 @@ export default function StoryWizard() {
               {topicIslands.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-600">
                   You don’t have any topic islands yet. Create one first.
+                  <div className="mt-4">
+                    <Link
+                      href="/onboarding/topic-island"
+                      className="inline-flex rounded-lg border border-gray-900 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
+                    >
+                      Create a Topic Island
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -258,6 +315,13 @@ export default function StoryWizard() {
                   })}
                 </div>
               )}
+              <button
+                type="button"
+                onClick={() => setStep(3)}
+                className="mt-6 rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Skip islands for now
+              </button>
             </div>
           )}
 
