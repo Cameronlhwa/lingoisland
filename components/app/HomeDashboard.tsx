@@ -379,19 +379,7 @@ export default function HomeDashboard({
       };
     };
 
-    if (flashcardDecks.length > 0) {
-      return flashcardDecks.map(buildCard);
-    }
-
-    const placeholderDecks: QuizIslandSummary[] = [
-      { id: "placeholder-relationships", name: "Relationships", card_count: 0 },
-      { id: "placeholder-travel", name: "Travel Plans", card_count: 0 },
-      { id: "placeholder-work", name: "Work Meetings", card_count: 0 },
-      { id: "placeholder-food", name: "Food & Dining", card_count: 0 },
-      { id: "placeholder-hobbies", name: "Hobbies", card_count: 0 },
-    ];
-
-    return placeholderDecks.map(buildCard);
+    return flashcardDecks.map(buildCard);
   }, [flashcardsLoading, flashcardDecks, quizStatsByIsland, t]);
   const treeCount = Math.min(5, Math.floor(todayReviewCount / 20));
   const treePositions = [
@@ -574,8 +562,16 @@ export default function HomeDashboard({
                   })}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
-                  {t("Create your first island to start reviewing words.")}
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+                  <p className="mb-4 text-sm text-gray-600">
+                    {t("Create your first island to start reviewing words.")}
+                  </p>
+                  <button
+                    onClick={handleCreateIsland}
+                    className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+                  >
+                    {t("Create your first island")}
+                  </button>
                 </div>
               )}
             </div>
@@ -613,52 +609,68 @@ export default function HomeDashboard({
 
               <div className="relative">
                 {showFlashcardsPanel ? (
-                  <div
-                    ref={flashcardsScrollRef}
-                    className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-1"
-                  >
-                    {deckCards.map((deck) => (
-                      <div
-                        key={deck.id}
-                        className={`${cardBaseClass} ${cardHoverClass} flex min-w-[220px] max-w-[240px] snap-start flex-col p-4`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div
-                            className="min-w-0 flex-1 text-sm font-semibold text-gray-900 truncate"
-                            title={deck.name}
-                          >
-                            {deck.name}
-                          </div>
-                          <span className="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
-                            {deck.dueCount} {t("due")}
-                          </span>
-                        </div>
-                        <p className="mt-2 text-xs text-gray-600">
-                          {deck.statusLabel} · {deck.totalCount} {t("cards")}
-                        </p>
-                        <div className="mt-2">
-                          <div className="flex items-center justify-between text-[11px] text-gray-500">
-                            <span>
-                              {deck.totalCount} {t("cards")}
-                            </span>
-                            <span>{deck.progressPercent}%</span>
-                          </div>
-                          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                            <div
-                              className="h-full rounded-full bg-gray-900"
-                              style={{ width: `${deck.progressPercent}%` }}
-                            />
-                          </div>
-                        </div>
-                        <Link
-                          href={`/app/quiz/${deck.id}`}
-                          className={`${buttonPrimaryClass} mt-3`}
+                  deckCards.length > 0 ? (
+                    <div
+                      ref={flashcardsScrollRef}
+                      className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-1"
+                    >
+                      {deckCards.map((deck) => (
+                        <div
+                          key={deck.id}
+                          className={`${cardBaseClass} ${cardHoverClass} flex min-w-[220px] max-w-[240px] snap-start flex-col p-4`}
                         >
-                          {t("Review Deck")}
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <div
+                              className="min-w-0 flex-1 text-sm font-semibold text-gray-900 truncate"
+                              title={deck.name}
+                            >
+                              {deck.name}
+                            </div>
+                            <span className="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
+                              {deck.dueCount} {t("due")}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-xs text-gray-600">
+                            {deck.statusLabel} · {deck.totalCount} {t("cards")}
+                          </p>
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between text-[11px] text-gray-500">
+                              <span>
+                                {deck.totalCount} {t("cards")}
+                              </span>
+                              <span>{deck.progressPercent}%</span>
+                            </div>
+                            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                              <div
+                                className="h-full rounded-full bg-gray-900"
+                                style={{ width: `${deck.progressPercent}%` }}
+                              />
+                            </div>
+                          </div>
+                          <Link
+                            href={`/app/quiz/${deck.id}`}
+                            className={`${buttonPrimaryClass} mt-3`}
+                          >
+                            {t("Review Deck")}
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+                      <p className="mb-4 text-sm text-gray-600">
+                        {t(
+                          "No flashcard decks yet. Create your first one to start practicing."
+                        )}
+                      </p>
+                      <Link
+                        href="/app/quiz"
+                        className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+                      >
+                        {t("Create your first deck")}
+                      </Link>
+                    </div>
+                  )
                 ) : (
                   <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
                     {t("Add a deck to start reviewing flashcards.")}
