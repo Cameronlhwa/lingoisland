@@ -58,7 +58,7 @@ export async function POST(
     )
     const recycleOldWords = body.recycleOldWords !== false
     const rawSuggestions = Array.isArray(body.suggestions) ? body.suggestions : []
-    const suggestions = Array.from(
+    const suggestions: string[] = Array.from(
       new Set(
         rawSuggestions
           .map((value: unknown) => String(value || '').trim())
