@@ -19,12 +19,14 @@ export async function generateWordList({
   detailedLevel,
   wordCount,
   existingWords,
+  suggestions,
 }: {
   topic: string
   level: 'A2' | 'B1' | 'B2'
   detailedLevel?: string
   wordCount: number
   existingWords: string[]
+  suggestions?: string[]
 }): Promise<Word[]> {
   const apiKey = process.env.DEEPSEEK_API_KEY
 
@@ -40,6 +42,10 @@ export async function generateWordList({
     existingWords.length > 0
       ? `\n\nIMPORTANT: Do NOT include these words (already in the island): ${existingWords.join(', ')}`
       : ''
+  const suggestionsList =
+    suggestions && suggestions.length > 0
+      ? `\n\nPRIORITY SUGGESTIONS: Use as many of these as possible (up to ${wordCount}), but ONLY if they are not already in the island: ${suggestions.join(', ')}`
+      : ''
 
   const levelDescriptions = {
     A2: 'upper beginner (simple sentence structures, common vocabulary)',
@@ -52,7 +58,7 @@ export async function generateWordList({
   const prompt = `You are a Mandarin Chinese learning assistant. Generate a list of Chinese vocabulary words for a topic island.
 
 Topic: ${topic}
-Learner's level: ${actualDetailedLevel} (${level} band: ${levelDescriptions[level]})${existingWordsList}
+Learner's level: ${actualDetailedLevel} (${level} band: ${levelDescriptions[level]})${existingWordsList}${suggestionsList}
 
 Requirements:
 - Generate EXACTLY ${wordCount} unique words
@@ -62,6 +68,7 @@ Requirements:
 - Provide accurate pinyin with tone marks
 - Words should be relevant to the topic
 - Each word must be different from the existing words listed above
+- If suggestions are provided, include as many as possible (up to ${wordCount})
 - Words should be practical and useful for daily conversation
 
 Output ONLY valid JSON (no markdown, no code blocks, no explanation). Format:

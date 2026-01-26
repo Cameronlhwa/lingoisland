@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/browser";
 import { useRouter, useParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useGlossary } from "@/contexts/GlossaryContext";
@@ -43,7 +42,6 @@ export default function TopicIslandDetailPage() {
   const router = useRouter();
   const params = useParams();
   const islandId = params.id as string;
-  const supabase = createClient();
   const { t } = useLanguage();
 
   const [island, setIsland] = useState<Island | null>(null);
@@ -66,6 +64,14 @@ export default function TopicIslandDetailPage() {
   const [creatingQuizIsland, setCreatingQuizIsland] = useState(false);
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set()); // Track added items
   const [askAIWord, setAskAIWord] = useState<IslandChatSelectedWord | null>(
+    null
+  );
+  const [addCount, setAddCount] = useState(7);
+  const [suggestionsInput, setSuggestionsInput] = useState("");
+  const [recycleOldWords, setRecycleOldWords] = useState(true);
+  const [addingWords, setAddingWords] = useState(false);
+  const [addToast, setAddToast] = useState<string | null>(null);
+  const [pendingScrollWordId, setPendingScrollWordId] = useState<string | null>(
     null
   );
   const [activeWordId, setActiveWordId] = useState<string | null>(null);
@@ -328,6 +334,22 @@ export default function TopicIslandDetailPage() {
     [words]
   );
 
+  const suggestionList = useMemo(() => {
+    const raw = suggestionsInput.split(",").map((value) => value.trim());
+    const deduped = Array.from(
+      new Set(raw.filter((value) => value.length > 0))
+    );
+    return deduped;
+  }, [suggestionsInput]);
+
+  const existingWordsSet = useMemo(() => {
+    return new Set(words.map((word) => word.hanzi.trim()));
+  }, [words]);
+
+  const alreadyInIslandSuggestions = useMemo(() => {
+    return suggestionList.filter((word) => existingWordsSet.has(word));
+  }, [existingWordsSet, suggestionList]);
+
   useEffect(() => {
     if (words.length === 0) return;
     const entriesMap = new Map<string, IntersectionObserverEntry>();
@@ -388,6 +410,22 @@ export default function TopicIslandDetailPage() {
   useEffect(() => {
     setGlossaryActiveWordId(activeWordId);
   }, [activeWordId, setGlossaryActiveWordId]);
+
+  useEffect(() => {
+    if (!pendingScrollWordId) return;
+    const anchorId = `word-${pendingScrollWordId}`;
+    const element = document.getElementById(anchorId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+      setPendingScrollWordId(null);
+    }
+  }, [pendingScrollWordId, words]);
+
+  useEffect(() => {
+    if (!addToast) return;
+    const timeout = setTimeout(() => setAddToast(null), 2500);
+    return () => clearTimeout(timeout);
+  }, [addToast]);
 
   useEffect(() => {
     return () => {
@@ -484,6 +522,46 @@ export default function TopicIslandDetailPage() {
   }
 
   const grammarEntries = Array.from(grammarMap.entries());
+
+  const handleAddWords = async () => {
+    if (addingWords) return;
+    setAddingWords(true);
+    try {
+      const response = await fetch(`/api/islands/${islandId}/add-words`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          count: addCount,
+          suggestions: suggestionList.filter(
+            (word) => !existingWordsSet.has(word)
+          ),
+          recycleOldWords,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to add words");
+      }
+
+      const data = await response.json();
+      const insertedCount = data.insertedCount || 0;
+      setAddToast(`Added ${insertedCount} words`);
+
+      const firstInserted = data.insertedWords?.[0];
+      if (firstInserted?.id) {
+        setPendingScrollWordId(firstInserted.id);
+      }
+
+      await loadIsland();
+      setSuggestionsInput("");
+    } catch (error) {
+      console.error("Error adding words:", error);
+      alert(error instanceof Error ? error.message : "Failed to add words");
+    } finally {
+      setAddingWords(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -838,6 +916,79 @@ export default function TopicIslandDetailPage() {
                 </div>
               )}
 
+              <div className="mt-10 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Add more words
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Add more vocabulary that fits this island.
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600">
+                    Add {addCount} words
+                  </span>
+                </div>
+
+                <div className="space-y-5">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Count
+                    </label>
+                    <input
+                      type="range"
+                      min={5}
+                      max={10}
+                      step={1}
+                      value={addCount}
+                      onChange={(e) => setAddCount(Number(e.target.value))}
+                      className="w-full accent-gray-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Suggested words
+                    </label>
+                    <input
+                      type="text"
+                      value={suggestionsInput}
+                      onChange={(e) => setSuggestionsInput(e.target.value)}
+                      placeholder="Describe the type of words you want (optional)"
+                      className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    />
+                    {alreadyInIslandSuggestions.length > 0 && (
+                      <p className="mt-2 text-xs text-gray-500">
+                        Already in island:{" "}
+                        {alreadyInIslandSuggestions.join(", ")}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-3 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={recycleOldWords}
+                        onChange={(e) => setRecycleOldWords(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-gray-900 accent-gray-900 focus:ring-gray-200"
+                      />
+                      Recycle existing words from this island into the sentence
+                      examples of the new words
+                    </label>
+                    <button
+                      onClick={handleAddWords}
+                      disabled={
+                        addingWords || island.status !== "ready" || addCount < 5
+                      }
+                      className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      {addingWords ? "Generating..." : "Generate"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Add to Quiz Modal */}
               {showAddToQuizModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -962,6 +1113,12 @@ export default function TopicIslandDetailPage() {
             </div>
           </div>
         </div>
+
+        {addToast && (
+          <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-lg">
+            {addToast}
+          </div>
+        )}
 
         <IslandSideChat
           islandId={islandId}
