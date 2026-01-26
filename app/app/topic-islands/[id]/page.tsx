@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter, useParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useGlossary } from "@/contexts/GlossaryContext";
 import IslandSideChat, {
   type IslandChatSelectedWord,
 } from "@/components/IslandSideChat";
@@ -67,6 +68,10 @@ export default function TopicIslandDetailPage() {
   const [askAIWord, setAskAIWord] = useState<IslandChatSelectedWord | null>(
     null
   );
+  const [activeWordId, setActiveWordId] = useState<string | null>(null);
+  const activeWordIdRef = useRef<string | null>(null);
+  const { setEntries, setActiveWordId: setGlossaryActiveWordId } =
+    useGlossary();
 
   useEffect(() => {
     loadIsland();
@@ -314,6 +319,83 @@ export default function TopicIslandDetailPage() {
     }
   };
 
+  const glossaryEntries = useMemo(
+    () =>
+      words.map((word, index) => ({
+        word,
+        anchorId: `word-${word.id || index}`,
+      })),
+    [words]
+  );
+
+  useEffect(() => {
+    if (words.length === 0) return;
+    const entriesMap = new Map<string, IntersectionObserverEntry>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          entriesMap.set(entry.target.id, entry);
+        });
+        const visible = Array.from(entriesMap.values()).filter(
+          (entry) => entry.isIntersecting
+        );
+        if (visible.length === 0) return;
+        const viewportCenter = window.innerHeight / 2;
+        visible.sort((a, b) => {
+          const aCenter =
+            a.boundingClientRect.top + a.boundingClientRect.height / 2;
+          const bCenter =
+            b.boundingClientRect.top + b.boundingClientRect.height / 2;
+          const aDistance = Math.abs(aCenter - viewportCenter);
+          const bDistance = Math.abs(bCenter - viewportCenter);
+          if (aDistance === bDistance) {
+            return b.intersectionRatio - a.intersectionRatio;
+          }
+          return aDistance - bDistance;
+        });
+        const nextId = visible[0]?.target.id;
+        if (nextId && nextId !== activeWordIdRef.current) {
+          activeWordIdRef.current = nextId;
+          setActiveWordId(nextId);
+        }
+      },
+      {
+        root: null,
+        threshold: [0, 0.25, 0.5, 0.75, 1],
+      }
+    );
+
+    const elements = document.querySelectorAll<HTMLElement>(
+      "[data-word-anchor='true']"
+    );
+    elements.forEach((el) => observer.observe(el));
+    return () => {
+      observer.disconnect();
+      entriesMap.clear();
+    };
+  }, [words]);
+
+  useEffect(() => {
+    setEntries(
+      glossaryEntries.map(({ word, anchorId }) => ({
+        anchorId,
+        hanzi: word.hanzi,
+        english: word.english,
+      }))
+    );
+  }, [glossaryEntries, setEntries]);
+
+  useEffect(() => {
+    setGlossaryActiveWordId(activeWordId);
+  }, [activeWordId, setGlossaryActiveWordId]);
+
+  useEffect(() => {
+    return () => {
+      setEntries([]);
+      setGlossaryActiveWordId(null);
+    };
+  }, [setEntries, setGlossaryActiveWordId]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -406,459 +488,478 @@ export default function TopicIslandDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex w-full">
-        <div className="flex-1 min-w-0 p-8">
-          <div className="mx-auto max-w-4xl">
-            {/* Header */}
-            <div className="mb-10">
-              <div className="mb-6 flex items-center justify-between">
-                <button
-                  onClick={() => router.push("/app/topic-islands")}
-                  className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
-                >
-                  ← Back to Topic Islands
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="text-sm font-medium text-red-600 transition-colors hover:text-red-800 disabled:opacity-50"
-                >
-                  {deleting ? "Deleting..." : "Delete Island"}
-                </button>
-              </div>
-              <h1 className="mb-4 text-4xl font-bold tracking-tight text-gray-900">
-                {island.topic}
-              </h1>
-              <div className="mb-6 space-y-1 text-sm text-gray-600">
-                <p>Level: {island.level}</p>
-                <p className="capitalize">Status: {island.status}</p>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="mb-2">
-                <div className="mb-2 flex justify-between text-sm font-medium text-gray-600">
-                  <span>Progress</span>
-                  <span>{progressLabel}</span>
-                </div>
-                <div className="h-2.5 w-full rounded-full bg-gray-200">
-                  <div
-                    className="h-full rounded-full bg-gray-900 transition-all"
-                    style={{ width: `${progressPercentage}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Grammar Focus */}
-            {grammarEntries.length > 0 && (
-              <div className="mb-10 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="mb-4 text-xl font-semibold text-gray-900">
-                  Grammar Focus
-                </h2>
-                <div className="space-y-6">
-                  {grammarEntries.map(([tag, tiers]) => (
-                    <div
-                      key={tag}
-                      className="border-t border-gray-100 pt-4 first:border-t-0 first:pt-0"
-                    >
-                      <h3 className="mb-2 text-base font-semibold text-gray-900">
-                        {tag}
-                      </h3>
-                      <div className="space-y-3 text-sm text-gray-700">
-                        {tiers.easy && (
-                          <div>
-                            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                              Easy
-                            </div>
-                            <div className="mt-1 text-base text-gray-900">
-                              {tiers.easy.hanzi}
-                            </div>
-                            <div className="text-sm text-gray-700">
-                              {tiers.easy.pinyin}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {tiers.easy.english}
-                            </div>
-                          </div>
-                        )}
-                        {tiers.same && (
-                          <div>
-                            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                              Your level
-                            </div>
-                            <div className="mt-1 text-base text-gray-900">
-                              {tiers.same.hanzi}
-                            </div>
-                            <div className="text-sm text-gray-700">
-                              {tiers.same.pinyin}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {tiers.same.english}
-                            </div>
-                          </div>
-                        )}
-                        {tiers.hard && (
-                          <div>
-                            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                              Slightly harder
-                            </div>
-                            <div className="mt-1 text-base text-gray-900">
-                              {tiers.hard.hanzi}
-                            </div>
-                            <div className="text-sm text-gray-700">
-                              {tiers.hard.pinyin}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {tiers.hard.english}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Generating Message */}
-            {(island.status === "generating" ||
-              island.status === "selecting") && (
-              <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="mb-3">
-                  <p className="text-base font-medium text-gray-900">
-                    Generating {island.word_target} words
-                    {island.grammar_target > 0 &&
-                      ` and ${island.grammar_target} grammar pattern${
-                        island.grammar_target > 1 ? "s" : ""
-                      }`}{" "}
-                    for "{island.topic}" at {island.level}...
-                  </p>
-                  <p className="mt-1 text-sm text-gray-600">{progressLabel}</p>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full bg-gray-900 transition-all duration-500"
-                    style={{ width: `${progressPercentage}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Error Message */}
-            {island.status === "error" && (
-              <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-6 shadow-sm">
-                <div className="mb-4">
-                  <p className="mb-2 text-base font-medium text-red-900">
-                    Error generating words
-                  </p>
-                  <p className="text-sm text-red-700">
-                    There was an issue generating words for this topic island.
-                    You can try again or create a new island.
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={async () => {
-                      try {
-                        // Reset status to draft and retry generation
-                        const response = await fetch(
-                          `/api/topic-islands/${islandId}/generate-batch`,
-                          {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ batchSize: 5 }),
-                          }
-                        );
-
-                        if (!response.ok) {
-                          const errorData = await response
-                            .json()
-                            .catch(() => ({}));
-                          throw new Error(
-                            errorData.message ||
-                              errorData.error ||
-                              "Failed to retry generation"
-                          );
-                        }
-
-                        // Reload island to show updated status
-                        await loadIsland();
-                      } catch (error) {
-                        console.error("Error retrying generation:", error);
-                        alert(
-                          error instanceof Error
-                            ? error.message
-                            : "Failed to retry generation. Please try again."
-                        );
-                      }
-                    }}
-                    className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
-                  >
-                    Retry Generation
-                  </button>
+        <div className="flex w-full px-8 py-8">
+          <div className="flex-1 min-w-0">
+            <div className="mx-auto max-w-4xl">
+              {/* Header */}
+              <div className="mb-10">
+                <div className="mb-6 flex items-center justify-between">
                   <button
                     onClick={() => router.push("/app/topic-islands")}
-                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
                   >
-                    Create New Island
+                    ← Back to Topic Islands
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="text-sm font-medium text-red-600 transition-colors hover:text-red-800 disabled:opacity-50"
+                  >
+                    {deleting ? "Deleting..." : "Delete Island"}
                   </button>
                 </div>
+                <h1 className="mb-4 text-4xl font-bold tracking-tight text-gray-900">
+                  {island.topic}
+                </h1>
+                <div className="mb-6 space-y-1 text-sm text-gray-600">
+                  <p>Level: {island.level}</p>
+                  <p className="capitalize">Status: {island.status}</p>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="mb-2">
+                  <div className="mb-2 flex justify-between text-sm font-medium text-gray-600">
+                    <span>Progress</span>
+                    <span>{progressLabel}</span>
+                  </div>
+                  <div className="h-2.5 w-full rounded-full bg-gray-200">
+                    <div
+                      className="h-full rounded-full bg-gray-900 transition-all"
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
+                </div>
               </div>
-            )}
 
-            {/* Words List / Loading State */}
-            {words.length > 0 ? (
-              <div className="space-y-6">
-                {words.map((word) => (
-                  <div
-                    key={word.id}
-                    className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
-                  >
-                    <div className="mb-6 flex items-start justify-between">
-                      <div>
-                        <div className="mb-2 text-3xl font-bold text-gray-900">
-                          {word.hanzi}
-                        </div>
-                        <div className="mb-2 text-lg text-gray-700">
-                          {word.pinyin}
-                        </div>
-                        <div className="text-base text-gray-600">
-                          {word.english}
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() =>
-                            setAskAIWord({
-                              hanzi: word.hanzi,
-                              pinyin: word.pinyin,
-                              english: word.english,
-                            })
-                          }
-                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
-                          title="Ask AI about this word"
-                        >
-                          Ask AI
-                        </button>
-                        <button
-                          onClick={() => handleAddToQuizClick("word", word.id)}
-                          disabled={addedItems.has(`word-${word.id}`)}
-                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
-                        >
-                          {addedItems.has(`word-${word.id}`)
-                            ? "✓ In quiz"
-                            : t("Add to quiz")}
-                        </button>
-                        <button
-                          onClick={() => handleMarkKnown(word.id)}
-                          disabled={markingKnown === word.id}
-                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50"
-                        >
-                          {markingKnown === word.id
-                            ? "Updating..."
-                            : "Already know"}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Sentences */}
-                    <div className="space-y-4 border-t border-gray-200 pt-6">
-                      {word.sentences
-                        .sort((a, b) => {
-                          const order = { easy: 0, same: 1, hard: 2 };
-                          return order[a.tier] - order[b.tier];
-                        })
-                        .map((sentence) => (
-                          <div key={sentence.id} className="space-y-2">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                  {sentence.tier}
-                                </div>
-                                <div className="mb-1 text-base font-medium text-gray-900">
-                                  {sentence.hanzi}
-                                </div>
-                                <div className="mb-1 text-sm text-gray-700">
-                                  {sentence.pinyin}
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                  {sentence.english}
-                                </div>
+              {/* Grammar Focus */}
+              {grammarEntries.length > 0 && (
+                <div className="mb-10 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                  <h2 className="mb-4 text-xl font-semibold text-gray-900">
+                    Grammar Focus
+                  </h2>
+                  <div className="space-y-6">
+                    {grammarEntries.map(([tag, tiers]) => (
+                      <div
+                        key={tag}
+                        className="border-t border-gray-100 pt-4 first:border-t-0 first:pt-0"
+                      >
+                        <h3 className="mb-2 text-base font-semibold text-gray-900">
+                          {tag}
+                        </h3>
+                        <div className="space-y-3 text-sm text-gray-700">
+                          {tiers.easy && (
+                            <div>
+                              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Easy
                               </div>
-                              <button
-                                onClick={() =>
-                                  handleAddToQuizClick("sentence", sentence.id)
-                                }
-                                disabled={addedItems.has(
-                                  `sentence-${sentence.id}`
-                                )}
-                                className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
-                              >
-                                {addedItems.has(`sentence-${sentence.id}`)
-                                  ? "✓ In quiz"
-                                  : t("Add to quiz")}
-                              </button>
+                              <div className="mt-1 text-base text-gray-900">
+                                {tiers.easy.hanzi}
+                              </div>
+                              <div className="text-sm text-gray-700">
+                                {tiers.easy.pinyin}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {tiers.easy.english}
+                              </div>
+                            </div>
+                          )}
+                          {tiers.same && (
+                            <div>
+                              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Your level
+                              </div>
+                              <div className="mt-1 text-base text-gray-900">
+                                {tiers.same.hanzi}
+                              </div>
+                              <div className="text-sm text-gray-700">
+                                {tiers.same.pinyin}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {tiers.same.english}
+                              </div>
+                            </div>
+                          )}
+                          {tiers.hard && (
+                            <div>
+                              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Slightly harder
+                              </div>
+                              <div className="mt-1 text-base text-gray-900">
+                                {tiers.hard.hanzi}
+                              </div>
+                              <div className="text-sm text-gray-700">
+                                {tiers.hard.pinyin}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {tiers.hard.english}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Generating Message */}
+              {(island.status === "generating" ||
+                island.status === "selecting") && (
+                <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                  <div className="mb-3">
+                    <p className="text-base font-medium text-gray-900">
+                      Generating {island.word_target} words
+                      {island.grammar_target > 0 &&
+                        ` and ${island.grammar_target} grammar pattern${
+                          island.grammar_target > 1 ? "s" : ""
+                        }`}{" "}
+                      for "{island.topic}" at {island.level}...
+                    </p>
+                    <p className="mt-1 text-sm text-gray-600">
+                      {progressLabel}
+                    </p>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                    <div
+                      className="h-full bg-gray-900 transition-all duration-500"
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {island.status === "error" && (
+                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-6 shadow-sm">
+                  <div className="mb-4">
+                    <p className="mb-2 text-base font-medium text-red-900">
+                      Error generating words
+                    </p>
+                    <p className="text-sm text-red-700">
+                      There was an issue generating words for this topic island.
+                      You can try again or create a new island.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={async () => {
+                        try {
+                          // Reset status to draft and retry generation
+                          const response = await fetch(
+                            `/api/topic-islands/${islandId}/generate-batch`,
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ batchSize: 5 }),
+                            }
+                          );
+
+                          if (!response.ok) {
+                            const errorData = await response
+                              .json()
+                              .catch(() => ({}));
+                            throw new Error(
+                              errorData.message ||
+                                errorData.error ||
+                                "Failed to retry generation"
+                            );
+                          }
+
+                          // Reload island to show updated status
+                          await loadIsland();
+                        } catch (error) {
+                          console.error("Error retrying generation:", error);
+                          alert(
+                            error instanceof Error
+                              ? error.message
+                              : "Failed to retry generation. Please try again."
+                          );
+                        }
+                      }}
+                      className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+                    >
+                      Retry Generation
+                    </button>
+                    <button
+                      onClick={() => router.push("/app/topic-islands")}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      Create New Island
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Words List / Loading State */}
+              {words.length > 0 ? (
+                <div className="space-y-6">
+                  {words.map((word, index) => {
+                    const anchorId = `word-${word.id || index}`;
+                    return (
+                      <div
+                        key={anchorId}
+                        id={anchorId}
+                        data-word-anchor="true"
+                        className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+                      >
+                        <div className="mb-6 flex items-start justify-between">
+                          <div>
+                            <div className="mb-2 text-3xl font-bold text-gray-900">
+                              {word.hanzi}
+                            </div>
+                            <div className="mb-2 text-lg text-gray-700">
+                              {word.pinyin}
+                            </div>
+                            <div className="text-base text-gray-600">
+                              {word.english}
                             </div>
                           </div>
-                        ))}
-                    </div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() =>
+                                setAskAIWord({
+                                  hanzi: word.hanzi,
+                                  pinyin: word.pinyin,
+                                  english: word.english,
+                                })
+                              }
+                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+                              title="Ask AI about this word"
+                            >
+                              Ask AI
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleAddToQuizClick("word", word.id)
+                              }
+                              disabled={addedItems.has(`word-${word.id}`)}
+                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
+                            >
+                              {addedItems.has(`word-${word.id}`)
+                                ? "✓ In quiz"
+                                : t("Add to quiz")}
+                            </button>
+                            <button
+                              onClick={() => handleMarkKnown(word.id)}
+                              disabled={markingKnown === word.id}
+                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50"
+                            >
+                              {markingKnown === word.id
+                                ? "Updating..."
+                                : "Already know"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Sentences */}
+                        <div className="space-y-4 border-t border-gray-200 pt-6">
+                          {word.sentences
+                            .sort((a, b) => {
+                              const order = { easy: 0, same: 1, hard: 2 };
+                              return order[a.tier] - order[b.tier];
+                            })
+                            .map((sentence) => (
+                              <div key={sentence.id} className="space-y-2">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                      {sentence.tier}
+                                    </div>
+                                    <div className="mb-1 text-base font-medium text-gray-900">
+                                      {sentence.hanzi}
+                                    </div>
+                                    <div className="mb-1 text-sm text-gray-700">
+                                      {sentence.pinyin}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      {sentence.english}
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() =>
+                                      handleAddToQuizClick(
+                                        "sentence",
+                                        sentence.id
+                                      )
+                                    }
+                                    disabled={addedItems.has(
+                                      `sentence-${sentence.id}`
+                                    )}
+                                    className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
+                                  >
+                                    {addedItems.has(`sentence-${sentence.id}`)
+                                      ? "✓ In quiz"
+                                      : t("Add to quiz")}
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : island.status === "generating" ? (
+                <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
+                    <p className="text-gray-700">
+                      Generating words and example sentences for this topic...
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : island.status === "generating" ? (
-              <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
-                  <p className="text-gray-700">
-                    Generating words and example sentences for this topic...
-                  </p>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-                <div className="flex flex-col items-center gap-3 text-gray-500">
-                  <svg
-                    className="h-6 w-6 animate-spin text-gray-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
-                  <p>
-                    Generating words and example sentences for this topic...
-                  </p>
+              ) : (
+                <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
+                  <div className="flex flex-col items-center gap-3 text-gray-500">
+                    <svg
+                      className="h-6 w-6 animate-spin text-gray-400"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      />
+                    </svg>
+                    <p>
+                      Generating words and example sentences for this topic...
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Add to Quiz Modal */}
-            {showAddToQuizModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
-                  <h3 className="mb-2 text-xl font-semibold text-gray-900">
-                    Add to Quiz
-                  </h3>
-                  <p className="mb-6 text-sm text-gray-600">
-                    {addToQuizContext?.type === "word"
-                      ? "This will create 2 cards: Chinese → English and English → Chinese."
-                      : "This will create 1 card: Chinese → English."}
-                  </p>
+              {/* Add to Quiz Modal */}
+              {showAddToQuizModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                  <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+                    <h3 className="mb-2 text-xl font-semibold text-gray-900">
+                      Add to Quiz
+                    </h3>
+                    <p className="mb-6 text-sm text-gray-600">
+                      {addToQuizContext?.type === "word"
+                        ? "This will create 2 cards: Chinese → English and English → Chinese."
+                        : "This will create 1 card: Chinese → English."}
+                    </p>
 
-                  {showCreateNew ? (
-                    /* Create New Quiz Island Inline */
-                    <div className="space-y-4">
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-900">
-                          Quiz Island Name
-                        </label>
-                        <input
-                          type="text"
-                          value={newQuizIslandName}
-                          onChange={(e) => setNewQuizIslandName(e.target.value)}
-                          placeholder="e.g., Basic Vocabulary"
-                          className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                          autoFocus
-                        />
-                        <p className="mt-1 text-xs text-gray-500">
-                          Quiz islands are for Chinese practice only
-                        </p>
-                      </div>
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          onClick={() => {
-                            setShowCreateNew(false);
-                            setNewQuizIslandName("");
-                            if (quizIslands.length > 0) {
-                              // Show select existing instead
-                            } else {
-                              setShowAddToQuizModal(false);
-                              setAddToQuizContext(null);
+                    {showCreateNew ? (
+                      /* Create New Quiz Island Inline */
+                      <div className="space-y-4">
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-gray-900">
+                            Quiz Island Name
+                          </label>
+                          <input
+                            type="text"
+                            value={newQuizIslandName}
+                            onChange={(e) =>
+                              setNewQuizIslandName(e.target.value)
                             }
-                          }}
-                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleCreateNewQuizIsland}
-                          disabled={
-                            creatingQuizIsland || !newQuizIslandName.trim()
-                          }
-                          className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
-                        >
-                          {creatingQuizIsland ? "Creating..." : "Create & Add"}
-                        </button>
+                            placeholder="e.g., Basic Vocabulary"
+                            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                            autoFocus
+                          />
+                          <p className="mt-1 text-xs text-gray-500">
+                            Quiz islands are for Chinese practice only
+                          </p>
+                        </div>
+                        <div className="flex justify-end space-x-3">
+                          <button
+                            onClick={() => {
+                              setShowCreateNew(false);
+                              setNewQuizIslandName("");
+                              if (quizIslands.length > 0) {
+                                // Show select existing instead
+                              } else {
+                                setShowAddToQuizModal(false);
+                                setAddToQuizContext(null);
+                              }
+                            }}
+                            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleCreateNewQuizIsland}
+                            disabled={
+                              creatingQuizIsland || !newQuizIslandName.trim()
+                            }
+                            className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                          >
+                            {creatingQuizIsland
+                              ? "Creating..."
+                              : "Create & Add"}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    /* Select Existing Quiz Island */
-                    <>
-                      <div className="mb-6">
-                        <select
-                          value={selectedQuizIslandId}
-                          onChange={(e) =>
-                            setSelectedQuizIslandId(e.target.value)
-                          }
-                          className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                        >
-                          {quizIslands.length === 0 ? (
-                            <option value="">No quiz islands yet</option>
-                          ) : (
-                            quizIslands.map((island) => (
-                              <option key={island.id} value={island.id}>
-                                {island.name}
-                              </option>
-                            ))
-                          )}
-                        </select>
-                      </div>
-                      {quizIslands.length > 0 && (
-                        <button
-                          onClick={() => setShowCreateNew(true)}
-                          className="mb-6 w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                        >
-                          + Create new quiz island
-                        </button>
-                      )}
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          onClick={() => {
-                            setShowAddToQuizModal(false);
-                            setSelectedQuizIslandId(
-                              localStorage.getItem("lastUsedQuizIslandId") || ""
-                            );
-                            setAddToQuizContext(null);
-                            setShowCreateNew(false);
-                          }}
-                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => handleAddToQuizConfirm()}
-                          disabled={addingToQuiz || !selectedQuizIslandId}
-                          className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
-                        >
-                          {addingToQuiz ? "Adding..." : "Add"}
-                        </button>
-                      </div>
-                    </>
-                  )}
+                    ) : (
+                      /* Select Existing Quiz Island */
+                      <>
+                        <div className="mb-6">
+                          <select
+                            value={selectedQuizIslandId}
+                            onChange={(e) =>
+                              setSelectedQuizIslandId(e.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                          >
+                            {quizIslands.length === 0 ? (
+                              <option value="">No quiz islands yet</option>
+                            ) : (
+                              quizIslands.map((island) => (
+                                <option key={island.id} value={island.id}>
+                                  {island.name}
+                                </option>
+                              ))
+                            )}
+                          </select>
+                        </div>
+                        {quizIslands.length > 0 && (
+                          <button
+                            onClick={() => setShowCreateNew(true)}
+                            className="mb-6 w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                          >
+                            + Create new quiz island
+                          </button>
+                        )}
+                        <div className="flex justify-end space-x-3">
+                          <button
+                            onClick={() => {
+                              setShowAddToQuizModal(false);
+                              setSelectedQuizIslandId(
+                                localStorage.getItem("lastUsedQuizIslandId") ||
+                                  ""
+                              );
+                              setAddToQuizContext(null);
+                              setShowCreateNew(false);
+                            }}
+                            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleAddToQuizConfirm()}
+                            disabled={addingToQuiz || !selectedQuizIslandId}
+                            className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                          >
+                            {addingToQuiz ? "Adding..." : "Add"}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
