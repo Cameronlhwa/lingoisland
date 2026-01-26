@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
@@ -63,7 +63,7 @@ const ROTATING_PLACEHOLDERS = [
   "Teach me travel phrases",
 ];
 
-export default function OnboardingTopicIslandPage() {
+function OnboardingTopicIslandContent() {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
@@ -409,5 +409,19 @@ export default function OnboardingTopicIslandPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function OnboardingTopicIslandPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-white px-6 py-12">
+          <div className="text-gray-600">Loading...</div>
+        </main>
+      }
+    >
+      <OnboardingTopicIslandContent />
+    </Suspense>
   );
 }
