@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Sidebar from "@/components/app/Sidebar";
+import { GlossaryProvider } from "@/contexts/GlossaryContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 
 export const metadata: Metadata = {
@@ -32,10 +33,12 @@ export default async function AppLayout({
 
   return (
     <LanguageProvider>
-      <div className="min-h-screen bg-white">
-        <Sidebar />
-        <main className="ml-64">{children}</main>
-      </div>
+      <GlossaryProvider>
+        <div className="min-h-screen bg-white">
+          <Sidebar />
+          <main className="ml-64">{children}</main>
+        </div>
+      </GlossaryProvider>
     </LanguageProvider>
   );
 }
