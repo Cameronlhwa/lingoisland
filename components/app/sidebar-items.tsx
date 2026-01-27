@@ -70,19 +70,4 @@ export const sidebarItems: SidebarItem[] = [
       </svg>
     ),
   },
-  {
-    href: "/app/chat",
-    label: "Chat",
-    icon: (className = iconClass) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className={className}
-        aria-hidden="true"
-      >
-        <path d="M4.804 21.644A1.5 1.5 0 003 20.25V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v8.5A2.25 2.25 0 0118.75 17.5H9.664l-3.47 3.47a1.5 1.5 0 01-1.39.674z" />
-      </svg>
-    ),
-  },
 ];

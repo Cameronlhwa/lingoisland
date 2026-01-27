@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useGlossary } from "@/contexts/GlossaryContext";
 import { sidebarItems } from "@/components/app/sidebar-items";
+import AccountModal from "./AccountModal";
 
 export default function Sidebar() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function Sidebar() {
   const { entries, activeWordId } = useGlossary();
   const glossaryListRef = useRef<HTMLDivElement | null>(null);
   const isTopicIslandDetail = pathname.startsWith("/app/topic-islands/");
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   useEffect(() => {
     if (!isTopicIslandDetail || !activeWordId || !glossaryListRef.current) {
@@ -34,6 +36,7 @@ export default function Sidebar() {
     await supabase.auth.signOut();
     router.push("/");
   };
+
 
   const navItems = sidebarItems;
 
@@ -150,6 +153,12 @@ export default function Sidebar() {
         </div>
 
         <button
+          onClick={() => setIsAccountOpen(true)}
+          className="mb-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+        >
+          {t("Account")}
+        </button>
+        <button
           onClick={handleSignOut}
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50"
         >
@@ -161,6 +170,7 @@ export default function Sidebar() {
           display: none;
         }
       `}</style>
+      <AccountModal open={isAccountOpen} onClose={() => setIsAccountOpen(false)} />
     </aside>
   );
 }
