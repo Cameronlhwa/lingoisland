@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -61,6 +61,7 @@ export async function POST(request: Request) {
     }
 
     let stripeCustomerId = profile?.stripe_customer_id ?? null;
+    const stripe = getStripe();
 
     if (!stripeCustomerId) {
       console.log("[STRIPE CHECKOUT] Creating Stripe customer", user.id);

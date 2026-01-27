@@ -2,6 +2,16 @@ import "server-only";
 
 import Stripe from "stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-12-15.clover",
-});
+let stripeClient: Stripe | null = null;
+
+export function getStripe() {
+  if (stripeClient) return stripeClient;
+  const apiKey = process.env.STRIPE_SECRET_KEY;
+  if (!apiKey) {
+    throw new Error("STRIPE_SECRET_KEY is not set");
+  }
+  stripeClient = new Stripe(apiKey, {
+    apiVersion: "2025-12-15.clover",
+  });
+  return stripeClient;
+}

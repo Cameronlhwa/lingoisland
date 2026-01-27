@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -110,6 +110,7 @@ const resolveUserId = async (
 };
 
 export async function POST(request: Request) {
+  const stripe = getStripe();
   const signature = request.headers.get("stripe-signature");
   if (!signature || !webhookSecret) {
     return NextResponse.json(
