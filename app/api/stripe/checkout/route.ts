@@ -10,7 +10,6 @@ type CheckoutRequest = {
 };
 
 export async function POST(request: Request) {
-  console.log("[STRIPE CHECKOUT] Request received");
   try {
     const supabase = await createClient();
     const {
@@ -64,7 +63,6 @@ export async function POST(request: Request) {
     const stripe = getStripe();
 
     if (!stripeCustomerId) {
-      console.log("[STRIPE CHECKOUT] Creating Stripe customer", user.id);
       const customer = await stripe.customers.create({
         email: user.email ?? undefined,
         metadata: { user_id: user.id },
@@ -90,11 +88,6 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log("[STRIPE CHECKOUT] Creating checkout session", {
-      userId: user.id,
-      stripeCustomerId,
-      priceId,
-    });
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: stripeCustomerId,
