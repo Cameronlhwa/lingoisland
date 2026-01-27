@@ -36,14 +36,14 @@ export default function AccountModal({
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
   const [entitlementsLoading, setEntitlementsLoading] = useState(true);
   const [entitlementsError, setEntitlementsError] = useState<string | null>(
-    null
+    null,
   );
   const [showPlanPicker, setShowPlanPicker] = useState(false);
   const [activeTab, setActiveTab] = useState<"subscription" | "profile">(
-    "subscription"
+    "subscription",
   );
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">(
-    "monthly"
+    "monthly",
   );
   const [checkoutLoading, setCheckoutLoading] = useState<
     "monthly" | "yearly" | null
@@ -73,7 +73,9 @@ export default function AccountModal({
         return;
       }
       setUserEmail(user.email ?? null);
-      setUserName((user.user_metadata?.full_name as string | undefined) ?? null);
+      setUserName(
+        (user.user_metadata?.full_name as string | undefined) ?? null,
+      );
     };
     void loadUser();
   }, [open, router, supabase, onClose]);
@@ -212,7 +214,10 @@ export default function AccountModal({
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        console.error("Failed to save feedback:", data.error || response.status);
+        console.error(
+          "Failed to save feedback:",
+          data.error || response.status,
+        );
       }
     } catch (error) {
       console.error("Error saving feedback:", error);
@@ -317,7 +322,7 @@ export default function AccountModal({
                 </p>
                 <div className="mt-6 rounded-xl border border-white/20 bg-white/10 p-4 text-sm backdrop-blur-sm">
                   <p className="font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                    What you get
+                    What you get:
                   </p>
                   <ul className="mt-2 space-y-1 text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                     <li>Unlimited Topic Islands (vocab + native examples)</li>
@@ -340,15 +345,17 @@ export default function AccountModal({
                     Manage your plan and billing details.
                   </p>
                 </div>
-              {entitlements?.plan === "pro" ? (
-                <span className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white">
-                  Pro
-                </span>
-              ) : null}
+                {entitlements?.plan === "pro" ? (
+                  <span className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white">
+                    Pro
+                  </span>
+                ) : null}
               </div>
 
               {entitlementsLoading ? (
-                <div className="mt-4 text-sm text-gray-500">Loading plan...</div>
+                <div className="mt-4 text-sm text-gray-500">
+                  Loading plan...
+                </div>
               ) : entitlementsError ? (
                 <div className="mt-4 text-sm text-red-600">
                   {entitlementsError}
@@ -514,6 +521,6 @@ export default function AccountModal({
         </div>
       ) : null}
     </div>,
-    document.body
+    document.body,
   );
 }
