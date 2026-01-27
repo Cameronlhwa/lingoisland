@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   },
   description:
     "Mandarin vocabulary by topic with real-life example sentences, daily stories, and spaced repetition review.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
   openGraph: {
     title: {
       default: "Lingo Island",
@@ -24,6 +28,14 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: "Lingo Island",
     type: "website",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 1200,
+        alt: "Lingo Island Logo",
+      },
+    ],
   },
   twitter: {
     card: "summary",
@@ -33,6 +45,7 @@ export const metadata: Metadata = {
     },
     description:
       "Mandarin vocabulary by topic with real-life example sentences, daily stories, and spaced repetition review.",
+    images: ["/logo.png"],
   },
 };
 
