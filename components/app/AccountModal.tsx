@@ -36,14 +36,14 @@ export default function AccountModal({
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
   const [entitlementsLoading, setEntitlementsLoading] = useState(true);
   const [entitlementsError, setEntitlementsError] = useState<string | null>(
-    null
+    null,
   );
   const [showPlanPicker, setShowPlanPicker] = useState(false);
   const [activeTab, setActiveTab] = useState<"subscription" | "profile">(
-    "subscription"
+    "subscription",
   );
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">(
-    "monthly"
+    "monthly",
   );
   const [checkoutLoading, setCheckoutLoading] = useState<
     "monthly" | "yearly" | null
@@ -73,7 +73,9 @@ export default function AccountModal({
         return;
       }
       setUserEmail(user.email ?? null);
-      setUserName((user.user_metadata?.full_name as string | undefined) ?? null);
+      setUserName(
+        (user.user_metadata?.full_name as string | undefined) ?? null,
+      );
     };
     void loadUser();
   }, [open, router, supabase, onClose]);
@@ -212,7 +214,10 @@ export default function AccountModal({
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        console.error("Failed to save feedback:", data.error || response.status);
+        console.error(
+          "Failed to save feedback:",
+          data.error || response.status,
+        );
       }
     } catch (error) {
       console.error("Error saving feedback:", error);
@@ -238,7 +243,7 @@ export default function AccountModal({
       }}
     >
       <div
-        className="relative w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl"
+        className="relative w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl md:min-h-[520px]"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -300,7 +305,7 @@ export default function AccountModal({
         ) : (
           <div className="mt-6 grid gap-6 md:grid-cols-[1.15fr_1fr]">
             <div
-              className="relative overflow-hidden rounded-2xl border border-slate-200 p-6 text-white shadow-sm"
+              className="relative min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 p-7 text-white shadow-sm"
               style={{
                 backgroundImage: "url('/Upgrade-modal.jpg')",
                 backgroundSize: "cover",
@@ -315,8 +320,8 @@ export default function AccountModal({
                 <p className="mt-2 text-sm text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                   Unlock unlimited stories, decks, and focused practice.
                 </p>
-                <div className="mt-6 rounded-xl border border-white/20 bg-white/10 p-4 text-sm backdrop-blur-sm">
-                  <p className="font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                <div className="mt-7 rounded-2xl border border-white/30 bg-white/15 p-5 text-sm shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                  <p className="font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                     What you get
                   </p>
                   <ul className="mt-2 space-y-1 text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
@@ -330,88 +335,106 @@ export default function AccountModal({
               </div>
             </div>
 
-            <div className={`${cardBaseClass} p-6`}>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-base font-semibold text-gray-900">
-                    Subscription
-                  </h2>
-                  <p className="mt-1 text-sm text-gray-600">
-                    Manage your plan and billing details.
-                  </p>
-                </div>
-              {entitlements?.plan === "pro" ? (
-                <span className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white">
-                  Pro
-                </span>
-              ) : null}
-              </div>
-
-              {entitlementsLoading ? (
-                <div className="mt-4 text-sm text-gray-500">Loading plan...</div>
-              ) : entitlementsError ? (
-                <div className="mt-4 text-sm text-red-600">
-                  {entitlementsError}
-                </div>
-              ) : (
-                <div className="mt-6 space-y-4">
-                  {entitlements?.plan === "pro" && renewalDate ? (
-                    <p className="text-sm text-gray-600">
-                      Renews on{" "}
-                      <span className="font-medium">{renewalDate}</span>
+            <div className={`${cardBaseClass} min-h-[360px] p-6`}>
+              <div className="flex h-full flex-col">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-base font-semibold text-gray-900">
+                      Subscription
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                      Speed up your mandarin journey by learning the words you
+                      actually use!
                     </p>
+                  </div>
+                  {entitlements?.plan === "pro" ? (
+                    <span className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white">
+                      Pro
+                    </span>
                   ) : null}
-
-                  {entitlements?.plan === "free" ? (
-                    <div className="space-y-4">
-                      <div className="space-y-3 pt-1">
-                        {[
-                          { id: "monthly", label: "Monthly", price: "$9.99" },
-                          { id: "yearly", label: "Yearly", price: "$79.99" },
-                        ].map((plan) => (
-                          <button
-                            key={plan.id}
-                            onClick={() =>
-                              setSelectedPlan(plan.id as "monthly" | "yearly")
-                            }
-                            className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
-                              selectedPlan === plan.id
-                                ? "border-gray-900 bg-gray-900 text-white"
-                                : "border-gray-200 bg-gray-100 text-gray-500 hover:bg-gray-200"
-                            }`}
-                          >
-                            <span>{plan.label}</span>
-                            <span>{plan.price}</span>
-                          </button>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => startCheckout(selectedPlan)}
-                        disabled={checkoutLoading !== null}
-                        className="inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
-                      >
-                        {checkoutLoading ? "Opening..." : "Upgrade Now"}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <button
-                        onClick={openBillingPortal}
-                        disabled={portalLoading}
-                        className="inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
-                      >
-                        {portalLoading ? "Opening..." : "Manage billing"}
-                      </button>
-                      <button
-                        onClick={() => setCancelOpen(true)}
-                        className="text-left text-xs font-medium text-red-600 hover:text-red-700"
-                      >
-                        Downgrade / Cancel
-                      </button>
-                    </div>
-                  )}
                 </div>
-              )}
+
+                {entitlementsLoading ? (
+                  <div className="mt-4 text-sm text-gray-500">
+                    Loading plan...
+                  </div>
+                ) : entitlementsError ? (
+                  <div className="mt-4 text-sm text-red-600">
+                    {entitlementsError}
+                  </div>
+                ) : (
+                  <div className="mt-6 flex flex-1 flex-col gap-4">
+                    {entitlements?.plan === "pro" && renewalDate ? (
+                      <p className="text-sm text-gray-600">
+                        Renews on{" "}
+                        <span className="font-medium">{renewalDate}</span>
+                      </p>
+                    ) : null}
+
+                    {entitlements?.plan === "free" ? (
+                      <div className="flex flex-1 flex-col gap-4">
+                        <div className="space-y-3 pt-1">
+                          {[
+                            { id: "monthly", label: "Monthly", price: "$9.99" },
+                            { id: "yearly", label: "Yearly", price: "$79.99" },
+                          ].map((plan) => (
+                            <button
+                              key={plan.id}
+                              onClick={() =>
+                                setSelectedPlan(plan.id as "monthly" | "yearly")
+                              }
+                              className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
+                                selectedPlan === plan.id
+                                  ? "border-gray-300 bg-gray-200 text-gray-900"
+                                  : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                              }`}
+                            >
+                              <span>{plan.label}</span>
+                              <span>{plan.price}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => startCheckout(selectedPlan)}
+                          disabled={checkoutLoading !== null}
+                          className="mt-auto inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          {checkoutLoading ? "Opening..." : "Upgrade Now"}
+                        </button>
+                        <div className="flex items-center gap-3 pt-1 text-sm font-semibold text-gray-600">
+                          <div className="flex -space-x-2">
+                            {["🏝️", "⛵️", "🥥"].map((emoji) => (
+                              <span
+                                key={emoji}
+                                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-sm"
+                              >
+                                {emoji}
+                              </span>
+                            ))}
+                          </div>
+                          <span>Join the LingoIsland Community!</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-auto space-y-2">
+                        <button
+                          onClick={openBillingPortal}
+                          disabled={portalLoading}
+                          className="inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          {portalLoading ? "Opening..." : "Manage billing"}
+                        </button>
+                        <button
+                          onClick={() => setCancelOpen(true)}
+                          className="text-left text-xs font-medium text-red-600 hover:text-red-700"
+                        >
+                          Downgrade / Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -514,6 +537,6 @@ export default function AccountModal({
         </div>
       ) : null}
     </div>,
-    document.body
+    document.body,
   );
 }
