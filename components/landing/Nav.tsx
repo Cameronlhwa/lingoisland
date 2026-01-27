@@ -1,10 +1,17 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Nav() {
   return (
     <nav className="sticky top-0 z-40 flex items-center justify-between border-b border-gray-100 bg-white/80 px-6 py-5 backdrop-blur-sm md:px-12">
-      <Link href="/" className="flex items-center gap-2.5">
-        <div className="h-7 w-7 rounded-lg border-2 border-gray-900 bg-gray-900"></div>
+      <Link href="/" className="flex items-center gap-1.5">
+        <Image
+          src="/logo.png"
+          alt="Lingo Island Logo"
+          width={40}
+          height={40}
+          className="rounded-lg"
+        />
         <span className="text-lg font-semibold text-gray-900">
           Lingo <span className="text-gray-500">Island</span>
         </span>

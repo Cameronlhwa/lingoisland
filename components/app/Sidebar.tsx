@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,7 +23,7 @@ export default function Sidebar() {
       return;
     }
     const target = glossaryListRef.current.querySelector<HTMLElement>(
-      `[data-glossary-id="${activeWordId}"]`
+      `[data-glossary-id="${activeWordId}"]`,
     );
     if (target) {
       target.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -39,7 +40,14 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
       <div className="flex flex-1 flex-col overflow-y-auto p-6">
-        <div className="mb-8">
+        <div className="mb-8 flex items-center gap-1.5">
+          <Image
+            src="/logo.png"
+            alt="Lingo Island Logo"
+            width={40}
+            height={40}
+            className="rounded-lg"
+          />
           <h2 className="text-xl font-bold text-gray-900">Lingo Island</h2>
         </div>
 
