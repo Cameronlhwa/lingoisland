@@ -43,9 +43,13 @@ const upsertActiveSubscription = async (
     typeof subscription.customer === "string"
       ? subscription.customer
       : subscription.customer.id;
-  const currentPeriodEnd = subscription.current_period_end
-    ? new Date(subscription.current_period_end * 1000).toISOString()
-    : null;
+  const currentPeriodEndUnix =
+    (subscription as { current_period_end?: number | null }).current_period_end ??
+    null;
+  const currentPeriodEnd =
+    typeof currentPeriodEndUnix === "number"
+      ? new Date(currentPeriodEndUnix * 1000).toISOString()
+      : null;
 
   const { error } = await supabaseAdmin.from("profiles").upsert(
     {
