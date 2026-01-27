@@ -1,27 +1,34 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
+let supabaseAdmin: SupabaseClient | null = null;
+
+const getSupabaseAdmin = () => {
+  if (supabaseAdmin) return supabaseAdmin;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Supabase admin env vars are not set");
+  }
+  supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
-  }
-);
+  });
+  return supabaseAdmin;
+};
 
 const findProfileUserId = async (stripeCustomerId: string | null) => {
   if (!stripeCustomerId) return null;
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from("profiles")
     .select("id")
     .eq("stripe_customer_id", stripeCustomerId)
@@ -51,7 +58,7 @@ const upsertActiveSubscription = async (
       ? new Date(currentPeriodEndUnix * 1000).toISOString()
       : null;
 
-  const { error } = await supabaseAdmin.from("profiles").upsert(
+  const { error } = await getSupabaseAdmin().from("profiles").upsert(
     {
       id: userId,
       plan: "pro",
@@ -71,7 +78,7 @@ const upsertActiveSubscription = async (
 };
 
 const clearSubscription = async (userId: string) => {
-  const { error } = await supabaseAdmin
+  const { error } = await getSupabaseAdmin()
     .from("profiles")
     .update({
       plan: "free",
@@ -110,6 +117,7 @@ const resolveUserId = async (
 };
 
 export async function POST(request: Request) {
+  const stripe = getStripe();
   const signature = request.headers.get("stripe-signature");
   if (!signature || !webhookSecret) {
     return NextResponse.json(

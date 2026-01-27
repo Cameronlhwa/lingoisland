@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useGlossary } from "@/contexts/GlossaryContext";
 import { sidebarItems } from "@/components/app/sidebar-items";
-import AccountModal from "./AccountModal";
+import AccountModal from "@/components/app/AccountModal";
 
 export default function Sidebar() {
   const router = useRouter();
