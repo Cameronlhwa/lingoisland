@@ -13,14 +13,14 @@ export default function FinalCTA() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.4 }}
         transition={{ duration: 0.4 }}
-        className="mx-auto max-w-6xl rounded-3xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-10 shadow-sm md:p-12"
+        className="mx-auto max-w-6xl rounded-3xl border-2 border-gray-300 bg-gradient-to-br from-gray-50 to-white p-10 shadow-lg md:p-12"
       >
         <div className="grid gap-10 lg:grid-cols-[1fr_1fr] lg:items-center">
           <div>
             <h2 className="text-3xl font-semibold text-gray-900 md:text-4xl">
               Ready to build vocabulary you can actually use?
             </h2>
-            <p className="mt-4 text-lg text-gray-600">
+            <p className="mt-4 text-lg text-gray-700">
               Create a Topic Island or spin your words into a story. Both paths
               get you to real-life Mandarin faster.
             </p>
@@ -30,8 +30,7 @@ export default function FinalCTA() {
               href="/onboarding/topic-island"
               title="Create Topic Island"
               microcopy={[
-                "Pick a topic → get 10–20 useful words",
-                "with real-life sentences at your level",
+                "Pick a topic → get 10–20 useful words with real-life sentences at your level. Free to start.",
               ]}
               tooltip={{
                 label: "What’s a Topic Island?",
@@ -43,8 +42,7 @@ export default function FinalCTA() {
               href="/onboarding/story"
               title="Create a Story"
               microcopy={[
-                "Turn your vocab into a short story",
-                "for easy comprehensible input",
+                "Turn your vocab into a short story for easy comprehensible input. Free to start.",
               ]}
               variant="secondary"
             />
@@ -54,4 +52,3 @@ export default function FinalCTA() {
     </section>
   );
 }
-

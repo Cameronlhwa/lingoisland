@@ -113,7 +113,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="mb-12 text-center">
           <h1 className="mb-4 text-4xl font-bold text-gray-900">
-            Welcome to Lingo Island
+            Welcome to LingoIsland
           </h1>
           <p className="text-lg text-gray-600">
             Sign in to start building your vocabulary
@@ -193,8 +193,8 @@ export default function LoginPage() {
             {isSubmitting
               ? "Please wait..."
               : isSignUp
-              ? "Create account"
-              : "Sign in with email"}
+                ? "Create account"
+                : "Sign in with email"}
           </button>
         </form>
 

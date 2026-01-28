@@ -13,10 +13,13 @@ export default function Nav() {
           className="rounded-lg"
         />
         <span className="text-lg font-semibold text-gray-900">
-          Lingo <span className="text-gray-500">Island</span>
+          Lingo<span className="text-gray-500">Island</span>
         </span>
       </Link>
       <div className="hidden items-center gap-6 text-sm text-gray-600 md:flex">
+        <Link href="/#why" className="hover:text-gray-900">
+          Why LingoIsland
+        </Link>
         <Link href="/#demo" className="hover:text-gray-900">
           Demo
         </Link>
