@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import SpeakerButton from "@/components/app/SpeakerButton";
 
 interface QuizIsland {
   id: string;
@@ -158,6 +159,8 @@ export default function ManageCardsPage() {
     EN_ZH: "English → Chinese",
   };
 
+  const containsChinese = (text: string) => /[\u4e00-\u9fff]/.test(text);
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="mx-auto max-w-4xl">
@@ -233,10 +236,16 @@ export default function ManageCardsPage() {
                   <div className="mb-1 text-sm font-semibold text-gray-900">
                     {directionLabel[card.direction]}
                   </div>
-                  <div className="text-base text-gray-900">
+                  <div className="flex items-center gap-2 text-base text-gray-900">
                     <span className="font-medium">{card.front}</span>
+                    {containsChinese(card.front) && (
+                      <SpeakerButton text={card.front} size="sm" />
+                    )}
                     <span className="mx-2 text-gray-400">→</span>
                     <span>{card.back}</span>
+                    {containsChinese(card.back) && (
+                      <SpeakerButton text={card.back} size="sm" />
+                    )}
                   </div>
                   {card.pinyin && (
                     <div className="mt-1 text-sm text-gray-500">{card.pinyin}</div>
@@ -266,10 +275,16 @@ export default function ManageCardsPage() {
                 <div className="mb-2 text-sm font-semibold text-gray-900">
                   {directionLabel[cardToDelete.direction]}
                 </div>
-                <div className="text-base text-gray-900">
+                <div className="flex items-center gap-2 text-base text-gray-900">
                   <span className="font-medium">{cardToDelete.front}</span>
+                  {containsChinese(cardToDelete.front) && (
+                    <SpeakerButton text={cardToDelete.front} size="sm" />
+                  )}
                   <span className="mx-2 text-gray-400">→</span>
                   <span>{cardToDelete.back}</span>
+                  {containsChinese(cardToDelete.back) && (
+                    <SpeakerButton text={cardToDelete.back} size="sm" />
+                  )}
                 </div>
                 {cardToDelete.pinyin && (
                   <div className="mt-2 text-sm text-gray-500">
