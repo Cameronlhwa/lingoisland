@@ -167,10 +167,10 @@ function TraditionalPanel({
   ];
 
   const vocabularyList = [
-    "1. hello (你好)",
-    "2. goodbye (再见)",
-    "3. thank you (谢谢)",
-    "4. you're welcome (不客气)",
+    "1. earthquake (地震)",
+    "2. typhoon (台风)",
+    "3. temperature (温度)",
+    "4. forecast (预报)",
   ];
 
   return (
