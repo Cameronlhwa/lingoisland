@@ -25,6 +25,7 @@ export default function TopicIslandsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [userDefaultLevel, setUserDefaultLevel] = useState<string>("B1");
   const [formData, setFormData] = useState({
     topic: "",
     level: "B1",
@@ -35,7 +36,37 @@ export default function TopicIslandsPage() {
 
   useEffect(() => {
     loadIslands();
+    loadUserProfile();
+
+    // Check if we should open the create modal from URL parameter
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("create") === "true") {
+      setShowCreateModal(true);
+      // Clean up URL
+      window.history.replaceState({}, "", "/app/topic-islands");
+    }
   }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const response = await fetch("/api/profile");
+      if (response.ok) {
+        const data = await response.json();
+        setUserDefaultLevel(data.cefrLevel || "B1");
+      }
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (showCreateModal) {
+      setFormData((prev) => ({
+        ...prev,
+        level: userDefaultLevel,
+      }));
+    }
+  }, [showCreateModal, userDefaultLevel]);
 
   const loadIslands = async () => {
     const {
@@ -247,9 +278,11 @@ export default function TopicIslandsPage() {
                     }
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-gray-900 focus:outline-none"
                   >
-                    <option value="A2">A2 - Upper Beginner</option>
+                    <option value="A1">A1 - Beginner</option>
+                    <option value="A2">A2 - Elementary</option>
                     <option value="B1">B1 - Intermediate</option>
                     <option value="B2">B2 - Upper Intermediate</option>
+                    <option value="C1">C1 - Advanced</option>
                   </select>
                 </div>
 

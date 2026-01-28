@@ -70,6 +70,61 @@ export async function GET(
 }
 
 /**
+ * PATCH /api/topic-islands/[id]
+ * Update island properties (e.g., topic name)
+ */
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const islandId = params.id
+    const body = await request.json()
+    const { topic } = body
+
+    if (!topic || typeof topic !== 'string' || !topic.trim()) {
+      return NextResponse.json(
+        { error: 'Topic is required and must be a non-empty string' },
+        { status: 400 }
+      )
+    }
+
+    // Verify ownership and update
+    const { data: island, error: updateError } = await supabase
+      .from('topic_islands')
+      .update({ topic: topic.trim() })
+      .eq('id', islandId)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+
+    if (updateError || !island) {
+      return NextResponse.json(
+        { error: 'Island not found or access denied' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({ island })
+  } catch (error) {
+    console.error('Error in PATCH /api/topic-islands/[id]:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+/**
  * DELETE /api/topic-islands/[id]
  * Delete an island and all associated words/sentences
  * CASCADE delete in database handles related records automatically

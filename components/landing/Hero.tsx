@@ -18,9 +18,9 @@ export default function Hero() {
             className="flex max-w-xl flex-col justify-center"
           >
             <h1 className="mb-8 text-5xl leading-tight tracking-tight md:text-6xl lg:text-7xl">
-              <span className="font-serif italic text-gray-500">Learn</span>{" "}
+              <span className="font-serif italic text-gray-500">Remember</span>{" "}
               <span className="font-sans font-bold text-gray-900">
-                Mandarin That Sticks
+                your Mandarin
               </span>
             </h1>
             <p className="mb-6 text-xl leading-relaxed text-gray-700 md:text-2xl">
@@ -50,7 +50,7 @@ export default function Hero() {
               href="/onboarding/story"
               title="Create a Story"
               microcopy={[
-                "Turn your vocab into a short story for easy comprehensible input. Practice reading in context, for added reinforcement.",
+                "Turn your vocab into a short story for easy comprehensible input. Practice reading in context for added reinforcement.",
               ]}
               variant="secondary"
             />
