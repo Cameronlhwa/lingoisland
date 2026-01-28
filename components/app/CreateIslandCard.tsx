@@ -19,19 +19,19 @@ export default function CreateIslandCard({
 
   return (
     <div
-      className={`${cardBaseClass} ${cardHoverClass} group relative w-full overflow-hidden p-6 text-left`}
+      className={`${cardBaseClass} ${cardHoverClass} group relative w-full overflow-hidden p-5 md:p-6 text-left`}
     >
       <div className="create-island-bg" aria-hidden="true" />
       <div className="create-island-shine" aria-hidden="true" />
 
-      <div className="relative z-10 flex flex-col gap-6">
+      <div className="relative z-10 flex flex-col gap-4 md:gap-6">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-700">
+          <span className="flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-700">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="h-4 w-4"
+              className="h-3.5 w-3.5 md:h-4 md:w-4"
             >
               <path
                 fillRule="evenodd"
@@ -40,16 +40,16 @@ export default function CreateIslandCard({
               />
             </svg>
           </span>
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900">
             {t("Create a Topic Island")}
           </h2>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <p className="text-base font-medium text-gray-900">
+        <div className="flex flex-col gap-2 md:gap-3">
+          <p className="text-sm md:text-base font-medium text-gray-900">
             {t("2 min setup → instant vocab + examples")}
           </p>
-          <p className="text-sm text-gray-600">
+          <p className="text-xs md:text-sm text-gray-600">
             {t("Pick a topic. Learn words you'll actually use.")}
           </p>
         </div>

@@ -453,9 +453,9 @@ export default function HomeDashboard({
   }
 
   return (
-    <div className="bg-gray-50 px-6 py-8 lg:px-10">
-      <div className="flex w-full flex-col gap-6">
-        <div className="grid gap-6 xl:grid-cols-3">
+    <div className="bg-gray-50 px-4 py-6 md:px-6 md:py-8 lg:px-10">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-4 md:max-w-none md:gap-6">
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-2 xl:grid-cols-3">
           <HeroContinueCard
             chips={chips}
             onStart={handleContinueStart}
@@ -475,15 +475,15 @@ export default function HomeDashboard({
           <CreateIslandCard onCreate={handleCreateIsland} />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-3">
-          <div className="flex flex-col gap-6 xl:col-span-2">
-            <div className={`${cardBaseClass} ${cardHoverClass} p-6`}>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="hidden gap-4 md:grid md:gap-6 lg:grid-cols-3">
+          <div className="flex flex-col gap-4 md:gap-6 lg:col-span-2">
+            <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-6`}>
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-base md:text-lg font-semibold text-gray-900">
                     {t("Review your islands")}
                   </h2>
-                  <p className="mt-1 text-sm text-gray-600">
+                  <p className="mt-1 text-xs md:text-sm text-gray-600">
                     {t("Quick refreshes.")}
                   </p>
                 </div>
@@ -576,13 +576,13 @@ export default function HomeDashboard({
               )}
             </div>
 
-            <div className={`${cardBaseClass} ${cardHoverClass} p-5`}>
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+            <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-5`}>
+              <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-base md:text-lg font-semibold text-gray-900">
                     {t("Flashcards")}
                   </h2>
-                  <p className="mt-1 text-sm text-gray-600">
+                  <p className="mt-1 text-xs md:text-sm text-gray-600">
                     {t("Decks ready.")}
                   </p>
                 </div>

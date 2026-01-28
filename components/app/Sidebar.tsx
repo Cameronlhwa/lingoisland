@@ -9,6 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useGlossary } from "@/contexts/GlossaryContext";
 import { sidebarItems } from "@/components/app/sidebar-items";
 import AccountModal from "@/components/app/AccountModal";
+import { useSidebar } from "@/components/app/AppLayoutClient";
 
 export default function Sidebar() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function Sidebar() {
   const glossaryListRef = useRef<HTMLDivElement | null>(null);
   const isTopicIslandDetail = pathname.startsWith("/app/topic-islands/");
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const { isOpen: sidebarOpen, setIsOpen: setSidebarOpen } = useSidebar();
 
   useEffect(() => {
     if (!isTopicIslandDetail || !activeWordId || !glossaryListRef.current) {
@@ -39,10 +41,18 @@ export default function Sidebar() {
 
   const navItems = sidebarItems;
 
+  // Close mobile sidebar when navigating
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname, setSidebarOpen]);
+
   return (
-    <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
+    <aside className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-300 md:translate-x-0 ${
+      sidebarOpen ? "translate-x-0" : "-translate-x-full"
+    }`}>
       <div className="flex flex-1 flex-col overflow-y-auto p-6">
-        <div className="mb-8 flex items-center gap-1.5">
+        {/* Hide logo on mobile since it's in the header */}
+        <div className="mb-8 hidden md:flex items-center gap-1.5">
           <Image
             src="/logo.png"
             alt="Lingo Island Logo"
