@@ -37,7 +37,6 @@ export default function Sidebar() {
     router.push("/");
   };
 
-
   const navItems = sidebarItems;
 
   return (
@@ -51,7 +50,9 @@ export default function Sidebar() {
             height={40}
             className="rounded-lg"
           />
-          <h2 className="text-xl font-bold text-gray-900">Lingo Island</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            Lingo<span className="text-gray-500">Island</span>
+          </h2>
         </div>
 
         <nav className="space-y-2">
@@ -170,7 +171,10 @@ export default function Sidebar() {
           display: none;
         }
       `}</style>
-      <AccountModal open={isAccountOpen} onClose={() => setIsAccountOpen(false)} />
+      <AccountModal
+        open={isAccountOpen}
+        onClose={() => setIsAccountOpen(false)}
+      />
     </aside>
   );
 }
