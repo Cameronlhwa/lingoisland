@@ -55,15 +55,15 @@ export default function DailyStoryCard({
   const timeLabel = getTimeLabel(story?.story_zh, t("min"));
   const containerClass =
     variant === "home"
-      ? `${cardBaseClass} ${cardHoverClass} p-6`
-      : "rounded-2xl border border-gray-200 bg-gray-50 p-6";
+      ? `${cardBaseClass} ${cardHoverClass} p-5 md:p-6`
+      : "rounded-2xl border border-gray-200 bg-gray-50 p-5 md:p-6";
 
   return (
     <div className={containerClass}>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-3 md:mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500">
-            <svg viewBox="0 0 24 24" className="h-4 w-4">
+          <span className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500">
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 md:h-4 md:w-4">
               <path
                 fill="currentColor"
                 d="M5 4h12a2 2 0 012 2v13l-3-2-3 2-3-2-3 2-2-1.4V6a2 2 0 012-2z"
@@ -71,31 +71,31 @@ export default function DailyStoryCard({
             </svg>
           </span>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900">
               {t("Read your Daily story")}
             </h2>
           </div>
         </div>
       </div>
       {story ? (
-        <div className="space-y-3">
+        <div className="space-y-2 md:space-y-3">
           {variant === "home" && (
-            <span className="text-sm text-gray-500">
+            <span className="text-xs md:text-sm text-gray-500">
               Review words you've recently learned in a short story.
             </span>
           )}
           <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
+            <span className="rounded-full border border-slate-200 bg-white px-2 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold uppercase tracking-wide text-gray-700">
               {story.level}
             </span>
-            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
+            <span className="rounded-full border border-slate-200 bg-white px-2 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold uppercase tracking-wide text-gray-700">
               {timeLabel}
             </span>
-            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
+            <span className="rounded-full border border-slate-200 bg-white px-2 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold uppercase tracking-wide text-gray-700">
               {t("Today")}
             </span>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">{story.title}</h3>
+          <h3 className="text-base md:text-lg font-semibold text-gray-900">{story.title}</h3>
           {variant === "home" && (
             <p
               className="text-sm text-gray-600"

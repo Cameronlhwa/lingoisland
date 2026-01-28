@@ -27,18 +27,18 @@ export default function HeroContinueCard({
 
   return (
     <div
-      className={`${cardBaseClass} ${cardHoverClass} group relative overflow-hidden p-8`}
+      className={`${cardBaseClass} ${cardHoverClass} group relative overflow-hidden p-5 md:p-8`}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/70 via-white to-white opacity-80 transition-opacity group-hover:opacity-100" />
-      <div className="relative flex flex-col gap-4">
+      <div className="relative flex flex-col gap-3 md:gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
             {t("Continue learning")}
           </h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-xs md:text-sm text-gray-600">
             {t("A quick session to keep your streak going.")}
           </p>
-          <p className="mt-2 text-sm font-semibold text-gray-900">
+          <p className="mt-2 text-xs md:text-sm font-semibold text-gray-900">
             {nextUpLabel}
           </p>
         </div>

@@ -17,17 +17,17 @@ export default function Hero() {
             transition={{ duration: 0.5 }}
             className="flex max-w-xl flex-col justify-center"
           >
-            <h1 className="mb-8 text-5xl leading-tight tracking-tight md:text-6xl lg:text-7xl">
+            <h1 className="mb-8 text-4xl leading-tight tracking-tight md:text-6xl lg:text-7xl">
               <span className="font-serif italic text-gray-500">Learn</span>{" "}
               <span className="font-sans font-bold text-gray-900">
                 Mandarin That Sticks
               </span>
             </h1>
-            <p className="mb-6 text-xl leading-relaxed text-gray-700 md:text-2xl">
+            <p className="mb-6 text-lg leading-relaxed text-gray-700 md:text-2xl">
               Overcome the intermediate plateau with personalized stories and
               vocabulary about topics you care about.
             </p>
-            <p className="text-lg leading-relaxed text-gray-600 md:text-xl">
+            <p className="text-base leading-relaxed text-gray-600 md:text-xl">
               Relavance + Reinforcement = Retention
             </p>
           </motion.div>

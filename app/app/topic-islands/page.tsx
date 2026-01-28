@@ -178,15 +178,15 @@ export default function TopicIslandsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-8">
+    <div className="min-h-screen bg-white p-4 md:p-8">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="mb-6 md:mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             {t("Topic Islands")}
           </h1>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="rounded-lg border border-gray-900 bg-white px-6 py-3 text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
+            className="rounded-lg border border-gray-900 bg-white px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
           >
             {t("Create Topic Island")}
           </button>
@@ -245,8 +245,8 @@ export default function TopicIslandsPage() {
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 shadow-xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 md:p-8 shadow-xl">
               <h2 className="mb-6 text-2xl font-bold text-gray-900">
                 {t("Create Topic Island")}
               </h2>

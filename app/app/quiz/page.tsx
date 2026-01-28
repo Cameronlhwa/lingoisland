@@ -101,19 +101,19 @@ export default function QuizIslandsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 md:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="mb-2 text-4xl font-bold tracking-tight text-gray-900">
+            <h1 className="mb-2 text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
               Quiz
             </h1>
-            <p className="text-gray-600">Practice what you've learned.</p>
+            <p className="text-sm md:text-base text-gray-600">Practice what you've learned.</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+            className="rounded-lg border border-gray-900 bg-gray-900 px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-medium text-white transition-colors hover:bg-gray-800"
           >
             + Create Quiz Island
           </button>
@@ -166,8 +166,8 @@ export default function QuizIslandsPage() {
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 md:p-6 shadow-xl">
               <h3 className="mb-4 text-xl font-semibold text-gray-900">
                 Create Quiz Island
               </h3>
