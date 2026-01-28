@@ -7,6 +7,7 @@ import { useGlossary } from "@/contexts/GlossaryContext";
 import IslandSideChat, {
   type IslandChatSelectedWord,
 } from "@/components/IslandSideChat";
+import SpeakerButton from "@/components/app/SpeakerButton";
 
 interface Sentence {
   id: string;
@@ -630,8 +631,14 @@ export default function TopicIslandDetailPage() {
                               <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                                 Easy
                               </div>
-                              <div className="mt-1 text-base text-gray-900">
-                                {tiers.easy.hanzi}
+                              <div className="mt-1 flex items-center gap-2">
+                                <div className="text-base text-gray-900">
+                                  {tiers.easy.hanzi}
+                                </div>
+                                <SpeakerButton
+                                  text={tiers.easy.hanzi}
+                                  size="sm"
+                                />
                               </div>
                               <div className="text-sm text-gray-700">
                                 {tiers.easy.pinyin}
@@ -646,8 +653,14 @@ export default function TopicIslandDetailPage() {
                               <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                                 Your level
                               </div>
-                              <div className="mt-1 text-base text-gray-900">
-                                {tiers.same.hanzi}
+                              <div className="mt-1 flex items-center gap-2">
+                                <div className="text-base text-gray-900">
+                                  {tiers.same.hanzi}
+                                </div>
+                                <SpeakerButton
+                                  text={tiers.same.hanzi}
+                                  size="sm"
+                                />
                               </div>
                               <div className="text-sm text-gray-700">
                                 {tiers.same.pinyin}
@@ -662,8 +675,14 @@ export default function TopicIslandDetailPage() {
                               <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                                 Slightly harder
                               </div>
-                              <div className="mt-1 text-base text-gray-900">
-                                {tiers.hard.hanzi}
+                              <div className="mt-1 flex items-center gap-2">
+                                <div className="text-base text-gray-900">
+                                  {tiers.hard.hanzi}
+                                </div>
+                                <SpeakerButton
+                                  text={tiers.hard.hanzi}
+                                  size="sm"
+                                />
                               </div>
                               <div className="text-sm text-gray-700">
                                 {tiers.hard.pinyin}
@@ -781,9 +800,12 @@ export default function TopicIslandDetailPage() {
                         className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
                       >
                         <div className="mb-6 flex items-start justify-between">
-                          <div>
-                            <div className="mb-2 text-3xl font-bold text-gray-900">
-                              {word.hanzi}
+                          <div className="flex-1">
+                            <div className="mb-2 flex items-center gap-3">
+                              <div className="text-3xl font-bold text-gray-900">
+                                {word.hanzi}
+                              </div>
+                              <SpeakerButton text={word.hanzi} size="lg" />
                             </div>
                             <div className="mb-2 text-lg text-gray-700">
                               {word.pinyin}
@@ -843,8 +865,14 @@ export default function TopicIslandDetailPage() {
                                     <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
                                       {sentence.tier}
                                     </div>
-                                    <div className="mb-1 text-base font-medium text-gray-900">
-                                      {sentence.hanzi}
+                                    <div className="mb-1 flex items-center gap-2">
+                                      <div className="text-base font-medium text-gray-900">
+                                        {sentence.hanzi}
+                                      </div>
+                                      <SpeakerButton
+                                        text={sentence.hanzi}
+                                        size="sm"
+                                      />
                                     </div>
                                     <div className="mb-1 text-sm text-gray-700">
                                       {sentence.pinyin}

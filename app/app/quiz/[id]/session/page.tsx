@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { pinyin as pinyinPro } from "pinyin-pro";
+import SpeakerButton from "@/components/app/SpeakerButton";
 
 interface Card {
   id: string;
@@ -208,8 +209,14 @@ export default function QuizSessionPage() {
         {/* Card */}
         <div className="rounded-xl border border-gray-200 bg-white p-12 shadow-sm">
           <div className="mb-8 text-center">
-            <div className="mb-4 text-4xl font-bold text-gray-900">
-              {currentCard.front}
+            <div className="mb-4 flex items-center justify-center gap-3">
+              <div className="text-4xl font-bold text-gray-900">
+                {currentCard.front}
+              </div>
+              {(isChinese(currentCard.front_lang) ||
+                containsChinese(currentCard.front)) && (
+                <SpeakerButton text={currentCard.front} size="lg" />
+              )}
             </div>
 
             {showPinyin &&
@@ -233,7 +240,13 @@ export default function QuizSessionPage() {
           ) : (
             <>
               <div className="mb-8 border-t border-gray-200 pt-8 text-center">
-                <div className="text-2xl text-gray-700">{currentCard.back}</div>
+                <div className="flex items-center justify-center gap-3">
+                  <div className="text-2xl text-gray-700">{currentCard.back}</div>
+                  {(isChinese(currentCard.back_lang) ||
+                    containsChinese(currentCard.back)) && (
+                    <SpeakerButton text={currentCard.back} size="md" />
+                  )}
+                </div>
                 {showPinyin &&
                   (isChinese(currentCard.back_lang) ||
                     containsChinese(currentCard.back)) && (

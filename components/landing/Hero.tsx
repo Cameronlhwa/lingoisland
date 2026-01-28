@@ -24,8 +24,8 @@ export default function Hero() {
               </span>
             </h1>
             <p className="mb-6 text-xl leading-relaxed text-gray-700 md:text-2xl">
-              Overcome the intermediate plateau with personalized stories, and
-              vocabulary about things you care about.
+              Overcome the intermediate plateau with personalized stories and
+              vocabulary about topics you care about.
             </p>
             <p className="text-lg leading-relaxed text-gray-600 md:text-xl">
               For A2–B2 (HSK 3-6) learners who keep forgetting the words they

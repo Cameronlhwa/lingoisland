@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/browser";
 import StorySideChat from "@/components/stories/StorySideChat";
 import type { IslandChatSelectedWord } from "@/components/IslandSideChat";
 import { pinyin } from "pinyin-pro";
+import SpeakerButton from "@/components/app/SpeakerButton";
 
 export type StoryDetail = {
   id: string;
@@ -329,23 +330,31 @@ export default function StoryReader({
                   {dateLabel ? <span>{dateLabel}</span> : null}
                 </div>
                 {showPinyin && titlePinyinParts.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap gap-x-2 gap-y-3">
-                    {titlePinyinParts.map((part, index) => (
-                      <span
-                        key={`${part.char}-${index}`}
-                        className="flex flex-col items-center text-sm text-gray-600"
-                      >
-                        <span className="text-xs text-gray-500">{part.py}</span>
-                        <span className="text-lg font-semibold text-gray-900">
-                          {part.char}
+                  <div className="mt-2">
+                    <div className="mb-2 flex items-center gap-2">
+                      <SpeakerButton text={story.title} size="md" />
+                    </div>
+                    <div className="flex flex-wrap gap-x-2 gap-y-3">
+                      {titlePinyinParts.map((part, index) => (
+                        <span
+                          key={`${part.char}-${index}`}
+                          className="flex flex-col items-center text-sm text-gray-600"
+                        >
+                          <span className="text-xs text-gray-500">{part.py}</span>
+                          <span className="text-lg font-semibold text-gray-900">
+                            {part.char}
+                          </span>
                         </span>
-                      </span>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {story.title}
-                  </h1>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      {story.title}
+                    </h1>
+                    <SpeakerButton text={story.title} size="lg" />
+                  </div>
                 )}
                 {story.topic ? (
                   <p className="mt-2 text-sm text-gray-500">
@@ -433,6 +442,12 @@ export default function StoryReader({
               </div>
 
               <div className="space-y-6">
+                <div className="mb-3 flex items-center gap-2">
+                  <SpeakerButton text={story.story_zh} size="md" />
+                  <span className="text-sm text-gray-500">
+                    Play full story
+                  </span>
+                </div>
                 {showPinyin && storyPinyinParts.length > 0 ? (
                   <div className="flex flex-wrap gap-x-2 gap-y-4 text-gray-900">
                     {storyPinyinParts.map((part, index) => (
@@ -475,9 +490,12 @@ export default function StoryReader({
                       key={word.id}
                       className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
                     >
-                      <div>
-                        <div className="text-2xl font-semibold text-gray-900">
-                          {word.hanzi}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="text-2xl font-semibold text-gray-900">
+                            {word.hanzi}
+                          </div>
+                          <SpeakerButton text={word.hanzi} size="md" />
                         </div>
                         <div className="text-sm text-gray-600">
                           {word.pinyin}
