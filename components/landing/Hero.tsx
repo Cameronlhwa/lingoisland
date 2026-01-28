@@ -18,9 +18,9 @@ export default function Hero() {
             className="flex max-w-xl flex-col justify-center"
           >
             <h1 className="mb-8 text-5xl leading-tight tracking-tight md:text-6xl lg:text-7xl">
-              <span className="font-serif italic text-gray-500">Remember</span>{" "}
+              <span className="font-serif italic text-gray-500">Learn</span>{" "}
               <span className="font-sans font-bold text-gray-900">
-                your Mandarin
+                Mandarin That Sticks
               </span>
             </h1>
             <p className="mb-6 text-xl leading-relaxed text-gray-700 md:text-2xl">
