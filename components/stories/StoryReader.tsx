@@ -77,6 +77,10 @@ export default function StoryReader({
   const [askAIWord, setAskAIWord] = useState<IslandChatSelectedWord | null>(
     null
   );
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
+  const [localStory, setLocalStory] = useState(story);
 
   const primaryIslandId = story.source_island_ids?.[0] || "";
   const hasPinyin = useMemo(
@@ -111,8 +115,8 @@ export default function StoryReader({
 
   const titlePinyinParts = useMemo(() => {
     if (!showPinyin) return [];
-    const chars = Array.from(story.title || "");
-    const pinyinParts = pinyin(story.title || "", {
+    const chars = Array.from(localStory.title || "");
+    const pinyinParts = pinyin(localStory.title || "", {
       toneType: "symbol",
       type: "array",
       nonZh: "consecutive",
@@ -124,14 +128,15 @@ export default function StoryReader({
       char,
       py: pinyinParts[index] || "",
     }));
-  }, [showPinyin, story.title]);
+  }, [showPinyin, localStory.title]);
   useEffect(() => {
     setShowPinyin(false);
     setStoryPinyin(story.story_pinyin || "");
     setShowEnglish(Boolean(story.story_en));
     setStoryEnglish(story.story_en || "");
     setTitlePinyin("");
-  }, [story.id, story.story_en, story.story_pinyin]);
+    setLocalStory(story);
+  }, [story]);
 
   const handleGeneratePinyin = async () => {
     setPinyinLoading(true);
@@ -174,6 +179,46 @@ export default function StoryReader({
       alert("Failed to generate pinyin. Please try again.");
     } finally {
       setPinyinLoading(false);
+    }
+  };
+
+  const handleStartEditTitle = () => {
+    setEditedTitle(localStory.title);
+    setIsEditingTitle(true);
+  };
+
+  const handleCancelEditTitle = () => {
+    setIsEditingTitle(false);
+    setEditedTitle("");
+  };
+
+  const handleSaveTitle = async () => {
+    if (!editedTitle.trim() || editedTitle === localStory.title) {
+      handleCancelEditTitle();
+      return;
+    }
+
+    setSavingTitle(true);
+    try {
+      const response = await fetch(`/api/story/${story.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: editedTitle.trim() }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to update title");
+      }
+
+      setLocalStory({ ...localStory, title: editedTitle.trim() });
+      setIsEditingTitle(false);
+      setEditedTitle("");
+    } catch (error) {
+      console.error("Error updating title:", error);
+      alert(error instanceof Error ? error.message : "Failed to update title");
+    } finally {
+      setSavingTitle(false);
     }
   };
 
@@ -329,10 +374,42 @@ export default function StoryReader({
                   <span>Level: {story.level}</span>
                   {dateLabel ? <span>{dateLabel}</span> : null}
                 </div>
-                {showPinyin && titlePinyinParts.length > 0 ? (
+                {isEditingTitle ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editedTitle}
+                      onChange={(e) => setEditedTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleSaveTitle();
+                        } else if (e.key === "Escape") {
+                          handleCancelEditTitle();
+                        }
+                      }}
+                      className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-3xl font-bold text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      autoFocus
+                      disabled={savingTitle}
+                    />
+                    <button
+                      onClick={handleSaveTitle}
+                      disabled={savingTitle || !editedTitle.trim()}
+                      className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      {savingTitle ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      onClick={handleCancelEditTitle}
+                      disabled={savingTitle}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : showPinyin && titlePinyinParts.length > 0 ? (
                   <div className="mt-2">
                     <div className="mb-2 flex items-center gap-2">
-                      <SpeakerButton text={story.title} size="md" />
+                      <SpeakerButton text={localStory.title} size="md" />
                     </div>
                     <div className="flex flex-wrap gap-x-2 gap-y-3">
                       {titlePinyinParts.map((part, index) => (
@@ -349,11 +426,18 @@ export default function StoryReader({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 group">
                     <h1 className="text-3xl font-bold text-gray-900">
-                      {story.title}
+                      {localStory.title}
                     </h1>
-                    <SpeakerButton text={story.title} size="lg" />
+                    <SpeakerButton text={localStory.title} size="lg" />
+                    <button
+                      onClick={handleStartEditTitle}
+                      className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 opacity-0 transition-all hover:border-gray-300 hover:text-gray-900 group-hover:opacity-100"
+                      title="Edit title"
+                    >
+                      Edit
+                    </button>
                   </div>
                 )}
                 {story.topic ? (
@@ -647,7 +731,7 @@ export default function StoryReader({
           </div>
         </div>
 
-        <StorySideChat storyId={story.id} storyTitle={story.title} />
+        <StorySideChat storyId={story.id} storyTitle={localStory.title} />
       </div>
     </div>
   );

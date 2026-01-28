@@ -51,7 +51,7 @@ export default function WhyLingoIsland() {
     <section
       id="why"
       ref={sectionRef}
-      className="bg-white px-6 py-24 md:px-12 md:py-32"
+      className="bg-white px-6 pb-24 pt-8 md:px-12 md:pb-32 md:pt-12"
     >
       <div className="mx-auto max-w-7xl">
         {/* Part 1: Primer */}

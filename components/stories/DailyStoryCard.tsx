@@ -72,18 +72,17 @@ export default function DailyStoryCard({
           </span>
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {t("Daily story")}
+              {t("Read your Daily story")}
             </h2>
-            <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
         </div>
       </div>
       {story ? (
         <div className="space-y-3">
           {variant === "home" && (
-            <p className="text-sm text-gray-600">
-              {t("Review your vocab in a short story.")}
-            </p>
+            <span className="text-sm text-gray-500">
+              Review words you've recently learned in a short story.
+            </span>
           )}
           <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
             <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">

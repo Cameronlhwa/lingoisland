@@ -34,6 +34,8 @@ export default function AccountModal({
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
+  const [cefrLevel, setCefrLevel] = useState<string>("B1");
+  const [levelLoading, setLevelLoading] = useState(false);
   const [entitlementsLoading, setEntitlementsLoading] = useState(true);
   const [entitlementsError, setEntitlementsError] = useState<string | null>(
     null,
@@ -125,6 +127,22 @@ export default function AccountModal({
     if (!open || !entitlements) return;
     setActiveTab(entitlements.plan === "pro" ? "profile" : "subscription");
   }, [open, entitlements]);
+
+  useEffect(() => {
+    if (!open) return;
+    const loadProfile = async () => {
+      try {
+        const response = await fetch("/api/profile");
+        if (response.ok) {
+          const data = await response.json();
+          setCefrLevel(data.cefrLevel || "B1");
+        }
+      } catch (error) {
+        console.error("Error loading profile:", error);
+      }
+    };
+    void loadProfile();
+  }, [open]);
 
   const renewalDate = useMemo(() => {
     if (!entitlements?.current_period_end) return null;
@@ -228,6 +246,30 @@ export default function AccountModal({
     }
   };
 
+  const handleLevelChange = async (newLevel: string) => {
+    setLevelLoading(true);
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cefrLevel: newLevel }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update level");
+      }
+
+      const data = await response.json();
+      setCefrLevel(data.cefrLevel);
+    } catch (error) {
+      console.error("Error updating level:", error);
+      alert(error instanceof Error ? error.message : "Failed to update level");
+    } finally {
+      setLevelLoading(false);
+    }
+  };
+
   if (!open || !mounted) return null;
 
   return createPortal(
@@ -286,21 +328,51 @@ export default function AccountModal({
 
         {activeTab === "profile" ? (
           <div className={`${cardBaseClass} mt-6 p-6`}>
-            <div className="flex flex-col gap-2">
-              <h2 className="text-base font-semibold text-gray-900">Profile</h2>
-              <div className="text-sm text-gray-600">
-                {userName ? (
-                  <div className="font-medium text-gray-900">{userName}</div>
-                ) : null}
-                <div>{userEmail ?? "Loading..."}</div>
+            <div className="space-y-6">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-base font-semibold text-gray-900">
+                  Profile
+                </h2>
+                <div className="text-sm text-gray-600">
+                  {userName ? (
+                    <div className="font-medium text-gray-900">{userName}</div>
+                  ) : null}
+                  <div>{userEmail ?? "Loading..."}</div>
+                </div>
               </div>
+
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor="level-select"
+                  className="text-sm font-medium text-gray-900"
+                >
+                  Default Chinese Level
+                </label>
+                <p className="text-xs text-gray-600">
+                  This will be used as the default level when creating new Topic
+                  Islands.
+                </p>
+                <select
+                  id="level-select"
+                  value={cefrLevel}
+                  onChange={(e) => handleLevelChange(e.target.value)}
+                  disabled={levelLoading}
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
+                >
+                  <option value="A2">A2 (Elementary)</option>
+                  <option value="B1">B1 (Intermediate)</option>
+                  <option value="B2">B2 (Upper Intermediate)</option>
+                  <option value="C1">C1 (Advanced)</option>
+                </select>
+              </div>
+
+              <button
+                onClick={handleSignOut}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Sign out
+              </button>
             </div>
-            <button
-              onClick={handleSignOut}
-              className="mt-4 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              Sign out
-            </button>
           </div>
         ) : (
           <div className="mt-6 grid gap-6 md:grid-cols-[1.15fr_1fr]">

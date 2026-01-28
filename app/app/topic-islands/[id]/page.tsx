@@ -65,7 +65,7 @@ export default function TopicIslandDetailPage() {
   const [creatingQuizIsland, setCreatingQuizIsland] = useState(false);
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set()); // Track added items
   const [askAIWord, setAskAIWord] = useState<IslandChatSelectedWord | null>(
-    null
+    null,
   );
   const [addCount, setAddCount] = useState(7);
   const [suggestionsInput, setSuggestionsInput] = useState("");
@@ -73,12 +73,15 @@ export default function TopicIslandDetailPage() {
   const [addingWords, setAddingWords] = useState(false);
   const [addToast, setAddToast] = useState<string | null>(null);
   const [pendingScrollWordId, setPendingScrollWordId] = useState<string | null>(
-    null
+    null,
   );
   const [activeWordId, setActiveWordId] = useState<string | null>(null);
   const activeWordIdRef = useRef<string | null>(null);
   const { setEntries, setActiveWordId: setGlossaryActiveWordId } =
     useGlossary();
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
 
   useEffect(() => {
     loadIsland();
@@ -141,7 +144,7 @@ export default function TopicIslandDetailPage() {
   const handleDelete = async () => {
     if (
       !confirm(
-        "Are you sure you want to delete this topic island? This will delete all words and sentences."
+        "Are you sure you want to delete this topic island? This will delete all words and sentences.",
       )
     ) {
       return;
@@ -176,7 +179,9 @@ export default function TopicIslandDetailPage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || errorData.error || "Failed to mark word as known"
+          errorData.message ||
+            errorData.error ||
+            "Failed to mark word as known",
         );
       }
 
@@ -189,7 +194,7 @@ export default function TopicIslandDetailPage() {
           const filtered = prevWords.filter((w) => w.id !== data.deletedWordId);
           // Add new word in the same position if possible, otherwise at the end
           const deletedIndex = prevWords.findIndex(
-            (w) => w.id === data.deletedWordId
+            (w) => w.id === data.deletedWordId,
           );
           if (deletedIndex >= 0) {
             return [
@@ -215,7 +220,7 @@ export default function TopicIslandDetailPage() {
 
   const handleAddToQuizClick = (
     type: "word" | "sentence",
-    sourceId: string
+    sourceId: string,
   ) => {
     // Check if already added
     if (addedItems.has(`${type}-${sourceId}`)) {
@@ -269,7 +274,7 @@ export default function TopicIslandDetailPage() {
     } catch (error) {
       console.error("Error creating quiz island:", error);
       alert(
-        error instanceof Error ? error.message : "Failed to create quiz island"
+        error instanceof Error ? error.message : "Failed to create quiz island",
       );
     } finally {
       setCreatingQuizIsland(false);
@@ -332,13 +337,13 @@ export default function TopicIslandDetailPage() {
         word,
         anchorId: `word-${word.id || index}`,
       })),
-    [words]
+    [words],
   );
 
   const suggestionList = useMemo(() => {
     const raw = suggestionsInput.split(",").map((value) => value.trim());
     const deduped = Array.from(
-      new Set(raw.filter((value) => value.length > 0))
+      new Set(raw.filter((value) => value.length > 0)),
     );
     return deduped;
   }, [suggestionsInput]);
@@ -360,7 +365,7 @@ export default function TopicIslandDetailPage() {
           entriesMap.set(entry.target.id, entry);
         });
         const visible = Array.from(entriesMap.values()).filter(
-          (entry) => entry.isIntersecting
+          (entry) => entry.isIntersecting,
         );
         if (visible.length === 0) return;
         const viewportCenter = window.innerHeight / 2;
@@ -385,11 +390,11 @@ export default function TopicIslandDetailPage() {
       {
         root: null,
         threshold: [0, 0.25, 0.5, 0.75, 1],
-      }
+      },
     );
 
     const elements = document.querySelectorAll<HTMLElement>(
-      "[data-word-anchor='true']"
+      "[data-word-anchor='true']",
     );
     elements.forEach((el) => observer.observe(el));
     return () => {
@@ -404,7 +409,7 @@ export default function TopicIslandDetailPage() {
         anchorId,
         hanzi: word.hanzi,
         english: word.english,
-      }))
+      })),
     );
   }, [glossaryEntries, setEntries]);
 
@@ -477,12 +482,12 @@ export default function TopicIslandDetailPage() {
     island.sentence_tasks || Math.max(island.word_target * 3, 1);
   const wordsSelected = Math.min(
     island.words_selected ?? words.length,
-    island.word_target
+    island.word_target,
   );
   const sentenceAttempts = Math.min(
     island.sentence_attempts ??
       words.reduce((total, word) => total + word.sentences.length, 0),
-    totalSentenceTasks
+    totalSentenceTasks,
   );
 
   const wordProgress = island.word_target
@@ -494,15 +499,15 @@ export default function TopicIslandDetailPage() {
     island.status === "ready"
       ? 100
       : wordProgress < 1
-      ? Math.round(30 * wordProgress)
-      : Math.round(30 + 70 * sentenceProgress);
+        ? Math.round(30 * wordProgress)
+        : Math.round(30 + 70 * sentenceProgress);
 
   const progressLabel =
     island.status === "ready"
       ? "Ready"
       : wordProgress < 1
-      ? `Selecting words (${wordsSelected}/${island.word_target})`
-      : `Generating sentences (${sentenceAttempts}/${totalSentenceTasks}) — 5 workers`;
+        ? `Selecting words (${wordsSelected}/${island.word_target})`
+        : `Generating sentences (${sentenceAttempts}/${totalSentenceTasks})`;
 
   // Group sentences by grammar pattern (if any)
   const grammarMap = new Map<
@@ -534,7 +539,7 @@ export default function TopicIslandDetailPage() {
         body: JSON.stringify({
           count: addCount,
           suggestions: suggestionList.filter(
-            (word) => !existingWordsSet.has(word)
+            (word) => !existingWordsSet.has(word),
           ),
           recycleOldWords,
         }),
@@ -564,6 +569,49 @@ export default function TopicIslandDetailPage() {
     }
   };
 
+  const handleStartEditTitle = () => {
+    setEditedTitle(island?.topic || "");
+    setIsEditingTitle(true);
+  };
+
+  const handleCancelEditTitle = () => {
+    setIsEditingTitle(false);
+    setEditedTitle("");
+  };
+
+  const handleSaveTitle = async () => {
+    if (!editedTitle.trim() || editedTitle === island?.topic) {
+      handleCancelEditTitle();
+      return;
+    }
+
+    setSavingTitle(true);
+    try {
+      const response = await fetch(`/api/topic-islands/${islandId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: editedTitle.trim() }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to update title");
+      }
+
+      // Update local state
+      if (island) {
+        setIsland({ ...island, topic: editedTitle.trim() });
+      }
+      setIsEditingTitle(false);
+      setEditedTitle("");
+    } catch (error) {
+      console.error("Error updating title:", error);
+      alert(error instanceof Error ? error.message : "Failed to update title");
+    } finally {
+      setSavingTitle(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex w-full">
@@ -587,9 +635,52 @@ export default function TopicIslandDetailPage() {
                     {deleting ? "Deleting..." : "Delete Island"}
                   </button>
                 </div>
-                <h1 className="mb-4 text-4xl font-bold tracking-tight text-gray-900">
-                  {island.topic}
-                </h1>
+                {isEditingTitle ? (
+                  <div className="mb-4 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editedTitle}
+                      onChange={(e) => setEditedTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleSaveTitle();
+                        } else if (e.key === "Escape") {
+                          handleCancelEditTitle();
+                        }
+                      }}
+                      className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-4xl font-bold tracking-tight text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      autoFocus
+                      disabled={savingTitle}
+                    />
+                    <button
+                      onClick={handleSaveTitle}
+                      disabled={savingTitle || !editedTitle.trim()}
+                      className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      {savingTitle ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      onClick={handleCancelEditTitle}
+                      disabled={savingTitle}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mb-4 flex items-center gap-3 group">
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                      {island.topic}
+                    </h1>
+                    <button
+                      onClick={handleStartEditTitle}
+                      className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 opacity-0 transition-all hover:border-gray-300 hover:text-gray-900 group-hover:opacity-100"
+                      title="Edit title"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                )}
                 <div className="mb-6 space-y-1 text-sm text-gray-600">
                   <p>Level: {island.level}</p>
                   <p className="capitalize">Status: {island.status}</p>
@@ -748,7 +839,7 @@ export default function TopicIslandDetailPage() {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ batchSize: 5 }),
-                            }
+                            },
                           );
 
                           if (!response.ok) {
@@ -758,7 +849,7 @@ export default function TopicIslandDetailPage() {
                             throw new Error(
                               errorData.message ||
                                 errorData.error ||
-                                "Failed to retry generation"
+                                "Failed to retry generation",
                             );
                           }
 
@@ -769,7 +860,7 @@ export default function TopicIslandDetailPage() {
                           alert(
                             error instanceof Error
                               ? error.message
-                              : "Failed to retry generation. Please try again."
+                              : "Failed to retry generation. Please try again.",
                           );
                         }
                       }}
@@ -885,11 +976,11 @@ export default function TopicIslandDetailPage() {
                                     onClick={() =>
                                       handleAddToQuizClick(
                                         "sentence",
-                                        sentence.id
+                                        sentence.id,
                                       )
                                     }
                                     disabled={addedItems.has(
-                                      `sentence-${sentence.id}`
+                                      `sentence-${sentence.id}`,
                                     )}
                                     className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
                                   >
@@ -1116,7 +1207,7 @@ export default function TopicIslandDetailPage() {
                               setShowAddToQuizModal(false);
                               setSelectedQuizIslandId(
                                 localStorage.getItem("lastUsedQuizIslandId") ||
-                                  ""
+                                  "",
                               );
                               setAddToQuizContext(null);
                               setShowCreateNew(false);
