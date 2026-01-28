@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Nav from "@/components/landing/Nav";
 import Hero from "@/components/landing/Hero";
+import WhyLingoIsland from "@/components/landing/WhyLingoIsland";
 import ProofDemo from "@/components/landing/ProofDemo";
 import FeatureGrid from "@/components/landing/FeatureGrid";
 import HowItWorks from "@/components/landing/HowItWorks";
@@ -82,6 +83,8 @@ export default function Home() {
       />
       <Nav />
       <Hero />
+      {/* Why LingoIsland */}
+      <WhyLingoIsland />
       {/* Proof demo */}
       <ProofDemo />
       {/* How it works loop */}

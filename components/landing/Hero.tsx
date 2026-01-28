@@ -18,9 +18,9 @@ export default function Hero() {
             className="flex max-w-xl flex-col justify-center"
           >
             <h1 className="mb-8 text-5xl leading-tight tracking-tight md:text-6xl lg:text-7xl">
-              <span className="font-serif italic text-gray-500">Remember</span>{" "}
+              <span className="font-serif italic text-gray-500">Learn</span>{" "}
               <span className="font-sans font-bold text-gray-900">
-                your Mandarin
+                Mandarin That Sticks
               </span>
             </h1>
             <p className="mb-6 text-xl leading-relaxed text-gray-700 md:text-2xl">
@@ -28,8 +28,7 @@ export default function Hero() {
               vocabulary about topics you care about.
             </p>
             <p className="text-lg leading-relaxed text-gray-600 md:text-xl">
-              For A2–B2 (HSK 3-6) learners who keep forgetting the words they
-              learn.
+              Relavance + Reinforcement = Retention
             </p>
           </motion.div>
 
@@ -39,7 +38,7 @@ export default function Hero() {
               href="/onboarding/topic-island"
               title="Create a Topic Island"
               microcopy={[
-                "Build vocabulary around topics you care about. 10–20 words with pinyin, examples, and translations.",
+                "Build vocabulary around topics that interest you. 10-20 words with pinyin, conventional examples, and translations.",
               ]}
               tooltip={{
                 label: "What's a Topic Island?",
@@ -51,7 +50,7 @@ export default function Hero() {
               href="/onboarding/story"
               title="Create a Story"
               microcopy={[
-                "Turn your vocab into a short story for easy comprehensible input. Practice reading in context.",
+                "Turn your vocab into a short story for easy comprehensible input. Practice reading in context, for added reinforcement.",
               ]}
               variant="secondary"
             />
