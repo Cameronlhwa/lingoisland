@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import AuthRedirectHandler from "@/components/AuthRedirectHandler";
 import { getSiteUrl } from "@/lib/utils/site-url";
+import { TTSProvider } from "@/contexts/TTSContext";
 
 const siteUrl = getSiteUrl();
 
@@ -104,10 +105,12 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <Suspense fallback={null}>
-          <AuthRedirectHandler />
-        </Suspense>
-        {children}
+        <TTSProvider>
+          <Suspense fallback={null}>
+            <AuthRedirectHandler />
+          </Suspense>
+          {children}
+        </TTSProvider>
       </body>
     </html>
   );

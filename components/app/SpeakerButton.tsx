@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { playTextToSpeech } from "@/lib/utils/tts";
+import { useTTS } from "@/contexts/TTSContext";
 import { Volume2 } from "lucide-react";
 
 interface SpeakerButtonProps {
   text: string;
+  type?: "word" | "sentence";
   size?: "sm" | "md" | "lg";
   className?: string;
 }
@@ -15,11 +17,13 @@ interface SpeakerButtonProps {
  */
 export default function SpeakerButton({
   text,
+  type = "sentence",
   size = "md",
   className = "",
 }: SpeakerButtonProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { settings } = useTTS();
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -31,7 +35,9 @@ export default function SpeakerButton({
     setError(null);
 
     try {
-      await playTextToSpeech(text);
+      const rate =
+        type === "word" ? settings.ttsRateWords : settings.ttsRateSentences;
+      await playTextToSpeech(text, rate);
     } catch (err) {
       console.error("Failed to play audio:", err);
       setError("Failed to play audio");

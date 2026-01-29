@@ -215,7 +215,7 @@ export default function QuizSessionPage() {
               </div>
               {(isChinese(currentCard.front_lang) ||
                 containsChinese(currentCard.front)) && (
-                <SpeakerButton text={currentCard.front} size="lg" />
+                <SpeakerButton text={currentCard.front} type="word" size="lg" />
               )}
             </div>
 
@@ -244,7 +244,7 @@ export default function QuizSessionPage() {
                   <div className="text-2xl text-gray-700">{currentCard.back}</div>
                   {(isChinese(currentCard.back_lang) ||
                     containsChinese(currentCard.back)) && (
-                    <SpeakerButton text={currentCard.back} size="md" />
+                    <SpeakerButton text={currentCard.back} type="word" size="md" />
                   )}
                 </div>
                 {showPinyin &&

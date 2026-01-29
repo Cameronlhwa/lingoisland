@@ -75,7 +75,7 @@ export default function StoryReader({
   const [creatingQuizIsland, setCreatingQuizIsland] = useState(false);
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
   const [askAIWord, setAskAIWord] = useState<IslandChatSelectedWord | null>(
-    null
+    null,
   );
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
@@ -85,7 +85,7 @@ export default function StoryReader({
   const primaryIslandId = story.source_island_ids?.[0] || "";
   const hasPinyin = useMemo(
     () => Boolean(storyPinyin || story.story_pinyin),
-    [storyPinyin, story.story_pinyin]
+    [storyPinyin, story.story_pinyin],
   );
   const hasEnglish = Boolean(storyEnglish || story.story_en);
 
@@ -281,7 +281,7 @@ export default function StoryReader({
     } catch (error) {
       console.error("Error creating quiz island:", error);
       alert(
-        error instanceof Error ? error.message : "Failed to create quiz island"
+        error instanceof Error ? error.message : "Failed to create quiz island",
       );
     } finally {
       setCreatingQuizIsland(false);
@@ -345,7 +345,7 @@ export default function StoryReader({
                   <button
                     onClick={() =>
                       router.push(
-                        `/app/topic-islands/${story.source_island_ids[0]}`
+                        `/app/topic-islands/${story.source_island_ids[0]}`,
                       )
                     }
                     className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
@@ -409,7 +409,11 @@ export default function StoryReader({
                 ) : showPinyin && titlePinyinParts.length > 0 ? (
                   <div className="mt-2">
                     <div className="mb-2 flex items-center gap-2">
-                      <SpeakerButton text={localStory.title} size="md" />
+                      <SpeakerButton
+                        text={localStory.title}
+                        type="sentence"
+                        size="md"
+                      />
                     </div>
                     <div className="flex flex-wrap gap-x-2 gap-y-3">
                       {titlePinyinParts.map((part, index) => (
@@ -417,7 +421,9 @@ export default function StoryReader({
                           key={`${part.char}-${index}`}
                           className="flex flex-col items-center text-sm text-gray-600"
                         >
-                          <span className="text-xs text-gray-500">{part.py}</span>
+                          <span className="text-xs text-gray-500">
+                            {part.py}
+                          </span>
                           <span className="text-lg font-semibold text-gray-900">
                             {part.char}
                           </span>
@@ -430,7 +436,11 @@ export default function StoryReader({
                     <h1 className="text-3xl font-bold text-gray-900">
                       {localStory.title}
                     </h1>
-                    <SpeakerButton text={localStory.title} size="lg" />
+                    <SpeakerButton
+                      text={localStory.title}
+                      type="sentence"
+                      size="lg"
+                    />
                     <button
                       onClick={handleStartEditTitle}
                       className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 opacity-0 transition-all hover:border-gray-300 hover:text-gray-900 group-hover:opacity-100"
@@ -502,7 +512,7 @@ export default function StoryReader({
                             .json()
                             .catch(() => ({}));
                           throw new Error(
-                            errorData.error || "Failed to generate English"
+                            errorData.error || "Failed to generate English",
                           );
                         }
                         const data = await response.json();
@@ -527,10 +537,12 @@ export default function StoryReader({
 
               <div className="space-y-6">
                 <div className="mb-3 flex items-center gap-2">
-                  <SpeakerButton text={story.story_zh} size="md" />
-                  <span className="text-sm text-gray-500">
-                    Play full story
-                  </span>
+                  <SpeakerButton
+                    text={story.story_zh}
+                    type="sentence"
+                    size="md"
+                  />
+                  <span className="text-sm text-gray-500">Play full story</span>
                 </div>
                 {showPinyin && storyPinyinParts.length > 0 ? (
                   <div className="flex flex-wrap gap-x-2 gap-y-4 text-gray-900">
@@ -579,7 +591,11 @@ export default function StoryReader({
                           <div className="text-2xl font-semibold text-gray-900">
                             {word.hanzi}
                           </div>
-                          <SpeakerButton text={word.hanzi} size="md" />
+                          <SpeakerButton
+                            text={word.hanzi}
+                            type="word"
+                            size="md"
+                          />
                         </div>
                         <div className="text-sm text-gray-600">
                           {word.pinyin}
@@ -706,7 +722,8 @@ export default function StoryReader({
                           onClick={() => {
                             setShowAddToQuizModal(false);
                             setSelectedQuizIslandId(
-                              localStorage.getItem("lastUsedQuizIslandId") || ""
+                              localStorage.getItem("lastUsedQuizIslandId") ||
+                                "",
                             );
                             setAddToQuizContext(null);
                             setShowCreateNew(false);

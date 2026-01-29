@@ -4,18 +4,30 @@ import { NextResponse } from 'next/server'
  * POST /api/tts
  * Convert Chinese text to speech using Google Cloud Text-to-Speech API
  * 
- * Body: { text: string }
+ * Body: { text: string, rate?: number }
  * Returns: audio/mp3 file
  */
 export async function POST(request: Request) {
   try {
-    const { text } = await request.json()
+    const { text, rate } = await request.json()
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json(
         { error: 'Text is required' },
         { status: 400 }
       )
+    }
+
+    // Validate and clamp rate (default to 1.0)
+    let speakingRate = 1.0
+    if (rate !== undefined) {
+      if (typeof rate !== 'number') {
+        return NextResponse.json(
+          { error: 'Rate must be a number' },
+          { status: 400 }
+        )
+      }
+      speakingRate = Math.max(0.25, Math.min(2.0, rate))
     }
 
     const apiKey = process.env.GOOGLE_TTS_API_KEY
@@ -48,7 +60,7 @@ export async function POST(request: Request) {
           },
           audioConfig: {
             audioEncoding: 'MP3',
-            speakingRate: 0.9, // Slightly slower for language learning
+            speakingRate: speakingRate,
             pitch: 0,
           },
         }),

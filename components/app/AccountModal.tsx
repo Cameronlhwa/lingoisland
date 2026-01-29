@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { cardBaseClass } from "@/components/app/ui/styles";
+import { useTTS } from "@/contexts/TTSContext";
 
 type Entitlements = {
   plan: "free" | "pro";
@@ -58,6 +59,15 @@ export default function AccountModal({
   const [comeback, setComeback] = useState<string>("");
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [ttsRateSentences, setTtsRateSentences] = useState(1.0);
+  const [ttsRateWords, setTtsRateWords] = useState(1.0);
+  const [ttsSaving, setTtsSaving] = useState(false);
+  const [ttsSaveStatus, setTtsSaveStatus] = useState<"idle" | "saved" | "error">(
+    "idle",
+  );
+  const ttsDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { settings: ttsSettings, updateSettings: updateTtsSettings } =
+    useTTS();
 
   useEffect(() => {
     setMounted(true);
@@ -136,6 +146,8 @@ export default function AccountModal({
         if (response.ok) {
           const data = await response.json();
           setCefrLevel(data.cefrLevel || "B1");
+          setTtsRateSentences(data.ttsRateSentences || 1.0);
+          setTtsRateWords(data.ttsRateWords || 1.0);
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -270,6 +282,63 @@ export default function AccountModal({
     }
   };
 
+  const saveTtsSettings = useCallback(
+    async (sentencesRate: number, wordsRate: number) => {
+      setTtsSaving(true);
+      setTtsSaveStatus("idle");
+      try {
+        await updateTtsSettings({
+          ttsRateSentences: sentencesRate,
+          ttsRateWords: wordsRate,
+        });
+        setTtsSaveStatus("saved");
+        setTimeout(() => setTtsSaveStatus("idle"), 2000);
+      } catch (error) {
+        console.error("Error saving TTS settings:", error);
+        setTtsSaveStatus("error");
+        setTimeout(() => setTtsSaveStatus("idle"), 3000);
+      } finally {
+        setTtsSaving(false);
+      }
+    },
+    [updateTtsSettings],
+  );
+
+  const handleTtsRateChange = useCallback(
+    (type: "sentences" | "words", value: number) => {
+      const clampedValue = Math.max(0.25, Math.min(2.0, value));
+      const roundedValue = Math.round(clampedValue * 100) / 100;
+
+      if (type === "sentences") {
+        setTtsRateSentences(roundedValue);
+      } else {
+        setTtsRateWords(roundedValue);
+      }
+
+      // Debounce the save
+      if (ttsDebounceTimeoutRef.current) {
+        clearTimeout(ttsDebounceTimeoutRef.current);
+      }
+
+      ttsDebounceTimeoutRef.current = setTimeout(() => {
+        void saveTtsSettings(
+          type === "sentences" ? roundedValue : ttsRateSentences,
+          type === "words" ? roundedValue : ttsRateWords,
+        );
+      }, 500);
+    },
+    [ttsRateSentences, ttsRateWords, saveTtsSettings],
+  );
+
+  const handleTtsReset = useCallback(async () => {
+    setTtsRateSentences(1.0);
+    setTtsRateWords(1.0);
+    if (ttsDebounceTimeoutRef.current) {
+      clearTimeout(ttsDebounceTimeoutRef.current);
+    }
+    await saveTtsSettings(1.0, 1.0);
+  }, [saveTtsSettings]);
+
   if (!open || !mounted) return null;
 
   return createPortal(
@@ -285,12 +354,12 @@ export default function AccountModal({
       }}
     >
       <div
-        className="relative w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl md:min-h-[520px]"
+        className="relative w-full max-w-3xl max-h-[90vh] rounded-2xl bg-white p-6 shadow-xl md:min-h-[520px] overflow-y-auto"
         onClick={(event) => event.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-sm text-gray-500 hover:text-gray-700"
+          className="absolute right-4 top-4 text-sm text-gray-500 hover:text-gray-700 z-10"
           aria-label="Close account"
         >
           ✕
@@ -359,11 +428,108 @@ export default function AccountModal({
                   disabled={levelLoading}
                   className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
                 >
+                  <option value="A1">A1 (Beginner)</option>
                   <option value="A2">A2 (Elementary)</option>
                   <option value="B1">B1 (Intermediate)</option>
                   <option value="B2">B2 (Upper Intermediate)</option>
                   <option value="C1">C1 (Advanced)</option>
                 </select>
+              </div>
+
+              <div className="flex flex-col gap-4 border-t border-gray-100 pt-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Audio (Text-to-Speech)
+                  </h3>
+                  {ttsSaveStatus === "saved" ? (
+                    <span className="text-xs font-medium text-green-600">
+                      Saved
+                    </span>
+                  ) : ttsSaveStatus === "error" ? (
+                    <span className="text-xs font-medium text-red-600">
+                      Error saving
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="tts-sentences"
+                        className="text-sm font-medium text-gray-900"
+                      >
+                        Sentences & Stories speed
+                      </label>
+                      <span className="text-sm font-medium text-gray-700">
+                        {ttsRateSentences.toFixed(2)}×
+                      </span>
+                    </div>
+                    <input
+                      id="tts-sentences"
+                      type="range"
+                      min="0.25"
+                      max="2.0"
+                      step="0.05"
+                      value={ttsRateSentences}
+                      onChange={(e) =>
+                        handleTtsRateChange(
+                          "sentences",
+                          parseFloat(e.target.value),
+                        )
+                      }
+                      disabled={ttsSaving}
+                      className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{
+                        background: `linear-gradient(to right, #111827 0%, #111827 ${((ttsRateSentences - 0.25) / (2.0 - 0.25)) * 100}%, #e5e7eb ${((ttsRateSentences - 0.25) / (2.0 - 0.25)) * 100}%, #e5e7eb 100%)`,
+                      }}
+                    />
+                    <p className="text-xs text-gray-600">
+                      Slower helps with listening practice.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="tts-words"
+                        className="text-sm font-medium text-gray-900"
+                      >
+                        Word speed
+                      </label>
+                      <span className="text-sm font-medium text-gray-700">
+                        {ttsRateWords.toFixed(2)}×
+                      </span>
+                    </div>
+                    <input
+                      id="tts-words"
+                      type="range"
+                      min="0.25"
+                      max="2.0"
+                      step="0.05"
+                      value={ttsRateWords}
+                      onChange={(e) =>
+                        handleTtsRateChange("words", parseFloat(e.target.value))
+                      }
+                      disabled={ttsSaving}
+                      className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{
+                        background: `linear-gradient(to right, #111827 0%, #111827 ${((ttsRateWords - 0.25) / (2.0 - 0.25)) * 100}%, #e5e7eb ${((ttsRateWords - 0.25) / (2.0 - 0.25)) * 100}%, #e5e7eb 100%)`,
+                      }}
+                    />
+                    <p className="text-xs text-gray-600">
+                      Make single-word pronunciation clearer.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleTtsReset}
+                    disabled={ttsSaving}
+                    className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Reset to default (1.0×)
+                  </button>
+                </div>
               </div>
 
               <button
