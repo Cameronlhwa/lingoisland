@@ -19,7 +19,7 @@ export async function GET() {
     // Get or create user profile
     let { data: profile, error } = await supabase
       .from('user_profiles')
-      .select('cefr_level')
+      .select('cefr_level, tts_rate_sentences, tts_rate_words')
       .eq('user_id', user.id)
       .single()
 
@@ -30,8 +30,10 @@ export async function GET() {
         .insert({
           user_id: user.id,
           cefr_level: 'B1',
+          tts_rate_sentences: 1.0,
+          tts_rate_words: 1.0,
         })
-        .select('cefr_level')
+        .select('cefr_level, tts_rate_sentences, tts_rate_words')
         .single()
 
       if (insertError) {
@@ -51,7 +53,11 @@ export async function GET() {
       )
     }
 
-    return NextResponse.json({ cefrLevel: profile?.cefr_level || 'B1' })
+    return NextResponse.json({
+      cefrLevel: profile?.cefr_level || 'B1',
+      ttsRateSentences: profile?.tts_rate_sentences || 1.0,
+      ttsRateWords: profile?.tts_rate_words || 1.0,
+    })
   } catch (error) {
     console.error('Error in GET /api/profile:', error)
     return NextResponse.json(
@@ -77,37 +83,70 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { cefrLevel } = body
+    const { cefrLevel, ttsRateSentences, ttsRateWords } = body
 
-    if (!cefrLevel || typeof cefrLevel !== 'string') {
-      return NextResponse.json(
-        { error: 'Invalid level' },
-        { status: 400 }
-      )
+    // Prepare update object
+    const updates: {
+      user_id: string
+      cefr_level?: string
+      tts_rate_sentences?: number
+      tts_rate_words?: number
+    } = {
+      user_id: user.id,
     }
 
-    // Validate level
-    const validLevels = ['A1','A2', 'B1', 'B2', 'C1']
-    if (!validLevels.includes(cefrLevel)) {
-      return NextResponse.json(
-        { error: 'Invalid CEFR level' },
-        { status: 400 }
-      )
+    // Validate and add cefrLevel if provided
+    if (cefrLevel !== undefined) {
+      if (typeof cefrLevel !== 'string') {
+        return NextResponse.json({ error: 'Invalid level' }, { status: 400 })
+      }
+
+      const validLevels = ['A1', 'A2', 'B1', 'B2', 'C1']
+      if (!validLevels.includes(cefrLevel)) {
+        return NextResponse.json(
+          { error: 'Invalid CEFR level' },
+          { status: 400 }
+        )
+      }
+
+      updates.cefr_level = cefrLevel
+    }
+
+    // Validate and add ttsRateSentences if provided
+    if (ttsRateSentences !== undefined) {
+      if (typeof ttsRateSentences !== 'number') {
+        return NextResponse.json(
+          { error: 'Invalid TTS rate for sentences' },
+          { status: 400 }
+        )
+      }
+
+      // Clamp to valid range
+      const clampedSentences = Math.max(0.25, Math.min(2.0, ttsRateSentences))
+      updates.tts_rate_sentences = Math.round(clampedSentences * 100) / 100
+    }
+
+    // Validate and add ttsRateWords if provided
+    if (ttsRateWords !== undefined) {
+      if (typeof ttsRateWords !== 'number') {
+        return NextResponse.json(
+          { error: 'Invalid TTS rate for words' },
+          { status: 400 }
+        )
+      }
+
+      // Clamp to valid range
+      const clampedWords = Math.max(0.25, Math.min(2.0, ttsRateWords))
+      updates.tts_rate_words = Math.round(clampedWords * 100) / 100
     }
 
     // Update or insert profile
     const { data: profile, error } = await supabase
       .from('user_profiles')
-      .upsert(
-        {
-          user_id: user.id,
-          cefr_level: cefrLevel,
-        },
-        {
-          onConflict: 'user_id',
-        }
-      )
-      .select('cefr_level')
+      .upsert(updates, {
+        onConflict: 'user_id',
+      })
+      .select('cefr_level, tts_rate_sentences, tts_rate_words')
       .single()
 
     if (error) {
@@ -118,7 +157,11 @@ export async function PATCH(request: Request) {
       )
     }
 
-    return NextResponse.json({ cefrLevel: profile.cefr_level })
+    return NextResponse.json({
+      cefrLevel: profile.cefr_level,
+      ttsRateSentences: profile.tts_rate_sentences,
+      ttsRateWords: profile.tts_rate_words,
+    })
   } catch (error) {
     console.error('Error in PATCH /api/profile:', error)
     return NextResponse.json(

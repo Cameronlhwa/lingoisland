@@ -47,9 +47,11 @@ export default function Sidebar() {
   }, [pathname, setSidebarOpen]);
 
   return (
-    <aside className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-300 md:translate-x-0 ${
-      sidebarOpen ? "translate-x-0" : "-translate-x-full"
-    }`}>
+    <aside
+      className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-300 md:translate-x-0 ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
       <div className="flex flex-1 flex-col overflow-y-auto p-6">
         {/* Hide logo on mobile since it's in the header */}
         <div className="mb-8 hidden md:flex items-center gap-1.5">
@@ -167,7 +169,7 @@ export default function Sidebar() {
           onClick={() => setIsAccountOpen(true)}
           className="mb-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
         >
-          {t("Account")}
+          {t("Account & Settings")}
         </button>
         <button
           onClick={handleSignOut}

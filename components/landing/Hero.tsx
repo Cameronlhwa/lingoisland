@@ -28,7 +28,7 @@ export default function Hero() {
               vocabulary about topics you care about.
             </p>
             <p className="text-base leading-relaxed text-gray-600 md:text-xl">
-              Relavance + Reinforcement = Retention
+              Relevance + Reinforcement = Retention
             </p>
           </motion.div>
 

@@ -728,6 +728,7 @@ export default function TopicIslandDetailPage() {
                                 </div>
                                 <SpeakerButton
                                   text={tiers.easy.hanzi}
+                                  type="sentence"
                                   size="sm"
                                 />
                               </div>
@@ -750,6 +751,7 @@ export default function TopicIslandDetailPage() {
                                 </div>
                                 <SpeakerButton
                                   text={tiers.same.hanzi}
+                                  type="sentence"
                                   size="sm"
                                 />
                               </div>
@@ -772,6 +774,7 @@ export default function TopicIslandDetailPage() {
                                 </div>
                                 <SpeakerButton
                                   text={tiers.hard.hanzi}
+                                  type="sentence"
                                   size="sm"
                                 />
                               </div>
@@ -896,7 +899,7 @@ export default function TopicIslandDetailPage() {
                               <div className="text-3xl font-bold text-gray-900">
                                 {word.hanzi}
                               </div>
-                              <SpeakerButton text={word.hanzi} size="lg" />
+                              <SpeakerButton text={word.hanzi} type="word" size="lg" />
                             </div>
                             <div className="mb-2 text-lg text-gray-700">
                               {word.pinyin}
@@ -962,6 +965,7 @@ export default function TopicIslandDetailPage() {
                                       </div>
                                       <SpeakerButton
                                         text={sentence.hanzi}
+                                        type="sentence"
                                         size="sm"
                                       />
                                     </div>

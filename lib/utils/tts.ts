@@ -3,17 +3,29 @@
  */
 
 // Cache audio to avoid redundant API calls
+// Key format: "text|rate" to cache different speeds separately
 const audioCache = new Map<string, string>()
 
 // Track currently playing audio
 let currentAudio: HTMLAudioElement | null = null
 
 /**
+ * Generate cache key for audio
+ */
+function getCacheKey(text: string, rate: number): string {
+  return `${text}|${rate.toFixed(2)}`
+}
+
+/**
  * Play Chinese text using Google Cloud Text-to-Speech
  * @param text - Chinese text to speak
+ * @param rate - Speaking rate (0.25 - 2.0, default 1.0)
  * @returns Promise that resolves when audio starts playing
  */
-export async function playTextToSpeech(text: string): Promise<void> {
+export async function playTextToSpeech(
+  text: string,
+  rate: number = 1.0,
+): Promise<void> {
   if (!text) {
     console.warn('playTextToSpeech: No text provided')
     return
@@ -27,7 +39,8 @@ export async function playTextToSpeech(text: string): Promise<void> {
     }
 
     // Check cache first
-    let audioUrl = audioCache.get(text)
+    const cacheKey = getCacheKey(text, rate)
+    let audioUrl = audioCache.get(cacheKey)
 
     if (!audioUrl) {
       // Fetch audio from API
@@ -36,7 +49,7 @@ export async function playTextToSpeech(text: string): Promise<void> {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, rate }),
       })
 
       if (!response.ok) {
@@ -51,7 +64,7 @@ export async function playTextToSpeech(text: string): Promise<void> {
       audioUrl = URL.createObjectURL(audioBlob)
 
       // Cache the audio URL
-      audioCache.set(text, audioUrl)
+      audioCache.set(cacheKey, audioUrl)
     }
 
     // Play audio

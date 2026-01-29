@@ -239,12 +239,12 @@ export default function ManageCardsPage() {
                   <div className="flex items-center gap-2 text-base text-gray-900">
                     <span className="font-medium">{card.front}</span>
                     {containsChinese(card.front) && (
-                      <SpeakerButton text={card.front} size="sm" />
+                      <SpeakerButton text={card.front} type="word" size="sm" />
                     )}
                     <span className="mx-2 text-gray-400">→</span>
                     <span>{card.back}</span>
                     {containsChinese(card.back) && (
-                      <SpeakerButton text={card.back} size="sm" />
+                      <SpeakerButton text={card.back} type="word" size="sm" />
                     )}
                   </div>
                   {card.pinyin && (
@@ -278,12 +278,12 @@ export default function ManageCardsPage() {
                 <div className="flex items-center gap-2 text-base text-gray-900">
                   <span className="font-medium">{cardToDelete.front}</span>
                   {containsChinese(cardToDelete.front) && (
-                    <SpeakerButton text={cardToDelete.front} size="sm" />
+                    <SpeakerButton text={cardToDelete.front} type="word" size="sm" />
                   )}
                   <span className="mx-2 text-gray-400">→</span>
                   <span>{cardToDelete.back}</span>
                   {containsChinese(cardToDelete.back) && (
-                    <SpeakerButton text={cardToDelete.back} size="sm" />
+                    <SpeakerButton text={cardToDelete.back} type="word" size="sm" />
                   )}
                 </div>
                 {cardToDelete.pinyin && (
