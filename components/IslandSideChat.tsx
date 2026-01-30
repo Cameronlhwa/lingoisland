@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import UpgradeModal from "@/components/app/UpgradeModal";
 
 type ChatRole = "user" | "assistant";
 
@@ -36,6 +37,8 @@ export default function IslandSideChat({
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -101,8 +104,11 @@ export default function IslandSideChat({
         const t = await res.text();
         throw new Error(t || "Failed to load chat history");
       }
-      const data = (await res.json()) as { messages?: ChatMessage[] };
+      const data = (await res.json()) as { messages?: ChatMessage[]; userPlan?: "free" | "pro" };
       setMessages(data.messages || []);
+      if (data.userPlan) {
+        setUserPlan(data.userPlan);
+      }
       hasLoadedRef.current = true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load chat history");
@@ -124,7 +130,13 @@ export default function IslandSideChat({
     setMessages([]);
     setSelectedWord(null);
     setError(null);
+    setUserPlan("free"); // Reset to default
   }, [islandId]);
+
+  // Count user messages (for paywall check)
+  const userMessageCount = useMemo(() => {
+    return messages.filter(m => m.role === "user").length;
+  }, [messages]);
 
   const sendMessage = async ({
     content,
@@ -375,6 +387,11 @@ export default function IslandSideChat({
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          // Check if free user has already sent 1 message
+          if (userPlan === "free" && userMessageCount >= 1) {
+            setShowUpgradeModal(true);
+            return;
+          }
           void sendMessage({ content: input });
         }}
         className="border-t border-gray-200 p-3"
@@ -392,7 +409,7 @@ export default function IslandSideChat({
             disabled={sending || !input.trim()}
             className="rounded-xl border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-800 disabled:opacity-50"
           >
-            {sending ? "…" : "Send"}
+            {sending ? "…" : (userPlan === "free" && userMessageCount >= 1 ? "Upgrade" : "Send")}
           </button>
         </div>
       </form>
@@ -401,6 +418,13 @@ export default function IslandSideChat({
 
   return (
     <>
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="AI Chat (unlimited messages)"
+      />
+
       {/* Floating button */}
       <button
         onClick={() => setOpen((v) => !v)}

@@ -6,6 +6,7 @@ import {
   type Word,
 } from '@/lib/deepseek/generate-word-sentences'
 import { limitConcurrency } from '@/lib/utils/concurrency'
+import { getEntitlements } from '@/lib/entitlements'
 
 const clampCount = (value: number) => Math.min(10, Math.max(5, value))
 
@@ -49,6 +50,18 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // PAYWALL: Check if user has Pro access for "add more words" feature
+    const entitlements = await getEntitlements(user.id)
+    if (!entitlements.isPro) {
+      return NextResponse.json(
+        { 
+          error: 'Adding more words is a Pro feature. Upgrade to Pro to expand your islands with unlimited vocabulary.',
+          code: 'PAYWALL_ADD_WORDS'
+        },
+        { status: 403 }
+      )
+    }
+
     const islandId = params.id
     const body = await request.json().catch(() => null)
     if (!body) {
@@ -82,6 +95,17 @@ export async function POST(
         { status: 404 }
       )
     }
+
+    // Get current max position to continue numbering
+    const { data: maxPositionData } = await supabase
+      .from('island_words')
+      .select('position')
+      .eq('island_id', islandId)
+      .order('position', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    let currentPosition = (maxPositionData?.position || 0)
 
     const { data: existingWordsData } = await supabase
       .from('island_words')
@@ -182,8 +206,9 @@ export async function POST(
       })
     }
 
-    const insertedWords: Array<Word & { id: string }> = []
+    const insertedWords: Array<Word & { id: string; position: number }> = []
     for (const word of dedupedWords) {
+      currentPosition += 1
       const { data: inserted, error } = await supabase
         .from('island_words')
         .insert({
@@ -193,6 +218,7 @@ export async function POST(
           pinyin: word.pinyin,
           english: word.english,
           difficulty_tag: 'core',
+          position: currentPosition,
         })
         .select()
         .single()
@@ -211,8 +237,19 @@ export async function POST(
       }
 
       if (inserted) {
-        insertedWords.push({ ...word, id: inserted.id })
+        insertedWords.push({ ...word, id: inserted.id, position: currentPosition })
       }
+    }
+
+    // PAYWALL ENFORCEMENT: For Free users, only generate sentences for unlocked words (position <= 10)
+    const wordsToGenerate = entitlements.isPro 
+      ? insertedWords 
+      : insertedWords.filter(w => w.position <= 10)
+
+    if (!entitlements.isPro && insertedWords.length > wordsToGenerate.length) {
+      console.log(
+        `[PAYWALL] Free user ${user.id}: Skipping sentence generation for ${insertedWords.length - wordsToGenerate.length} locked words (positions 11-20)`
+      )
     }
 
     const knownWords =
@@ -220,7 +257,7 @@ export async function POST(
         ? pickRandomUnique(existingWords, 8)
         : undefined
 
-    const sentenceTasks = insertedWords.map((word, index) => {
+    const sentenceTasks = wordsToGenerate.map((word, index) => {
       return async () => {
       const retryConfigs = [
         undefined,
@@ -256,7 +293,7 @@ export async function POST(
             grammarTags: grammarTags.length > 0 ? grammarTags : undefined,
             knownWords,
             wordIndex: index,
-            totalWords: insertedWords.length,
+            totalWords: wordsToGenerate.length,
             retryHint,
             generationConfig: retryConfigs[attempt],
           })

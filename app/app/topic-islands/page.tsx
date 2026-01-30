@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import UpgradeModal from "@/components/app/UpgradeModal";
 
 interface TopicIsland {
   id: string;
@@ -36,6 +37,7 @@ export default function TopicIslandsPage() {
     reviewVocabMode: "random" as "random" | "select",
     selectedReviewIslands: [] as string[],
   });
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     loadIslands();
@@ -153,6 +155,15 @@ export default function TopicIslandsPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        
+        // Check if this is a paywall error
+        if (errorData.code === 'PAYWALL_ISLAND_LIMIT') {
+          setShowCreateModal(false);
+          setShowUpgradeModal(true);
+          setCreating(false);
+          return;
+        }
+        
         throw new Error(
           errorData.details ||
             errorData.error ||
@@ -559,6 +570,13 @@ export default function TopicIslandsPage() {
             </div>
           </div>
         )}
+
+        {/* Upgrade Modal */}
+        <UpgradeModal 
+          open={showUpgradeModal} 
+          onClose={() => setShowUpgradeModal(false)}
+          feature="Create Topic Island (monthly limit reached)"
+        />
       </div>
     </div>
   );

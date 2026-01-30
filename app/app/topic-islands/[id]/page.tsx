@@ -8,6 +8,8 @@ import IslandSideChat, {
   type IslandChatSelectedWord,
 } from "@/components/IslandSideChat";
 import SpeakerButton from "@/components/app/SpeakerButton";
+import AccountModal from "@/components/app/AccountModal";
+import UpgradeModal from "@/components/app/UpgradeModal";
 
 interface Sentence {
   id: string;
@@ -23,6 +25,8 @@ interface Word {
   hanzi: string;
   pinyin: string;
   english: string;
+  position?: number;
+  is_locked?: boolean;
   sentences: Sentence[];
 }
 
@@ -48,6 +52,10 @@ export default function TopicIslandDetailPage() {
   const [island, setIsland] = useState<Island | null>(null);
   const [words, setWords] = useState<Word[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<string | undefined>();
   const [markingKnown, setMarkingKnown] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [quizIslands, setQuizIslands] = useState<
@@ -134,10 +142,18 @@ export default function TopicIslandDetailPage() {
       const data = await response.json();
       setIsland(data.island);
       setWords(data.words);
+      setUserPlan(data.user_plan || "free");
       setLoading(false);
     } catch (error) {
       console.error("Error loading island:", error);
       setLoading(false);
+    }
+  };
+
+  const handleLockedWordClick = (word: Word) => {
+    if (word.is_locked) {
+      setUpgradeFeature("Unlock Words 11-20");
+      setShowUpgradeModal(true);
     }
   };
 
@@ -886,13 +902,43 @@ export default function TopicIslandDetailPage() {
                 <div className="space-y-6">
                   {words.map((word, index) => {
                     const anchorId = `word-${word.id || index}`;
+                    const isLocked = word.is_locked || false;
+                    
                     return (
                       <div
                         key={anchorId}
                         id={anchorId}
                         data-word-anchor="true"
-                        className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+                        className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm relative ${isLocked ? 'cursor-pointer' : ''}`}
+                        onClick={() => isLocked && handleLockedWordClick(word)}
                       >
+                        {/* Blur effect and overlay for locked words */}
+                        {isLocked && (
+                          <>
+                            <div className="absolute inset-0 backdrop-blur-sm bg-white/30 rounded-xl z-10" />
+                            <div className="absolute inset-0 z-20 flex items-center justify-center">
+                              <div className="bg-white/95 backdrop-blur-md border border-gray-300 rounded-xl p-6 shadow-xl max-w-sm mx-4 text-center">
+                                <div className="mb-2 text-2xl">🔒</div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                                  Unlock words 11–20
+                                </h3>
+                                <p className="text-sm text-gray-600 mb-4">
+                                  Unlimited islands + stories + full examples
+                                </p>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setUpgradeFeature("Unlock Words 11-20");
+                                    setShowUpgradeModal(true);
+                                  }}
+                                  className="w-full rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+                                >
+                                  Upgrade to Pro
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
                         <div className="mb-6 flex items-start justify-between">
                           <div className="flex-1">
                             <div className="mb-2 flex items-center gap-3">
@@ -910,33 +956,51 @@ export default function TopicIslandDetailPage() {
                           </div>
                           <div className="flex space-x-2">
                             <button
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isLocked) {
+                                  handleLockedWordClick(word);
+                                  return;
+                                }
                                 setAskAIWord({
                                   hanzi: word.hanzi,
                                   pinyin: word.pinyin,
                                   english: word.english,
-                                })
-                              }
-                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
-                              title="Ask AI about this word"
+                                });
+                              }}
+                              disabled={isLocked}
+                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={isLocked ? "Upgrade to unlock" : "Ask AI about this word"}
                             >
                               Ask AI
                             </button>
                             <button
-                              onClick={() =>
-                                handleAddToQuizClick("word", word.id)
-                              }
-                              disabled={addedItems.has(`word-${word.id}`)}
-                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isLocked) {
+                                  handleLockedWordClick(word);
+                                  return;
+                                }
+                                handleAddToQuizClick("word", word.id);
+                              }}
+                              disabled={addedItems.has(`word-${word.id}`) || isLocked}
+                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                             >
                               {addedItems.has(`word-${word.id}`)
                                 ? "✓ In quiz"
                                 : t("Add to quiz")}
                             </button>
                             <button
-                              onClick={() => handleMarkKnown(word.id)}
-                              disabled={markingKnown === word.id}
-                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isLocked) {
+                                  handleLockedWordClick(word);
+                                  return;
+                                }
+                                handleMarkKnown(word.id);
+                              }}
+                              disabled={markingKnown === word.id || isLocked}
+                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {markingKnown === word.id
                                 ? "Updating..."
@@ -1100,13 +1164,20 @@ export default function TopicIslandDetailPage() {
                       examples of the new words
                     </label>
                     <button
-                      onClick={handleAddWords}
-                      disabled={
-                        addingWords || island.status !== "ready" || addCount < 5
+                      onClick={
+                        userPlan === "free"
+                          ? () => {
+                              setUpgradeFeature("Add More Words");
+                              setShowUpgradeModal(true);
+                            }
+                          : handleAddWords
                       }
-                      className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                      disabled={
+                        userPlan === "pro" && (addingWords || island.status !== "ready" || addCount < 5)
+                      }
+                      className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {addingWords ? "Generating..." : "Generate"}
+                      {userPlan === "free" ? "Upgrade to Pro" : (addingWords ? "Generating..." : "Generate")}
                     </button>
                   </div>
                 </div>
@@ -1247,6 +1318,17 @@ export default function TopicIslandDetailPage() {
           islandId={islandId}
           askAIWord={askAIWord}
           onAskAIHandled={() => setAskAIWord(null)}
+        />
+        
+        {/* Account/Upgrade Modals */}
+        <AccountModal open={showAccountModal} onClose={() => setShowAccountModal(false)} />
+        <UpgradeModal 
+          open={showUpgradeModal} 
+          onClose={() => {
+            setShowUpgradeModal(false);
+            setUpgradeFeature(undefined);
+          }}
+          feature={upgradeFeature}
         />
       </div>
     </div>

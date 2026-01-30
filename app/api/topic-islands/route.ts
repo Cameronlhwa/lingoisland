@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { canCreateTopicIsland, incrementTopicIslandCount } from '@/lib/entitlements'
 
 /**
  * POST /api/topic-islands
@@ -14,6 +15,18 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check if user can create a topic island (Free: 1/month, Pro: unlimited)
+    const { allowed, reason } = await canCreateTopicIsland(user.id)
+    if (!allowed) {
+      return NextResponse.json(
+        { 
+          error: reason || 'Cannot create topic island',
+          code: 'PAYWALL_ISLAND_LIMIT'
+        },
+        { status: 403 }
+      )
     }
 
     const body = await request.json()
@@ -91,6 +104,7 @@ export async function POST(request: Request) {
 
     if (existing) {
       // Return existing island id to keep behaviour consistent
+      // Don't increment usage count since island already exists
       return NextResponse.json({ islandId: existing.id })
     }
 
@@ -119,6 +133,9 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
+
+    // Increment usage count for this month
+    await incrementTopicIslandCount(user.id)
 
     return NextResponse.json({ islandId: island.id })
   } catch (error) {

@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getEntitlements, isWordLocked } from '@/lib/entitlements'
 
 /**
  * POST /api/quiz-islands/add-from-topic-item
  * Add a word or sentence from a topic island to a quiz island
  * For words: creates both ZH_EN and EN_ZH (if requested)
  * For sentences: creates only ZH_EN
+ * PAYWALL: Free users can only add unlocked words (position <= 10)
  */
 export async function POST(request: Request) {
   try {
@@ -17,6 +19,9 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Get user entitlements
+    const entitlements = await getEntitlements(user.id)
 
     const body = await request.json()
     const { quizIslandId, type, sourceId, createReverse } = body
@@ -65,7 +70,7 @@ export async function POST(request: Request) {
     if (type === 'word') {
       const { data: word } = await supabase
         .from('island_words')
-        .select('hanzi, pinyin, english')
+        .select('hanzi, pinyin, english, position')
         .eq('id', sourceId)
         .eq('user_id', user.id)
         .single()
@@ -74,6 +79,18 @@ export async function POST(request: Request) {
         return NextResponse.json(
           { error: 'Word not found or access denied' },
           { status: 404 }
+        )
+      }
+
+      // PAYWALL: Check if word is locked for Free users
+      const position = word.position || 999
+      if (isWordLocked(position, entitlements.isPro)) {
+        return NextResponse.json(
+          { 
+            error: 'This word is locked. Upgrade to Pro to unlock words 11-20 and add them to quizzes.',
+            code: 'PAYWALL_LOCKED_WORD'
+          },
+          { status: 403 }
         )
       }
 

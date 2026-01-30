@@ -33,6 +33,7 @@ create table if not exists public.island_words (
   pinyin text not null,
   english text not null,
   difficulty_tag text not null default 'core',
+  position int, -- Position for stable ordering (1-20), used for paywall
   created_at timestamptz not null default now(),
   unique (island_id, hanzi)
 );
@@ -165,6 +166,9 @@ create index if not exists topic_islands_user_id_created_at_idx
 
 create index if not exists island_words_user_id_island_id_created_at_idx
   on public.island_words(user_id, island_id, created_at);
+
+create index if not exists island_words_island_id_position_idx
+  on public.island_words(island_id, position);
 
 create index if not exists island_sentences_user_id_island_id_created_at_idx
   on public.island_sentences(user_id, island_id, created_at);
@@ -333,4 +337,42 @@ create index if not exists flashcards_user_id_deck_id_created_at_idx
 
 create index if not exists card_review_state_user_id_due_at_idx
   on public.card_review_state(user_id, due_at);
+
+-- Usage tracking table (for paywall limits)
+create table if not exists public.usage_monthly (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  month_key text not null, -- Format: "YYYY-MM"
+  topic_islands_created int not null default 0,
+  stories_created int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, month_key)
+);
+
+-- Enable RLS on usage_monthly
+alter table public.usage_monthly enable row level security;
+
+-- RLS Policies for usage_monthly
+drop policy if exists "Users can view their own usage" on public.usage_monthly;
+create policy "Users can view their own usage"
+  on public.usage_monthly
+  for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own usage" on public.usage_monthly;
+create policy "Users can insert their own usage"
+  on public.usage_monthly
+  for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own usage" on public.usage_monthly;
+create policy "Users can update their own usage"
+  on public.usage_monthly
+  for update
+  using (auth.uid() = user_id);
+
+-- Index for performance
+create index if not exists usage_monthly_user_id_month_key_idx 
+  on public.usage_monthly(user_id, month_key);
 
