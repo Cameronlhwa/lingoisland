@@ -27,8 +27,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // Allow fine-grained CEFR values like A2-, A2, A2+, B1-, B1, B1+, B2-, B2, B2+,
-    // but require that they belong to one of the A2/B1/B2 bands.
+    // Allow fine-grained CEFR values like A1-, A1, A1+, A2-, A2, A2+, B1-, B1, B1+, B2-, B2, B2+, C1-, C1, C1+
+    // Validate that they belong to one of the standard CEFR bands
     if (!level || typeof level !== 'string') {
       return NextResponse.json(
         { error: 'Level is required' },
@@ -37,11 +37,15 @@ export async function POST(request: Request) {
     }
 
     const baseLevel =
-      level.startsWith('A2') ? 'A2' : level.startsWith('B1') ? 'B1' : level.startsWith('B2') ? 'B2' : null
+      level.startsWith('A1') ? 'A1' :
+      level.startsWith('A2') ? 'A2' : 
+      level.startsWith('B1') ? 'B1' : 
+      level.startsWith('B2') ? 'B2' :
+      level.startsWith('C1') ? 'C1' : null
 
     if (!baseLevel) {
       return NextResponse.json(
-        { error: 'Level must be in the A2, B1, or B2 bands' },
+        { error: 'Level must be in the A1, A2, B1, B2, or C1 bands' },
         { status: 400 }
       )
     }

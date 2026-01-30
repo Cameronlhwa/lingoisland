@@ -81,17 +81,33 @@ async function generateDailyStory({
   }
 
   const targetWordList = targetWords.map((w) => w.hanzi).filter(Boolean);
+  
+  // Level-specific style guidance
+  const levelGuidance: Record<string, string> = {
+    A1: `\nSTYLE FOR A1: Very simple sentences (5-10 chars), present tense, basic patterns (我 + verb), concrete survival vocabulary.`,
+    A2: `\nSTYLE FOR A2: Simple clear sentences (8-15 chars), everyday vocabulary, basic connectors (然后、但是、因为).`,
+    B1: `\nSTYLE FOR B1: Natural conversational flow, mix of simple and compound sentences, casual connectors (其实、不过、虽然).`,
+    B2: `\nSTYLE FOR B2: Sophisticated narrative, varied structures, personal voice, modern expressions (limited).`,
+    C1: `\nSTYLE FOR C1: Complex nuanced narrative, idioms and chengyu, sophisticated discourse, cultural references OK.`,
+  };
+  
+  // Normalize level (handle variations like A2-, A2, A2+)
+  let baseLevel = level;
+  if (level.match(/^(A1|A2|B1|B2|C1)[+-]?$/)) {
+    baseLevel = level.replace(/[+-]/g, '');
+  }
+  const styleGuide = levelGuidance[baseLevel] || levelGuidance['B1'];
+  
   const basePrompt = `You are a Mandarin Chinese storyteller for language learners.
 
 Topic: ${topic}
-Learner level: ${level}
+Learner level: ${level}${styleGuide}
 Target length: ${lengthChars} Chinese characters (count characters, not tokens)
 Target words (optional to use): ${targetWordList.join(", ")}
 
 Story requirements:
-- 5-8 sentences
-- Natural Chinese a native in their 20s would say
-- Conversational, not textbook, not repetitive
+- 5-8 sentences (adjust complexity and length based on ${baseLevel} level)
+- Match the style guidance for ${baseLevel} level
 - Use Simplified Chinese
 - Not all target words need to be used; include only what fits naturally
 - story_zh must be between ${minLength}-${maxLength} characters

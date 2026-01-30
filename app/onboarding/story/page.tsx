@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import { useRouter } from "next/navigation";
 
-type Level = "A2" | "B1" | "B2" | "C1";
+type Level = "A1" | "A2" | "B1" | "B2" | "C1";
 
 const STORAGE_KEY = "pending_story_request";
 
@@ -314,6 +314,7 @@ export default function OnboardingStoryPage() {
                 onChange={(e) => setLevel(e.target.value as Level)}
                 className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-gray-900 focus:outline-none"
               >
+                <option value="A1">A1 - Beginner</option>
                 <option value="A2">A2 - Upper Beginner</option>
                 <option value="B1">B1 - Intermediate</option>
                 <option value="B2">B2 - Upper Intermediate</option>

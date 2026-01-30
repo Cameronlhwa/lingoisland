@@ -56,6 +56,54 @@ export async function generateStory({
   const minLength = Math.max(50, Math.round(lengthChars * 0.6));
   const maxLength = Math.min(500, Math.round(lengthChars * 1.4));
 
+  // Level-specific style guidance
+  const levelGuidance: Record<string, string> = {
+    A1: `
+STYLE FOR A1 (Beginner):
+- Use VERY SIMPLE sentences (5-10 characters each)
+- Present tense, basic patterns like: 我 + verb, 这是 + noun
+- Only basic, concrete vocabulary (food, family, colors, numbers)
+- Short, direct statements
+- Example tone: "今天很热。我很累。我想喝水。"`,
+    A2: `
+STYLE FOR A2 (Upper Beginner):
+- Simple, clear sentences (8-15 characters each)
+- Common everyday vocabulary and expressions
+- Basic connectors: 然后、但是、因为、所以
+- Natural but not complex
+- Example tone: "今天天气不错。我去了超市买东西。买了很多水果。"`,
+    B1: `
+STYLE FOR B1 (Intermediate):
+- Natural conversational flow
+- Mix of simple and compound sentences
+- Common connectors: 其实、不过、虽然…但是、如果…就
+- Casual tone, avoid textbook formality
+- Example tone: "周末我本来想出去玩，不过天气不太好，所以就在家休息了。"`,
+    B2: `
+STYLE FOR B2 (Upper Intermediate):
+- Sophisticated but natural narrative
+- Varied sentence structures and connectors
+- Can include: 而且、除了…以外、要是…的话、一边…一边
+- Personal voice with some modern expressions (limited)
+- Example tone: "最近工作压力有点大，感觉需要放松一下。要是能去旅游就好了。"`,
+    C1: `
+STYLE FOR C1 (Advanced):
+- Complex, nuanced narrative with personality
+- Idioms and chengyu where natural
+- Sophisticated connectors and discourse markers
+- Can include cultural references, wordplay
+- Modern colloquialisms and slang appropriate
+- Near-native expressiveness and flow
+- Example tone: "说实话，这段时间过得挺充实的。虽然偶尔会感到疲惫，但每天都有新的收获。"`,
+  };
+
+  // Normalize level (handle variations like A2-, A2, A2+)
+  let baseLevel = level;
+  if (level.match(/^(A1|A2|B1|B2|C1)[+-]?$/)) {
+    baseLevel = level.replace(/[+-]/g, '') as string;
+  }
+  const styleGuide = levelGuidance[baseLevel] || levelGuidance['B1'];
+
   const basePrompt = `You are a Mandarin Chinese storyteller for language learners.
 
 CRITICAL LENGTH REQUIREMENT:
@@ -66,7 +114,7 @@ CRITICAL LENGTH REQUIREMENT:
 - Before responding, mentally count your story's character length!
 
 Topic: ${topic}
-Learner level: ${level}
+Learner level: ${level}${styleGuide}
 Target words (must appear naturally in story_zh): ${targetWordList.join(", ")}${
     requestedWords.length
       ? `\nRequested words (also must appear): ${requestedWords.join(", ")}`
@@ -74,9 +122,8 @@ Target words (must appear naturally in story_zh): ${targetWordList.join(", ")}${
   }
 
 Story requirements:
-- Write ${Math.round(lengthChars / 25)}-${Math.round(lengthChars / 20)} sentences (about 20-25 characters per sentence)
-- Natural conversational Chinese a native in their 20s would say
-- NOT textbook-style, NOT repetitive
+- Write ${Math.round(lengthChars / 25)}-${Math.round(lengthChars / 20)} sentences (adjust sentence length based on level)
+- Match the style guidance for ${baseLevel} level exactly
 - Use Simplified Chinese (简体中文)
 - Include all target words naturally in the story
 - Count your characters before finalizing!

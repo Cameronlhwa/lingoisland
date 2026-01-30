@@ -416,6 +416,7 @@ export default function StoryWizard() {
                   onChange={(e) => setLevel(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-gray-900 focus:outline-none"
                 >
+                  <option value="A1">A1 - Beginner</option>
                   <option value="A2">A2 - Upper Beginner</option>
                   <option value="B1">B1 - Intermediate</option>
                   <option value="B2">B2 - Upper Intermediate</option>

@@ -66,32 +66,64 @@ export async function POST(
       })
     }
 
+    // Parse request body for review vocab configuration
+    const body = await request.json().catch(() => ({}))
+    const reviewVocabConfig = body.reviewVocab as
+      | { mode: 'random' | 'select'; islandIds?: string[] }
+      | undefined
+
     // Update status to selecting
     await supabase
       .from('topic_islands')
       .update({ status: 'selecting' })
       .eq('id', islandId)
 
-    // Fetch 3-5 known words from other islands for context
-    const { data: knownWordsData } = await supabase
-      .from('island_words')
-      .select('hanzi')
-      .eq('user_id', user.id)
-      .neq('island_id', islandId)
-      .order('created_at', { ascending: false })
-      .limit(50)
+    // Fetch known words based on review vocab configuration
+    let knownWords: string[] = []
+    
+    if (reviewVocabConfig) {
+      // User explicitly wants review vocabulary
+      if (reviewVocabConfig.mode === 'select' && reviewVocabConfig.islandIds && reviewVocabConfig.islandIds.length > 0) {
+        // Fetch words from specific selected islands
+        const { data: knownWordsData } = await supabase
+          .from('island_words')
+          .select('hanzi')
+          .eq('user_id', user.id)
+          .in('island_id', reviewVocabConfig.islandIds)
+          .order('created_at', { ascending: false })
+          .limit(50)
 
-    const candidateKnownWords = knownWordsData?.map((w) => w.hanzi) || []
-    const knownWords = candidateKnownWords
-      .sort(() => 0.5 - Math.random())
-      .slice(0, Math.min(5, candidateKnownWords.length))
+        const candidateKnownWords = knownWordsData?.map((w) => w.hanzi) || []
+        knownWords = candidateKnownWords
+          .sort(() => 0.5 - Math.random())
+          .slice(0, Math.min(8, candidateKnownWords.length))
+      } else if (reviewVocabConfig.mode === 'random') {
+        // Fetch words randomly from all other islands
+        const { data: knownWordsData } = await supabase
+          .from('island_words')
+          .select('hanzi')
+          .eq('user_id', user.id)
+          .neq('island_id', islandId)
+          .order('created_at', { ascending: false })
+          .limit(50)
+
+        const candidateKnownWords = knownWordsData?.map((w) => w.hanzi) || []
+        knownWords = candidateKnownWords
+          .sort(() => 0.5 - Math.random())
+          .slice(0, Math.min(8, candidateKnownWords.length))
+      }
+    }
+    // If no review vocab config, knownWords remains empty array
 
     // Map stored level to base band for validation
-    const mapToBaseLevel = (level: string | null): 'A2' | 'B1' | 'B2' => {
+    const mapToBaseLevel = (level: string | null): 'A1' | 'A2' | 'B1' | 'B2' | 'C1' => {
       if (!level) return 'B1'
+      if (level.startsWith('A1')) return 'A1'
       if (level.startsWith('A2')) return 'A2'
       if (level.startsWith('B1')) return 'B1'
-      return 'B2'
+      if (level.startsWith('B2')) return 'B2'
+      if (level.startsWith('C1')) return 'C1'
+      return 'B1'
     }
 
     const baseLevel = mapToBaseLevel(island.level as string)
@@ -217,9 +249,11 @@ export async function POST(
     if (grammarTarget > 0) {
       // Generate grammar patterns based on level
       const grammarPatternsByLevel: Record<string, string[]> = {
+        'A1': ['吗 (yes/no question)', '呢 (question particle)', '了 (completed action)', '很 + adjective'],
         'A2': ['了 (change of state)', '过 (experience)', '在/正在 (progressive)', '会/能/可以 (ability)', '要/得/应该 (need/should)'],
         'B1': ['比 (comparison)', '把 (only if natural)', '被 (passive)', '结果补语 (e.g., 好/完/到)', '起来/下去/出来 (directional)', '一边…一边…', '先…再…'],
         'B2': ['连…都…', '即使…也…', '既然…就…', '不但…而且…', '越…越…', '反正…', '干脆…'],
+        'C1': ['无论…都…', '哪怕…也…', '以至于…', '难怪…', '与其…不如…', '再说…', '总之…'],
       }
 
       const patterns = grammarPatternsByLevel[baseLevel] || grammarPatternsByLevel['B1']
@@ -449,7 +483,7 @@ export async function POST(
             detailedLevel,
             grammarTarget,
             grammarTags: grammarTags.length > 0 ? grammarTags : undefined,
-            knownWords,
+            knownWords: knownWords.length > 0 ? knownWords : undefined,
             wordIndex: index,
             totalWords: insertedWords.length,
             styles: chosenStyles,

@@ -22,7 +22,7 @@ export async function generateWordList({
   suggestions,
 }: {
   topic: string
-  level: 'A2' | 'B1' | 'B2'
+  level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
   detailedLevel?: string
   wordCount: number
   existingWords: string[]
@@ -48,9 +48,11 @@ export async function generateWordList({
       : ''
 
   const levelDescriptions = {
-    A2: 'upper beginner (simple sentence structures, common vocabulary)',
-    B1: 'intermediate (more complex structures, varied vocabulary)',
-    B2: 'upper intermediate (advanced structures, nuanced vocabulary)',
+    A1: 'beginner (very basic phrases, survival vocabulary, simple present tense)',
+    A2: 'upper beginner (simple sentence structures, common everyday vocabulary)',
+    B1: 'intermediate (more complex structures, varied vocabulary, can discuss familiar topics)',
+    B2: 'upper intermediate (advanced structures, nuanced vocabulary, can express opinions)',
+    C1: 'advanced (complex discourse, subtle meanings, idiomatic expressions, sophisticated vocabulary)',
   }
 
   const actualDetailedLevel = detailedLevel || level
