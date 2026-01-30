@@ -6,6 +6,9 @@ import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 type CEFRLevel =
+  | "A1-"
+  | "A1"
+  | "A1+"
   | "A2-"
   | "A2"
   | "A2+"
@@ -14,14 +17,24 @@ type CEFRLevel =
   | "B1+"
   | "B2-"
   | "B2"
-  | "B2+";
+  | "B2+"
+  | "C1-"
+  | "C1"
+  | "C1+";
 
 const LEVEL_GROUPS: {
-  base: "A2" | "B1" | "B2";
+  base: "A1" | "A2" | "B1" | "B2" | "C1";
   label: string;
   description: string;
   levels: CEFRLevel[];
 }[] = [
+  {
+    base: "A1",
+    label: "Beginner",
+    description:
+      "Just starting out with basic phrases and survival vocabulary (equivalent to HSK 1-2).",
+    levels: ["A1-", "A1", "A1+"],
+  },
   {
     base: "A2",
     label: "Upper beginner",
@@ -42,6 +55,13 @@ const LEVEL_GROUPS: {
     description:
       "You follow most native content but still miss details and complex ideas (equivalent to HSK 5-6).",
     levels: ["B2-", "B2", "B2+"],
+  },
+  {
+    base: "C1",
+    label: "Advanced",
+    description:
+      "You're fluent with nuanced expression but still learning sophisticated vocabulary and idioms.",
+    levels: ["C1-", "C1", "C1+"],
   },
 ];
 

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateStory } from "@/lib/deepseek/generate-story";
 
-const LEVELS = ["A2", "B1", "B2", "C1"];
+const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
 
 function normalizeRequestedWords(words: string[]) {
   return words
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
     if (!LEVELS.includes(level)) {
       return NextResponse.json(
-        { error: "Level must be one of A2, B1, B2, C1" },
+        { error: "Level must be one of A1, A2, B1, B2, C1" },
         { status: 400 }
       );
     }

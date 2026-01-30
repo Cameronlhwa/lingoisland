@@ -5,7 +5,65 @@ import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import { useRouter } from "next/navigation";
 
-type Level = "A2" | "B1" | "B2" | "C1";
+type Level =
+  | "A1-"
+  | "A1"
+  | "A1+"
+  | "A2-"
+  | "A2"
+  | "A2+"
+  | "B1-"
+  | "B1"
+  | "B1+"
+  | "B2-"
+  | "B2"
+  | "B2+"
+  | "C1-"
+  | "C1"
+  | "C1+";
+
+const LEVEL_GROUPS: {
+  base: "A1" | "A2" | "B1" | "B2" | "C1";
+  label: string;
+  description: string;
+  levels: Level[];
+}[] = [
+  {
+    base: "A1",
+    label: "Beginner",
+    description:
+      "Just starting out with basic phrases and survival vocabulary (HSK 1-2).",
+    levels: ["A1-", "A1", "A1+"],
+  },
+  {
+    base: "A2",
+    label: "Upper beginner",
+    description:
+      "You can handle basics but still need support in conversations (HSK 3).",
+    levels: ["A2-", "A2", "A2+"],
+  },
+  {
+    base: "B1",
+    label: "Intermediate",
+    description:
+      "You can talk about everyday topics but struggle with nuance (HSK 4-5).",
+    levels: ["B1-", "B1", "B1+"],
+  },
+  {
+    base: "B2",
+    label: "Upper intermediate",
+    description:
+      "You follow most native content but miss some details (HSK 5-6).",
+    levels: ["B2-", "B2", "B2+"],
+  },
+  {
+    base: "C1",
+    label: "Advanced",
+    description:
+      "You're fluent but still learning sophisticated vocabulary and idioms.",
+    levels: ["C1-", "C1", "C1+"],
+  },
+];
 
 const STORAGE_KEY = "pending_story_request";
 
@@ -170,8 +228,9 @@ export default function OnboardingStoryPage() {
   };
 
   const canContinue =
-    (step === 1 && topic.trim().length > 0) ||
-    (step === 2 && lengthChars >= 50 && lengthChars <= 500);
+    step === 1 || // Level selection (auto-advances)
+    (step === 2 && topic.trim().length > 0) ||
+    (step === 3 && lengthChars >= 50 && lengthChars <= 500);
 
   if (checkingAuth) {
     return (
@@ -185,7 +244,7 @@ export default function OnboardingStoryPage() {
     <main className="flex min-h-screen items-center justify-center bg-white px-6 py-12">
       <div className="w-full max-w-2xl">
         <div className="mb-12 flex justify-center gap-4">
-          {[1, 2, 3].map((stepNum) => (
+          {[1, 2, 3, 4].map((stepNum) => (
             <div
               key={stepNum}
               className={`h-1 w-16 ${
@@ -197,6 +256,57 @@ export default function OnboardingStoryPage() {
 
         {step === 1 && (
           <div>
+            <h1 className="mb-4 text-3xl font-bold text-gray-900">
+              What best describes your level?
+            </h1>
+            <p className="mb-8 text-lg text-gray-600">
+              Choose the row that feels closest. You can always change this
+              later.
+            </p>
+
+            <div className="space-y-4">
+              {LEVEL_GROUPS.map((group) => (
+                <div
+                  key={group.base}
+                  className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="max-w-sm">
+                    <h2 className="text-base font-semibold text-gray-900">
+                      {group.label} ({group.base})
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                      {group.description}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {group.levels.map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => {
+                          setLevel(lvl);
+                          setStep(2);
+                        }}
+                        className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 hover:bg-gray-50"
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div>
+            <button
+              onClick={() => setStep(1)}
+              className="mb-8 text-sm text-gray-600 underline hover:text-gray-900"
+            >
+              ← Back
+            </button>
             <h1 className="mb-4 text-3xl font-bold text-gray-900">
               What do you want the story to be about?
             </h1>
@@ -226,8 +336,14 @@ export default function OnboardingStoryPage() {
           </div>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <div className="space-y-8">
+            <button
+              onClick={() => setStep(2)}
+              className="mb-4 text-sm text-gray-600 underline hover:text-gray-900"
+            >
+              ← Back
+            </button>
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-900">
                 Specific words (optional)
@@ -306,27 +422,17 @@ export default function OnboardingStoryPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-900">
-                Level
-              </label>
-              <select
-                value={level}
-                onChange={(e) => setLevel(e.target.value as Level)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-gray-900 focus:outline-none"
-              >
-                <option value="A2">A2 - Upper Beginner</option>
-                <option value="B1">B1 - Intermediate</option>
-                <option value="B2">B2 - Upper Intermediate</option>
-                <option value="C1">C1 - Advanced</option>
-              </select>
+              <p className="text-sm text-gray-600">
+                Current level: <span className="font-medium text-gray-900">{level}</span>
+              </p>
             </div>
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div>
             <button
-              onClick={() => setStep(2)}
+              onClick={() => setStep(3)}
               className="mb-8 text-sm text-gray-600 underline hover:text-gray-900"
             >
               ← Back
@@ -432,19 +538,24 @@ export default function OnboardingStoryPage() {
           </div>
         )}
 
-        {step < 3 && (
-          <div className="mt-10 flex items-center justify-between">
+        {step === 2 && (
+          <div className="mt-10 flex justify-end">
             <button
               type="button"
-              onClick={() => setStep((prev) => Math.max(1, prev - 1))}
-              disabled={step === 1}
-              className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              onClick={() => setStep(3)}
+              disabled={!canContinue}
+              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
             >
-              Back
+              Continue
             </button>
+          </div>
+        )}
+        
+        {step === 3 && (
+          <div className="mt-10 flex justify-end">
             <button
               type="button"
-              onClick={() => setStep((prev) => Math.min(3, prev + 1))}
+              onClick={() => setStep(4)}
               disabled={!canContinue}
               className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
             >

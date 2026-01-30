@@ -30,8 +30,11 @@ export default function TopicIslandsPage() {
     topic: "",
     level: "B1",
     wordTarget: 12,
-     grammarTarget: 0,
-     wantsGrammar: false,
+    grammarTarget: 0,
+    wantsGrammar: false,
+    includeReviewVocab: false,
+    reviewVocabMode: "random" as "random" | "select",
+    selectedReviewIslands: [] as string[],
   });
 
   useEffect(() => {
@@ -65,6 +68,18 @@ export default function TopicIslandsPage() {
         ...prev,
         level: userDefaultLevel,
       }));
+    } else {
+      // Reset form when modal closes
+      setFormData({
+        topic: "",
+        level: userDefaultLevel,
+        wordTarget: 12,
+        grammarTarget: 0,
+        wantsGrammar: false,
+        includeReviewVocab: false,
+        reviewVocabMode: "random",
+        selectedReviewIslands: [],
+      });
     }
   }, [showCreateModal, userDefaultLevel]);
 
@@ -92,7 +107,7 @@ export default function TopicIslandsPage() {
 
     if (
       !confirm(
-        "Are you sure you want to delete this topic island? This will delete all words and sentences."
+        "Are you sure you want to delete this topic island? This will delete all words and sentences.",
       )
     ) {
       return;
@@ -141,19 +156,33 @@ export default function TopicIslandsPage() {
         throw new Error(
           errorData.details ||
             errorData.error ||
-            "Failed to create topic island"
+            "Failed to create topic island",
         );
       }
 
       const { islandId } = await response.json();
 
+      // Prepare review vocab configuration
+      const reviewVocabConfig = formData.includeReviewVocab
+        ? {
+            mode: formData.reviewVocabMode,
+            islandIds:
+              formData.reviewVocabMode === "select"
+                ? formData.selectedReviewIslands
+                : undefined,
+          }
+        : undefined;
+
       // Start generation in the background (fire-and-forget)
       fetch(`/api/topic-islands/${islandId}/generate-batch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ batchSize: 5 }),
+        body: JSON.stringify({
+          batchSize: 5,
+          reviewVocab: reviewVocabConfig,
+        }),
       }).catch((err) =>
-        console.error("Error starting topic island generation:", err)
+        console.error("Error starting topic island generation:", err),
       );
 
       // Immediately navigate to island page; it will show loading/progress
@@ -246,7 +275,7 @@ export default function TopicIslandsPage() {
         {/* Create Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 md:p-8 shadow-xl">
+            <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-5 md:p-8 shadow-xl">
               <h2 className="mb-6 text-2xl font-bold text-gray-900">
                 {t("Create Topic Island")}
               </h2>
@@ -287,14 +316,37 @@ export default function TopicIslandsPage() {
                 </div>
 
                 <div className="mb-4">
+                  <label className="mb-2 block text-sm font-medium text-gray-900">
+                    Word Count: {formData.wordTarget}
+                  </label>
+                  <input
+                    type="range"
+                    min="10"
+                    max="20"
+                    value={formData.wordTarget}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        wordTarget: parseInt(e.target.value),
+                      })
+                    }
+                    className="w-full"
+                  />
+                  <div className="mt-1 flex justify-between text-xs text-gray-500">
+                    <span>10</span>
+                    <span>20</span>
+                  </div>
+                </div>
+
+                <div className="mb-4">
                   <div className="mb-3 flex items-center justify-between">
                     <div>
                       <label className="block text-sm font-medium text-gray-900">
-                        Focus on new grammar?
+                        Include new grammar pattern teaching?
                       </label>
                       <p className="mt-1 text-xs text-gray-600">
-                        If enabled, some example sentences will highlight new
-                        patterns.
+                        Learn new native grammar structures that are useful for
+                        your desired topic.
                       </p>
                     </div>
                     <button
@@ -305,7 +357,7 @@ export default function TopicIslandsPage() {
                           wantsGrammar: !prev.wantsGrammar,
                         }))
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                         formData.wantsGrammar ? "bg-gray-900" : "bg-gray-300"
                       }`}
                     >
@@ -322,7 +374,7 @@ export default function TopicIslandsPage() {
                   {formData.wantsGrammar && (
                     <div className="mt-2">
                       <p className="mb-2 text-sm font-medium text-gray-900">
-                        How many grammar patterns to focus on?
+                        How many grammar patterns to teach?
                       </p>
                       <div className="flex gap-2">
                         {[1, 2, 3].map((count) => (
@@ -349,28 +401,142 @@ export default function TopicIslandsPage() {
                   )}
                 </div>
 
-                <div className="mb-6">
-                  <label className="mb-2 block text-sm font-medium text-gray-900">
-                    Word Count: {formData.wordTarget}
-                  </label>
-                  <input
-                    type="range"
-                    min="10"
-                    max="20"
-                    value={formData.wordTarget}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        wordTarget: parseInt(e.target.value),
-                      })
-                    }
-                    className="w-full"
-                  />
-                  <div className="mt-1 flex justify-between text-xs text-gray-500">
-                    <span>10</span>
-                    <span>20</span>
+                {/* Review Vocabulary Section */}
+                {islands.length > 0 && (
+                  <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <div className="mb-3 flex items-start justify-between">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-900">
+                          Include review vocabulary?
+                        </label>
+                        <p className="mt-1 text-xs text-gray-600">
+                          Example sentences will use words from your other
+                          islands along with the new words for reinforcement.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            includeReviewVocab: !prev.includeReviewVocab,
+                            selectedReviewIslands: [],
+                          }))
+                        }
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                          formData.includeReviewVocab
+                            ? "bg-gray-900"
+                            : "bg-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                            formData.includeReviewVocab
+                              ? "translate-x-5"
+                              : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {formData.includeReviewVocab && (
+                      <div className="mt-4 space-y-3">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                reviewVocabMode: "random",
+                                selectedReviewIslands: [],
+                              }))
+                            }
+                            className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                              formData.reviewVocabMode === "random"
+                                ? "border-gray-900 bg-gray-900 text-white"
+                                : "border-gray-300 bg-white text-gray-900 hover:border-gray-900"
+                            }`}
+                          >
+                            Random
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                reviewVocabMode: "select",
+                              }))
+                            }
+                            className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                              formData.reviewVocabMode === "select"
+                                ? "border-gray-900 bg-gray-900 text-white"
+                                : "border-gray-300 bg-white text-gray-900 hover:border-gray-900"
+                            }`}
+                          >
+                            Select Islands
+                          </button>
+                        </div>
+
+                        {formData.reviewVocabMode === "select" && (
+                          <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-200 bg-white p-3">
+                            {islands.length === 0 ? (
+                              <p className="text-xs text-gray-500">
+                                No other islands available
+                              </p>
+                            ) : (
+                              islands.map((island) => (
+                                <label
+                                  key={island.id}
+                                  className="flex cursor-pointer items-center gap-2 rounded p-1.5 hover:bg-gray-50"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.selectedReviewIslands.includes(
+                                      island.id,
+                                    )}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          selectedReviewIslands: [
+                                            ...prev.selectedReviewIslands,
+                                            island.id,
+                                          ],
+                                        }));
+                                      } else {
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          selectedReviewIslands:
+                                            prev.selectedReviewIslands.filter(
+                                              (id) => id !== island.id,
+                                            ),
+                                        }));
+                                      }
+                                    }}
+                                    className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-2 focus:ring-gray-900"
+                                  />
+                                  <span className="flex-1 text-sm text-gray-900">
+                                    {island.topic}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {island.level}
+                                  </span>
+                                </label>
+                              ))
+                            )}
+                          </div>
+                        )}
+
+                        {formData.reviewVocabMode === "random" && (
+                          <p className="text-xs text-gray-600">
+                            Words will be randomly selected from all your other
+                            islands.
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
                 <div className="flex gap-4">
                   <button

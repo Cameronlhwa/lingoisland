@@ -11,11 +11,14 @@ const clampCount = (value: number) => Math.min(10, Math.max(5, value))
 
 const normalizeHanzi = (value: string) => value.trim()
 
-const mapToBaseLevel = (level: string | null): 'A2' | 'B1' | 'B2' => {
+const mapToBaseLevel = (level: string | null): 'A1' | 'A2' | 'B1' | 'B2' | 'C1' => {
   if (!level) return 'B1'
+  if (level.startsWith('A1')) return 'A1'
   if (level.startsWith('A2')) return 'A2'
   if (level.startsWith('B1')) return 'B1'
-  return 'B2'
+  if (level.startsWith('B2')) return 'B2'
+  if (level.startsWith('C1')) return 'C1'
+  return 'B1'
 }
 
 const pickRandomUnique = <T,>(source: T[], count: number): T[] => {
@@ -100,6 +103,12 @@ export async function POST(
     let grammarTags: string[] = []
     if (grammarTarget > 0) {
       const grammarPatternsByLevel: Record<string, string[]> = {
+        A1: [
+          '吗 (yes/no question)',
+          '呢 (question particle)',
+          '了 (completed action)',
+          '很 + adjective',
+        ],
         A2: [
           '了 (change of state)',
           '过 (experience)',
@@ -124,6 +133,15 @@ export async function POST(
           '越…越…',
           '反正…',
           '干脆…',
+        ],
+        C1: [
+          '无论…都…',
+          '哪怕…也…',
+          '以至于…',
+          '难怪…',
+          '与其…不如…',
+          '再说…',
+          '总之…',
         ],
       }
 

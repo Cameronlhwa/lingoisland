@@ -42,7 +42,7 @@ export async function generateWordSentences({
 }: {
   word: Word
   topic: string
-  level: 'A2' | 'B1' | 'B2'
+  level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
   detailedLevel?: string
   grammarTarget?: number
   grammarTags?: string[] // Available grammar patterns to use
@@ -69,16 +69,21 @@ export async function generateWordSentences({
   }
 
   const levelDescriptions = {
-    A2: 'upper beginner (simple sentence structures, common vocabulary)',
-    B1: 'intermediate (more complex structures, varied vocabulary)',
-    B2: 'upper intermediate (advanced structures, nuanced vocabulary)',
+    A1: 'beginner (very basic phrases, survival vocabulary, simple present tense)',
+    A2: 'upper beginner (simple sentence structures, common everyday vocabulary)',
+    B1: 'intermediate (more complex structures, varied vocabulary, can discuss familiar topics)',
+    B2: 'upper intermediate (advanced structures, nuanced vocabulary, can express opinions)',
+    C1: 'advanced (complex discourse, subtle meanings, idiomatic expressions, sophisticated vocabulary)',
   }
 
   const actualDetailedLevel = detailedLevel || level
 
   // Define easy/same/hard tiers relative to the detailed level
   const easyTierMap: Record<string, string> = {
-    'A2-': 'beginner / early A2',
+    'A1-': 'absolute beginner',
+    'A1': 'weak A1',
+    'A1+': 'solid A1',
+    'A2-': 'strong A1 / weak A2',
     'A2': 'early A2',
     'A2+': 'solid A2',
     'B1-': 'strong A2 / weak B1',
@@ -87,9 +92,15 @@ export async function generateWordSentences({
     'B2-': 'strong B1',
     'B2': 'B1+',
     'B2+': 'solid B2',
+    'C1-': 'strong B2',
+    'C1': 'B2+',
+    'C1+': 'solid C1',
   }
 
   const hardTierMap: Record<string, string> = {
+    'A1-': 'A1 level',
+    'A1': 'A1+ level',
+    'A1+': 'early A2',
     'A2-': 'A2 level',
     'A2': 'A2+ level',
     'A2+': 'early B1',
@@ -98,7 +109,10 @@ export async function generateWordSentences({
     'B1+': 'early B2',
     'B2-': 'B2 level',
     'B2': 'B2+ level',
-    'B2+': 'slightly above B2 (but not academic C1)',
+    'B2+': 'early C1',
+    'C1-': 'C1 level',
+    'C1': 'C1+ level',
+    'C1+': 'high C1 (sophisticated, near-native expressions)',
   }
 
   const easyDescription = easyTierMap[actualDetailedLevel] || `one full level easier than ${level}`
@@ -147,11 +161,20 @@ export async function generateWordSentences({
     ? `\n\nGRAMMAR FOCUS:\n- Use the grammar pattern "${grammarPatternToUse}" in ONE of the three sentences.\n- The sentence with this pattern should naturally demonstrate it.\n- The other two sentences should use familiar grammar so the focus stays on vocabulary.\n- Include the grammarTag field: "${grammarPatternToUse}" for the sentence using the pattern, null for others.`
     : ''
 
+  // Level-specific guidance
+  const levelGuidance = {
+    A1: `\n\nSTYLE FOR A1: Very basic phrases (4-8 chars), simple present tense, concrete survival vocabulary (food, numbers, basic actions), NO slang.`,
+    A2: `\n\nSTYLE FOR A2: Natural everyday Chinese, simple friendly tone, common expressions (就、也、都、很), practical for daily situations.`,
+    B1: `\n\nSTYLE FOR B1: Conversational chat-with-friends tone, casual connectors (其实、感觉、有点、挺、就), authentic not textbooky.`,
+    B2: `\n\nSTYLE FOR B2: What 20-30 year olds say to friends, casual connectors (其实、感觉、有点、挺、蛮、真的、太…了), light modern expressions OK (max 1): 不卷、躺平、emo.`,
+    C1: `\n\nSTYLE FOR C1: Sophisticated yet natural, idioms and subtle meanings OK, modern slang welcome, complex structures, near-native expressiveness, cultural references OK.`,
+  }
+
   const prompt = `You are a Mandarin Chinese learning assistant. Generate example sentences for a single vocabulary word.
 
 Word to demonstrate: ${word.hanzi} (${word.pinyin}) - ${word.english}
 Topic: ${topic}
-Learner's level: ${actualDetailedLevel} (${level} band: ${levelDescriptions[level]})${knownWordsSection}${diversityPlanSection}${grammarSection}${avoidSection}${retryHintSection}
+Learner's level: ${actualDetailedLevel} (${level} band: ${levelDescriptions[level]})${levelGuidance[level]}${knownWordsSection}${diversityPlanSection}${grammarSection}${avoidSection}${retryHintSection}
 
 Generate THREE example sentences showing this word in context:
 1. "easy": Approximately ONE FULL LEVEL easier than ${actualDetailedLevel} (${easyDescription}). Shorter sentences, simpler grammar and vocabulary.
