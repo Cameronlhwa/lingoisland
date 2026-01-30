@@ -27,6 +27,66 @@ const topicSuggestions = [
 
 const STORAGE_KEY = "pending_story_request";
 
+type CEFRLevel =
+  | "A1-"
+  | "A1"
+  | "A1+"
+  | "A2-"
+  | "A2"
+  | "A2+"
+  | "B1-"
+  | "B1"
+  | "B1+"
+  | "B2-"
+  | "B2"
+  | "B2+"
+  | "C1-"
+  | "C1"
+  | "C1+";
+
+const LEVEL_GROUPS: {
+  base: "A1" | "A2" | "B1" | "B2" | "C1";
+  label: string;
+  description: string;
+  levels: CEFRLevel[];
+}[] = [
+  {
+    base: "A1",
+    label: "Beginner",
+    description:
+      "Just starting out with basic phrases and survival vocabulary (HSK 1-2).",
+    levels: ["A1-", "A1", "A1+"],
+  },
+  {
+    base: "A2",
+    label: "Upper beginner",
+    description:
+      "You can handle basics but still need support in conversations (HSK 3).",
+    levels: ["A2-", "A2", "A2+"],
+  },
+  {
+    base: "B1",
+    label: "Intermediate",
+    description:
+      "You can talk about everyday topics but struggle with nuance (HSK 4-5).",
+    levels: ["B1-", "B1", "B1+"],
+  },
+  {
+    base: "B2",
+    label: "Upper intermediate",
+    description:
+      "You follow most native content but miss some details (HSK 5-6).",
+    levels: ["B2-", "B2", "B2+"],
+  },
+  {
+    base: "C1",
+    label: "Advanced",
+    description:
+      "You're fluent but still learning sophisticated vocabulary and idioms.",
+    levels: ["C1-", "C1", "C1+"],
+  },
+];
+
 function normalizeWords(value: string) {
   return value
     .split(/[,，\n]/g)
@@ -46,7 +106,7 @@ export default function StoryWizard() {
   const [wordInput, setWordInput] = useState("");
   const [requestedWords, setRequestedWords] = useState<string[]>([]);
   const [lengthChars, setLengthChars] = useState(200);
-  const [level, setLevel] = useState("B1");
+  const [level, setLevel] = useState<CEFRLevel>("B1");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +142,7 @@ export default function StoryWizard() {
         setTopicIslands(islandsResult.data);
       }
       if (!profileResult.error && profileResult.data?.cefr_level) {
-        setLevel(profileResult.data.cefr_level);
+        setLevel(profileResult.data.cefr_level as CEFRLevel);
       }
       setLoading(false);
     };
@@ -132,10 +192,12 @@ export default function StoryWizard() {
   );
 
   const canProceed = useMemo(() => {
-    if (step === 1) return topic.trim().length > 0;
-    if (step === 2) return true;
-    return true;
-  }, [step, topic]);
+    if (step === 1) return true; // Level selection (auto-advances on click)
+    if (step === 2) return topic.trim().length > 0; // Topic input
+    if (step === 3 && topicIslands.length === 0) return true; // Skip if no islands
+    if (step === 3) return selectedIslands.size > 0; // Must select at least one island
+    return true; // Steps 4 and 5 always proceed
+  }, [step, topic, topicIslands.length, selectedIslands.size]);
 
   const addRequestedWords = (value: string) => {
     const next = normalizeWords(value);
@@ -211,11 +273,11 @@ export default function StoryWizard() {
               Create a custom story
             </h1>
             <p className="mt-2 text-sm text-gray-600">
-              Step {step} of 4
+              Step {step} of 5
             </p>
           </div>
           <div className="flex gap-2">
-            {[1, 2, 3, 4].map((s) => (
+            {[1, 2, 3, 4, 5].map((s) => (
               <div
                 key={s}
                 className={`h-2 w-10 rounded-full ${
@@ -233,6 +295,51 @@ export default function StoryWizard() {
 
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
           {step === 1 && (
+            <div>
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
+                What best describes your level?
+              </h2>
+              <p className="mb-8 text-base text-gray-600">
+                Choose the row that feels closest. You can always change this
+                later.
+              </p>
+
+              <div className="space-y-4">
+                {LEVEL_GROUPS.map((group) => (
+                  <div
+                    key={group.base}
+                    className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between"
+                  >
+                    <div className="max-w-sm">
+                      <h3 className="text-base font-semibold text-gray-900">
+                        {group.label} ({group.base})
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-600">
+                        {group.description}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {group.levels.map((lvl) => (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => {
+                            setLevel(lvl);
+                            setStep(2);
+                          }}
+                          className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 hover:bg-gray-50"
+                        >
+                          {lvl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
             <div className="space-y-6">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900">
@@ -262,7 +369,7 @@ export default function StoryWizard() {
             </div>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <div>
               <h2 className="mb-4 text-xl font-semibold text-gray-900">
                 Pick topic islands
@@ -317,7 +424,7 @@ export default function StoryWizard() {
               )}
               <button
                 type="button"
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 className="mt-6 rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 transition-colors hover:bg-gray-50"
               >
                 Skip islands for now
@@ -325,7 +432,7 @@ export default function StoryWizard() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div className="space-y-6">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900">
@@ -382,21 +489,14 @@ export default function StoryWizard() {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <div className="space-y-6">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900">
-                  Length (characters)
+                  Story length: ~{lengthChars} characters
                 </label>
                 <div className="flex items-center gap-4">
-                  <input
-                    type="number"
-                    min={50}
-                    max={500}
-                    value={lengthChars}
-                    onChange={(e) => setLengthChars(Number(e.target.value))}
-                    className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
-                  />
+                  <span className="text-xs text-gray-500">Shorter</span>
                   <input
                     type="range"
                     min={50}
@@ -405,23 +505,11 @@ export default function StoryWizard() {
                     onChange={(e) => setLengthChars(Number(e.target.value))}
                     className="flex-1"
                   />
+                  <span className="text-xs text-gray-500">Longer</span>
                 </div>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-900">
-                  Level
-                </label>
-                <select
-                  value={level}
-                  onChange={(e) => setLevel(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-gray-900 focus:outline-none"
-                >
-                  <option value="A1">A1 - Beginner</option>
-                  <option value="A2">A2 - Upper Beginner</option>
-                  <option value="B1">B1 - Intermediate</option>
-                  <option value="B2">B2 - Upper Intermediate</option>
-                  <option value="C1">C1 - Advanced</option>
-                </select>
+                <p className="mt-2 text-xs text-gray-500">
+                  Current level: <span className="font-medium text-gray-900">{level}</span>
+                </p>
               </div>
             </div>
           )}
@@ -438,21 +526,23 @@ export default function StoryWizard() {
               Try again
             </button>
           </div>
-        ) : null}
+          ) : null}
 
         <div className="mt-8 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setStep((prev) => Math.max(1, prev - 1))}
-            disabled={step === 1}
-            className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
-          >
-            Back
-          </button>
-          {step < 4 ? (
+          {step > 1 && (
             <button
               type="button"
-              onClick={() => setStep((prev) => Math.min(4, prev + 1))}
+              onClick={() => setStep((prev) => Math.max(1, prev - 1))}
+              className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              Back
+            </button>
+          )}
+          {step === 1 && <div />}
+          {step < 5 ? (
+            <button
+              type="button"
+              onClick={() => setStep((prev) => Math.min(5, prev + 1))}
               disabled={!canProceed}
               className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
             >
