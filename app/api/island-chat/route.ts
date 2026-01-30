@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { getEntitlements } from "@/lib/entitlements";
 
 type IncomingMessage = { role: "user" | "assistant"; content: string };
 
@@ -109,7 +110,14 @@ export async function GET(request: Request) {
 
     if (msgErr) throw msgErr;
 
-    return NextResponse.json({ threadId, messages: msgs || [] });
+    // Get user plan for paywall enforcement
+    const entitlements = await getEntitlements(user.id);
+
+    return NextResponse.json({ 
+      threadId, 
+      messages: msgs || [],
+      userPlan: entitlements.isPro ? "pro" : "free"
+    });
   } catch (error) {
     console.error("Error in GET /api/island-chat:", error);
     return NextResponse.json(

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getEntitlements, isWordLocked } from '@/lib/entitlements'
 
 /**
  * GET /api/topic-islands/[id]
@@ -36,11 +37,15 @@ export async function GET(
       )
     }
 
-    // Get words
+    // Get user entitlements
+    const entitlements = await getEntitlements(user.id)
+
+    // Get words (order by position, then created_at as fallback)
     const { data: words } = await supabase
       .from('island_words')
       .select('*')
       .eq('island_id', islandId)
+      .order('position', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: true })
 
     // Get sentences grouped by word
@@ -50,15 +55,25 @@ export async function GET(
       .eq('island_id', islandId)
       .order('word_id, tier', { ascending: true })
 
-    // Attach sentences to words
-    const wordsWithSentences = (words || []).map((word) => ({
-      ...word,
-      sentences: (sentences || []).filter((s) => s.word_id === word.id),
-    }))
+    // Attach sentences to words and add locked flag
+    // If position is null, assign temporary positions based on array order (1-indexed)
+    const wordsWithSentences = (words || []).map((word, index) => {
+      // Use actual position if exists, otherwise use array index + 1
+      const position = word.position ?? (index + 1)
+      const locked = isWordLocked(position, entitlements.isPro)
+      
+      return {
+        ...word,
+        position, // Include the resolved position in response
+        is_locked: locked,
+        sentences: (sentences || []).filter((s) => s.word_id === word.id),
+      }
+    })
 
     return NextResponse.json({
       island,
       words: wordsWithSentences,
+      user_plan: entitlements.isPro ? 'pro' : 'free',
     })
   } catch (error) {
     console.error('Error in GET /api/topic-islands/[id]:', error)

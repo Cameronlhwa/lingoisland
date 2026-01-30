@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { generateWordList } from '@/lib/deepseek/generate-word-list'
 import { generateWordSentences, type Word } from '@/lib/deepseek/generate-word-sentences'
 import { limitConcurrency } from '@/lib/utils/concurrency'
+import { getEntitlements } from '@/lib/entitlements'
 
 /**
  * POST /api/topic-islands/[id]/generate-batch
@@ -49,6 +50,9 @@ export async function POST(
         { status: 404 }
       )
     }
+
+    // Get user entitlements for paywall enforcement
+    const entitlements = await getEntitlements(user.id)
 
     const apiKey = process.env.DEEPSEEK_API_KEY?.trim()
     if (!apiKey) {
@@ -218,6 +222,17 @@ export async function POST(
     // Calculate how many words we need
     const wordsNeeded = island.word_target - currentWords
 
+    // Get current max position to continue numbering
+    const { data: maxPositionData } = await supabase
+      .from('island_words')
+      .select('position')
+      .eq('island_id', islandId)
+      .order('position', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    let currentPosition = (maxPositionData?.position || 0)
+
     // STAGE 1: Generate word list upfront
     let wordList: Word[]
     try {
@@ -262,8 +277,9 @@ export async function POST(
     }
 
     // Insert words into database first
-    const insertedWords: Array<Word & { id: string }> = []
+    const insertedWords: Array<Word & { id: string; position: number }> = []
     for (const word of wordList) {
+      currentPosition += 1
       const { data: wordData, error: wordError } = await supabase
         .from('island_words')
         .insert({
@@ -273,6 +289,7 @@ export async function POST(
           pinyin: word.pinyin,
           english: word.english,
           difficulty_tag: 'core',
+          position: currentPosition,
         })
         .select()
         .single()
@@ -293,12 +310,23 @@ export async function POST(
       }
 
       if (wordData) {
-        insertedWords.push({ ...word, id: wordData.id })
+        insertedWords.push({ ...word, id: wordData.id, position: currentPosition })
         await updateProgress({
           wordsSelected: currentWords + insertedWords.length,
           status: 'selecting',
         })
       }
+    }
+
+    // PAYWALL ENFORCEMENT: For Free users, only generate sentences for unlocked words (position <= 10)
+    const wordsToGenerate = entitlements.isPro 
+      ? insertedWords 
+      : insertedWords.filter(w => w.position <= 10)
+
+    if (!entitlements.isPro && insertedWords.length > wordsToGenerate.length) {
+      console.log(
+        `[PAYWALL] Free user ${user.id}: Skipping sentence generation for ${insertedWords.length - wordsToGenerate.length} locked words (positions 11-20)`
+      )
     }
 
     if (insertedWords.length === 0) {
@@ -436,7 +464,7 @@ export async function POST(
       return run
     }
 
-    const sentenceGenerationTasks = insertedWords.map((word, index) => {
+    const sentenceGenerationTasks = wordsToGenerate.map((word, index) => {
       return async () => {
         const styleCount = Math.random() < 0.5 ? 2 : 3
         const contextCount = Math.random() < 0.5 ? 1 : 2
@@ -485,7 +513,7 @@ export async function POST(
             grammarTags: grammarTags.length > 0 ? grammarTags : undefined,
             knownWords: knownWords.length > 0 ? knownWords : undefined,
             wordIndex: index,
-            totalWords: insertedWords.length,
+            totalWords: wordsToGenerate.length,
             styles: chosenStyles,
             contexts: chosenContexts,
             avoidOpeners: avoidOpeners.length > 0 ? avoidOpeners : undefined,
@@ -653,7 +681,7 @@ export async function POST(
 
     if (failedGenerations > 0) {
       console.warn(
-        `Failed to generate sentences for ${failedGenerations} out of ${insertedWords.length} words`
+        `Failed to generate sentences for ${failedGenerations} out of ${wordsToGenerate.length} words`
       )
     }
 
