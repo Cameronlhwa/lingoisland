@@ -241,12 +241,19 @@ export async function POST(request: Request) {
         const userId = await resolveUserId(subscription, null);
 
         if (!userId) {
-          console.error("[STRIPE WEBHOOK] Could not resolve user for update. Subscription:", {
+          console.error("[STRIPE WEBHOOK] ⚠️  CRITICAL: Could not resolve user for update. Subscription:", {
             subscriptionId: subscription.id,
             customerId: subscription.customer,
             metadata: subscription.metadata,
+            status: subscription.status,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
           });
-          break;
+          console.error("[STRIPE WEBHOOK] ⚠️  Subscription status change will not be applied!");
+          // Return error so Stripe will retry
+          return NextResponse.json(
+            { error: "Could not resolve user ID for subscription update" },
+            { status: 400 }
+          );
         }
 
         console.log("[STRIPE WEBHOOK] Subscription updated:", {
@@ -289,12 +296,18 @@ export async function POST(request: Request) {
         const userId = await resolveUserId(subscription, null);
 
         if (!userId) {
-          console.error("[STRIPE WEBHOOK] Could not resolve user for delete. Subscription:", {
+          console.error("[STRIPE WEBHOOK] ⚠️  CRITICAL: Could not resolve user for delete. Subscription:", {
             subscriptionId: subscription.id,
             customerId: subscription.customer,
             metadata: subscription.metadata,
           });
-          break;
+          console.error("[STRIPE WEBHOOK] ⚠️  User will remain Pro even though subscription was deleted!");
+          console.error("[STRIPE WEBHOOK] ⚠️  Manual intervention required - find user by stripe_customer_id and clear subscription");
+          // Return error so Stripe will retry
+          return NextResponse.json(
+            { error: "Could not resolve user ID for subscription deletion" },
+            { status: 400 }
+          );
         }
 
         console.log("[STRIPE WEBHOOK] Subscription deleted:", {
