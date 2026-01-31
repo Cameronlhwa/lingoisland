@@ -2,12 +2,13 @@
 
 import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
-import { useRouter, usePathname } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useState, useEffect, type FormEvent } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +16,28 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Handle error from URL params (e.g., from failed OAuth)
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error) {
+      switch (error) {
+        case "auth_failed":
+          setErrorMessage("Authentication failed. Please try again.");
+          break;
+        case "oauth_expired":
+          setErrorMessage("OAuth session expired. Please sign in again.");
+          break;
+        case "verification_failed":
+          setErrorMessage("Verification failed. Please try again.");
+          break;
+        default:
+          setErrorMessage("An error occurred. Please try again.");
+      }
+      // Clear the error from URL
+      router.replace("/login");
+    }
+  }, [searchParams, router]);
 
   const handleGoogleLogin = async () => {
     setStatusMessage(null);

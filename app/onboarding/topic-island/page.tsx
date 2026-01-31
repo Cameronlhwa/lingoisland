@@ -107,7 +107,7 @@ function OnboardingTopicIslandContent() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Check if user is already authenticated - if so, redirect to app
+  // Check if user is already authenticated - if so, redirect to processing page
   useEffect(() => {
     checkAuthAndRedirect();
   }, []);
@@ -119,12 +119,12 @@ function OnboardingTopicIslandContent() {
 
     setCheckingAuth(false);
 
-    // If user is authenticated and has a pending request, redirect to /app
-    // so it can be processed
+    // If user is authenticated and has a pending request, redirect to topic-islands
+    // page where it will be processed and redirected to the island detail page
     if (user) {
       const pendingRequest = localStorage.getItem(STORAGE_KEY);
       if (pendingRequest) {
-        router.replace("/app");
+        router.replace("/app/topic-islands");
       }
     }
   };
@@ -210,8 +210,8 @@ function OnboardingTopicIslandContent() {
 
     const { origin, redirectTo, cookieOptions } = getOAuthRedirectConfig();
 
-    // Always redirect to /app after auth - it will handle the pending request
-    const nextPath = "/app";
+    // Redirect to topic-islands page after auth - it will handle the pending request
+    const nextPath = "/app/topic-islands";
     localStorage.setItem("oauth_next", nextPath);
     document.cookie = `oauth_next=${nextPath}; ${cookieOptions}`;
 
@@ -300,7 +300,7 @@ function OnboardingTopicIslandContent() {
         return;
       }
 
-      router.replace("/app");
+      router.replace("/app/topic-islands");
     } finally {
       setIsSubmitting(false);
     }
