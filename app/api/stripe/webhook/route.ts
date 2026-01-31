@@ -255,8 +255,19 @@ export async function POST(request: Request) {
         if (subscription.status === "active" || subscription.status === "trialing") {
           console.log("[STRIPE WEBHOOK] Subscription is active/trialing - upgrading to Pro");
           await upsertActiveSubscription(userId, subscription);
-        } else if (subscription.status === "canceled" || subscription.status === "unpaid") {
-          console.log("[STRIPE WEBHOOK] Subscription is canceled/unpaid - downgrading to Free");
+        } else if (subscription.status === "canceled") {
+          // Check if cancel_at_period_end is true
+          // If true, user keeps access until current_period_end
+          if (subscription.cancel_at_period_end) {
+            console.log("[STRIPE WEBHOOK] Subscription canceled at period end - maintaining Pro until", subscription.current_period_end);
+            // Keep them as Pro until the period ends
+            await upsertActiveSubscription(userId, subscription);
+          } else {
+            console.log("[STRIPE WEBHOOK] Subscription canceled immediately - downgrading to Free");
+            await clearSubscription(userId);
+          }
+        } else if (subscription.status === "unpaid") {
+          console.log("[STRIPE WEBHOOK] Subscription is unpaid - downgrading to Free");
           await clearSubscription(userId);
         } else {
           console.log("[STRIPE WEBHOOK] Subscription status not handled:", subscription.status);
