@@ -39,9 +39,9 @@ export async function GET() {
       );
 
       return NextResponse.json({
-        cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
-        currentPeriodEnd: subscription.current_period_end 
-          ? new Date(subscription.current_period_end * 1000).toISOString()
+        cancelAtPeriodEnd: (subscription as any).cancel_at_period_end || false,
+        currentPeriodEnd: (subscription as any).current_period_end 
+          ? new Date((subscription as any).current_period_end * 1000).toISOString()
           : null,
       });
     } catch (stripeError) {
