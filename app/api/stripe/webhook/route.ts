@@ -52,7 +52,7 @@ const upsertActiveSubscription = async (
       : subscription.customer.id;
   
   // Stripe Subscription.current_period_end is a Unix timestamp (number)
-  const currentPeriodEndUnix = subscription.current_period_end;
+  const currentPeriodEndUnix = (subscription as any).current_period_end;
   const currentPeriodEnd =
     typeof currentPeriodEndUnix === "number"
       ? new Date(currentPeriodEndUnix * 1000).toISOString()
@@ -64,7 +64,7 @@ const upsertActiveSubscription = async (
     status: subscription.status,
     currentPeriodEndUnix,
     currentPeriodEnd,
-    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
   });
 
   if (!currentPeriodEnd) {
@@ -79,7 +79,7 @@ const upsertActiveSubscription = async (
       stripe_customer_id: stripeCustomerId,
       stripe_subscription_id: subscription.id,
       current_period_end: currentPeriodEnd,
-      cancel_at_period_end: subscription.cancel_at_period_end || false,
+      cancel_at_period_end: (subscription as any).cancel_at_period_end || false,
     },
     { onConflict: "id" }
   );
@@ -246,7 +246,7 @@ export async function POST(request: Request) {
             customerId: subscription.customer,
             metadata: subscription.metadata,
             status: subscription.status,
-            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+            cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
           });
           console.error("[STRIPE WEBHOOK] ⚠️  Subscription status change will not be applied!");
           // Return error so Stripe will retry
@@ -268,8 +268,8 @@ export async function POST(request: Request) {
         } else if (subscription.status === "canceled") {
           // Check if cancel_at_period_end is true
           // If true, user keeps access until current_period_end
-          if (subscription.cancel_at_period_end) {
-            console.log("[STRIPE WEBHOOK] Subscription canceled at period end - maintaining Pro until", subscription.current_period_end);
+          if ((subscription as any).cancel_at_period_end) {
+            console.log("[STRIPE WEBHOOK] Subscription canceled at period end - maintaining Pro until", (subscription as any).current_period_end);
             // Keep them as Pro until the period ends
             await upsertActiveSubscription(userId, subscription);
           } else {
