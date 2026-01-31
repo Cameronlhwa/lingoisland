@@ -3,9 +3,9 @@
 import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, Suspense, type FormEvent } from "react";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -267,5 +267,19 @@ export default function LoginPage() {
         </button>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-white px-6">
+          <div className="text-gray-600">Loading...</div>
+        </main>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }
