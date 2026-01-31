@@ -64,6 +64,7 @@ const upsertActiveSubscription = async (
     status: subscription.status,
     currentPeriodEndUnix,
     currentPeriodEnd,
+    cancelAtPeriodEnd: subscription.cancel_at_period_end,
   });
 
   if (!currentPeriodEnd) {
@@ -78,6 +79,7 @@ const upsertActiveSubscription = async (
       stripe_customer_id: stripeCustomerId,
       stripe_subscription_id: subscription.id,
       current_period_end: currentPeriodEnd,
+      cancel_at_period_end: subscription.cancel_at_period_end || false,
     },
     { onConflict: "id" }
   );
@@ -100,6 +102,7 @@ const clearSubscription = async (userId: string) => {
       plan: "free",
       stripe_subscription_id: null,
       current_period_end: null,
+      cancel_at_period_end: false,
     })
     .eq("id", userId);
 

@@ -22,12 +22,13 @@ export async function getEntitlements(userId: string): Promise<{
   isPro: boolean;
   current_period_end: string | null;
   stripe_subscription_id: string | null;
+  cancel_at_period_end: boolean;
   features: Record<Feature, boolean>;
 }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("plan, current_period_end, stripe_subscription_id")
+    .select("plan, current_period_end, stripe_subscription_id, cancel_at_period_end")
     .eq("id", userId)
     .maybeSingle();
 
@@ -41,6 +42,7 @@ export async function getEntitlements(userId: string): Promise<{
     : null;
   const currentPeriodEndValue = data?.current_period_end ?? null;
   const stripeSubscriptionId = data?.stripe_subscription_id ?? null;
+  const cancelAtPeriodEnd = data?.cancel_at_period_end ?? false;
   
   // User is considered Pro if plan='pro' AND either:
   // 1. current_period_end is NULL (manual grant with no expiry)
@@ -57,7 +59,14 @@ export async function getEntitlements(userId: string): Promise<{
     ])
   ) as Record<Feature, boolean>;
 
-  return { plan, isPro, current_period_end: currentPeriodEndValue, stripe_subscription_id: stripeSubscriptionId, features };
+  return { 
+    plan, 
+    isPro, 
+    current_period_end: currentPeriodEndValue, 
+    stripe_subscription_id: stripeSubscriptionId, 
+    cancel_at_period_end: cancelAtPeriodEnd,
+    features 
+  };
 }
 
 /**

@@ -12,11 +12,7 @@ type Entitlements = {
   isPro: boolean;
   current_period_end: string | null;
   stripe_subscription_id: string | null;
-};
-
-type SubscriptionStatus = {
-  cancelAtPeriodEnd: boolean;
-  currentPeriodEnd: string | null;
+  cancel_at_period_end: boolean;
 };
 
 const reasons = [
@@ -41,7 +37,6 @@ export default function AccountModal({
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [cefrLevel, setCefrLevel] = useState<string>("B1");
   const [levelLoading, setLevelLoading] = useState(false);
   const [entitlementsLoading, setEntitlementsLoading] = useState(true);
@@ -119,21 +114,6 @@ export default function AccountModal({
           return;
         }
         setEntitlements(data);
-
-        // If user has a subscription, check cancellation status
-        if (data.stripe_subscription_id) {
-          try {
-            const statusResponse = await fetch("/api/subscription-status", {
-              cache: "no-store",
-            });
-            if (statusResponse.ok) {
-              const statusData = await statusResponse.json();
-              setSubscriptionStatus(statusData);
-            }
-          } catch (error) {
-            console.error("Error loading subscription status:", error);
-          }
-        }
       } catch (error) {
         console.error("Error loading entitlements:", error);
         setEntitlementsError("Failed to load entitlements.");
@@ -667,12 +647,12 @@ export default function AccountModal({
                     {renewalDate ? (
                       <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
                         <p className="text-sm font-medium text-gray-900">
-                          {subscriptionStatus?.cancelAtPeriodEnd 
+                          {entitlements.cancel_at_period_end 
                             ? "Subscription Ending" 
                             : "Active Pro Subscription"}
                         </p>
                         <p className="mt-1 text-xs text-gray-600">
-                          {subscriptionStatus?.cancelAtPeriodEnd ? (
+                          {entitlements.cancel_at_period_end ? (
                             <>
                               Active until{" "}
                               <span className="font-medium">{renewalDate}</span>
@@ -732,7 +712,7 @@ export default function AccountModal({
                           {portalLoading ? "Opening..." : "Manage Subscription"}
                         </button>
                       )}
-                      {renewalDate && !subscriptionStatus?.cancelAtPeriodEnd && (
+                      {renewalDate && !entitlements.cancel_at_period_end && (
                         <button
                           onClick={() => setCancelOpen(true)}
                           className="w-full text-center text-xs font-medium text-gray-500 hover:text-red-600"
