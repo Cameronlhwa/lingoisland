@@ -708,7 +708,18 @@ export default function AccountModal({
                           )}
                         </p>
                       </div>
+                    ) : entitlements.stripe_subscription_id ? (
+                      // Has subscription ID but no period end = data out of sync
+                      <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3">
+                        <p className="text-sm font-medium text-yellow-900">
+                          Subscription Data Out of Sync
+                        </p>
+                        <p className="mt-1 text-xs text-yellow-700">
+                          Click "Sync from Stripe" below to fix this
+                        </p>
+                      </div>
                     ) : (
+                      // No subscription ID and no period end = manual lifetime grant
                       <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
                         <p className="text-sm font-medium text-gray-900">
                           Pro Access
