@@ -54,6 +54,8 @@ export default function AccountModal({
     "monthly" | "yearly" | null
   >(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [reason, setReason] = useState<string>("");
@@ -221,6 +223,47 @@ export default function AccountModal({
       console.error("Error opening billing portal:", error);
     } finally {
       setPortalLoading(false);
+    }
+  };
+
+  const syncSubscription = async () => {
+    if (syncLoading) return;
+    setSyncLoading(true);
+    setSyncMessage(null);
+    try {
+      const response = await fetch("/api/stripe/sync-subscription", { 
+        method: "POST" 
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        setSyncMessage(`Error: ${data.error || "Failed to sync subscription"}`);
+        return;
+      }
+
+      setSyncMessage(data.message || "Subscription synced successfully!");
+      
+      // Reload entitlements after sync
+      setTimeout(async () => {
+        try {
+          const entitlementsResponse = await fetch("/api/entitlements", {
+            cache: "no-store",
+          });
+          if (entitlementsResponse.ok) {
+            const entitlementsData = await entitlementsResponse.json();
+            setEntitlements(entitlementsData);
+          }
+        } catch (error) {
+          console.error("Error reloading entitlements:", error);
+        }
+        setSyncMessage(null);
+      }, 3000);
+    } catch (error) {
+      console.error("Error syncing subscription:", error);
+      setSyncMessage("Error: Failed to sync subscription");
+    } finally {
+      setSyncLoading(false);
     }
   };
 
@@ -703,13 +746,41 @@ export default function AccountModal({
                     </div>
 
                     <div className="mt-auto space-y-2">
+                      {syncMessage && (
+                        <div className={`rounded-lg px-3 py-2 text-xs ${
+                          syncMessage.startsWith("Error") 
+                            ? "bg-red-50 text-red-600" 
+                            : "bg-green-50 text-green-600"
+                        }`}>
+                          {syncMessage}
+                        </div>
+                      )}
                       {renewalDate && (
+                        <>
+                          <button
+                            onClick={openBillingPortal}
+                            disabled={portalLoading}
+                            className="inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                          >
+                            {portalLoading ? "Opening..." : "Manage Subscription"}
+                          </button>
+                          <button
+                            onClick={syncSubscription}
+                            disabled={syncLoading}
+                            className="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
+                          >
+                            {syncLoading ? "Syncing..." : "Sync from Stripe"}
+                          </button>
+                        </>
+                      )}
+                      {/* Show sync button for lifetime users too in case they need to fix issues */}
+                      {!renewalDate && entitlements?.stripe_subscription_id && (
                         <button
-                          onClick={openBillingPortal}
-                          disabled={portalLoading}
-                          className="inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                          onClick={syncSubscription}
+                          disabled={syncLoading}
+                          className="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
                         >
-                          {portalLoading ? "Opening..." : "Manage Subscription"}
+                          {syncLoading ? "Syncing..." : "Sync from Stripe"}
                         </button>
                       )}
                       {renewalDate && !entitlements.cancel_at_period_end && (
