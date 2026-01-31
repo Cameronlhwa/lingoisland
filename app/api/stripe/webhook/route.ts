@@ -108,12 +108,21 @@ const resolveUserId = async (
   subscription?: Stripe.Subscription | null,
   session?: Stripe.Checkout.Session | null
 ) => {
+  // Try 1: Get from subscription metadata
   const metadataUserId = subscription?.metadata?.user_id ?? null;
-  if (metadataUserId) return metadataUserId;
+  if (metadataUserId) {
+    console.log("[STRIPE WEBHOOK] Resolved user ID from subscription metadata:", metadataUserId);
+    return metadataUserId;
+  }
 
+  // Try 2: Get from session client_reference_id
   const sessionUserId = session?.client_reference_id ?? null;
-  if (sessionUserId) return sessionUserId;
+  if (sessionUserId) {
+    console.log("[STRIPE WEBHOOK] Resolved user ID from session client_reference_id:", sessionUserId);
+    return sessionUserId;
+  }
 
+  // Try 3: Look up by stripe_customer_id
   const stripeCustomerId =
     (subscription?.customer &&
       (typeof subscription.customer === "string"
@@ -125,7 +134,19 @@ const resolveUserId = async (
         : session.customer.id)) ||
     null;
 
-  return findProfileUserId(stripeCustomerId);
+  if (stripeCustomerId) {
+    console.log("[STRIPE WEBHOOK] Looking up user by stripe_customer_id:", stripeCustomerId);
+    const userId = await findProfileUserId(stripeCustomerId);
+    if (userId) {
+      console.log("[STRIPE WEBHOOK] Resolved user ID from stripe_customer_id lookup:", userId);
+    } else {
+      console.error("[STRIPE WEBHOOK] Could not find user with stripe_customer_id:", stripeCustomerId);
+    }
+    return userId;
+  }
+
+  console.error("[STRIPE WEBHOOK] Failed to resolve user ID - no metadata, client_reference_id, or customer_id available");
+  return null;
 };
 
 export async function POST(request: Request) {
@@ -151,36 +172,71 @@ export async function POST(request: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
+        console.log("[STRIPE WEBHOOK] Processing checkout.session.completed");
         const session = event.data.object as Stripe.Checkout.Session;
+        console.log("[STRIPE WEBHOOK] Session data:", {
+          sessionId: session.id,
+          customerId: session.customer,
+          subscriptionId: session.subscription,
+          clientReferenceId: session.client_reference_id,
+        });
+
         const subscriptionId =
           typeof session.subscription === "string"
             ? session.subscription
             : session.subscription?.id;
 
         if (!subscriptionId) {
-          console.warn("[STRIPE WEBHOOK] Missing subscription on session");
+          console.warn("[STRIPE WEBHOOK] Missing subscription on session - this might be a one-time payment, not a subscription");
           break;
         }
 
+        console.log("[STRIPE WEBHOOK] Retrieving subscription:", subscriptionId);
         const subscription = await stripe.subscriptions.retrieve(
           subscriptionId
         );
+        console.log("[STRIPE WEBHOOK] Retrieved subscription:", {
+          id: subscription.id,
+          status: subscription.status,
+          customerId: subscription.customer,
+          metadata: subscription.metadata,
+        });
+
         const userId = await resolveUserId(subscription, session);
 
         if (!userId) {
-          console.warn("[STRIPE WEBHOOK] Could not resolve user for checkout");
+          console.error("[STRIPE WEBHOOK] Could not resolve user for checkout. Session:", {
+            sessionId: session.id,
+            customerId: session.customer,
+            subscriptionId: subscription.id,
+            clientReferenceId: session.client_reference_id,
+            metadata: subscription.metadata,
+          });
           break;
         }
 
+        console.log("[STRIPE WEBHOOK] Resolved user ID:", userId);
         await upsertActiveSubscription(userId, subscription);
         break;
       }
       case "customer.subscription.updated": {
+        console.log("[STRIPE WEBHOOK] Processing customer.subscription.updated");
         const subscription = event.data.object as Stripe.Subscription;
+        console.log("[STRIPE WEBHOOK] Subscription data:", {
+          id: subscription.id,
+          status: subscription.status,
+          customerId: subscription.customer,
+          metadata: subscription.metadata,
+        });
+
         const userId = await resolveUserId(subscription, null);
 
         if (!userId) {
-          console.warn("[STRIPE WEBHOOK] Could not resolve user for update");
+          console.error("[STRIPE WEBHOOK] Could not resolve user for update. Subscription:", {
+            subscriptionId: subscription.id,
+            customerId: subscription.customer,
+            metadata: subscription.metadata,
+          });
           break;
         }
 
@@ -191,19 +247,33 @@ export async function POST(request: Request) {
         });
 
         if (subscription.status === "active" || subscription.status === "trialing") {
+          console.log("[STRIPE WEBHOOK] Subscription is active/trialing - upgrading to Pro");
           await upsertActiveSubscription(userId, subscription);
         } else if (subscription.status === "canceled" || subscription.status === "unpaid") {
-          // Handle canceled/unpaid subscriptions
+          console.log("[STRIPE WEBHOOK] Subscription is canceled/unpaid - downgrading to Free");
           await clearSubscription(userId);
+        } else {
+          console.log("[STRIPE WEBHOOK] Subscription status not handled:", subscription.status);
         }
         break;
       }
       case "customer.subscription.deleted": {
+        console.log("[STRIPE WEBHOOK] Processing customer.subscription.deleted");
         const subscription = event.data.object as Stripe.Subscription;
+        console.log("[STRIPE WEBHOOK] Subscription data:", {
+          id: subscription.id,
+          customerId: subscription.customer,
+          metadata: subscription.metadata,
+        });
+
         const userId = await resolveUserId(subscription, null);
 
         if (!userId) {
-          console.warn("[STRIPE WEBHOOK] Could not resolve user for delete");
+          console.error("[STRIPE WEBHOOK] Could not resolve user for delete. Subscription:", {
+            subscriptionId: subscription.id,
+            customerId: subscription.customer,
+            metadata: subscription.metadata,
+          });
           break;
         }
 
@@ -216,10 +286,12 @@ export async function POST(request: Request) {
         break;
       }
       default:
+        console.log("[STRIPE WEBHOOK] Unhandled event type:", event.type);
         break;
     }
   } catch (error) {
     console.error("[STRIPE WEBHOOK] Handler failed:", error);
+    console.error("[STRIPE WEBHOOK] Event data:", JSON.stringify(event, null, 2));
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }
