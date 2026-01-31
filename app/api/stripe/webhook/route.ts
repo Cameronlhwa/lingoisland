@@ -50,9 +50,9 @@ const upsertActiveSubscription = async (
     typeof subscription.customer === "string"
       ? subscription.customer
       : subscription.customer.id;
-  const currentPeriodEndUnix =
-    (subscription as { current_period_end?: number | null }).current_period_end ??
-    null;
+  
+  // Stripe Subscription.current_period_end is a Unix timestamp (number)
+  const currentPeriodEndUnix = subscription.current_period_end;
   const currentPeriodEnd =
     typeof currentPeriodEndUnix === "number"
       ? new Date(currentPeriodEndUnix * 1000).toISOString()
@@ -62,8 +62,14 @@ const upsertActiveSubscription = async (
     stripeCustomerId,
     subscriptionId: subscription.id,
     status: subscription.status,
+    currentPeriodEndUnix,
     currentPeriodEnd,
   });
+
+  if (!currentPeriodEnd) {
+    console.error("[STRIPE WEBHOOK] WARNING: current_period_end is missing from subscription!");
+    console.error("[STRIPE WEBHOOK] Full subscription object:", JSON.stringify(subscription, null, 2));
+  }
 
   const { error } = await getSupabaseAdmin().from("profiles").upsert(
     {
