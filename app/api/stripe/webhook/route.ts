@@ -58,6 +58,13 @@ const upsertActiveSubscription = async (
       ? new Date(currentPeriodEndUnix * 1000).toISOString()
       : null;
 
+  console.log("[STRIPE WEBHOOK] Upserting subscription for user:", userId, {
+    stripeCustomerId,
+    subscriptionId: subscription.id,
+    status: subscription.status,
+    currentPeriodEnd,
+  });
+
   const { error } = await getSupabaseAdmin().from("profiles").upsert(
     {
       id: userId,
@@ -74,10 +81,13 @@ const upsertActiveSubscription = async (
       "[STRIPE WEBHOOK] Failed to upsert subscription:",
       error
     );
+  } else {
+    console.log("[STRIPE WEBHOOK] Successfully upserted subscription for user:", userId);
   }
 };
 
 const clearSubscription = async (userId: string) => {
+  console.log("[STRIPE WEBHOOK] Clearing subscription for user:", userId);
   const { error } = await getSupabaseAdmin()
     .from("profiles")
     .update({
@@ -89,6 +99,8 @@ const clearSubscription = async (userId: string) => {
 
   if (error) {
     console.error("[STRIPE WEBHOOK] Failed to clear subscription:", error);
+  } else {
+    console.log("[STRIPE WEBHOOK] Successfully cleared subscription for user:", userId);
   }
 };
 
@@ -172,8 +184,17 @@ export async function POST(request: Request) {
           break;
         }
 
+        console.log("[STRIPE WEBHOOK] Subscription updated:", {
+          userId,
+          subscriptionId: subscription.id,
+          status: subscription.status,
+        });
+
         if (subscription.status === "active" || subscription.status === "trialing") {
           await upsertActiveSubscription(userId, subscription);
+        } else if (subscription.status === "canceled" || subscription.status === "unpaid") {
+          // Handle canceled/unpaid subscriptions
+          await clearSubscription(userId);
         }
         break;
       }
@@ -185,6 +206,11 @@ export async function POST(request: Request) {
           console.warn("[STRIPE WEBHOOK] Could not resolve user for delete");
           break;
         }
+
+        console.log("[STRIPE WEBHOOK] Subscription deleted:", {
+          userId,
+          subscriptionId: subscription.id,
+        });
 
         await clearSubscription(userId);
         break;

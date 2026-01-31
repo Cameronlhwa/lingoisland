@@ -39,6 +39,10 @@ export async function getEntitlements(userId: string): Promise<{
     ? new Date(data.current_period_end)
     : null;
   const currentPeriodEndValue = data?.current_period_end ?? null;
+  
+  // User is considered Pro if plan='pro' AND either:
+  // 1. current_period_end is NULL (manual grant with no expiry)
+  // 2. current_period_end is in the future (active Stripe subscription)
   const isPro =
     plan === "pro" &&
     (!currentPeriodEnd || currentPeriodEnd.getTime() > Date.now());

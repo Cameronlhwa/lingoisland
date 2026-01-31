@@ -2,7 +2,21 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateStory } from "@/lib/deepseek/generate-story";
 
+// Base levels for validation
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
+
+// Extended levels for backward compatibility
+const EXTENDED_LEVELS = [
+  "A1-", "A1", "A1+",
+  "A2-", "A2", "A2+",
+  "B1-", "B1", "B1+",
+  "B2-", "B2", "B2+",
+  "C1-", "C1", "C1+"
+];
+
+function isValidLevel(level: string): boolean {
+  return EXTENDED_LEVELS.includes(level);
+}
 
 function normalizeRequestedWords(words: string[]) {
   return words
@@ -49,9 +63,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Topic is required" }, { status: 400 });
     }
 
-    if (!LEVELS.includes(level)) {
+    if (!isValidLevel(level)) {
       return NextResponse.json(
-        { error: "Level must be one of A1, A2, B1, B2, C1" },
+        { error: "Level must be one of A1, A2, B1, B2, C1 (with optional +/- suffixes)" },
         { status: 400 }
       );
     }

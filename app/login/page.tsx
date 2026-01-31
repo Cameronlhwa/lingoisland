@@ -46,6 +46,7 @@ export default function LoginPage() {
   };
 
   const ensureUserProfile = async (userId: string) => {
+    // Create user_profiles (app settings)
     const { data, error } = await supabase
       .from("user_profiles")
       .select("user_id")
@@ -67,6 +68,31 @@ export default function LoginPage() {
 
       if (insertError) {
         console.error("Error creating user profile:", insertError);
+      }
+    }
+
+    // Create profiles (billing)
+    const { data: billingData, error: billingError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (billingError) {
+      console.error("Error loading billing profile:", billingError);
+      return;
+    }
+
+    if (!billingData) {
+      const { error: insertError } = await supabase
+        .from("profiles")
+        .insert({
+          id: userId,
+          plan: "free",
+        });
+
+      if (insertError) {
+        console.error("Error creating billing profile:", insertError);
       }
     }
   };
