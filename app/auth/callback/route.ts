@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getOriginFromRequest } from '@/lib/utils/origin'
@@ -57,10 +57,51 @@ export async function GET(request: NextRequest) {
   // Get the origin from the incoming request (preserves localhost vs production)
   const origin = getOriginFromRequest(request)
 
+  // Create a response that we'll modify with cookies
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+        },
+      },
+    }
+  )
+
   // Handle OAuth code exchange (Google login)
   if (code) {
-    const supabase = await createClient()
-    
     // Exchange code for session
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
@@ -134,8 +175,6 @@ export async function GET(request: NextRequest) {
   } 
   // Handle email verification, password reset, or email change
   else if (token_hash && type) {
-    const supabase = await createClient()
-    
     // Verify the token
     const { error } = await supabase.auth.verifyOtp({
       token_hash,
@@ -225,10 +264,17 @@ export async function GET(request: NextRequest) {
   // Build redirect URL using the detected origin
   const redirectUrl = new URL(next, origin)
 
-  // Create response and clear the oauth cookies after use
-  const response = NextResponse.redirect(redirectUrl)
-  response.cookies.set('oauth_origin', '', { maxAge: 0, path: '/' })
-  response.cookies.set('oauth_next', '', { maxAge: 0, path: '/' })
+  // Create redirect response and transfer all cookies
+  const redirectResponse = NextResponse.redirect(redirectUrl)
   
-  return response
+  // Copy all cookies from the response we've been building
+  response.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+  })
+  
+  // Clear the oauth cookies after use
+  redirectResponse.cookies.set('oauth_origin', '', { maxAge: 0, path: '/' })
+  redirectResponse.cookies.set('oauth_next', '', { maxAge: 0, path: '/' })
+  
+  return redirectResponse
 }
