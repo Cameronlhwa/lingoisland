@@ -83,33 +83,53 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user_profiles exists, create if needed
-    const { data: existingUserProfile } = await supabase
+    const { data: existingUserProfile, error: profileCheckError } = await supabase
       .from('user_profiles')
       .select('user_id')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
+
+    if (profileCheckError) {
+      console.error('[AUTH CALLBACK] Error checking user_profiles:', profileCheckError)
+    }
 
     if (!existingUserProfile) {
-      // Create default user profile (app settings)
-      await supabase.from('user_profiles').insert({
+      console.log('[AUTH CALLBACK] Creating new user_profiles for user:', user.id)
+      const { error: insertError } = await supabase.from('user_profiles').insert({
         user_id: user.id,
         cefr_level: 'B1',
       })
+      
+      if (insertError) {
+        console.error('[AUTH CALLBACK] Error creating user_profiles:', insertError)
+      }
+    } else {
+      console.log('[AUTH CALLBACK] User profile already exists for:', user.id)
     }
 
     // Check if profiles (billing) exists, create if needed
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile, error: billingCheckError } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, plan')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
+
+    if (billingCheckError) {
+      console.error('[AUTH CALLBACK] Error checking profiles:', billingCheckError)
+    }
 
     if (!existingProfile) {
-      // Create default billing profile
-      await supabase.from('profiles').insert({
+      console.log('[AUTH CALLBACK] Creating new billing profile for user:', user.id)
+      const { error: insertError } = await supabase.from('profiles').insert({
         id: user.id,
         plan: 'free',
       })
+      
+      if (insertError) {
+        console.error('[AUTH CALLBACK] Error creating billing profile:', insertError)
+      }
+    } else {
+      console.log('[AUTH CALLBACK] Billing profile already exists. User:', user.id, 'Plan:', existingProfile.plan)
     }
   } 
   // Handle email verification, password reset, or email change
@@ -142,31 +162,51 @@ export async function GET(request: NextRequest) {
 
     // For email verification (signup), create both profiles if they don't exist
     if (type === 'email' || type === 'signup') {
-      const { data: existingUserProfile } = await supabase
+      const { data: existingUserProfile, error: profileCheckError } = await supabase
         .from('user_profiles')
         .select('user_id')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
+
+      if (profileCheckError) {
+        console.error('[AUTH CALLBACK] Error checking user_profiles:', profileCheckError)
+      }
 
       if (!existingUserProfile) {
-        await supabase.from('user_profiles').insert({
+        console.log('[AUTH CALLBACK] Creating new user_profiles for user (email verify):', user.id)
+        const { error: insertError } = await supabase.from('user_profiles').insert({
           user_id: user.id,
           cefr_level: 'B1',
         })
+        
+        if (insertError) {
+          console.error('[AUTH CALLBACK] Error creating user_profiles:', insertError)
+        }
       }
 
       // Also create billing profile
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: billingCheckError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, plan')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
+
+      if (billingCheckError) {
+        console.error('[AUTH CALLBACK] Error checking profiles:', billingCheckError)
+      }
 
       if (!existingProfile) {
-        await supabase.from('profiles').insert({
+        console.log('[AUTH CALLBACK] Creating new billing profile for user (email verify):', user.id)
+        const { error: insertError } = await supabase.from('profiles').insert({
           id: user.id,
           plan: 'free',
         })
+        
+        if (insertError) {
+          console.error('[AUTH CALLBACK] Error creating billing profile:', insertError)
+        }
+      } else {
+        console.log('[AUTH CALLBACK] Billing profile already exists (email verify). User:', user.id, 'Plan:', existingProfile.plan)
       }
     }
     
