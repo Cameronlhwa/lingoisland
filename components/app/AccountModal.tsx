@@ -542,36 +542,75 @@ export default function AccountModal({
           </div>
         ) : (
           <div className="mt-6 grid gap-6 md:grid-cols-[1.15fr_1fr]">
-            <div
-              className="relative min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 p-7 text-white shadow-sm"
-              style={{
-                backgroundImage: "url('/Upgrade-modal.jpg')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/40 to-slate-950/70" />
-              <div className="relative z-10">
-                <h2 className="text-2xl font-semibold drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]">
-                  Upgrade to Pro
-                </h2>
-                <p className="mt-2 text-sm text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                  Unlock unlimited stories, decks, and focused practice.
-                </p>
-                <div className="mt-7 rounded-2xl border border-white/30 bg-white/15 p-5 text-sm shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-md">
-                  <p className="font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                    What you get
+            {/* Left decorative panel - conditional based on Pro status */}
+            {entitlements?.plan === "pro" ? (
+              // Pro user - show success/confirmation design
+              <div
+                className="relative min-h-[360px] overflow-hidden rounded-2xl border border-emerald-200 p-7 text-white shadow-sm"
+                style={{
+                  backgroundImage: "url('/Upgrade-modal.jpg')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/70 via-emerald-950/40 to-emerald-950/70" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl">✓</span>
+                    <h2 className="text-2xl font-semibold drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]">
+                      You're Pro!
+                    </h2>
+                  </div>
+                  <p className="mt-2 text-sm text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                    You have full access to all LingoIsland features.
                   </p>
-                  <ul className="mt-2 space-y-1 text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                    <li>Unlimited Topic Islands (vocab + native examples)</li>
-                    <li>Story regeneration + longer stories</li>
-                    <li>
-                      24/7 Mandarin coach (instant corrections + explanations)
-                    </li>
-                  </ul>
+                  <div className="mt-7 rounded-2xl border border-white/30 bg-white/15 p-5 text-sm shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                    <p className="font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                      Your Pro Benefits
+                    </p>
+                    <ul className="mt-2 space-y-1 text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                      <li>✓ Unlimited Topic Islands (vocab + native examples)</li>
+                      <li>✓ Story regeneration + longer stories</li>
+                      <li>
+                        ✓ 24/7 Mandarin coach (instant corrections + explanations)
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              // Free user - show upgrade prompt
+              <div
+                className="relative min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 p-7 text-white shadow-sm"
+                style={{
+                  backgroundImage: "url('/Upgrade-modal.jpg')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/40 to-slate-950/70" />
+                <div className="relative z-10">
+                  <h2 className="text-2xl font-semibold drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]">
+                    Upgrade to Pro
+                  </h2>
+                  <p className="mt-2 text-sm text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                    Unlock unlimited stories, decks, and focused practice.
+                  </p>
+                  <div className="mt-7 rounded-2xl border border-white/30 bg-white/15 p-5 text-sm shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                    <p className="font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                      What you get
+                    </p>
+                    <ul className="mt-2 space-y-1 text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                      <li>Unlimited Topic Islands (vocab + native examples)</li>
+                      <li>Story regeneration + longer stories</li>
+                      <li>
+                        24/7 Mandarin coach (instant corrections + explanations)
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className={`${cardBaseClass} min-h-[360px] p-6`}>
               <div className="flex h-full flex-col">
@@ -600,76 +639,122 @@ export default function AccountModal({
                   <div className="mt-4 text-sm text-red-600">
                     {entitlementsError}
                   </div>
-                ) : (
+                ) : entitlements?.plan === "pro" ? (
+                  // Pro user view - show benefits and management
                   <div className="mt-6 flex flex-1 flex-col gap-4">
-                    {entitlements?.plan === "pro" && renewalDate ? (
-                      <p className="text-sm text-gray-600">
-                        Renews on{" "}
-                        <span className="font-medium">{renewalDate}</span>
-                      </p>
-                    ) : null}
-
-                    {entitlements?.plan === "free" ? (
-                      <div className="flex flex-1 flex-col gap-4">
-                        <div className="space-y-3 pt-1">
-                          {[
-                            { id: "monthly", label: "Monthly", price: "$9.99" },
-                            { id: "yearly", label: "Yearly", price: "$79.99" },
-                          ].map((plan) => (
-                            <button
-                              key={plan.id}
-                              onClick={() =>
-                                setSelectedPlan(plan.id as "monthly" | "yearly")
-                              }
-                              className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
-                                selectedPlan === plan.id
-                                  ? "border-gray-300 bg-gray-200 text-gray-900"
-                                  : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
-                              }`}
-                            >
-                              <span>{plan.label}</span>
-                              <span>{plan.price}</span>
-                            </button>
-                          ))}
-                        </div>
-                        <button
-                          onClick={() => startCheckout(selectedPlan)}
-                          disabled={checkoutLoading !== null}
-                          className="mt-auto inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                          {checkoutLoading ? "Opening..." : "Upgrade Now"}
-                        </button>
-                        <div className="flex items-center gap-3 pt-1 text-sm font-semibold text-gray-600">
-                          <div className="flex -space-x-2">
-                            {["🏝️", "⛵️", "🥥"].map((emoji) => (
-                              <span
-                                key={emoji}
-                                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-sm"
-                              >
-                                {emoji}
-                              </span>
-                            ))}
-                          </div>
-                          <span>Join the LingoIsland Community!</span>
-                        </div>
+                    {renewalDate ? (
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                        <p className="text-sm font-medium text-gray-900">
+                          Active Pro Subscription
+                        </p>
+                        <p className="mt-1 text-xs text-gray-600">
+                          Renews on{" "}
+                          <span className="font-medium">{renewalDate}</span>
+                        </p>
                       </div>
                     ) : (
-                      <div className="mt-auto space-y-2">
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                        <p className="text-sm font-medium text-gray-900">
+                          Pro Access
+                        </p>
+                        <p className="mt-1 text-xs text-gray-600">
+                          Lifetime access • No renewal required
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="space-y-2.5 rounded-lg border border-gray-200 bg-white px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Your Pro Benefits
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <span className="text-green-600">✓</span>
+                          <span className="text-sm text-gray-700">
+                            Unlimited Topic Islands & vocab
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-green-600">✓</span>
+                          <span className="text-sm text-gray-700">
+                            Unlimited stories & content
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-green-600">✓</span>
+                          <span className="text-sm text-gray-700">
+                            24/7 AI tutor with corrections
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto space-y-2">
+                      {renewalDate && (
                         <button
                           onClick={openBillingPortal}
                           disabled={portalLoading}
-                          className="inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                          className="inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
                         >
-                          {portalLoading ? "Opening..." : "Manage billing"}
+                          {portalLoading ? "Opening..." : "Manage Subscription"}
                         </button>
+                      )}
+                      {renewalDate && (
                         <button
                           onClick={() => setCancelOpen(true)}
-                          className="text-left text-xs font-medium text-red-600 hover:text-red-700"
+                          className="w-full text-center text-xs font-medium text-gray-500 hover:text-red-600"
                         >
-                          Downgrade / Cancel
+                          Cancel subscription
                         </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  // Free user view - show upgrade options
+                  <div className="mt-6 flex flex-1 flex-col gap-4">
+                    <div className="flex flex-1 flex-col gap-4">
+                      <div className="space-y-3 pt-1">
+                        {[
+                          { id: "monthly", label: "Monthly", price: "$9.99" },
+                          { id: "yearly", label: "Yearly", price: "$79.99" },
+                        ].map((plan) => (
+                          <button
+                            key={plan.id}
+                            onClick={() =>
+                              setSelectedPlan(plan.id as "monthly" | "yearly")
+                            }
+                            className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
+                              selectedPlan === plan.id
+                                ? "border-gray-300 bg-gray-200 text-gray-900"
+                                : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                            }`}
+                          >
+                            <span>{plan.label}</span>
+                            <span>{plan.price}</span>
+                          </button>
+                        ))}
                       </div>
-                    )}
+                      <button
+                        onClick={() => startCheckout(selectedPlan)}
+                        disabled={checkoutLoading !== null}
+                        className="mt-auto inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {checkoutLoading ? "Opening..." : "Upgrade Now"}
+                      </button>
+                      <div className="flex items-center gap-3 pt-1 text-sm font-semibold text-gray-600">
+                        <div className="flex -space-x-2">
+                          {["🏝️", "⛵️", "🥥"].map((emoji) => (
+                            <span
+                              key={emoji}
+                              className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-sm"
+                            >
+                              {emoji}
+                            </span>
+                          ))}
+                        </div>
+                        <span>Join the LingoIsland Community!</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

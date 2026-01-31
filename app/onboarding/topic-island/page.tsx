@@ -5,7 +5,11 @@ import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
-type CEFRLevel =
+// Base CEFR levels for onboarding (simplified)
+type CEFRLevel = "A1" | "A2" | "B1" | "B2" | "C1";
+
+// Extended levels are still valid for existing users
+type ExtendedCEFRLevel =
   | "A1-"
   | "A1"
   | "A1+"
@@ -23,45 +27,39 @@ type CEFRLevel =
   | "C1+";
 
 const LEVEL_GROUPS: {
-  base: "A1" | "A2" | "B1" | "B2" | "C1";
+  base: CEFRLevel;
   label: string;
   description: string;
-  levels: CEFRLevel[];
 }[] = [
   {
     base: "A1",
     label: "Beginner",
     description:
       "Just starting out with basic phrases and survival vocabulary (equivalent to HSK 1-2).",
-    levels: ["A1-", "A1", "A1+"],
   },
   {
     base: "A2",
     label: "Upper beginner",
     description:
       "You can handle basics but still need support in most conversations (equivalent to HSK 3).",
-    levels: ["A2-", "A2", "A2+"],
   },
   {
     base: "B1",
     label: "Intermediate",
     description:
       "You can talk about everyday topics but struggle with nuance and speed (equivalent to HSK 4-5).",
-    levels: ["B1-", "B1", "B1+"],
   },
   {
     base: "B2",
     label: "Upper intermediate",
     description:
       "You follow most native content but still miss details and complex ideas (equivalent to HSK 5-6).",
-    levels: ["B2-", "B2", "B2+"],
   },
   {
     base: "C1",
     label: "Advanced",
     description:
       "You're fluent with nuanced expression but still learning sophisticated vocabulary and idioms.",
-    levels: ["C1-", "C1", "C1+"],
   },
 ];
 
@@ -345,31 +343,17 @@ function OnboardingTopicIslandContent() {
 
             <div className="space-y-4">
               {LEVEL_GROUPS.map((group) => (
-                <div
+                <button
                   key={group.base}
-                  className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between"
+                  type="button"
+                  onClick={() => handleLevelSelect(group.base)}
+                  className="flex w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition-all hover:border-gray-900 hover:bg-gray-50"
                 >
-                  <div className="max-w-sm">
-                    <h2 className="text-base font-semibold text-gray-900">
-                      {group.label} ({group.base})
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-600">
-                      {group.description}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {group.levels.map((level) => (
-                      <button
-                        key={level}
-                        type="button"
-                        onClick={() => handleLevelSelect(level)}
-                        className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 hover:bg-gray-50"
-                      >
-                        {level}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                  <h2 className="text-base font-semibold text-gray-900">
+                    {group.label} ({group.base})
+                  </h2>
+                  <p className="text-sm text-gray-600">{group.description}</p>
+                </button>
               ))}
             </div>
           </div>

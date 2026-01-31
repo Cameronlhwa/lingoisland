@@ -11,13 +11,38 @@ import { getOriginFromRequest } from '@/lib/utils/origin'
  * 3. Password reset
  * 4. Email change confirmation
  * 
- * Creates/updates user profile and redirects to /app
+ * Creates/updates BOTH user_profiles (app settings) AND profiles (billing)
  */
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const token_hash = requestUrl.searchParams.get('token_hash')
   const type = requestUrl.searchParams.get('type')
+  const error = requestUrl.searchParams.get('error')
+  const error_code = requestUrl.searchParams.get('error_code')
+  const error_description = requestUrl.searchParams.get('error_description')
+  
+  // Log OAuth errors for debugging
+  if (error) {
+    console.error('[AUTH CALLBACK] OAuth error received:', {
+      error,
+      error_code,
+      error_description,
+      timestamp: new Date().toISOString(),
+      url: requestUrl.href,
+    })
+    
+    // Handle flow_state_not_found specifically - this often means the user's session expired during OAuth
+    if (error_code === 'flow_state_not_found') {
+      console.error('[AUTH CALLBACK] Flow state not found - user may need to retry login. This can happen if:')
+      console.error('  1. User took too long during OAuth flow (session expired)')
+      console.error('  2. Browser cookies were cleared during OAuth')
+      console.error('  3. User clicked back/forward during OAuth')
+      const origin = getOriginFromRequest(request)
+      const loginUrl = new URL('/login?error=oauth_expired', origin)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
   
   // Try to get 'next' from cookie first (stored before OAuth), then from URL, then default
   const nextFromCookie = request.cookies.get('oauth_next')?.value
@@ -57,18 +82,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(errorUrl)
     }
 
-    // Check if profile exists, create/update if needed
-    const { data: existingProfile } = await supabase
+    // Check if user_profiles exists, create if needed
+    const { data: existingUserProfile } = await supabase
       .from('user_profiles')
       .select('user_id')
       .eq('user_id', user.id)
       .single()
 
-    if (!existingProfile) {
-      // Create default profile
+    if (!existingUserProfile) {
+      // Create default user profile (app settings)
       await supabase.from('user_profiles').insert({
         user_id: user.id,
         cefr_level: 'B1',
+      })
+    }
+
+    // Check if profiles (billing) exists, create if needed
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single()
+
+    if (!existingProfile) {
+      // Create default billing profile
+      await supabase.from('profiles').insert({
+        id: user.id,
+        plan: 'free',
       })
     }
   } 
@@ -100,18 +140,32 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(errorUrl)
     }
 
-    // For email verification (signup), create profile if it doesn't exist
+    // For email verification (signup), create both profiles if they don't exist
     if (type === 'email' || type === 'signup') {
-      const { data: existingProfile } = await supabase
+      const { data: existingUserProfile } = await supabase
         .from('user_profiles')
         .select('user_id')
         .eq('user_id', user.id)
         .single()
 
-      if (!existingProfile) {
+      if (!existingUserProfile) {
         await supabase.from('user_profiles').insert({
           user_id: user.id,
           cefr_level: 'B1',
+        })
+      }
+
+      // Also create billing profile
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      if (!existingProfile) {
+        await supabase.from('profiles').insert({
+          id: user.id,
+          plan: 'free',
         })
       }
     }
