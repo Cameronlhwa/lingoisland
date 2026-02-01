@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { cardBaseClass } from "@/components/app/ui/styles";
 import { useTTS } from "@/contexts/TTSContext";
+import { useAnalytics } from "@/lib/posthog/client";
 
 type Entitlements = {
   plan: "free" | "pro";
@@ -70,6 +71,7 @@ export default function AccountModal({
   const [syncingFromStripe, setSyncingFromStripe] = useState(false);
   const ttsDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { settings: ttsSettings, updateSettings: updateTtsSettings } = useTTS();
+  const { captureEvent, identify } = useAnalytics();
 
   useEffect(() => {
     setMounted(true);
@@ -90,9 +92,17 @@ export default function AccountModal({
       setUserName(
         (user.user_metadata?.full_name as string | undefined) ?? null,
       );
+      
+      // Identify user in PostHog
+      if (user.id) {
+        identify(user.id, {
+          email: user.email,
+          name: user.user_metadata?.full_name,
+        });
+      }
     };
     void loadUser();
-  }, [open, router, supabase, onClose]);
+  }, [open, router, supabase, onClose, identify]);
 
   useEffect(() => {
     if (!open) return;
@@ -211,6 +221,7 @@ export default function AccountModal({
   }, [entitlements]);
 
   const handleSignOut = async () => {
+    captureEvent("user_logged_out");
     await supabase.auth.signOut();
     onClose();
     router.push("/");
@@ -219,6 +230,12 @@ export default function AccountModal({
   const startCheckout = async (interval: "monthly" | "yearly") => {
     if (checkoutLoading) return;
     setCheckoutLoading(interval);
+    
+    captureEvent("checkout_started", {
+      interval,
+      location: "account_modal",
+    });
+    
     try {
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -235,12 +252,20 @@ export default function AccountModal({
       const data = await response.json();
       if (!response.ok || !data.url) {
         console.error("Checkout failed:", data.error);
+        captureEvent("checkout_failed", {
+          interval,
+          error: data.error,
+        });
         return;
       }
 
       window.location.href = data.url;
     } catch (error) {
       console.error("Error starting checkout:", error);
+      captureEvent("checkout_error", {
+        interval,
+        error: String(error),
+      });
     } finally {
       setCheckoutLoading(null);
     }
@@ -249,6 +274,11 @@ export default function AccountModal({
   const openBillingPortal = async () => {
     if (portalLoading) return;
     setPortalLoading(true);
+    
+    captureEvent("billing_portal_opened", {
+      subscription_state: subscriptionState,
+    });
+    
     try {
       const response = await fetch("/api/stripe/portal", { method: "POST" });
       if (response.status === 401) {
@@ -276,6 +306,13 @@ export default function AccountModal({
     }
     setFeedbackError(null);
     setFeedbackLoading(true);
+
+    captureEvent("cancellation_feedback_submitted", {
+      reason,
+      has_details: !!details.trim(),
+      comeback,
+      plan: entitlements?.plan ?? "pro",
+    });
 
     try {
       const response = await fetch("/api/billing/cancellation-feedback", {

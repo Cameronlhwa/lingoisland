@@ -14,6 +14,7 @@ This creates missing `profiles` entries for all users.
 ### 2. Deploy Code Changes (10 minutes)
 
 The following files have been updated:
+
 - ✅ `/app/auth/callback/route.ts` - Creates both profile tables on login
 - ✅ `/app/login/page.tsx` - Creates both profile tables on email auth
 - ✅ `/app/api/stripe/webhook/route.ts` - Better webhook logging
@@ -24,6 +25,7 @@ Deploy these changes to production immediately.
 ### 3. Manually Recover Affected User (5 minutes per user)
 
 **OPTION A: Reconnect to Stripe Subscription**
+
 ```sql
 -- Step 1: Find user ID
 SELECT id, email FROM auth.users WHERE email = 'user@example.com';
@@ -31,7 +33,7 @@ SELECT id, email FROM auth.users WHERE email = 'user@example.com';
 -- Step 2: Update their profile with Stripe data
 -- (Get stripe_customer_id and stripe_subscription_id from Stripe Dashboard)
 UPDATE public.profiles
-SET 
+SET
   stripe_customer_id = 'cus_xxxxxxxxxxxxx',  -- From Stripe
   stripe_subscription_id = 'sub_yyyyyyyyyyyyy',  -- From Stripe
   plan = 'pro',
@@ -39,16 +41,17 @@ SET
 WHERE id = 'USER_UUID_FROM_STEP_1';
 
 -- Step 3: Verify
-SELECT id, plan, stripe_customer_id, current_period_end 
-FROM public.profiles 
+SELECT id, plan, stripe_customer_id, current_period_end
+FROM public.profiles
 WHERE id = 'USER_UUID_FROM_STEP_1';
 ```
 
 **OPTION B: Grant Pro Manually (No Stripe, No Expiry)**
+
 ```sql
 -- Grant lifetime Pro access to a user (useful for refunds, gifts, etc.)
 UPDATE public.profiles
-SET 
+SET
   plan = 'pro',
   current_period_end = NULL  -- NULL = no expiry
 WHERE id = (
@@ -63,6 +66,7 @@ WHERE u.email = 'user@example.com';
 ```
 
 **How Pro Detection Works:**
+
 - User is Pro if `plan='pro'` AND either:
   - `current_period_end` is NULL (manual grant, no expiry) OR
   - `current_period_end` is in the future (active Stripe subscription)
@@ -86,14 +90,14 @@ After recovery:
 SELECT id, email FROM auth.users WHERE email = 'user@example.com';
 -- Copy the id
 
-SELECT 
+SELECT
   p.id,
   p.plan,
   p.stripe_customer_id,
   p.stripe_subscription_id,
   p.current_period_end,
   up.cefr_level,
-  CASE 
+  CASE
     WHEN p.plan = 'pro' AND p.current_period_end IS NULL THEN 'Manual Grant (Lifetime)'
     WHEN p.plan = 'pro' AND p.current_period_end > now() THEN 'Active Subscription'
     WHEN p.plan = 'pro' AND p.current_period_end <= now() THEN 'Expired Subscription'
@@ -109,12 +113,13 @@ WHERE p.id = 'USER_ID_HERE';
 ```
 
 **List all Pro users:**
+
 ```sql
-SELECT 
+SELECT
   u.email,
   p.plan,
   p.current_period_end,
-  CASE 
+  CASE
     WHEN p.plan = 'pro' AND p.current_period_end IS NULL THEN 'Manual Grant (Lifetime)'
     WHEN p.plan = 'pro' AND p.current_period_end > now() THEN 'Active Subscription'
     WHEN p.plan = 'pro' AND p.current_period_end <= now() THEN 'Expired'
@@ -153,6 +158,7 @@ Best,
 If users report `flow_state_not_found`:
 
 1. **Check server logs** for:
+
    ```
    [AUTH CALLBACK] Flow state not found
    ```
@@ -170,7 +176,6 @@ To verify cancellation works:
 1. **Trigger in Stripe Test Mode:**
    - Create test subscription (card: 4242 4242 4242 4242)
    - Cancel immediately in Stripe Dashboard
-   
 2. **Check webhook fired:**
    - Stripe Dashboard → Webhooks → View logs
    - Your server logs: `[STRIPE WEBHOOK] Subscription deleted`
@@ -184,11 +189,13 @@ To verify cancellation works:
 ## 📊 Current Status
 
 **Files Changed:**
+
 - ✅ 3 TypeScript files updated (auth callback, login page, webhook)
 - ✅ 1 SQL migration created
 - ✅ 2 documentation files created
 
 **What's Fixed:**
+
 - ✅ All users now get both profile tables created on login
 - ✅ Existing users get missing `profiles` entries via migration
 - ✅ OAuth errors logged with helpful context
@@ -196,6 +203,7 @@ To verify cancellation works:
 - ✅ Better logging throughout for debugging
 
 **Still Required:**
+
 - ⏳ Deploy code changes
 - ⏳ Run migration
 - ⏳ Manually recover affected users
@@ -204,5 +212,6 @@ To verify cancellation works:
 ## 📞 Need Help?
 
 See full details in:
+
 - `CUSTOMER_DATA_RECOVERY.md` - Comprehensive recovery guide
 - `supabase/migrations/20260131_000001_fix_profiles_backfill.sql` - Migration with inline docs

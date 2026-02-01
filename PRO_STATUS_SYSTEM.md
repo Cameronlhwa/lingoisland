@@ -47,6 +47,7 @@ const isPro =
 ### Type 1: Active Stripe Subscription
 
 **Database values:**
+
 ```sql
 plan = 'pro'
 stripe_customer_id = 'cus_xxxxxxxxxxxxx'
@@ -55,6 +56,7 @@ current_period_end = '2026-03-01 00:00:00+00'  -- Future date
 ```
 
 **Characteristics:**
+
 - ✅ User pays monthly/yearly
 - ✅ Managed through Stripe
 - ✅ Auto-renews until canceled
@@ -62,11 +64,12 @@ current_period_end = '2026-03-01 00:00:00+00'  -- Future date
 - ✅ Webhook automatically updates on cancel/renewal
 
 **How to set up:**
+
 ```sql
 -- Automatically handled by Stripe webhook when user subscribes
 -- Or manually reconnect:
 UPDATE profiles
-SET 
+SET
   stripe_customer_id = 'cus_xxxxxxxxxxxxx',
   stripe_subscription_id = 'sub_yyyyyyyyyyyyy',
   plan = 'pro',
@@ -77,6 +80,7 @@ WHERE id = 'USER_UUID';
 ### Type 2: Manual Pro Grant (Lifetime)
 
 **Database values:**
+
 ```sql
 plan = 'pro'
 stripe_customer_id = NULL
@@ -85,16 +89,18 @@ current_period_end = NULL  -- NULL means no expiry
 ```
 
 **Characteristics:**
+
 - ✅ No payment required
 - ✅ Never expires (lifetime access)
 - ✅ No renewal date shown in UI
 - ✅ Perfect for refunds, gifts, beta testers, staff, etc.
 
 **How to set up:**
+
 ```sql
 -- Grant lifetime Pro to a user
 UPDATE profiles
-SET 
+SET
   plan = 'pro',
   current_period_end = NULL
 WHERE id = (
@@ -117,6 +123,7 @@ WHERE id = (
 ## How It Looks in the UI
 
 ### For Type 1 (Stripe Subscription):
+
 ```
 ┌─────────────────────────────────────┐
 │ Subscription                    Pro │
@@ -128,6 +135,7 @@ WHERE id = (
 ```
 
 ### For Type 2 (Manual Grant):
+
 ```
 ┌─────────────────────────────────────┐
 │ Subscription                    Pro │
@@ -141,17 +149,18 @@ WHERE id = (
 ## SQL Queries for Management
 
 ### Check a user's Pro status:
+
 ```sql
-SELECT 
+SELECT
   u.email,
   p.plan,
   p.current_period_end,
-  CASE 
-    WHEN p.plan = 'pro' AND p.current_period_end IS NULL 
+  CASE
+    WHEN p.plan = 'pro' AND p.current_period_end IS NULL
       THEN 'Manual Grant (Lifetime)'
-    WHEN p.plan = 'pro' AND p.current_period_end > now() 
+    WHEN p.plan = 'pro' AND p.current_period_end > now()
       THEN 'Active Subscription'
-    WHEN p.plan = 'pro' AND p.current_period_end <= now() 
+    WHEN p.plan = 'pro' AND p.current_period_end <= now()
       THEN 'Expired Subscription'
     ELSE 'Free'
   END as status
@@ -161,10 +170,11 @@ WHERE u.email = 'user@example.com';
 ```
 
 ### List all Pro users by type:
+
 ```sql
-SELECT 
+SELECT
   u.email,
-  CASE 
+  CASE
     WHEN p.current_period_end IS NULL THEN 'Manual Grant'
     ELSE 'Stripe Subscription'
   END as pro_type,
@@ -172,21 +182,22 @@ SELECT
   p.stripe_customer_id
 FROM profiles p
 JOIN auth.users u ON u.id = p.id
-WHERE p.plan = 'pro' 
+WHERE p.plan = 'pro'
   AND (p.current_period_end IS NULL OR p.current_period_end > now())
 ORDER BY pro_type, u.email;
 ```
 
 ### Find expired subscriptions:
+
 ```sql
-SELECT 
+SELECT
   u.email,
   p.plan,
   p.current_period_end
 FROM profiles p
 JOIN auth.users u ON u.id = p.id
-WHERE p.plan = 'pro' 
-  AND p.current_period_end IS NOT NULL 
+WHERE p.plan = 'pro'
+  AND p.current_period_end IS NOT NULL
   AND p.current_period_end <= now()
 ORDER BY p.current_period_end DESC;
 ```
@@ -194,10 +205,11 @@ ORDER BY p.current_period_end DESC;
 ## Converting Between Types
 
 ### Convert Manual Grant → Stripe Subscription:
+
 ```sql
 -- User starts paying after having lifetime access
 UPDATE profiles
-SET 
+SET
   stripe_customer_id = 'cus_xxxxxxxxxxxxx',
   stripe_subscription_id = 'sub_yyyyyyyyyyyyy',
   current_period_end = '2026-03-01 00:00:00+00'
@@ -205,10 +217,11 @@ WHERE id = 'USER_UUID';
 ```
 
 ### Convert Stripe Subscription → Manual Grant:
+
 ```sql
 -- User cancels Stripe but you want them to keep access
 UPDATE profiles
-SET 
+SET
   stripe_customer_id = NULL,  -- Or keep for records
   stripe_subscription_id = NULL,
   current_period_end = NULL   -- NULL = lifetime
@@ -216,10 +229,11 @@ WHERE id = 'USER_UUID';
 ```
 
 ### Downgrade to Free:
+
 ```sql
 -- Remove Pro access
 UPDATE profiles
-SET 
+SET
   plan = 'free',
   current_period_end = NULL
 WHERE id = 'USER_UUID';
@@ -245,6 +259,7 @@ WHERE id = 'USER_UUID';
 ## Testing
 
 ### Test Manual Grant:
+
 ```sql
 -- Grant yourself Pro
 UPDATE profiles
@@ -258,10 +273,11 @@ WHERE id = (SELECT id FROM auth.users WHERE email = 'your@email.com');
 ```
 
 ### Test Stripe Subscription:
+
 ```sql
 -- Set test subscription (use Stripe test mode data)
 UPDATE profiles
-SET 
+SET
   plan = 'pro',
   stripe_customer_id = 'cus_test_xxxxx',
   stripe_subscription_id = 'sub_test_yyyyy',
@@ -276,6 +292,7 @@ WHERE id = 'YOUR_USER_ID';
 ## Summary
 
 The dual pro status system provides flexibility:
+
 - **Stripe subscriptions** for paying customers (auto-managed)
 - **Manual grants** for special cases (admin-managed)
 

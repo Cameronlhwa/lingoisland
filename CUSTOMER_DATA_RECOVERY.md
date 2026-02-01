@@ -25,12 +25,14 @@ After the `stripe-paywall` commit (9ec6387), users who previously had paid subsc
 ### 1. Database Migration: `20260131_000001_fix_profiles_backfill.sql`
 
 **What it does:**
+
 - Creates `profiles` entries for ALL existing `auth.users` who don't have one
 - Sets default plan to "free" (manual recovery needed for paid users)
 - Adds helpful comments to distinguish the two profile tables
 - Includes step-by-step manual recovery instructions
 
 **To run:**
+
 ```bash
 # Apply the migration
 supabase db push
@@ -42,31 +44,34 @@ supabase db push
 ### 2. Auth Callback Updates: `/app/auth/callback/route.ts`
 
 **Changes:**
+
 - ✅ Creates BOTH `user_profiles` AND `profiles` on OAuth login
 - ✅ Creates BOTH tables for email verification/signup
 - ✅ Detailed logging for OAuth errors (especially `flow_state_not_found`)
 - ✅ User-friendly error redirects with helpful messages
 
 **Key code addition:**
+
 ```typescript
 // Check if profiles (billing) exists, create if needed
 const { data: existingProfile } = await supabase
-  .from('profiles')
-  .select('id')
-  .eq('id', user.id)
-  .single()
+  .from("profiles")
+  .select("id")
+  .eq("id", user.id)
+  .single();
 
 if (!existingProfile) {
-  await supabase.from('profiles').insert({
+  await supabase.from("profiles").insert({
     id: user.id,
-    plan: 'free',
-  })
+    plan: "free",
+  });
 }
 ```
 
 ### 3. Login Page Updates: `/app/login/page.tsx`
 
 **Changes:**
+
 - ✅ `ensureUserProfile()` now creates BOTH profile tables
 - ✅ Applies to email/password login flow
 - ✅ Consistent behavior across all auth methods
@@ -74,6 +79,7 @@ if (!existingProfile) {
 ### 4. Webhook Improvements: `/app/api/stripe/webhook/route.ts`
 
 **Changes:**
+
 - ✅ Better logging for subscription events
 - ✅ Handles `canceled` and `unpaid` subscription statuses
 - ✅ Clear logs when subscription is cleared or activated
@@ -90,6 +96,7 @@ For each affected user (reported lost subscription):
 Go to [Stripe Dashboard](https://dashboard.stripe.com/customers) → Search customer by email
 
 Copy these values:
+
 - Customer ID: `cus_xxxxxxxxxxxxx`
 - Subscription ID: `sub_yyyyyyyyyyyyy`
 - Current Period End: `2026-03-01 12:00:00` (convert to ISO format)
@@ -97,8 +104,8 @@ Copy these values:
 **2. Get User ID from Database**
 
 ```sql
-SELECT id, email 
-FROM auth.users 
+SELECT id, email
+FROM auth.users
 WHERE email = 'affected.user@example.com';
 ```
 
@@ -107,9 +114,10 @@ Copy the `id` (UUID format)
 **3. Reconnect User to Stripe (Option A) OR Grant Pro Manually (Option B)**
 
 **Option A: Reconnect to Existing Stripe Subscription**
+
 ```sql
 UPDATE public.profiles
-SET 
+SET
   stripe_customer_id = 'cus_xxxxxxxxxxxxx',
   stripe_subscription_id = 'sub_yyyyyyyyyyyyy',
   plan = 'pro',
@@ -118,16 +126,18 @@ WHERE id = 'USER_UUID_FROM_STEP_2';
 ```
 
 **Option B: Grant Pro Manually (No Stripe, Lifetime Access)**
+
 ```sql
 -- Use this for refunds, compensation, or giving free Pro access
 UPDATE public.profiles
-SET 
+SET
   plan = 'pro',
   current_period_end = NULL  -- NULL means no expiry
 WHERE id = 'USER_UUID_FROM_STEP_2';
 ```
 
 > **Note:** The system detects Pro status if `plan='pro'` AND either:
+>
 > - `current_period_end = NULL` (manual grant, no expiry)
 > - `current_period_end > now()` (active Stripe subscription)
 
@@ -140,6 +150,7 @@ WHERE id = 'USER_UUID_FROM_STEP_2';
 ```
 
 Should show:
+
 - `plan`: `pro`
 - `stripe_customer_id`: filled
 - `stripe_subscription_id`: filled
@@ -148,6 +159,7 @@ Should show:
 **5. Verify in Stripe**
 
 Check that Stripe customer has:
+
 - Active subscription
 - Same subscription ID as database
 - Correct billing cycle
@@ -155,6 +167,7 @@ Check that Stripe customer has:
 **6. Ask User to Confirm**
 
 Have user:
+
 1. Log out and log back in
 2. Verify they see "Pro" plan in account
 3. Confirm all their data is restored
@@ -165,6 +178,7 @@ Have user:
 ### What causes this?
 
 This error appears when:
+
 1. ⏱️ User takes too long during OAuth flow (>10 minutes)
 2. 🍪 Browser cookies were cleared during OAuth
 3. ⬅️➡️ User clicked back/forward during OAuth
@@ -173,6 +187,7 @@ This error appears when:
 ### Fix Applied
 
 Updated `/app/auth/callback/route.ts` to:
+
 - Detect this specific error code
 - Log detailed debugging info
 - Redirect user to login with helpful message: `/login?error=oauth_expired`
@@ -181,11 +196,13 @@ Updated `/app/auth/callback/route.ts` to:
 ### How to Debug
 
 Check server logs for:
+
 ```
 [AUTH CALLBACK] Flow state not found - user may need to retry login
 ```
 
 The log will include:
+
 - Timestamp
 - Error details
 - Full URL for debugging
@@ -193,6 +210,7 @@ The log will include:
 ### Prevention
 
 The error itself can't be fully prevented (it's a Supabase/Google OAuth timing issue), but:
+
 - ✅ Users now see helpful error message instead of generic error
 - ✅ Detailed logging helps track frequency
 - ✅ Users know to simply try logging in again
@@ -240,6 +258,7 @@ await clearSubscription(userId);
 **Test in Stripe Test Mode:**
 
 1. Create test subscription:
+
    ```bash
    # Use test card: 4242 4242 4242 4242
    # Any future expiry, any CVC
@@ -281,25 +300,33 @@ For full refunds (customer paid but wants money back):
 ## Preventing Future Issues
 
 ### For New Users
+
 ✅ All authentication paths now create BOTH profile tables:
+
 - Google OAuth → Both tables created
-- Email/password login → Both tables created  
+- Email/password login → Both tables created
 - Email verification → Both tables created
 
 ### For Existing Users
+
 ✅ Migration creates missing `profiles` entries:
+
 - Backfills all existing users
 - Sets default plan to "free"
 - Preserves existing Stripe linkages
 
 ### For Stripe Integration
+
 ✅ Webhooks can now reliably find users:
+
 - Users have `profiles` entries with `stripe_customer_id`
 - Metadata includes `user_id` as backup
 - Multiple fallback methods in `resolveUserId()`
 
 ### Monitoring
+
 ✅ Enhanced logging throughout:
+
 - OAuth errors logged with context
 - Stripe webhook events logged
 - Subscription updates tracked
@@ -330,6 +357,7 @@ When a user reports lost subscription:
 > Your subscription is still active in our payment processor, but it wasn't properly linked to your account. I've now manually reconnected your subscription, and you should have full access to all Pro features.
 >
 > Can you please:
+>
 > 1. Log out and log back in
 > 2. Verify you see "Pro" in your account settings
 > 3. Confirm all your data is restored

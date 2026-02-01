@@ -23,6 +23,7 @@ Created a dedicated Pro user experience that clearly shows:
 ### For Pro Users with Active Subscription (Stripe)
 
 **Shows:**
+
 ```
 ┌─────────────────────────────────────────────┐
 │ Subscription                           [Pro]│
@@ -45,6 +46,7 @@ Created a dedicated Pro user experience that clearly shows:
 ```
 
 **Benefits:**
+
 - Clear status: "Active Pro Subscription"
 - Shows renewal date prominently
 - Lists all benefits they're getting
@@ -54,6 +56,7 @@ Created a dedicated Pro user experience that clearly shows:
 ### For Pro Users with Lifetime Access (Manual Grant)
 
 **Shows:**
+
 ```
 ┌─────────────────────────────────────────────┐
 │ Subscription                           [Pro]│
@@ -75,6 +78,7 @@ Created a dedicated Pro user experience that clearly shows:
 ```
 
 **Benefits:**
+
 - Clear "Lifetime access" messaging
 - Shows they don't need to worry about renewal
 - Lists all benefits
@@ -83,6 +87,7 @@ Created a dedicated Pro user experience that clearly shows:
 ### For Free Users (Unchanged)
 
 **Shows:**
+
 ```
 ┌─────────────────────────────────────────────┐
 │ Subscription                                │
@@ -102,6 +107,7 @@ Created a dedicated Pro user experience that clearly shows:
 
 **Before:** Generic "Pro" badge with no context
 **After:** Dedicated status box showing:
+
 - "Active Pro Subscription" with renewal date, OR
 - "Pro Access" with "Lifetime access" messaging
 
@@ -109,8 +115,9 @@ Created a dedicated Pro user experience that clearly shows:
 
 **Before:** No indication of what Pro provides
 **After:** Clear benefits list:
+
 - ✓ Unlimited Topic Islands & vocab
-- ✓ Unlimited stories & content  
+- ✓ Unlimited stories & content
 - ✓ 24/7 AI tutor with corrections
 
 This reminds users why they're paying and increases perceived value.
@@ -118,14 +125,16 @@ This reminds users why they're paying and increases perceived value.
 ### 3. Contextual Actions
 
 **Before:** Same "Manage billing" button for all Pro users
-**After:** 
+**After:**
+
 - Stripe subscribers: "Manage Subscription" + cancel link
 - Lifetime users: No billing buttons (nothing to manage)
 
 ### 4. Better Visual Hierarchy
 
 **Before:** Flat layout, hard to scan
-**After:** 
+**After:**
+
 - Bordered boxes for status and benefits
 - Green checkmarks for benefits
 - Clear button prominence
@@ -167,11 +176,13 @@ const renewalDate = useMemo(() => {
 ### Button States
 
 **Manage Subscription:**
+
 - Only shown for users with `renewalDate` (Stripe customers)
 - Opens Stripe Customer Portal
 - Shows loading state: "Opening..."
 
 **Cancel:**
+
 - Only shown for users with `renewalDate`
 - Opens cancellation feedback modal
 - Subtle styling to avoid accidental clicks
@@ -208,6 +219,7 @@ const renewalDate = useMemo(() => {
 ## Mobile Considerations
 
 The improved layout works on mobile because:
+
 - Stacked vertical layout (already responsive)
 - Benefits list uses simple text (no complex tables)
 - Buttons are full-width (easy to tap)
@@ -216,6 +228,7 @@ The improved layout works on mobile because:
 ## Future Enhancements
 
 Potential additions:
+
 - Show usage stats ("You've created 47 islands this month!")
 - Add "Refer a friend" for Pro users
 - Show subscription history/invoices
