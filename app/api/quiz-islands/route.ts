@@ -129,3 +129,53 @@ export async function POST(request: Request) {
   }
 }
 
+/**
+ * DELETE /api/quiz-islands
+ * Delete a quiz island
+ */
+export async function DELETE(request: Request) {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const quizIslandId = searchParams.get('quizIslandId')
+
+    if (!quizIslandId) {
+      return NextResponse.json(
+        { error: 'Quiz island ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Delete the quiz island
+    const { error } = await supabase
+      .from('quiz_islands')
+      .delete()
+      .eq('id', quizIslandId)
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error('Error deleting quiz island:', error)
+      return NextResponse.json(
+        { error: 'Failed to delete quiz island' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error in DELETE /api/quiz-islands:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+

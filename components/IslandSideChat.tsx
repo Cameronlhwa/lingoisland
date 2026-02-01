@@ -409,7 +409,7 @@ export default function IslandSideChat({
             disabled={sending || !input.trim()}
             className="rounded-xl border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-800 disabled:opacity-50"
           >
-            {sending ? "…" : (userPlan === "free" && userMessageCount >= 1 ? "Upgrade" : "Send")}
+            {sending ? "…" : "Send"}
           </button>
         </div>
       </form>
