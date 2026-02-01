@@ -3,6 +3,7 @@
 ## Problem
 
 Pro users were seeing "Upgrade to Pro" messaging even though they already have Pro access. This was confusing and made them think:
+
 - They weren't properly upgraded
 - Something was wrong with their subscription
 - They needed to pay again
@@ -10,6 +11,7 @@ Pro users were seeing "Upgrade to Pro" messaging even though they already have P
 ## Solution
 
 Updated the UpgradeModal to detect Pro status and show appropriate content:
+
 - **Pro users**: See confirmation they have access + what they get
 - **Free users**: See upgrade pricing and benefits (unchanged)
 
@@ -23,7 +25,7 @@ const [loading, setLoading] = useState(true);
 
 useEffect(() => {
   if (!open) return;
-  
+
   const fetchEntitlements = async () => {
     const response = await fetch("/api/entitlements");
     if (response.ok) {
@@ -52,6 +54,7 @@ useEffect(() => {
 ## Pro User View
 
 ### Left Side (Image Background)
+
 ```
 ┌────────────────────────────────────────┐
 │ ✓ You're Pro!                          │
@@ -68,6 +71,7 @@ useEffect(() => {
 ```
 
 **Key Changes:**
+
 - ✅ Green gradient instead of blue (success color)
 - ✅ Big checkmark icon
 - ✅ "You're Pro!" headline instead of "Upgrade to Pro"
@@ -75,6 +79,7 @@ useEffect(() => {
 - ✅ Benefits list (same as free, but framed as "what you have")
 
 ### Right Side (White Background)
+
 ```
 ┌────────────────────────────────────────┐
 │ You're all set!                        │
@@ -94,6 +99,7 @@ useEffect(() => {
 ```
 
 **Key Changes:**
+
 - ✅ "You're all set!" instead of "Subscription"
 - ✅ Confirmation message
 - ✅ Optional note if triggered by a feature (maybe a bug)
@@ -117,6 +123,7 @@ If a Pro user somehow triggers the upgrade modal (maybe a bug), we show:
 ```
 
 This helps debug issues where:
+
 - Entitlements check failed client-side
 - Race condition in loading
 - Browser cache issues
@@ -126,30 +133,34 @@ This helps debug issues where:
 ### Background Gradient
 
 **Free Users (Blue):**
+
 ```css
-background: linear-gradient(from-slate-950/80 via-slate-950/60 to-slate-950/80)
+background: linear-gradient(from-slate-950/80 via-slate-950/60 to-slate-950/80);
 ```
 
 **Pro Users (Green):**
+
 ```css
-background: linear-gradient(from-emerald-950/80 via-emerald-950/60 to-emerald-950/80)
+background: linear-gradient(
+  from-emerald-950/80 via-emerald-950/60 to-emerald-950/80
+);
 ```
 
 This subtle color change signals success/confirmation.
 
 ### Headlines
 
-| User Type | Headline              | Subheading                                    |
-|-----------|-----------------------|-----------------------------------------------|
-| Free      | "Upgrade to Pro"      | "Unlock unlimited stories, decks..."          |
-| Pro       | "✓ You're Pro!"       | "You have full access to all features."       |
+| User Type | Headline         | Subheading                              |
+| --------- | ---------------- | --------------------------------------- |
+| Free      | "Upgrade to Pro" | "Unlock unlimited stories, decks..."    |
+| Pro       | "✓ You're Pro!"  | "You have full access to all features." |
 
 ### Primary Action
 
-| User Type | Button Text                   | Action              |
-|-----------|-------------------------------|---------------------|
-| Free      | "Upgrade Now"                 | Opens Stripe checkout |
-| Pro       | "Continue Using LingoIsland"  | Closes modal         |
+| User Type | Button Text                  | Action                |
+| --------- | ---------------------------- | --------------------- |
+| Free      | "Upgrade Now"                | Opens Stripe checkout |
+| Pro       | "Continue Using LingoIsland" | Closes modal          |
 
 ## User Flow Examples
 
@@ -182,7 +193,7 @@ This subtle color change signals success/confirmation.
 ```typescript
 useEffect(() => {
   if (!open) return;
-  
+
   const fetchEntitlements = async () => {
     try {
       const response = await fetch("/api/entitlements");
@@ -202,6 +213,7 @@ useEffect(() => {
 ```
 
 **Why check on modal open:**
+
 - Fresh data (in case subscription status changed)
 - Only loads when needed (performance)
 - Handles race conditions
@@ -213,6 +225,7 @@ Shows simple "Loading..." spinner while fetching entitlements. Brief flash, usua
 ### Error Handling
 
 If API call fails:
+
 - Falls back to showing upgrade view (safe default)
 - Free users see normal upgrade flow
 - Pro users might see upgrade prompt but can close it

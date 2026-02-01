@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import { TTSProvider } from "@/contexts/TTSContext";
+import { PostHogProvider } from "@/components/PostHogProvider";
+import { PostHogPageView } from "@/components/PostHogPageView";
 
 const siteUrl = getSiteUrl();
 
@@ -114,9 +116,12 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <TTSProvider>
-          {children}
-        </TTSProvider>
+        <PostHogProvider>
+          <PostHogPageView />
+          <TTSProvider>
+            {children}
+          </TTSProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
