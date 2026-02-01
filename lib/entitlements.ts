@@ -8,6 +8,13 @@ export type Feature =
   | "export_decks"
   | "chat";
 
+export type SubscriptionState =
+  | "free"
+  | "active_renewing"
+  | "canceled_active"
+  | "lifetime"
+  | "trialing";
+
 const FEATURE_DEFAULTS: Record<Feature, { free: boolean; pro: boolean }> = {
   create_topic_island: { free: false, pro: true },
   add_more_words: { free: false, pro: true },
@@ -16,6 +23,41 @@ const FEATURE_DEFAULTS: Record<Feature, { free: boolean; pro: boolean }> = {
   export_decks: { free: false, pro: true },
   chat: { free: false, pro: true },
 };
+
+/**
+ * Determine the subscription state based on profile data
+ */
+export function getSubscriptionState(
+  plan: "free" | "pro",
+  stripeSubscriptionId: string | null,
+  currentPeriodEnd: string | null,
+  cancelAtPeriodEnd: boolean
+): SubscriptionState {
+  if (plan !== "pro") {
+    return "free";
+  }
+
+  const hasStripeId = !!stripeSubscriptionId;
+  const hasPeriodEnd = !!currentPeriodEnd;
+
+  // Lifetime Pro: Pro plan with no Stripe subscription
+  if (!hasStripeId && !hasPeriodEnd) {
+    return "lifetime";
+  }
+
+  // Canceled but still active until period end
+  if (cancelAtPeriodEnd && hasPeriodEnd) {
+    return "canceled_active";
+  }
+
+  // Active subscription that will renew
+  if (!cancelAtPeriodEnd && hasPeriodEnd) {
+    return "active_renewing";
+  }
+
+  // Fallback
+  return "active_renewing";
+}
 
 export async function getEntitlements(userId: string): Promise<{
   plan: "free" | "pro";

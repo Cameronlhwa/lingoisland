@@ -38,10 +38,26 @@ export async function GET() {
         profile.stripe_subscription_id
       );
 
+      const rawSub = subscription as any;
+      
+      // Get cancel status
+      const cancelAtPeriodEnd = rawSub.cancel_at_period_end ?? false;
+      const cancelAt = rawSub.cancel_at;
+      const isCanceled = cancelAtPeriodEnd || !!cancelAt || rawSub.cancellation_details?.reason === 'cancellation_requested';
+      
+      // Get current_period_end
+      let currentPeriodEndUnix = rawSub.current_period_end;
+      if (!currentPeriodEndUnix && rawSub.items?.data?.[0]) {
+        currentPeriodEndUnix = rawSub.items.data[0].current_period_end;
+      }
+      if (!currentPeriodEndUnix && cancelAt) {
+        currentPeriodEndUnix = cancelAt;
+      }
+
       return NextResponse.json({
-        cancelAtPeriodEnd: (subscription as any).cancel_at_period_end || false,
-        currentPeriodEnd: (subscription as any).current_period_end 
-          ? new Date((subscription as any).current_period_end * 1000).toISOString()
+        cancelAtPeriodEnd: isCanceled,
+        currentPeriodEnd: currentPeriodEndUnix 
+          ? new Date(currentPeriodEndUnix * 1000).toISOString()
           : null,
       });
     } catch (stripeError) {

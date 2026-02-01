@@ -64,12 +64,12 @@ export default function AccountModal({
   const [ttsRateSentences, setTtsRateSentences] = useState(1.0);
   const [ttsRateWords, setTtsRateWords] = useState(1.0);
   const [ttsSaving, setTtsSaving] = useState(false);
-  const [ttsSaveStatus, setTtsSaveStatus] = useState<"idle" | "saved" | "error">(
-    "idle",
-  );
+  const [ttsSaveStatus, setTtsSaveStatus] = useState<
+    "idle" | "saved" | "error"
+  >("idle");
+  const [syncingFromStripe, setSyncingFromStripe] = useState(false);
   const ttsDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { settings: ttsSettings, updateSettings: updateTtsSettings } =
-    useTTS();
+  const { settings: ttsSettings, updateSettings: updateTtsSettings } = useTTS();
 
   useEffect(() => {
     setMounted(true);
@@ -140,6 +140,35 @@ export default function AccountModal({
     setActiveTab(entitlements.plan === "pro" ? "profile" : "subscription");
   }, [open, entitlements]);
 
+  // Auto-sync from Stripe when modal opens and user has a subscription
+  useEffect(() => {
+    if (!open || !entitlements?.stripe_subscription_id) return;
+
+    // Initial sync when modal opens
+    const doInitialSync = async () => {
+      try {
+        const response = await fetch("/api/stripe/sync", {
+          method: "POST",
+        });
+
+        if (response.ok) {
+          const entitlementsResponse = await fetch("/api/entitlements", {
+            cache: "no-store",
+          });
+
+          if (entitlementsResponse.ok) {
+            const updatedEntitlements = await entitlementsResponse.json();
+            setEntitlements(updatedEntitlements);
+          }
+        }
+      } catch (error) {
+        console.error("Auto-sync failed:", error);
+      }
+    };
+
+    doInitialSync();
+  }, [open, entitlements?.stripe_subscription_id]);
+
   useEffect(() => {
     if (!open) return;
     const loadProfile = async () => {
@@ -164,6 +193,22 @@ export default function AccountModal({
     if (Number.isNaN(date.getTime())) return null;
     return date.toLocaleDateString();
   }, [entitlements?.current_period_end]);
+
+  const subscriptionState = useMemo(() => {
+    if (!entitlements) return null;
+
+    const isPro = entitlements.plan === "pro";
+    const hasStripeId = !!entitlements.stripe_subscription_id;
+    const hasPeriodEnd = !!entitlements.current_period_end;
+    const isCanceled = entitlements.cancel_at_period_end;
+
+    if (!isPro) return "free";
+    if (!hasStripeId && !hasPeriodEnd) return "lifetime";
+    if (isCanceled && hasPeriodEnd) return "canceled_active";
+    if (!isCanceled && hasPeriodEnd) return "active_renewing";
+
+    return "unknown";
+  }, [entitlements]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -340,6 +385,49 @@ export default function AccountModal({
     }
     await saveTtsSettings(1.0, 1.0);
   }, [saveTtsSettings]);
+
+  const syncFromStripe = async () => {
+    if (syncingFromStripe) return;
+    setSyncingFromStripe(true);
+
+    try {
+      const response = await fetch("/api/stripe/sync", {
+        method: "POST",
+      });
+
+      if (response.status === 401) {
+        onClose();
+        router.push("/login");
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Failed to sync from Stripe:", data.error);
+        alert(data.error || "Failed to sync subscription status");
+        return;
+      }
+
+      // Reload entitlements to reflect the sync
+      const entitlementsResponse = await fetch("/api/entitlements", {
+        cache: "no-store",
+      });
+
+      if (entitlementsResponse.ok) {
+        const updatedEntitlements = await entitlementsResponse.json();
+        setEntitlements(updatedEntitlements);
+      }
+
+      // Refresh the page to update all UI
+      router.refresh();
+    } catch (error) {
+      console.error("Error syncing from Stripe:", error);
+      alert("Failed to sync subscription status");
+    } finally {
+      setSyncingFromStripe(false);
+    }
+  };
 
   if (!open || !mounted) return null;
 
@@ -571,10 +659,13 @@ export default function AccountModal({
                       Your Pro Benefits
                     </p>
                     <ul className="mt-2 space-y-1 text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                      <li>✓ Unlimited Topic Islands (vocab + native examples)</li>
+                      <li>
+                        ✓ Unlimited Topic Islands (vocab + native examples)
+                      </li>
                       <li>✓ Story regeneration + longer stories</li>
                       <li>
-                        ✓ 24/7 Mandarin coach (instant corrections + explanations)
+                        ✓ 24/7 Mandarin coach (instant corrections +
+                        explanations)
                       </li>
                     </ul>
                   </div>
@@ -645,33 +736,48 @@ export default function AccountModal({
                   // Pro user view - show benefits and management
                   <div className="mt-6 flex flex-1 flex-col gap-4">
                     {renewalDate ? (
-                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                        <p className="text-sm font-medium text-gray-900">
-                          {entitlements.cancel_at_period_end 
-                            ? "Subscription Ending" 
-                            : "Active Pro Subscription"}
-                        </p>
-                        <p className="mt-1 text-xs text-gray-600">
-                          {entitlements.cancel_at_period_end ? (
-                            <>
-                              Active until{" "}
-                              <span className="font-medium">{renewalDate}</span>
-                            </>
-                          ) : (
-                            <>
-                              Renews on{" "}
-                              <span className="font-medium">{renewalDate}</span>
-                            </>
-                          )}
-                        </p>
-                      </div>
+                      subscriptionState === "canceled_active" ? (
+                        // Canceled subscription - amber warning
+                        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-amber-600">⏳</span>
+                            <p className="text-sm font-semibold text-amber-900">
+                              Subscription Canceled
+                            </p>
+                          </div>
+                          <p className="mt-1.5 text-xs text-amber-700">
+                            Your Pro access expires on{" "}
+                            <span className="font-semibold">{renewalDate}</span>
+                            . After that, you'll be downgraded to Free.
+                          </p>
+                        </div>
+                      ) : (
+                        // Active renewing subscription - emerald
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-emerald-600">✓</span>
+                            <p className="text-sm font-semibold text-emerald-900">
+                              Active Pro Subscription
+                            </p>
+                          </div>
+                          <p className="mt-1.5 text-xs text-emerald-700">
+                            Your subscription renews automatically on{" "}
+                            <span className="font-semibold">{renewalDate}</span>
+                          </p>
+                        </div>
+                      )
                     ) : (
-                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                        <p className="text-sm font-medium text-gray-900">
-                          Pro Access
-                        </p>
-                        <p className="mt-1 text-xs text-gray-600">
-                          Lifetime access • No renewal required
+                      // Lifetime Pro - purple badge
+                      <div className="rounded-lg border border-purple-200 bg-purple-50 px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-purple-600">⭐</span>
+                          <p className="text-sm font-semibold text-purple-900">
+                            Lifetime Pro Access
+                          </p>
+                        </div>
+                        <p className="mt-1.5 text-xs text-purple-700">
+                          You have unlimited access to all features with no
+                          renewal required.
                         </p>
                       </div>
                     )}
@@ -703,23 +809,24 @@ export default function AccountModal({
                     </div>
 
                     <div className="mt-auto space-y-2">
-                      {renewalDate && (
-                        <button
-                          onClick={openBillingPortal}
-                          disabled={portalLoading}
-                          className="inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                          {portalLoading ? "Opening..." : "Manage Subscription"}
-                        </button>
-                      )}
-                      {renewalDate && !entitlements.cancel_at_period_end && (
-                        <button
-                          onClick={() => setCancelOpen(true)}
-                          className="w-full text-center text-xs font-medium text-gray-500 hover:text-red-600"
-                        >
-                          Cancel subscription
-                        </button>
-                      )}
+                      {renewalDate && subscriptionState !== "lifetime" ? (
+                        <>
+                          <button
+                            onClick={openBillingPortal}
+                            disabled={portalLoading}
+                            className="inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                          >
+                            {portalLoading
+                              ? "Opening..."
+                              : "Manage Subscription"}
+                          </button>
+                          {subscriptionState === "canceled_active" && (
+                            <p className="text-center text-xs text-amber-600 font-medium">
+                              Click above to reactivate your subscription
+                            </p>
+                          )}
+                        </>
+                      ) : null}
                     </div>
                   </div>
                 ) : (
