@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import "./globals.css";
-import AuthRedirectHandler from "@/components/AuthRedirectHandler";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import { TTSProvider } from "@/contexts/TTSContext";
 
@@ -15,6 +13,17 @@ export const metadata: Metadata = {
   },
   description:
     "Mandarin vocabulary by topic with real-life example sentences, daily stories, and spaced repetition review.",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
@@ -106,9 +115,6 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <TTSProvider>
-          <Suspense fallback={null}>
-            <AuthRedirectHandler />
-          </Suspense>
           {children}
         </TTSProvider>
       </body>
