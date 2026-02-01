@@ -19,6 +19,9 @@ export default function QuizIslandDetailPage() {
 
   const [quizIsland, setQuizIsland] = useState<QuizIsland | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState("");
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
     loadQuizIsland();
@@ -40,6 +43,48 @@ export default function QuizIslandDetailPage() {
       console.error("Error loading quiz island:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStartEditName = () => {
+    if (quizIsland) {
+      setEditedName(quizIsland.name);
+      setIsEditingName(true);
+    }
+  };
+
+  const handleCancelEditName = () => {
+    setIsEditingName(false);
+    setEditedName("");
+  };
+
+  const handleSaveName = async () => {
+    if (!editedName.trim() || !quizIsland || editedName === quizIsland.name) {
+      handleCancelEditName();
+      return;
+    }
+
+    setSavingName(true);
+    try {
+      const response = await fetch(`/api/quiz-islands/${quizIslandId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editedName.trim() }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to update name");
+      }
+
+      setQuizIsland({ ...quizIsland, name: editedName.trim() });
+      setIsEditingName(false);
+      setEditedName("");
+    } catch (error) {
+      console.error("Error updating name:", error);
+      alert(error instanceof Error ? error.message : "Failed to update name");
+    } finally {
+      setSavingName(false);
     }
   };
 
@@ -94,9 +139,52 @@ export default function QuizIslandDetailPage() {
           >
             ← Back to Quiz
           </button>
-          <h1 className="mb-2 text-4xl font-bold tracking-tight text-gray-900">
-            {quizIsland.name}
-          </h1>
+          {isEditingName ? (
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                type="text"
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSaveName();
+                  } else if (e.key === "Escape") {
+                    handleCancelEditName();
+                  }
+                }}
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-3xl font-bold text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                autoFocus
+                disabled={savingName}
+              />
+              <button
+                onClick={handleSaveName}
+                disabled={savingName || !editedName.trim()}
+                className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+              >
+                {savingName ? "Saving..." : "Save"}
+              </button>
+              <button
+                onClick={handleCancelEditName}
+                disabled={savingName}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 group mb-2">
+              <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                {quizIsland.name}
+              </h1>
+              <button
+                onClick={handleStartEditName}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 opacity-0 transition-all hover:border-gray-300 hover:text-gray-900 group-hover:opacity-100"
+                title="Edit name"
+              >
+                Edit
+              </button>
+            </div>
+          )}
           <p className="text-sm text-gray-600">
             Chinese • {quizIsland.card_count} card
             {quizIsland.card_count !== 1 ? "s" : ""}

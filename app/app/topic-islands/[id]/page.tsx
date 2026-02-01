@@ -925,16 +925,16 @@ export default function TopicIslandDetailPage() {
                                 <p className="text-sm text-gray-600 mb-4">
                                   Unlimited islands + stories + full examples
                                 </p>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setUpgradeFeature("Unlock Words 11-20");
-                                    setShowUpgradeModal(true);
-                                  }}
-                                  className="w-full rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-                                >
-                                  Upgrade to Pro
-                                </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setUpgradeFeature("Unlock Words 11-20");
+                                  setShowUpgradeModal(true);
+                                }}
+                                className="w-full rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+                              >
+                                Unlock Words
+                              </button>
                               </div>
                             </div>
                           </>
@@ -1177,7 +1177,7 @@ export default function TopicIslandDetailPage() {
                       }
                       className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {userPlan === "free" ? "Upgrade to Pro" : (addingWords ? "Generating..." : "Generate")}
+                      {addingWords ? "Generating..." : `Add ${addCount} words`}
                     </button>
                   </div>
                 </div>

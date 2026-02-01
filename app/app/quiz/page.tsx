@@ -18,6 +18,7 @@ export default function QuizIslandsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newIslandName, setNewIslandName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [deletingIslandId, setDeletingIslandId] = useState<string | null>(null);
 
   useEffect(() => {
     loadQuizIslands();
@@ -70,64 +71,70 @@ export default function QuizIslandsPage() {
     }
   };
 
+  const handleDelete = async (islandId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this quiz island? This will also delete all cards in it."
+      )
+    ) {
+      return;
+    }
+
+    setDeletingIslandId(islandId);
+    try {
+      const response = await fetch(`/api/quiz-islands?quizIslandId=${islandId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete quiz island");
+      }
+
+      setQuizIslands(quizIslands.filter((island) => island.id !== islandId));
+    } catch (error) {
+      console.error("Error deleting quiz island:", error);
+      alert(
+        error instanceof Error ? error.message : "Failed to delete quiz island"
+      );
+    } finally {
+      setDeletingIslandId(null);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="flex items-center gap-3 text-gray-600">
-          <svg
-            className="h-5 w-5 animate-spin text-gray-400"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            />
-          </svg>
-          <span>Loading quiz islands...</span>
-        </div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+    <div className="min-h-screen bg-white p-4 md:p-8">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <div className="mb-6 md:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="mb-2 text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
-              Quiz
-            </h1>
-            <p className="text-sm md:text-base text-gray-600">Practice what you've learned.</p>
-          </div>
+        <div className="mb-6 md:mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+            Quiz
+          </h1>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="rounded-lg border border-gray-900 bg-gray-900 px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-medium text-white transition-colors hover:bg-gray-800"
+            className="rounded-lg border border-gray-900 bg-white px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
           >
-            + Create Quiz Island
+            Create Quiz Island
           </button>
         </div>
 
         {/* Empty State */}
         {quizIslands.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <p className="mb-4 text-gray-600">
-              No quiz islands yet. Create your first one to start practicing.
+          <div className="flex flex-col items-center justify-center py-20">
+            <p className="mb-8 text-lg text-gray-600">
+              Create your first quiz island to start practicing
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+              className="rounded-lg border border-gray-900 bg-white px-8 py-4 text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
             >
               Create Quiz Island
             </button>
@@ -138,7 +145,7 @@ export default function QuizIslandsPage() {
             {quizIslands.map((island) => (
               <div
                 key={island.id}
-                className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:border-gray-900 hover:bg-gray-50 hover:shadow-md"
+                className="group relative rounded-xl border border-gray-300 bg-white p-6 shadow-sm transition-all hover:border-gray-900 hover:bg-gray-50 hover:shadow-md"
               >
                 <Link href={`/app/quiz/${island.id}`} className="block">
                   <h3 className="mb-2 text-xl font-bold text-gray-900">
@@ -151,14 +158,18 @@ export default function QuizIslandsPage() {
                     </p>
                   </div>
                 </Link>
-                <div className="mt-4">
-                  <Link
-                    href={`/app/quiz/${island.id}`}
-                    className="block w-full rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-gray-800"
-                  >
-                    Start Quiz
-                  </Link>
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDelete(island.id);
+                  }}
+                  disabled={deletingIslandId === island.id}
+                  className="absolute right-4 top-4 text-sm text-gray-400 opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100 disabled:opacity-50"
+                  title="Delete island"
+                >
+                  {deletingIslandId === island.id ? "Deleting..." : "×"}
+                </button>
               </div>
             ))}
           </div>
@@ -167,10 +178,10 @@ export default function QuizIslandsPage() {
         {/* Create Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 md:p-6 shadow-xl">
-              <h3 className="mb-4 text-xl font-semibold text-gray-900">
+            <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-5 md:p-8 shadow-xl">
+              <h2 className="mb-6 text-2xl font-bold text-gray-900">
                 Create Quiz Island
-              </h3>
+              </h2>
               <form onSubmit={handleCreate}>
                 <div className="mb-6">
                   <label className="mb-2 block text-sm font-medium text-gray-900">
@@ -181,29 +192,30 @@ export default function QuizIslandsPage() {
                     value={newIslandName}
                     onChange={(e) => setNewIslandName(e.target.value)}
                     placeholder="e.g., Basic Vocabulary"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-gray-900 focus:outline-none"
                     required
                     autoFocus
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-gray-600">
                     Quiz islands are for Chinese practice only
                   </p>
                 </div>
-                <div className="flex justify-end space-x-3">
+                <div className="flex gap-4">
                   <button
                     type="button"
                     onClick={() => {
                       setShowCreateModal(false);
                       setNewIslandName("");
                     }}
-                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-base text-gray-700 transition-colors hover:bg-gray-50"
+                    disabled={creating}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={creating || !newIslandName.trim()}
-                    className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    className="flex-1 rounded-lg border border-gray-900 bg-white px-4 py-2 text-base font-medium text-gray-900 transition-colors hover:bg-gray-50 disabled:opacity-50"
                   >
                     {creating ? "Creating..." : "Create"}
                   </button>
