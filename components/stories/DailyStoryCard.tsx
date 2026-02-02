@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import {
   buttonPrimaryClass,
   cardBaseClass,
@@ -49,10 +50,11 @@ export default function DailyStoryCard({
   loading?: boolean;
 }) {
   const { t } = useLanguage();
+  const { convertText } = useCharacterSet();
   const today = getLocalDateKey();
 
   const dateLabel = formatDate(story?.date || story?.created_at || today);
-  const timeLabel = getTimeLabel(story?.story_zh, t("min"));
+  const timeLabel = getTimeLabel(story?.story_zh, convertText(t("min")));
   const containerClass =
     variant === "home"
       ? `${cardBaseClass} ${cardHoverClass} p-5 md:p-6`
@@ -72,7 +74,7 @@ export default function DailyStoryCard({
           </span>
           <div>
             <h2 className="text-lg md:text-xl font-semibold text-gray-900">
-              {t("Read your Daily story")}
+              {convertText(t("Read your Daily story"))}
             </h2>
           </div>
         </div>
@@ -81,7 +83,7 @@ export default function DailyStoryCard({
         <div className="space-y-2 md:space-y-3">
           {variant === "home" && (
             <span className="text-xs md:text-sm text-gray-500">
-              Review words you've recently learned in a short story.
+              {convertText(t("Review words you've recently learned in a short story."))}
             </span>
           )}
           <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
@@ -92,10 +94,10 @@ export default function DailyStoryCard({
               {timeLabel}
             </span>
             <span className="rounded-full border border-slate-200 bg-white px-2 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold uppercase tracking-wide text-gray-700">
-              {t("Today")}
+              {convertText(t("Today"))}
             </span>
           </div>
-          <h3 className="text-base md:text-lg font-semibold text-gray-900">{story.title}</h3>
+          <h3 className="text-base md:text-lg font-semibold text-gray-900">{convertText(story.title)}</h3>
           {variant === "home" && (
             <p
               className="text-sm text-gray-600"
@@ -106,23 +108,23 @@ export default function DailyStoryCard({
                 overflow: "hidden",
               }}
             >
-              {story.story_zh}
+              {convertText(story.story_zh)}
             </p>
           )}
           <Link href={`/app/story/${story.id}`} className={buttonPrimaryClass}>
-            {t("Read")}
+            {convertText(t("Read"))}
           </Link>
         </div>
       ) : (
         <div className="flex flex-col items-start gap-3 text-sm text-gray-600">
           {variant === "home" && (
-            <span>{t("Review your vocab in a short story.")}</span>
+            <span>{convertText(t("Review your vocab in a short story."))}</span>
           )}
           <span>
-            {loading ? t("Generating...") : t("Today's story is on the way.")}
+            {loading ? convertText(t("Generating...")) : convertText(t("Today's story is on the way."))}
           </span>
           <Link href={previewHref} className={buttonPrimaryClass}>
-            {t("Read")}
+            {convertText(t("Read"))}
           </Link>
         </div>
       )}

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import UpgradeModal from "@/components/app/UpgradeModal";
 
 interface TopicIsland {
@@ -21,6 +22,7 @@ export default function TopicIslandsPage() {
   const router = useRouter();
   const supabase = createClient();
   const { t } = useLanguage();
+  const { convertText } = useCharacterSet();
   const [islands, setIslands] = useState<TopicIsland[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -375,7 +377,7 @@ export default function TopicIslandsPage() {
                   className="block"
                 >
                   <h3 className="mb-2 text-xl font-bold text-gray-900">
-                    {island.topic}
+                    {convertText(island.topic)}
                   </h3>
                   <div className="space-y-1 text-sm text-gray-600">
                     <p>
@@ -646,7 +648,7 @@ export default function TopicIslandsPage() {
                                     className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-2 focus:ring-gray-900"
                                   />
                                   <span className="flex-1 text-sm text-gray-900">
-                                    {island.topic}
+                                    {convertText(island.topic)}
                                   </span>
                                   <span className="text-xs text-gray-500">
                                     {island.level}

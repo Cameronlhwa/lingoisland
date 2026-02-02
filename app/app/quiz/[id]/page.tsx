@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import { QuizMasteryStats } from "@/components/app/QuizMasteryStats";
 
 interface QuizIsland {
@@ -16,6 +17,7 @@ export default function QuizIslandDetailPage() {
   const router = useRouter();
   const params = useParams();
   const quizIslandId = params.id as string;
+  const { convertText } = useCharacterSet();
 
   const [quizIsland, setQuizIsland] = useState<QuizIsland | null>(null);
   const [loading, setLoading] = useState(true);
@@ -174,7 +176,7 @@ export default function QuizIslandDetailPage() {
           ) : (
             <div className="flex items-center gap-3 group mb-2">
               <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-                {quizIsland.name}
+                {convertText(quizIsland.name)}
               </h1>
               <button
                 onClick={handleStartEditName}

@@ -110,6 +110,7 @@ const translations: Record<string, { en: string; zh: string }> = {
   // Common
   Next: { en: "Next", zh: "接下来" },
   "Daily story": { en: "Daily story", zh: "每日故事" },
+  "Read your Daily story": { en: "Read your Daily story", zh: "阅读每日故事" },
   Today: { en: "Today", zh: "今天" },
   Story: { en: "Story", zh: "故事" },
   Flashcards: { en: "Flashcards", zh: "闪卡" },
@@ -198,6 +199,10 @@ const translations: Record<string, { en: string; zh: string }> = {
   Dating: { en: "Dating", zh: "约会" },
   Driving: { en: "Driving", zh: "驾驶" },
   Work: { en: "Work", zh: "工作" },
+  "Review words you've recently learned in a short story.": {
+    en: "Review words you've recently learned in a short story.",
+    zh: "在短故事中复习你最近学过的单词。",
+  },
   "Review your vocab in a short story.": {
     en: "Review your vocab in a short story.",
     zh: "在短故事中复习词汇。",
@@ -246,6 +251,11 @@ const translations: Record<string, { en: string; zh: string }> = {
   "Select a deck...": { en: "Select a deck...", zh: "选择卡片组..." },
   Add: { en: "Add", zh: "添加" },
   "Adding...": { en: "Adding...", zh: "添加中..." },
+  "Account & Settings": { en: "Account & Settings", zh: "账户与设置" },
+  
+  // Character Set
+  Traditional: { en: "Traditional", zh: "繁體" },
+  Simplified: { en: "Simplified", zh: "简体" },
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {

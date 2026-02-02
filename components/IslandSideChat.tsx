@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import UpgradeModal from "@/components/app/UpgradeModal";
 
 type ChatRole = "user" | "assistant";
@@ -28,6 +29,7 @@ export default function IslandSideChat({
   askAIWord?: IslandChatSelectedWord | null;
   onAskAIHandled?: () => void;
 }) {
+  const { convertText } = useCharacterSet();
   const [open, setOpen] = useState(false);
   const [modelMode, setModelMode] = useState<"chat" | "thinking">("chat");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -316,7 +318,7 @@ export default function IslandSideChat({
       <div className="px-4 py-2 text-xs text-gray-500">
         {selectedWord?.hanzi ? (
           <span>
-            Selected: <span className="font-medium">{selectedWord.hanzi}</span>
+            Selected: <span className="font-medium">{convertText(selectedWord.hanzi)}</span>
             {selectedWord.pinyin ? ` • ${selectedWord.pinyin}` : ""}
             {selectedWord.english ? ` • ${selectedWord.english}` : ""}
           </span>

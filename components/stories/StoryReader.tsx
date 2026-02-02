@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import StorySideChat from "@/components/stories/StorySideChat";
 import type { IslandChatSelectedWord } from "@/components/IslandSideChat";
 import { pinyin } from "pinyin-pro";
@@ -53,6 +54,7 @@ export default function StoryReader({
 }) {
   const router = useRouter();
   const supabase = createClient();
+  const { convertText } = useCharacterSet();
   const [showPinyin, setShowPinyin] = useState(false);
   const [showEnglish, setShowEnglish] = useState(Boolean(story.story_en));
   const [storyPinyin, setStoryPinyin] = useState(story.story_pinyin || "");
@@ -425,7 +427,7 @@ export default function StoryReader({
                             {part.py}
                           </span>
                           <span className="text-lg font-semibold text-gray-900">
-                            {part.char}
+                            {convertText(part.char)}
                           </span>
                         </span>
                       ))}
@@ -434,7 +436,7 @@ export default function StoryReader({
                 ) : (
                   <div className="flex items-center gap-3 group">
                     <h1 className="text-3xl font-bold text-gray-900">
-                      {localStory.title}
+                      {convertText(localStory.title)}
                     </h1>
                     <SpeakerButton
                       text={localStory.title}
@@ -553,14 +555,14 @@ export default function StoryReader({
                       >
                         <span className="text-xs text-gray-500">{part.py}</span>
                         <span className="text-2xl leading-relaxed">
-                          {part.char}
+                          {convertText(part.char)}
                         </span>
                       </span>
                     ))}
                   </div>
                 ) : (
                   <div className="text-2xl leading-relaxed text-gray-900">
-                    {story.story_zh}
+                    {convertText(story.story_zh)}
                   </div>
                 )}
                 {showEnglish && (storyEnglish || story.story_en) ? (
@@ -589,7 +591,7 @@ export default function StoryReader({
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <div className="text-2xl font-semibold text-gray-900">
-                            {word.hanzi}
+                            {convertText(word.hanzi)}
                           </div>
                           <SpeakerButton
                             text={word.hanzi}

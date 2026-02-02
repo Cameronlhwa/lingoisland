@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import {
   buttonPrimaryClass,
   buttonSecondaryClass,
@@ -21,6 +22,7 @@ export default function HeroContinueCard({
   nextUpText?: string;
 }) {
   const { t } = useLanguage();
+  const { convertText } = useCharacterSet();
   const nextUpLabel =
     nextUpText ??
     `${t("Next")}: ${t("Flashcards")} · 2 ${t("min")} · 12 ${t("due")}`;
@@ -33,13 +35,13 @@ export default function HeroContinueCard({
       <div className="relative flex flex-col gap-3 md:gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
-            {t("Continue learning")}
+            {convertText(t("Continue learning"))}
           </h1>
           <p className="mt-1 text-xs md:text-sm text-gray-600">
-            {t("A quick session to keep your streak going.")}
+            {convertText(t("A quick session to keep your streak going."))}
           </p>
           <p className="mt-2 text-xs md:text-sm font-semibold text-gray-900">
-            {nextUpLabel}
+            {convertText(nextUpLabel)}
           </p>
         </div>
 
@@ -50,7 +52,7 @@ export default function HeroContinueCard({
                 key={chip}
                 className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700"
               >
-                {chip}
+                {convertText(chip)}
               </span>
             ))}
           </div>
@@ -58,10 +60,10 @@ export default function HeroContinueCard({
 
         <div className="flex items-center gap-3">
           <button onClick={onStart} className={buttonPrimaryClass}>
-            {t("Start")}
+            {convertText(t("Start"))}
           </button>
           <Link href={chooseHref} className={buttonSecondaryClass}>
-            {t("Choose")}
+            {convertText(t("Choose"))}
           </Link>
         </div>
       </div>
