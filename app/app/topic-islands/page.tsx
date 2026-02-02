@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import UpgradeModal from "@/components/app/UpgradeModal";
@@ -16,6 +17,7 @@ interface TopicIsland {
   grammar_target?: number;
   status: string;
   created_at: string;
+  image_url?: string | null;
 }
 
 export default function TopicIslandsPage() {
@@ -208,6 +210,12 @@ export default function TopicIslandsPage() {
       }).catch((err) =>
         console.error("Error starting topic island generation:", err)
       );
+      fetch(`/api/topic-islands/${islandId}/generate-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }).catch((err) =>
+        console.error("Error starting topic island image generation:", err)
+      );
 
       // Redirect directly to island detail page
       router.replace(`/app/topic-islands/${islandId}`);
@@ -312,6 +320,12 @@ export default function TopicIslandsPage() {
       }).catch((err) =>
         console.error("Error starting topic island generation:", err),
       );
+      fetch(`/api/topic-islands/${islandId}/generate-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }).catch((err) =>
+        console.error("Error starting topic island image generation:", err),
+      );
 
       // Immediately navigate to island page; it will show loading/progress
       router.push(`/app/topic-islands/${islandId}`);
@@ -338,9 +352,13 @@ export default function TopicIslandsPage() {
     );
   }
 
+  const vPatternOffsets = [-72, 92, -72];
+  const vJitter = [-10, 6, 14, -6, 12, -8];
+  const sideOffsets = [-18, 22, -10, 16, -24, 12];
+
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
-      <div className="mx-auto max-w-6xl">
+    <div className="min-h-screen bg-white px-6 py-4 md:px-16 md:py-8">
+      <div className="mx-auto max-w-5xl">
         <div className="mb-6 md:mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             {t("Topic Islands")}
@@ -366,42 +384,84 @@ export default function TopicIslandsPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {islands.map((island) => (
-              <div
-                key={island.id}
-                className="group relative rounded-xl border border-gray-300 bg-white p-6 shadow-sm transition-all hover:border-gray-900 hover:bg-gray-50 hover:shadow-md"
-              >
-                <Link
-                  href={`/app/topic-islands/${island.id}`}
-                  className="block"
+          <>
+            {/* 
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {islands.map((island) => (
+                <div
+                  key={island.id}
+                  className="group relative rounded-xl border border-gray-300 bg-white p-6 shadow-sm transition-all hover:border-gray-900 hover:bg-gray-50 hover:shadow-md"
                 >
-                  <h3 className="mb-2 text-xl font-bold text-gray-900">
-                    {convertText(island.topic)}
-                  </h3>
-                  <div className="space-y-1 text-sm text-gray-600">
-                    <p>
-                      {t("Level")}: {island.level}
-                    </p>
-                    <p>
-                      {t("Word target")}: {island.word_target} {t("words")}
-                    </p>
-                    <p className="capitalize">
-                      {t("Status")}: {t(island.status) || island.status}
-                    </p>
-                  </div>
-                </Link>
-                <button
-                  onClick={(e) => handleDelete(island.id, e)}
-                  disabled={deleting === island.id}
-                  className="absolute right-4 top-4 text-sm text-gray-400 opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100 disabled:opacity-50"
-                  title="Delete island"
-                >
-                  {deleting === island.id ? "Deleting..." : "×"}
-                </button>
+                  <Link
+                    href={`/app/topic-islands/${island.id}`}
+                    className="block"
+                  >
+                    <h3 className="mb-2 text-xl font-bold text-gray-900">
+                      {convertText(island.topic)}
+                    </h3>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <p>
+                        {t("Level")}: {island.level}
+                      </p>
+                      <p>
+                        {t("Word target")}: {island.word_target} {t("words")}
+                      </p>
+                      <p className="capitalize">
+                        {t("Status")}: {t(island.status) || island.status}
+                      </p>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={(e) => handleDelete(island.id, e)}
+                    disabled={deleting === island.id}
+                    className="absolute right-4 top-4 text-sm text-gray-400 opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100 disabled:opacity-50"
+                    title="Delete island"
+                  >
+                    {deleting === island.id ? "Deleting..." : "×"}
+                  </button>
+                </div>
+              ))}
+            </div>
+            */}
+            <div className="pb-16 pt-24">
+              <div className="grid grid-cols-1 justify-items-center gap-x-24 gap-y-24 md:grid-cols-2 lg:grid-cols-3">
+                {islands.map((island, index) => {
+                  const offsetY =
+                    vPatternOffsets[index % vPatternOffsets.length] +
+                    vJitter[index % vJitter.length];
+                  const offsetX = sideOffsets[index % sideOffsets.length];
+                  const imageSrc = island.image_url || "/blank_island.png";
+                  const isDataUrl = imageSrc.startsWith("data:");
+                  return (
+                    <Link
+                      key={island.id}
+                      href={`/app/topic-islands/${island.id}`}
+                      className="group relative block mx-10 md:mx-16"
+                      style={{
+                        transform: `translate(${offsetX}px, ${offsetY}px)`,
+                      }}
+                    >
+                      <div className="flex flex-col items-center">
+                        <span className="mb-6 text-lg font-semibold uppercase tracking-wide text-black md:text-xl">
+                          {convertText(island.topic)}
+                        </span>
+                        <div className="relative h-56 w-96 md:h-64 md:w-[26rem] transition-transform duration-250 ease-out will-change-transform group-hover:scale-[1.03]">
+                          <Image
+                            src={imageSrc}
+                            alt={convertText(island.topic)}
+                            fill
+                            className="object-contain"
+                            priority={index < 3}
+                            unoptimized={isDataUrl}
+                          />
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+          </>
         )}
 
         {/* Create Modal */}

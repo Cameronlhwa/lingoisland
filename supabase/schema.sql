@@ -21,6 +21,7 @@ create table if not exists public.topic_islands (
   sentences_generated int not null default 0,
   sentence_attempts int not null default 0,
   sentence_tasks int not null default 0,
+  image_url text,
   created_at timestamptz not null default now()
 );
 
@@ -375,4 +376,3 @@ create policy "Users can update their own usage"
 -- Index for performance
 create index if not exists usage_monthly_user_id_month_key_idx 
   on public.usage_monthly(user_id, month_key);
-

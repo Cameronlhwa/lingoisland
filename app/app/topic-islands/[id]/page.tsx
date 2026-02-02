@@ -42,6 +42,7 @@ interface Island {
   sentences_generated?: number;
   sentence_attempts?: number;
   sentence_tasks?: number;
+  image_url?: string | null;
 }
 
 export default function TopicIslandDetailPage() {
@@ -92,6 +93,10 @@ export default function TopicIslandDetailPage() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [savingTitle, setSavingTitle] = useState(false);
+  const [imageProgress, setImageProgress] = useState(0);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const imageRequestedRef = useRef(false);
+  const imageLoggedRef = useRef(false);
 
   useEffect(() => {
     loadIsland();
@@ -103,13 +108,87 @@ export default function TopicIslandDetailPage() {
     }
     // Poll for updates if status is selecting or generating
     const interval = setInterval(() => {
-      if (island?.status === "generating" || island?.status === "selecting") {
+      if (
+        island?.status === "generating" ||
+        island?.status === "selecting" ||
+        (island && !island.image_url)
+      ) {
         loadIsland();
       }
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [islandId, island?.status]);
+  }, [islandId, island?.status, island?.image_url]);
+
+  useEffect(() => {
+    setImageProgress(0);
+    setImageError(null);
+    imageRequestedRef.current = false;
+    imageLoggedRef.current = false;
+  }, [islandId]);
+
+  useEffect(() => {
+    if (!island) return;
+
+    if (!island.image_url && !imageRequestedRef.current) {
+      imageRequestedRef.current = true;
+      fetch(`/api/topic-islands/${islandId}/generate-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+        .then(async (response) => {
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            const message =
+              data?.error || data?.details || "Failed to generate island art";
+            throw new Error(message);
+          }
+          return data;
+        })
+        .then((data) => {
+          if (data?.status === "exists" && !imageLoggedRef.current) {
+            imageLoggedRef.current = true;
+            setImageProgress(100);
+            console.log(
+              `[TOPIC ISLAND IMAGE] ready (cached) for island ${islandId}`,
+            );
+          }
+          if (data?.status === "ready" || data?.status === "exists") {
+            setImageError(null);
+            loadIsland();
+          }
+        })
+        .catch((error) => {
+          const message =
+            error instanceof Error ? error.message : "Island art failed";
+          setImageError(message);
+          console.error("Error starting topic island image generation:", error);
+        });
+    }
+
+    if (island.image_url && !imageLoggedRef.current) {
+      imageLoggedRef.current = true;
+      setImageProgress(100);
+      setImageError(null);
+      console.log(`[TOPIC ISLAND IMAGE] ready for island ${island.id}`);
+      console.log(`[TOPIC ISLAND IMAGE] data URL`, island.image_url);
+    }
+  }, [island?.id, island?.image_url, islandId]);
+
+  useEffect(() => {
+    if (!island || island.image_url) return;
+
+    setImageProgress((prev) => (prev > 0 ? prev : 6));
+    const interval = setInterval(() => {
+      setImageProgress((prev) => {
+        if (prev >= 90) return 90;
+        const bump = Math.max(1, Math.round((90 - prev) * 0.15));
+        return Math.min(90, prev + bump);
+      });
+    }, 900);
+
+    return () => clearInterval(interval);
+  }, [island?.id, island?.image_url]);
 
   const loadQuizIslands = async () => {
     try {
@@ -526,6 +605,14 @@ export default function TopicIslandDetailPage() {
       : wordProgress < 1
         ? `Selecting words (${wordsSelected}/${island.word_target})`
         : `Generating sentences (${sentenceAttempts}/${totalSentenceTasks})`;
+  const imageProgressPercentage = island.image_url
+    ? 100
+    : Math.max(1, Math.round(imageProgress));
+  const imageProgressLabel = imageError
+    ? "Failed"
+    : island.image_url
+      ? "Ready"
+      : `Generating (${imageProgressPercentage}%)`;
 
   // Group sentences by grammar pattern (if any)
   const grammarMap = new Map<
@@ -714,6 +801,18 @@ export default function TopicIslandDetailPage() {
                     <div
                       className="h-full rounded-full bg-gray-900 transition-all"
                       style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <div className="mb-2 flex justify-between text-sm font-medium text-gray-600">
+                    <span>Island art</span>
+                    <span>{imageProgressLabel}</span>
+                  </div>
+                  <div className="h-2.5 w-full rounded-full bg-gray-200">
+                    <div
+                      className="h-full rounded-full bg-gray-700 transition-all duration-500"
+                      style={{ width: `${imageProgressPercentage}%` }}
                     />
                   </div>
                 </div>

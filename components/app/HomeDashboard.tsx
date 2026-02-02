@@ -338,6 +338,12 @@ export default function HomeDashboard({
       }).catch((err) =>
         console.error("Error starting topic island generation:", err)
       );
+      fetch(`/api/topic-islands/${islandId}/generate-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }).catch((err) =>
+        console.error("Error starting topic island image generation:", err)
+      );
 
       // Redirect to island detail page using replace to avoid adding to history
       router.replace(`/app/topic-islands/${islandId}`);
