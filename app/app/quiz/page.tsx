@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 
 interface QuizIsland {
   id: string;
@@ -13,6 +14,7 @@ interface QuizIsland {
 
 export default function QuizIslandsPage() {
   const router = useRouter();
+  const { convertText } = useCharacterSet();
   const [quizIslands, setQuizIslands] = useState<QuizIsland[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -149,7 +151,7 @@ export default function QuizIslandsPage() {
               >
                 <Link href={`/app/quiz/${island.id}`} className="block">
                   <h3 className="mb-2 text-xl font-bold text-gray-900">
-                    {island.name}
+                    {convertText(island.name)}
                   </h3>
                   <div className="space-y-1 text-sm text-gray-600">
                     <p>

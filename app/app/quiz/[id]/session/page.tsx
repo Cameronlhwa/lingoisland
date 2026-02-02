@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { pinyin as pinyinPro } from "pinyin-pro";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import SpeakerButton from "@/components/app/SpeakerButton";
 
 interface Card {
@@ -20,6 +21,7 @@ export default function QuizSessionPage() {
   const params = useParams();
   const quizIslandId = params.id as string;
   const maxSessionCards = 10;
+  const { convertText } = useCharacterSet();
 
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -211,7 +213,9 @@ export default function QuizSessionPage() {
           <div className="mb-8 text-center">
             <div className="mb-4 flex items-center justify-center gap-3">
               <div className="text-4xl font-bold text-gray-900">
-                {currentCard.front}
+                {containsChinese(currentCard.front)
+                  ? convertText(currentCard.front)
+                  : currentCard.front}
               </div>
               {(isChinese(currentCard.front_lang) ||
                 containsChinese(currentCard.front)) && (
@@ -241,7 +245,11 @@ export default function QuizSessionPage() {
             <>
               <div className="mb-8 border-t border-gray-200 pt-8 text-center">
                 <div className="flex items-center justify-center gap-3">
-                  <div className="text-2xl text-gray-700">{currentCard.back}</div>
+                  <div className="text-2xl text-gray-700">
+                    {containsChinese(currentCard.back)
+                      ? convertText(currentCard.back)
+                      : currentCard.back}
+                  </div>
                   {(isChinese(currentCard.back_lang) ||
                     containsChinese(currentCard.back)) && (
                     <SpeakerButton text={currentCard.back} type="word" size="md" />

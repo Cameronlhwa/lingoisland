@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import DailyStoryCard, {
   type DailyStorySummary,
 } from "@/components/stories/DailyStoryCard";
@@ -66,6 +67,7 @@ export default function HomeDashboard({
   const router = useRouter();
   const supabase = createClient();
   const { t } = useLanguage();
+  const { convertText } = useCharacterSet();
   const [topicIslands, setTopicIslands] = useState<TopicIsland[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingPendingRequest, setProcessingPendingRequest] =
@@ -368,7 +370,7 @@ export default function HomeDashboard({
           : 0
       );
       const statusLabel =
-        dueCount > 8 ? t("Review") : dueCount > 4 ? t("Practice") : t("New");
+        dueCount > 8 ? convertText(t("Review")) : dueCount > 4 ? convertText(t("Practice")) : convertText(t("New"));
 
       return {
         ...deck,
@@ -380,7 +382,7 @@ export default function HomeDashboard({
     };
 
     return flashcardDecks.map(buildCard);
-  }, [flashcardsLoading, flashcardDecks, quizStatsByIsland, t]);
+  }, [flashcardsLoading, flashcardDecks, quizStatsByIsland, t, convertText]);
   const treeCount = Math.min(5, Math.floor(todayReviewCount / 20));
   const treePositions = [
     { x: 70, y: 96, scale: 1 },
@@ -391,10 +393,10 @@ export default function HomeDashboard({
   ].slice(0, treeCount);
   const islandStatus =
     treeCount >= 5
-      ? t("The island is thriving!")
+      ? convertText(t("The island is thriving!"))
       : treeCount > 0
-      ? t("The island is growing, but still needs help...")
-      : t("The island is dry with no resources");
+      ? convertText(t("The island is growing, but still needs help..."))
+      : convertText(t("The island is dry with no resources"));
   const cappedReviews = Math.min(100, todayReviewCount);
   const chips = useMemo(() => {
     const values: string[] = [];
@@ -445,8 +447,8 @@ export default function HomeDashboard({
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-gray-600">
           {processingPendingRequest
-            ? t("Creating your topic island...")
-            : t("Loading...")}
+            ? convertText(t("Creating your topic island..."))
+            : convertText(t("Loading..."))}
         </div>
       </div>
     );
@@ -481,24 +483,24 @@ export default function HomeDashboard({
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-base md:text-lg font-semibold text-gray-900">
-                    {t("Review your islands")}
+                    {convertText(t("Review your islands"))}
                   </h2>
                   <p className="mt-1 text-xs md:text-sm text-gray-600">
-                    {t("Quick refreshes.")}
+                    {convertText(t("Quick refreshes."))}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleScrollIslands("left")}
                     className={buttonIconClass}
-                    aria-label={t("Scroll islands left")}
+                    aria-label={convertText(t("Scroll islands left"))}
                   >
                     ←
                   </button>
                   <button
                     onClick={() => handleScrollIslands("right")}
                     className={buttonIconClass}
-                    aria-label={t("Scroll islands right")}
+                    aria-label={convertText(t("Scroll islands right"))}
                   >
                     →
                   </button>
@@ -506,7 +508,7 @@ export default function HomeDashboard({
                     href="/app/topic-islands"
                     className={buttonSecondaryClass}
                   >
-                    {t("View All")}
+                    {convertText(t("View All"))}
                   </Link>
                 </div>
               </div>
@@ -526,36 +528,36 @@ export default function HomeDashboard({
                     );
                     const dueCount = (daysSince * 3 + index * 2) % 12;
                     const statusLabel =
-                      dueCount > 6 ? t("Due soon") : t("On track");
+                      dueCount > 6 ? convertText(t("Due soon")) : convertText(t("On track"));
                     const lastReviewed = Math.min(9, daysSince);
 
                     return (
                       <div
                         key={island.id}
-                        className={`${cardBaseClass} ${cardHoverClass} min-h-[180px] min-w-[240px] max-w-[280px] p-4 flex h-full flex-col`}
+                        className={`${cardBaseClass} ${cardHoverClass} min-h-[180px] min-w-[180px] sm:min-w-[220px] md:min-w-[240px] max-w-[280px] p-4 flex h-full flex-col`}
                       >
                         <h3
                           className="text-base font-semibold text-gray-900 truncate"
                           title={island.topic}
                         >
-                          {island.topic.length > 48
+                          {convertText(island.topic.length > 48
                             ? `${island.topic.slice(0, 45)}...`
-                            : island.topic}
+                            : island.topic)}
                         </h3>
                         <p className="mt-1.5 text-sm text-gray-600">
-                          {island.word_target} {t("words")} / {island.level}
+                          {island.word_target} {convertText(t("words"))} / {island.level}
                         </p>
                         <p className="mt-1.5 text-xs text-gray-500">
-                          {statusLabel} · {Math.max(1, dueCount)} {t("due")}
+                          {statusLabel} · {Math.max(1, dueCount)} {convertText(t("due"))}
                           {" · "}
-                          {t("Last reviewed")}: {lastReviewed}
-                          {t("day short")}
+                          {convertText(t("Last reviewed"))}: {lastReviewed}
+                          {convertText(t("day short"))}
                         </p>
                         <Link
                           href={`/app/topic-islands/${island.id}`}
                           className={`${buttonPrimaryClass} mt-auto`}
                         >
-                          {t("Review")}
+                          {convertText(t("Review"))}
                         </Link>
                       </div>
                     );
@@ -564,13 +566,13 @@ export default function HomeDashboard({
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
                   <p className="mb-4 text-sm text-gray-600">
-                    {t("Create your first island to start reviewing words.")}
+                    {convertText(t("Create your first island to start reviewing words."))}
                   </p>
                   <button
                     onClick={handleCreateIsland}
                     className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
                   >
-                    {t("Create your first island")}
+                    {convertText(t("Create your first island"))}
                   </button>
                 </div>
               )}
@@ -580,29 +582,29 @@ export default function HomeDashboard({
               <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-base md:text-lg font-semibold text-gray-900">
-                    {t("Flashcards")}
+                    {convertText(t("Flashcards"))}
                   </h2>
                   <p className="mt-1 text-xs md:text-sm text-gray-600">
-                    {t("Decks ready.")}
+                    {convertText(t("Decks ready."))}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleScrollDecks("left")}
                     className={buttonIconClass}
-                    aria-label={t("Scroll decks left")}
+                    aria-label={convertText(t("Scroll decks left"))}
                   >
                     ←
                   </button>
                   <button
                     onClick={() => handleScrollDecks("right")}
                     className={buttonIconClass}
-                    aria-label={t("Scroll decks right")}
+                    aria-label={convertText(t("Scroll decks right"))}
                   >
                     →
                   </button>
                   <Link href="/app/quiz" className={buttonSecondaryClass}>
-                    {t("View Decks")}
+                    {convertText(t("View Decks"))}
                   </Link>
                 </div>
               </div>
@@ -617,26 +619,26 @@ export default function HomeDashboard({
                       {deckCards.map((deck) => (
                         <div
                           key={deck.id}
-                          className={`${cardBaseClass} ${cardHoverClass} flex min-w-[220px] max-w-[240px] snap-start flex-col p-4`}
+                          className={`${cardBaseClass} ${cardHoverClass} flex min-w-[160px] sm:min-w-[200px] md:min-w-[220px] max-w-[240px] snap-start flex-col p-4`}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div
                               className="min-w-0 flex-1 text-sm font-semibold text-gray-900 truncate"
                               title={deck.name}
                             >
-                              {deck.name}
+                              {convertText(deck.name)}
                             </div>
                             <span className="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
-                              {deck.dueCount} {t("due")}
+                              {deck.dueCount} {convertText(t("due"))}
                             </span>
                           </div>
                           <p className="mt-2 text-xs text-gray-600">
-                            {deck.statusLabel} · {deck.totalCount} {t("cards")}
+                            {deck.statusLabel} · {deck.totalCount} {convertText(t("cards"))}
                           </p>
                           <div className="mt-2">
                             <div className="flex items-center justify-between text-[11px] text-gray-500">
                               <span>
-                                {deck.totalCount} {t("cards")}
+                                {deck.totalCount} {convertText(t("cards"))}
                               </span>
                               <span>{deck.progressPercent}%</span>
                             </div>
@@ -651,7 +653,7 @@ export default function HomeDashboard({
                             href={`/app/quiz/${deck.id}`}
                             className={`${buttonPrimaryClass} mt-3`}
                           >
-                            {t("Review Deck")}
+                            {convertText(t("Review Deck"))}
                           </Link>
                         </div>
                       ))}
@@ -659,21 +661,21 @@ export default function HomeDashboard({
                   ) : (
                     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
                       <p className="mb-4 text-sm text-gray-600">
-                        {t(
+                        {convertText(t(
                           "No flashcard decks yet. Create your first one to start practicing."
-                        )}
+                        ))}
                       </p>
                       <Link
                         href="/app/quiz"
                         className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
                       >
-                        {t("Create your first deck")}
+                        {convertText(t("Create your first deck"))}
                       </Link>
                     </div>
                   )
                 ) : (
                   <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
-                    {t("Add a deck to start reviewing flashcards.")}
+                    {convertText(t("Add a deck to start reviewing flashcards."))}
                   </div>
                 )}
               </div>
@@ -685,18 +687,18 @@ export default function HomeDashboard({
             <div className={`${cardBaseClass} ${cardHoverClass} p-4`}>
               <div className="mb-3">
                 <h2 className="text-lg font-semibold text-slate-900">
-                  {t("Your island")}
+                  {convertText(t("Your island"))}
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
                   {islandLoading
-                    ? t("Counting today's reviews...")
-                    : `${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t(
+                    ? convertText(t("Counting today's reviews..."))
+                    : convertText(`${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t(
                         "today"
-                      )} · ${treeCount}/5 ${t("trees")}`}
+                      )} · ${treeCount}/5 ${t("trees")}`)}
                 </p>
                 {!islandLoading ? (
                   <p className="mt-1 text-xs text-slate-500">
-                    {islandStatus} · {cappedReviews}/100 {t("reviews")}
+                    {islandStatus} · {cappedReviews}/100 {convertText(t("reviews"))}
                   </p>
                 ) : null}
               </div>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GlossaryProvider } from "@/contexts/GlossaryContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { CharacterSetProvider } from "@/contexts/CharacterSetContext";
 import AppLayoutClient from "@/components/app/AppLayoutClient";
 
 export const metadata: Metadata = {
@@ -33,9 +34,11 @@ export default async function AppLayout({
 
   return (
     <LanguageProvider>
-      <GlossaryProvider>
-        <AppLayoutClient>{children}</AppLayoutClient>
-      </GlossaryProvider>
+      <CharacterSetProvider>
+        <GlossaryProvider>
+          <AppLayoutClient>{children}</AppLayoutClient>
+        </GlossaryProvider>
+      </CharacterSetProvider>
     </LanguageProvider>
   );
 }

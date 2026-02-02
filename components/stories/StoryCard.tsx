@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 
 export type StorySummary = {
   id: string;
@@ -20,6 +21,7 @@ function formatDate(value: string | null) {
 }
 
 export default function StoryCard({ story }: { story: StorySummary }) {
+  const { convertText } = useCharacterSet();
   const label = story.kind === "daily" ? "Daily" : "Custom";
   const badgeTone =
     story.kind === "daily"
@@ -43,7 +45,7 @@ export default function StoryCard({ story }: { story: StorySummary }) {
         </span>
       </div>
       <h3 className="mb-2 text-lg font-semibold text-gray-900">
-        {story.title}
+        {convertText(story.title)}
       </h3>
       <p
         className="text-sm text-gray-600"
@@ -54,7 +56,7 @@ export default function StoryCard({ story }: { story: StorySummary }) {
           overflow: "hidden",
         }}
       >
-        {story.story_zh}
+        {convertText(story.story_zh)}
       </p>
     </Link>
   );

@@ -1,6 +1,14 @@
 const DEFAULT_SITE_URL = "https://lingoisland.com";
 
-const normalizeSiteUrl = (url: string) => url.replace(/\/+$/, "");
+const normalizeSiteUrl = (url: string) => {
+  // Remove trailing slashes
+  let normalized = url.replace(/\/+$/, "");
+  
+  // Remove www. from the URL for canonical consistency
+  normalized = normalized.replace(/\/\/www\./, '//');
+  
+  return normalized;
+};
 
 export const getSiteUrl = () => {
   const rawUrl =
@@ -9,5 +17,11 @@ export const getSiteUrl = () => {
     DEFAULT_SITE_URL;
 
   return normalizeSiteUrl(rawUrl);
+};
+
+export const getCanonicalUrl = (path: string = '') => {
+  const siteUrl = getSiteUrl();
+  const cleanPath = path.replace(/^\/+/, ''); // Remove leading slashes
+  return cleanPath ? `${siteUrl}/${cleanPath}` : siteUrl;
 };
 

@@ -64,6 +64,7 @@ export default function AccountModal({
   const [mounted, setMounted] = useState(false);
   const [ttsRateSentences, setTtsRateSentences] = useState(1.0);
   const [ttsRateWords, setTtsRateWords] = useState(1.0);
+  const [characterSet, setCharacterSet] = useState<"simplified" | "traditional">("simplified");
   const [ttsSaving, setTtsSaving] = useState(false);
   const [ttsSaveStatus, setTtsSaveStatus] = useState<
     "idle" | "saved" | "error"
@@ -189,6 +190,7 @@ export default function AccountModal({
           setCefrLevel(data.cefrLevel || "B1");
           setTtsRateSentences(data.ttsRateSentences || 1.0);
           setTtsRateWords(data.ttsRateWords || 1.0);
+          setCharacterSet(data.characterSet || "simplified");
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -423,6 +425,36 @@ export default function AccountModal({
     await saveTtsSettings(1.0, 1.0);
   }, [saveTtsSettings]);
 
+  const handleCharacterSetChange = useCallback(
+    async (newCharacterSet: "simplified" | "traditional") => {
+      setCharacterSet(newCharacterSet);
+      setTtsSaving(true);
+      setTtsSaveStatus("idle");
+      try {
+        const response = await fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ characterSet: newCharacterSet }),
+        });
+
+        if (response.ok) {
+          setTtsSaveStatus("saved");
+          setTimeout(() => setTtsSaveStatus("idle"), 2000);
+          // Reload page to apply character conversion throughout
+          window.location.reload();
+        } else {
+          setTtsSaveStatus("error");
+        }
+      } catch (error) {
+        console.error("Error saving character set:", error);
+        setTtsSaveStatus("error");
+      } finally {
+        setTtsSaving(false);
+      }
+    },
+    [],
+  );
+
   const syncFromStripe = async () => {
     if (syncingFromStripe) return;
     setSyncingFromStripe(true);
@@ -656,6 +688,56 @@ export default function AccountModal({
                   >
                     Reset to default (1.0×)
                   </button>
+                </div>
+              </div>
+
+              {/* Character Set Preference */}
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-5">
+                <h3 className="mb-1 text-base font-semibold text-gray-900">
+                  Character Set
+                </h3>
+                <p className="mb-4 text-xs text-gray-600">
+                  Choose how Chinese characters are displayed throughout the app
+                </p>
+                <div className="space-y-3">
+                  <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-gray-200 bg-white p-3 transition-colors hover:border-gray-300">
+                    <input
+                      type="radio"
+                      name="characterSet"
+                      value="simplified"
+                      checked={characterSet === "simplified"}
+                      onChange={() => handleCharacterSetChange("simplified")}
+                      disabled={ttsSaving}
+                      className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">
+                        Simplified (简体字)
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Used in Mainland China, Singapore
+                      </div>
+                    </div>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-gray-200 bg-white p-3 transition-colors hover:border-gray-300">
+                    <input
+                      type="radio"
+                      name="characterSet"
+                      value="traditional"
+                      checked={characterSet === "traditional"}
+                      onChange={() => handleCharacterSetChange("traditional")}
+                      disabled={ttsSaving}
+                      className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">
+                        Traditional (繁體字)
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Used in Taiwan, Hong Kong, Macau
+                      </div>
+                    </div>
+                  </label>
                 </div>
               </div>
 

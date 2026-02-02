@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import { useGlossary } from "@/contexts/GlossaryContext";
 import { sidebarItems } from "@/components/app/sidebar-items";
 import AccountModal from "@/components/app/AccountModal";
@@ -16,6 +17,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const supabase = createClient();
   const { isChineseMode, toggleChineseMode, t } = useLanguage();
+  const { characterSet, convertText } = useCharacterSet();
   const { entries, activeWordId } = useGlossary();
   const glossaryListRef = useRef<HTMLDivElement | null>(null);
   const isTopicIslandDetail = pathname.startsWith("/app/topic-islands/");
@@ -91,7 +93,7 @@ export default function Sidebar() {
                 }`}
               >
                 {item.icon()}
-                {t(item.label)}
+                {convertText(t(item.label))}
               </Link>
             );
           })}
@@ -128,7 +130,7 @@ export default function Sidebar() {
                           : "border-gray-200 bg-white py-1.5 text-xs text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                     >
-                      <div>{entry.hanzi}</div>
+                      <div>{convertText(entry.hanzi)}</div>
                       {entry.english && (
                         <div className="truncate text-[10px] text-gray-500">
                           {entry.english}
@@ -145,10 +147,23 @@ export default function Sidebar() {
 
       {/* Always visible footer with settings and sign out */}
       <div className="border-t border-gray-200 bg-white p-6">
+        {/* Character Set Display */}
+        <button
+          onClick={() => setIsAccountOpen(true)}
+          className="mb-3 w-full flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm transition-colors hover:bg-gray-50"
+        >
+          <span className="font-medium text-gray-700">
+            {characterSet === "traditional" ? "繁體字" : "简体字"}
+          </span>
+          <span className="text-xs text-gray-500">
+            {characterSet === "traditional" ? convertText(t("Traditional")) : convertText(t("Simplified"))}
+          </span>
+        </button>
+
         {/* Chinese Mode Toggle */}
         <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
           <span className="text-sm font-medium text-gray-700">
-            {t("Chinese Mode")}
+            {convertText(t("Chinese Mode"))}
           </span>
           <button
             onClick={toggleChineseMode}
@@ -169,13 +184,13 @@ export default function Sidebar() {
           onClick={() => setIsAccountOpen(true)}
           className="mb-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
         >
-          {t("Account & Settings")}
+          {convertText(t("Account & Settings"))}
         </button>
         <button
           onClick={handleSignOut}
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50"
         >
-          {t("Sign Out")}
+          {convertText(t("Sign Out"))}
         </button>
       </div>
       <style jsx>{`

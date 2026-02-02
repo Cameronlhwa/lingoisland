@@ -19,7 +19,7 @@ export async function GET() {
     // Get or create user profile
     let { data: profile, error } = await supabase
       .from('user_profiles')
-      .select('cefr_level, tts_rate_sentences, tts_rate_words')
+      .select('cefr_level, tts_rate_sentences, tts_rate_words, character_set')
       .eq('user_id', user.id)
       .single()
 
@@ -32,8 +32,9 @@ export async function GET() {
           cefr_level: 'B1',
           tts_rate_sentences: 1.0,
           tts_rate_words: 1.0,
+          character_set: 'simplified',
         })
-        .select('cefr_level, tts_rate_sentences, tts_rate_words')
+        .select('cefr_level, tts_rate_sentences, tts_rate_words, character_set')
         .single()
 
       if (insertError) {
@@ -57,6 +58,7 @@ export async function GET() {
       cefrLevel: profile?.cefr_level || 'B1',
       ttsRateSentences: profile?.tts_rate_sentences || 1.0,
       ttsRateWords: profile?.tts_rate_words || 1.0,
+      characterSet: profile?.character_set || 'simplified',
     })
   } catch (error) {
     console.error('Error in GET /api/profile:', error)
@@ -83,7 +85,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { cefrLevel, ttsRateSentences, ttsRateWords } = body
+    const { cefrLevel, ttsRateSentences, ttsRateWords, characterSet } = body
 
     // Prepare update object
     const updates: {
@@ -91,6 +93,7 @@ export async function PATCH(request: Request) {
       cefr_level?: string
       tts_rate_sentences?: number
       tts_rate_words?: number
+      character_set?: string
     } = {
       user_id: user.id,
     }
@@ -140,13 +143,33 @@ export async function PATCH(request: Request) {
       updates.tts_rate_words = Math.round(clampedWords * 100) / 100
     }
 
+    // Validate and add characterSet if provided
+    if (characterSet !== undefined) {
+      if (typeof characterSet !== 'string') {
+        return NextResponse.json(
+          { error: 'Invalid character set' },
+          { status: 400 }
+        )
+      }
+
+      const validCharacterSets = ['simplified', 'traditional']
+      if (!validCharacterSets.includes(characterSet)) {
+        return NextResponse.json(
+          { error: 'Invalid character set. Must be "simplified" or "traditional"' },
+          { status: 400 }
+        )
+      }
+
+      updates.character_set = characterSet
+    }
+
     // Update or insert profile
     const { data: profile, error } = await supabase
       .from('user_profiles')
       .upsert(updates, {
         onConflict: 'user_id',
       })
-      .select('cefr_level, tts_rate_sentences, tts_rate_words')
+      .select('cefr_level, tts_rate_sentences, tts_rate_words, character_set')
       .single()
 
     if (error) {
@@ -161,6 +184,7 @@ export async function PATCH(request: Request) {
       cefrLevel: profile.cefr_level,
       ttsRateSentences: profile.tts_rate_sentences,
       ttsRateWords: profile.tts_rate_words,
+      characterSet: profile.character_set,
     })
   } catch (error) {
     console.error('Error in PATCH /api/profile:', error)

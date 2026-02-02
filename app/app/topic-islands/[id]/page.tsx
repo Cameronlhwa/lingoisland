@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useGlossary } from "@/contexts/GlossaryContext";
+import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import IslandSideChat, {
   type IslandChatSelectedWord,
 } from "@/components/IslandSideChat";
@@ -48,6 +49,7 @@ export default function TopicIslandDetailPage() {
   const params = useParams();
   const islandId = params.id as string;
   const { t } = useLanguage();
+  const { convertText } = useCharacterSet();
 
   const [island, setIsland] = useState<Island | null>(null);
   const [words, setWords] = useState<Word[]>([]);
@@ -740,7 +742,7 @@ export default function TopicIslandDetailPage() {
                               </div>
                               <div className="mt-1 flex items-center gap-2">
                                 <div className="text-base text-gray-900">
-                                  {tiers.easy.hanzi}
+                                  {convertText(tiers.easy.hanzi)}
                                 </div>
                                 <SpeakerButton
                                   text={tiers.easy.hanzi}
@@ -763,7 +765,7 @@ export default function TopicIslandDetailPage() {
                               </div>
                               <div className="mt-1 flex items-center gap-2">
                                 <div className="text-base text-gray-900">
-                                  {tiers.same.hanzi}
+                                  {convertText(tiers.same.hanzi)}
                                 </div>
                                 <SpeakerButton
                                   text={tiers.same.hanzi}
@@ -786,7 +788,7 @@ export default function TopicIslandDetailPage() {
                               </div>
                               <div className="mt-1 flex items-center gap-2">
                                 <div className="text-base text-gray-900">
-                                  {tiers.hard.hanzi}
+                                  {convertText(tiers.hard.hanzi)}
                                 </div>
                                 <SpeakerButton
                                   text={tiers.hard.hanzi}
@@ -939,126 +941,156 @@ export default function TopicIslandDetailPage() {
                             </div>
                           </>
                         )}
-                        <div className="mb-6 flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="mb-2 flex items-center gap-3">
-                              <div className="text-3xl font-bold text-gray-900">
-                                {word.hanzi}
+                        <div className="mb-6">
+                          {/* Desktop: side-by-side, Mobile: stacked */}
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="mb-2 flex items-center gap-3">
+                                <div className="text-3xl font-bold text-gray-900">
+                                  {convertText(word.hanzi)}
+                                </div>
+                                <SpeakerButton text={word.hanzi} type="word" size="lg" />
                               </div>
-                              <SpeakerButton text={word.hanzi} type="word" size="lg" />
+                              <div className="mb-2 text-lg text-gray-700">
+                                {word.pinyin}
+                              </div>
+                              <div className="text-base text-gray-600">
+                                {word.english}
+                              </div>
                             </div>
-                            <div className="mb-2 text-lg text-gray-700">
-                              {word.pinyin}
+                            {/* Buttons - stack on mobile, horizontal on desktop */}
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (isLocked) {
+                                    handleLockedWordClick(word);
+                                    return;
+                                  }
+                                  setAskAIWord({
+                                    hanzi: word.hanzi,
+                                    pinyin: word.pinyin,
+                                    english: word.english,
+                                  });
+                                }}
+                                disabled={isLocked}
+                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={isLocked ? "Upgrade to unlock" : "Ask AI about this word"}
+                              >
+                                Ask AI
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (isLocked) {
+                                    handleLockedWordClick(word);
+                                    return;
+                                  }
+                                  handleAddToQuizClick("word", word.id);
+                                }}
+                                disabled={addedItems.has(`word-${word.id}`) || isLocked}
+                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                              >
+                                {addedItems.has(`word-${word.id}`)
+                                  ? "✓ In quiz"
+                                  : t("Add to quiz")}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (isLocked) {
+                                    handleLockedWordClick(word);
+                                    return;
+                                  }
+                                  handleMarkKnown(word.id);
+                                }}
+                                disabled={markingKnown === word.id || isLocked}
+                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {markingKnown === word.id
+                                  ? "Updating..."
+                                  : "Already know"}
+                              </button>
                             </div>
-                            <div className="text-base text-gray-600">
-                              {word.english}
-                            </div>
-                          </div>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (isLocked) {
-                                  handleLockedWordClick(word);
-                                  return;
-                                }
-                                setAskAIWord({
-                                  hanzi: word.hanzi,
-                                  pinyin: word.pinyin,
-                                  english: word.english,
-                                });
-                              }}
-                              disabled={isLocked}
-                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                              title={isLocked ? "Upgrade to unlock" : "Ask AI about this word"}
-                            >
-                              Ask AI
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (isLocked) {
-                                  handleLockedWordClick(word);
-                                  return;
-                                }
-                                handleAddToQuizClick("word", word.id);
-                              }}
-                              disabled={addedItems.has(`word-${word.id}`) || isLocked}
-                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
-                            >
-                              {addedItems.has(`word-${word.id}`)
-                                ? "✓ In quiz"
-                                : t("Add to quiz")}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (isLocked) {
-                                  handleLockedWordClick(word);
-                                  return;
-                                }
-                                handleMarkKnown(word.id);
-                              }}
-                              disabled={markingKnown === word.id || isLocked}
-                              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {markingKnown === word.id
-                                ? "Updating..."
-                                : "Already know"}
-                            </button>
                           </div>
                         </div>
 
                         {/* Sentences */}
                         <div className="space-y-4 border-t border-gray-200 pt-6">
-                          {word.sentences
-                            .sort((a, b) => {
-                              const order = { easy: 0, same: 1, hard: 2 };
-                              return order[a.tier] - order[b.tier];
-                            })
-                            .map((sentence) => (
-                              <div key={sentence.id} className="space-y-2">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                      {sentence.tier}
-                                    </div>
-                                    <div className="mb-1 flex items-center gap-2">
-                                      <div className="text-base font-medium text-gray-900">
-                                        {sentence.hanzi}
+                          {word.sentences.length === 0 && island.status === "generating" ? (
+                            <div className="flex items-center gap-3 py-4 text-gray-600">
+                              <svg
+                                className="h-5 w-5 animate-spin text-gray-400"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                />
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                />
+                              </svg>
+                              <span className="text-sm">Example sentences loading...</span>
+                            </div>
+                          ) : (
+                            word.sentences
+                              .sort((a, b) => {
+                                const order = { easy: 0, same: 1, hard: 2 };
+                                return order[a.tier] - order[b.tier];
+                              })
+                              .map((sentence) => (
+                                <div key={sentence.id} className="space-y-2">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                        {sentence.tier}
                                       </div>
-                                      <SpeakerButton
-                                        text={sentence.hanzi}
-                                        type="sentence"
-                                        size="sm"
-                                      />
+                                      <div className="mb-1 flex items-center gap-2">
+                                        <div className="text-base font-medium text-gray-900">
+                                          {convertText(sentence.hanzi)}
+                                        </div>
+                                        <SpeakerButton
+                                          text={sentence.hanzi}
+                                          type="sentence"
+                                          size="sm"
+                                        />
+                                      </div>
+                                      <div className="mb-1 text-sm text-gray-700">
+                                        {sentence.pinyin}
+                                      </div>
+                                      <div className="text-sm text-gray-600">
+                                        {sentence.english}
+                                      </div>
                                     </div>
-                                    <div className="mb-1 text-sm text-gray-700">
-                                      {sentence.pinyin}
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                      {sentence.english}
-                                    </div>
+                                    <button
+                                      onClick={() =>
+                                        handleAddToQuizClick(
+                                          "sentence",
+                                          sentence.id,
+                                        )
+                                      }
+                                      disabled={addedItems.has(
+                                        `sentence-${sentence.id}`,
+                                      )}
+                                      className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
+                                    >
+                                      {addedItems.has(`sentence-${sentence.id}`)
+                                        ? "✓ In quiz"
+                                        : t("Add to quiz")}
+                                    </button>
                                   </div>
-                                  <button
-                                    onClick={() =>
-                                      handleAddToQuizClick(
-                                        "sentence",
-                                        sentence.id,
-                                      )
-                                    }
-                                    disabled={addedItems.has(
-                                      `sentence-${sentence.id}`,
-                                    )}
-                                    className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
-                                  >
-                                    {addedItems.has(`sentence-${sentence.id}`)
-                                      ? "✓ In quiz"
-                                      : t("Add to quiz")}
-                                  </button>
                                 </div>
-                              </div>
-                            ))}
+                              ))
+                          )}
                         </div>
                       </div>
                     );
