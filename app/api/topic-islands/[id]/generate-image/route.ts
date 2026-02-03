@@ -51,7 +51,10 @@ export async function POST(
       return NextResponse.json({ status: 'exists' })
     }
 
-    const generated = await generateIslandImage({ topic: island.topic })
+    const generated = await generateIslandImage({ 
+      topic: island.topic,
+      removeBackgroundEnabled: true 
+    })
     const imageUrl = `data:${generated.mimeType};base64,${generated.data}`
 
     const { error: updateError } = await supabase
