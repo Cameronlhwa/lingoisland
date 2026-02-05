@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -8,6 +8,8 @@ import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import UpgradeModal from "@/components/app/UpgradeModal";
+import { OceanBackground } from "@/components/OceanBackground";
+import { coverUrlFromKey } from "@/lib/islandLibrary";
 
 interface TopicIsland {
   id: string;
@@ -18,6 +20,7 @@ interface TopicIsland {
   status: string;
   created_at: string;
   image_url?: string | null;
+  cover_key?: string | null;
 }
 
 export default function TopicIslandsPage() {
@@ -31,6 +34,7 @@ export default function TopicIslandsPage() {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [userDefaultLevel, setUserDefaultLevel] = useState<string>("B1");
+  const [visibleCount, setVisibleCount] = useState(3); // Show 3 islands initially
   const [formData, setFormData] = useState({
     topic: "",
     level: "B1",
@@ -44,6 +48,7 @@ export default function TopicIslandsPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [processingPendingRequest, setProcessingPendingRequest] =
     useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const STORAGE_KEY = "pending_topic_island_request";
 
@@ -100,6 +105,33 @@ export default function TopicIslandsPage() {
       });
     }
   }, [showCreateModal, userDefaultLevel]);
+
+  // Infinite scroll: load more islands automatically
+  useEffect(() => {
+    // Don't set up observer if still loading or no islands to observe
+    if (loading || islands.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && visibleCount < islands.length) {
+          // Load 3 more islands when user scrolls near bottom
+          setVisibleCount((prev) => Math.min(prev + 3, islands.length));
+        }
+      },
+      { threshold: 0.5 } // Only trigger when spinner is 50% visible (prevents immediate firing)
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [visibleCount, islands.length, loading]);
 
   const loadIslands = async () => {
     const {
@@ -210,12 +242,7 @@ export default function TopicIslandsPage() {
       }).catch((err) =>
         console.error("Error starting topic island generation:", err)
       );
-      fetch(`/api/topic-islands/${islandId}/generate-image`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      }).catch((err) =>
-        console.error("Error starting topic island image generation:", err)
-      );
+      // Image generation disabled - using pre-generated library images for cost savings
 
       // Redirect directly to island detail page
       router.replace(`/app/topic-islands/${islandId}`);
@@ -320,12 +347,7 @@ export default function TopicIslandsPage() {
       }).catch((err) =>
         console.error("Error starting topic island generation:", err),
       );
-      fetch(`/api/topic-islands/${islandId}/generate-image`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      }).catch((err) =>
-        console.error("Error starting topic island image generation:", err),
-      );
+      // Image generation disabled - using pre-generated library images for cost savings
 
       // Immediately navigate to island page; it will show loading/progress
       router.push(`/app/topic-islands/${islandId}`);
@@ -340,25 +362,15 @@ export default function TopicIslandsPage() {
     }
   };
 
-  if (loading || processingPendingRequest) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-gray-600">
-          {processingPendingRequest
-            ? t("Creating your topic island...")
-            : t("Loading...")}
-        </div>
-      </div>
-    );
-  }
-
   const vPatternOffsets = [-72, 92, -72];
   const vJitter = [-10, 6, 14, -6, 12, -8];
   const sideOffsets = [-18, 22, -10, 16, -24, 12];
 
   return (
-    <div className="min-h-screen bg-white px-6 py-4 md:px-16 md:py-8">
-      <div className="mx-auto max-w-5xl">
+    <div className="relative min-h-screen px-6 py-4 md:px-16 md:py-8">
+      <OceanBackground />
+      <div className="relative z-10 mx-auto max-w-5xl">
+        {/* Header - Always visible */}
         <div className="mb-6 md:mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             {t("Topic Islands")}
@@ -371,7 +383,16 @@ export default function TopicIslandsPage() {
           </button>
         </div>
 
-        {islands.length === 0 ? (
+        {/* Loading state */}
+        {(loading || processingPendingRequest) ? (
+          <div className="flex min-h-[400px] items-center justify-center">
+            <div className="text-gray-600">
+              {processingPendingRequest
+                ? t("Creating your topic island...")
+                : t("Loading...")}
+            </div>
+          </div>
+        ) : islands.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <p className="mb-8 text-lg text-gray-600">
               Create your first topic island to start learning
@@ -425,12 +446,17 @@ export default function TopicIslandsPage() {
             */}
             <div className="pb-16 pt-24">
               <div className="grid grid-cols-1 justify-items-center gap-x-24 gap-y-24 md:grid-cols-2 lg:grid-cols-3">
-                {islands.map((island, index) => {
+                {islands.slice(0, visibleCount).map((island, sliceIndex) => {
+                  // Track original index in full islands array
+                  const originalIndex = islands.findIndex(i => i.id === island.id);
                   const offsetY =
-                    vPatternOffsets[index % vPatternOffsets.length] +
-                    vJitter[index % vJitter.length];
-                  const offsetX = sideOffsets[index % sideOffsets.length];
-                  const imageSrc = island.image_url || "/blank_island.png";
+                    vPatternOffsets[originalIndex % vPatternOffsets.length] +
+                    vJitter[originalIndex % vJitter.length];
+                  const offsetX = sideOffsets[originalIndex % sideOffsets.length];
+                  // Use cover_key from library, fallback to image_url (legacy), then blank
+                  const imageSrc = island.cover_key 
+                    ? coverUrlFromKey(island.cover_key)
+                    : island.image_url || "/blank_island.png";
                   const isDataUrl = imageSrc.startsWith("data:");
                   return (
                     <Link
@@ -442,16 +468,23 @@ export default function TopicIslandsPage() {
                       }}
                     >
                       <div className="flex flex-col items-center">
-                        <span className="mb-6 text-lg font-semibold uppercase tracking-wide text-black md:text-xl">
-                          {convertText(island.topic)}
-                        </span>
+                        {/* Speech bubble title */}
+                        <div className="relative mb-10 w-auto max-w-[90%] px-6 py-3 bg-white border-[3px] border-black rounded-2xl text-center">
+                          <h3 className="text-base font-bold uppercase tracking-wide text-gray-900 md:text-lg leading-tight">
+                            {convertText(island.topic)}
+                          </h3>
+                          {/* Speech bubble pointer */}
+                          <div className="absolute left-1/2 -bottom-3 -translate-x-1/2 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[12px] border-t-black" />
+                          <div className="absolute left-1/2 -bottom-[9px] -translate-x-1/2 w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-t-[9px] border-t-white" />
+                        </div>
                         <div className="relative h-56 w-96 md:h-64 md:w-[26rem] transition-transform duration-250 ease-out will-change-transform group-hover:scale-[1.03]">
                           <Image
                             src={imageSrc}
                             alt={convertText(island.topic)}
                             fill
                             className="object-contain"
-                            priority={index < 3}
+                            priority={originalIndex < 3}
+                            loading={originalIndex < 3 ? "eager" : "lazy"}
                             unoptimized={isDataUrl}
                           />
                         </div>
@@ -460,6 +493,19 @@ export default function TopicIslandsPage() {
                   );
                 })}
               </div>
+              
+              {/* Loading spinner - shows when more islands available */}
+              {visibleCount < islands.length && (
+                <div ref={observerTarget} className="mt-32 flex justify-center py-12 min-h-[200px]">
+                  <div className="flex flex-col items-center gap-3">
+                    {/* Animated spinner matching ocean theme */}
+                    <div className="h-12 w-12 animate-spin rounded-full border-[3px] border-black border-t-transparent" />
+                    <div className="text-gray-600 text-sm font-medium">
+                      {t("Loading more islands...")}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}

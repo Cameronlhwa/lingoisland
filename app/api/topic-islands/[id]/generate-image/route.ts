@@ -5,6 +5,10 @@ import { generateIslandImage } from '@/lib/nanobanana/generate-island-image'
 /**
  * POST /api/topic-islands/[id]/generate-image
  * Generate a themed island image using the base island art.
+ * 
+ * NOTE: Generation disabled for cost savings in normal product flow.
+ * All islands now use pre-generated library images (cover_key).
+ * This route is kept for legacy support and manual generation if needed.
  */
 export async function POST(
   request: Request,
@@ -77,7 +81,7 @@ export async function POST(
     const message =
       error instanceof Error ? error.message : 'Internal server error'
     return NextResponse.json(
-      { error: message },
+      { error: message, details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }

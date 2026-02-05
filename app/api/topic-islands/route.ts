@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { canCreateTopicIsland, incrementTopicIslandCount } from '@/lib/entitlements'
+import { pickRandomCoverKey } from '@/lib/islandLibrary'
 
 /**
  * POST /api/topic-islands
@@ -108,7 +109,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ islandId: existing.id })
     }
 
-    // Create topic island
+    // Create topic island with pre-generated cover image
     const { data: island, error } = await supabase
       .from('topic_islands')
       .insert({
@@ -119,6 +120,7 @@ export async function POST(request: Request) {
         word_target: wordTarget,
         grammar_target: grammar,
         status: 'draft',
+        cover_key: pickRandomCoverKey(), // Assign random pre-generated island image
       })
       .select()
       .single()

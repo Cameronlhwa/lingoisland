@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai'
+import { GoogleGenAI } from '@google/genai/node'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import sharp from 'sharp'
@@ -106,11 +106,15 @@ async function removeWhiteBackground(imageBase64: string): Promise<string> {
   return resultBuffer.toString('base64')
 }
 
-// Using Pro model for high-fidelity detail preservation during editing
+// Pro as main model for image editing; flash as fallback
 const DEFAULT_MODEL = 'gemini-3-pro-image-preview'
+const FALLBACK_MODEL = 'gemini-2.5-flash-image'
 
+// NOTE: Generation disabled for cost savings in normal product flow.
+// All islands now use pre-generated library images (cover_key).
+// This code is kept for legacy support and manual generation if needed.
 const buildPrompt = (topic: string) =>
-  `Using the provided image, change ONLY the objects on top of the island surface to represent "${topic}". In this artstyle, keep it simple, clean, and cartoonish. Add at least one structure to the island that relates to the topic. Also add in a cute fat furry very cute smiling capybara standing on two feet that suits the topic. Please maintain the thickness that the original island has for any new graphics on it. Keep the island shape, ocean, sky, lighting, shadows, and composition EXACTLY the same. Do not regenerate or redraw the base island - just add themed elements on its surface. Match the existing art style.`
+  `Using the provided image, change ONLY the objects on top of the island surface to represent "${topic}". In this artstyle, keep it simple, clean, and cartoonish. Add at least one structure to the island that relates to the topic. Also add in a cute fat furry very cute smiling capybara (light brown caramel colour) standing on two feet that suits the topic. Please maintain the thickness that the original island has for any new graphics on it. Keep the island shape, ocean, sky, lighting, shadows, and composition EXACTLY the same. Do not regenerate or redraw the base island - just add themed elements on its surface. Match the existing art style. You can add one to two plain colours maximum. Try to use a bit of navy blue #182545 (RGB 24, 37, 69)`
 
 export async function generateIslandImage({
   topic,
@@ -130,48 +134,71 @@ export async function generateIslandImage({
   const baseImageBase64 = baseImage.toString('base64')
 
   const apiKey =
+    process.env.NANO_BANANA_API_KEY ||
     process.env.GOOGLE_API_KEY ||
     process.env.GOOGLE_AI_API_KEY ||
-    process.env.GEMINI_API_KEY ||
-    process.env.NANO_BANANA_API_KEY
+    process.env.GEMINI_API_KEY
 
   if (!apiKey) {
-    throw new Error('GOOGLE_API_KEY not configured')
+    throw new Error(
+      'Island image API key not set. Add NANO_BANANA_API_KEY (or GEMINI_API_KEY) to .env.local'
+    )
   }
 
   const ai = new GoogleGenAI({ apiKey })
-  
-  // Following the image editing pattern from docs
-  // https://ai.google.dev/gemini-api/docs/image-generation#javascript
-  // Image first, then edit instruction (as shown in inpainting examples)
-  const prompt = [
+
+  const contents = [
     {
-      inlineData: {
-        mimeType: 'image/png',
-        data: baseImageBase64,
-      },
+      parts: [
+        {
+          inlineData: {
+            mimeType: 'image/png',
+            data: baseImageBase64,
+          },
+        },
+        { text: buildPrompt(trimmedTopic) },
+      ],
     },
-    { text: buildPrompt(trimmedTopic) },
   ]
 
-  const response = await ai.models.generateContent({
-    model,
-    contents: prompt,
-    config: {
-      responseModalities: ['IMAGE', 'TEXT'],
-    },
-  })
+  type GenResponse = Awaited<ReturnType<typeof ai.models.generateContent>>
+  let response: GenResponse | undefined
+  const modelsToTry = [model, model === DEFAULT_MODEL ? FALLBACK_MODEL : DEFAULT_MODEL].filter(
+    (m, i, arr) => arr.indexOf(m) === i
+  )
 
-  const parts = response?.candidates?.[0]?.content?.parts || []
+  for (const tryModel of modelsToTry) {
+    try {
+      response = await ai.models.generateContent({
+        model: tryModel,
+        contents,
+        config: {
+          responseModalities: ['IMAGE', 'TEXT'],
+        },
+      })
+      break
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (tryModel === modelsToTry[modelsToTry.length - 1]) {
+        throw new Error(
+          msg.includes('API key') ? msg : `Island image generation failed: ${msg}`
+        )
+      }
+      console.warn(`[generate-island-image] ${tryModel} failed, trying next:`, msg)
+    }
+  }
+
+  if (!response) {
+    throw new Error('Island image generation failed: no response from API')
+  }
+
+  const parts = response.candidates?.[0]?.content?.parts ?? []
   for (const part of parts) {
     if (part?.inlineData?.data) {
       let imageData = part.inlineData.data
-      
-      // Apply simple DFS flood fill background removal if enabled
       if (removeBackgroundEnabled) {
         imageData = await removeWhiteBackground(imageData)
       }
-      
       return {
         data: imageData,
         mimeType: 'image/png',
@@ -179,5 +206,7 @@ export async function generateIslandImage({
     }
   }
 
-  throw new Error('Nano Banana response missing image data')
+  const blockReason = response.promptFeedback?.blockReason
+  const blockMsg = blockReason ? ` (block reason: ${blockReason})` : ''
+  throw new Error(`Image model returned no image${blockMsg}. Try again or use a different topic.`)
 }

@@ -43,6 +43,7 @@ interface Island {
   sentence_attempts?: number;
   sentence_tasks?: number;
   image_url?: string | null;
+  cover_key?: string | null;
 }
 
 export default function TopicIslandDetailPage() {
@@ -93,6 +94,8 @@ export default function TopicIslandDetailPage() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [savingTitle, setSavingTitle] = useState(false);
+  // Image generation disabled - using pre-generated library images
+  // Keeping these for legacy support during migration
   const [imageProgress, setImageProgress] = useState(0);
   const [imageError, setImageError] = useState<string | null>(null);
   const imageRequestedRef = useRef(false);
@@ -110,15 +113,14 @@ export default function TopicIslandDetailPage() {
     const interval = setInterval(() => {
       if (
         island?.status === "generating" ||
-        island?.status === "selecting" ||
-        (island && !island.image_url)
+        island?.status === "selecting"
       ) {
         loadIsland();
       }
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [islandId, island?.status, island?.image_url]);
+  }, [islandId, island?.status]);
 
   useEffect(() => {
     setImageProgress(0);
@@ -127,68 +129,21 @@ export default function TopicIslandDetailPage() {
     imageLoggedRef.current = false;
   }, [islandId]);
 
+  // Image generation disabled - using pre-generated library images for cost savings
+  // Islands now use cover_key which is assigned at creation time
   useEffect(() => {
     if (!island) return;
 
-    if (!island.image_url && !imageRequestedRef.current) {
-      imageRequestedRef.current = true;
-      fetch(`/api/topic-islands/${islandId}/generate-image`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      })
-        .then(async (response) => {
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            const message =
-              data?.error || data?.details || "Failed to generate island art";
-            throw new Error(message);
-          }
-          return data;
-        })
-        .then((data) => {
-          if (data?.status === "exists" && !imageLoggedRef.current) {
-            imageLoggedRef.current = true;
-            setImageProgress(100);
-            console.log(
-              `[TOPIC ISLAND IMAGE] ready (cached) for island ${islandId}`,
-            );
-          }
-          if (data?.status === "ready" || data?.status === "exists") {
-            setImageError(null);
-            loadIsland();
-          }
-        })
-        .catch((error) => {
-          const message =
-            error instanceof Error ? error.message : "Island art failed";
-          setImageError(message);
-          console.error("Error starting topic island image generation:", error);
-        });
+    // All new islands have cover_key assigned at creation
+    // Legacy islands may still have image_url
+    if (island.cover_key || island.image_url) {
+      if (!imageLoggedRef.current) {
+        imageLoggedRef.current = true;
+        setImageProgress(100);
+        setImageError(null);
+      }
     }
-
-    if (island.image_url && !imageLoggedRef.current) {
-      imageLoggedRef.current = true;
-      setImageProgress(100);
-      setImageError(null);
-      console.log(`[TOPIC ISLAND IMAGE] ready for island ${island.id}`);
-      console.log(`[TOPIC ISLAND IMAGE] data URL`, island.image_url);
-    }
-  }, [island?.id, island?.image_url, islandId]);
-
-  useEffect(() => {
-    if (!island || island.image_url) return;
-
-    setImageProgress((prev) => (prev > 0 ? prev : 6));
-    const interval = setInterval(() => {
-      setImageProgress((prev) => {
-        if (prev >= 90) return 90;
-        const bump = Math.max(1, Math.round((90 - prev) * 0.15));
-        return Math.min(90, prev + bump);
-      });
-    }, 900);
-
-    return () => clearInterval(interval);
-  }, [island?.id, island?.image_url]);
+  }, [island?.id, island?.cover_key, island?.image_url]);
 
   const loadQuizIslands = async () => {
     try {
@@ -605,14 +560,9 @@ export default function TopicIslandDetailPage() {
       : wordProgress < 1
         ? `Selecting words (${wordsSelected}/${island.word_target})`
         : `Generating sentences (${sentenceAttempts}/${totalSentenceTasks})`;
-  const imageProgressPercentage = island.image_url
-    ? 100
-    : Math.max(1, Math.round(imageProgress));
-  const imageProgressLabel = imageError
-    ? "Failed"
-    : island.image_url
-      ? "Ready"
-      : `Generating (${imageProgressPercentage}%)`;
+  // Islands use pre-generated cover images now
+  const imageProgressPercentage = (island.cover_key || island.image_url) ? 100 : 0;
+  const imageProgressLabel = (island.cover_key || island.image_url) ? "Ready" : "Loading...";
 
   // Group sentences by grammar pattern (if any)
   const grammarMap = new Map<
