@@ -17,7 +17,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const supabase = createClient();
   const { isChineseMode, toggleChineseMode, t } = useLanguage();
-  const { characterSet, convertText } = useCharacterSet();
+  const { convertText } = useCharacterSet();
   const { entries, activeWordId } = useGlossary();
   const glossaryListRef = useRef<HTMLDivElement | null>(null);
   const isTopicIslandDetail = pathname.startsWith("/app/topic-islands/");
@@ -147,19 +147,6 @@ export default function Sidebar() {
 
       {/* Always visible footer with settings and sign out */}
       <div className="border-t border-gray-200 bg-white p-6">
-        {/* Character Set Display */}
-        <button
-          onClick={() => setIsAccountOpen(true)}
-          className="mb-3 w-full flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm transition-colors hover:bg-gray-50"
-        >
-          <span className="font-medium text-gray-700">
-            {characterSet === "traditional" ? "繁體字" : "简体字"}
-          </span>
-          <span className="text-xs text-gray-500">
-            {characterSet === "traditional" ? convertText(t("Traditional")) : convertText(t("Simplified"))}
-          </span>
-        </button>
-
         {/* Chinese Mode Toggle */}
         <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
           <span className="text-sm font-medium text-gray-700">
