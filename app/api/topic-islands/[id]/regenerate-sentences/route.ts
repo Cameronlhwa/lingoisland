@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { generateWordSentences } from '@/lib/deepseek/generate-word-sentences'
 
 interface Word {
@@ -21,7 +21,7 @@ export async function POST(
 ) {
   const islandId = params.id
 
-  const supabase = createServerClient()
+  const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
