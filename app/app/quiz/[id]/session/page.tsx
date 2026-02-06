@@ -20,7 +20,7 @@ export default function QuizSessionPage() {
   const router = useRouter();
   const params = useParams();
   const quizIslandId = params.id as string;
-  const maxSessionCards = 10;
+  const sessionCardLimit = 10; // One session = this many cards; queue is ordered weak-first so these are relearning + new first
   const { convertText } = useCharacterSet();
 
   const [cards, setCards] = useState<Card[]>([]);
@@ -29,30 +29,11 @@ export default function QuizSessionPage() {
   const [showPinyin, setShowPinyin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [grading, setGrading] = useState(false);
+  const [tierMessage, setTierMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadQueue();
   }, [quizIslandId]);
-
-  const shuffleArray = <T,>(items: T[]) => {
-    const array = [...items];
-    for (let i = array.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  };
-
-  const interleaveQueues = <T,>(primary: T[], secondary: T[]) => {
-    const result: T[] = [];
-    let i = 0;
-    let j = 0;
-    while (i < primary.length || j < secondary.length) {
-      if (i < primary.length) result.push(primary[i++]);
-      if (j < secondary.length) result.push(secondary[j++]);
-    }
-    return result;
-  };
 
   const isChinese = (lang: string | null | undefined) =>
     typeof lang === "string" && lang.toLowerCase().startsWith("zh");
@@ -69,18 +50,6 @@ export default function QuizSessionPage() {
     }
   };
 
-  const buildStrategicQueue = (queue: Card[]) => {
-    const due = queue.filter((card) => card.queue_bucket === "due");
-    const newCards = queue.filter((card) => card.queue_bucket === "new");
-    const review = queue.filter(
-      (card) =>
-        card.queue_bucket === "review" || card.queue_bucket === undefined
-    );
-
-    const mixed = interleaveQueues(shuffleArray(due), shuffleArray(newCards));
-    return [...mixed, ...shuffleArray(review)].slice(0, maxSessionCards);
-  };
-
   const loadQueue = async () => {
     try {
       const response = await fetch(`/api/quiz-islands/${quizIslandId}/queue`);
@@ -92,7 +61,9 @@ export default function QuizSessionPage() {
         throw new Error("Failed to load queue");
       }
       const data = await response.json();
-      setCards(buildStrategicQueue(data.cards || []));
+      // Queue is ordered weak-first (relearning → new → hard → good → easy); take first N so each session gets the most important cards including new
+      const queue = data.cards || [];
+      setCards(queue.slice(0, sessionCardLimit));
       setCurrentIndex(0);
       setShowAnswer(false);
     } catch (error) {
@@ -117,6 +88,16 @@ export default function QuizSessionPage() {
       );
 
       if (!response.ok) throw new Error("Failed to grade");
+
+      const result = await response.json();
+      const newTier = result?.reviewState?.mastery_tier;
+      if (newTier === "easy") {
+        setTierMessage("Moved to Easy stack!");
+        setTimeout(() => setTierMessage(null), 2500);
+      } else if (newTier === "good" && rating === "easy") {
+        setTierMessage("One more Easy to get back to Easy stack");
+        setTimeout(() => setTierMessage(null), 2500);
+      }
 
       // Move to next card
       if (currentIndex < cards.length - 1) {
@@ -296,6 +277,11 @@ export default function QuizSessionPage() {
                 </button>
               </div>
 
+              {tierMessage && (
+                <div className="mt-4 rounded-lg bg-green-50 px-4 py-2 text-center text-sm font-medium text-green-800">
+                  {tierMessage}
+                </div>
+              )}
               {/* Hint text */}
               <div className="mt-6 text-center text-xs text-gray-500">
                 Rate how well you remembered this card
