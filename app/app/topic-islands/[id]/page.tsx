@@ -176,13 +176,47 @@ export default function TopicIslandDetailPage() {
       }
 
       const data = await response.json();
+      const previousStatus = island?.status;
       setIsland(data.island);
       setWords(data.words);
       setUserPlan(data.user_plan || "free");
       setLoading(false);
+
+      // If island just became ready, check for missing sentences
+      if (previousStatus === "generating" && data.island.status === "ready") {
+        checkAndRegenerateSentences();
+      }
     } catch (error) {
       console.error("Error loading island:", error);
       setLoading(false);
+    }
+  };
+
+  const checkAndRegenerateSentences = async () => {
+    try {
+      console.log("Checking for missing sentences...");
+      const response = await fetch(
+        `/api/topic-islands/${islandId}/regenerate-sentences`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Failed to check sentences");
+        return;
+      }
+
+      const result = await response.json();
+      console.log("Sentence check result:", result);
+
+      if (result.regenerated > 0) {
+        console.log(`Regenerated ${result.regenerated} word(s) with missing sentences`);
+        // Reload island to show new sentences
+        setTimeout(() => loadIsland(), 1000);
+      }
+    } catch (error) {
+      console.error("Error checking sentences:", error);
     }
   };
 
@@ -754,18 +788,6 @@ export default function TopicIslandDetailPage() {
                     />
                   </div>
                 </div>
-                <div className="mb-2">
-                  <div className="mb-2 flex justify-between text-sm font-medium text-gray-600">
-                    <span>Island art</span>
-                    <span>{imageProgressLabel}</span>
-                  </div>
-                  <div className="h-2.5 w-full rounded-full bg-gray-200">
-                    <div
-                      className="h-full rounded-full bg-gray-700 transition-all duration-500"
-                      style={{ width: `${imageProgressPercentage}%` }}
-                    />
-                  </div>
-                </div>
               </div>
 
               {/* Grammar Focus */}
@@ -1066,7 +1088,7 @@ export default function TopicIslandDetailPage() {
 
                         {/* Sentences */}
                         <div className="space-y-4 border-t border-gray-200 pt-6">
-                          {word.sentences.length === 0 && island.status === "generating" ? (
+                          {word.sentences.length === 0 ? (
                             <div className="flex items-center gap-3 py-4 text-gray-600">
                               <svg
                                 className="h-5 w-5 animate-spin text-gray-400"
@@ -1089,6 +1111,30 @@ export default function TopicIslandDetailPage() {
                                 />
                               </svg>
                               <span className="text-sm">Example sentences loading...</span>
+                            </div>
+                          ) : word.sentences.length < 3 ? (
+                            <div className="flex items-center gap-3 py-4 text-amber-600">
+                              <svg
+                                className="h-5 w-5 animate-spin text-amber-500"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                />
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                />
+                              </svg>
+                              <span className="text-sm">Some sentences missing...</span>
                             </div>
                           ) : (
                             word.sentences

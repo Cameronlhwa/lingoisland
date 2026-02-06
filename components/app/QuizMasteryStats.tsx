@@ -9,10 +9,17 @@ type QuizStatsRow = {
   good_count: number;
   easy_count: number;
   new_count: number;
+  new_queue_count: number;
   total_count: number;
 };
 
-export function QuizMasteryStats({ quizIslandId }: { quizIslandId: string }) {
+export function QuizMasteryStats({ 
+  quizIslandId,
+  onTierClick,
+}: { 
+  quizIslandId: string;
+  onTierClick?: (tier: string) => void;
+}) {
   const [stats, setStats] = useState<QuizStatsRow | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -112,7 +119,19 @@ export function QuizMasteryStats({ quizIslandId }: { quizIslandId: string }) {
             {bars.map((b) => {
               const heightPercent = total > 0 ? (b.count / total) * 100 : 0;
               return (
-                <div key={b.key} className="flex flex-1 flex-col items-center">
+                <div 
+                  key={b.key} 
+                  className="flex flex-1 flex-col items-center cursor-pointer transition-all hover:opacity-80 hover:scale-105"
+                  onClick={() => onTierClick?.(b.key)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onTierClick?.(b.key);
+                    }
+                  }}
+                >
                   <div className="flex h-28 w-full items-end rounded-lg bg-gray-100 px-2">
                     <div
                       className={`w-full rounded-md ${b.colorClass}`}

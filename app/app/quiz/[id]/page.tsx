@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import { QuizMasteryStats } from "@/components/app/QuizMasteryStats";
+import ProgressModal from "@/components/app/ProgressModal";
 
 interface QuizIsland {
   id: string;
@@ -24,6 +25,8 @@ export default function QuizIslandDetailPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<string | null>(null);
 
   useEffect(() => {
     loadQuizIsland();
@@ -235,8 +238,30 @@ export default function QuizIslandDetailPage() {
               </div>
             </div>
 
-            <QuizMasteryStats quizIslandId={quizIslandId} />
+            <QuizMasteryStats 
+              quizIslandId={quizIslandId}
+              onTierClick={(tier) => {
+                // Map bar keys to mastery tier names
+                const tierMap: Record<string, string> = {
+                  forgot: "relearning",
+                  hard: "hard",
+                  good: "good",
+                  easy: "easy",
+                };
+                setSelectedTier(tierMap[tier] || tier);
+                setShowProgressModal(true);
+              }}
+            />
           </div>
+        )}
+
+        {/* Progress Modal */}
+        {showProgressModal && (
+          <ProgressModal
+            quizIslandId={quizIslandId}
+            initialTier={selectedTier}
+            onClose={() => setShowProgressModal(false)}
+          />
         )}
       </div>
     </div>

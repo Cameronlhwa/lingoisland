@@ -34,11 +34,11 @@ export async function GET(
       )
     }
 
-    // Call the RPC function
+    // Call the RPC (70% new queue cards, 30% review cards for 10-card sessions)
     const { data, error } = await supabase.rpc('get_quiz_queue', {
       p_quiz_island_id: params.id,
-      p_review_limit: 80,
-      p_new_limit: 20,
+      p_new_limit: 7,      // 70% of 10-card session
+      p_review_limit: 3,   // 30% of 10-card session
     })
 
     if (error) {
