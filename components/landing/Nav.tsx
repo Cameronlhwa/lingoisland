@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import AppLogo from "@/components/app/AppLogo";
 import { useState } from "react";
 
 export default function Nav() {
@@ -10,18 +10,10 @@ export default function Nav() {
   return (
     <nav className="sticky top-0 z-40 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
       <div className="flex items-center justify-between px-6 py-5 md:px-12">
-        <Link href="/" className="flex items-center gap-1.5">
-          <Image
-            src="/logo.png"
-            alt="Lingo Island Logo"
-            width={40}
-            height={40}
-            className="rounded-lg"
-          />
-          <span className="text-lg font-semibold text-gray-900">
-            Lingo<span className="text-gray-500">Island</span>
-          </span>
-        </Link>
+        <AppLogo
+          href="/"
+          textClassName="text-xl font-semibold text-gray-900"
+        />
         
         {/* Desktop Nav Links */}
         <div className="hidden items-center gap-6 text-sm text-gray-600 md:flex">

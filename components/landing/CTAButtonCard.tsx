@@ -32,10 +32,10 @@ export default function CTAButtonCard({
         initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className={`flex min-h-[150px] flex-col rounded-2xl border bg-white p-6 shadow-sm transition-all ${
+        className={`flex min-h-[150px] flex-col rounded-2xl border bg-white p-6 shadow-md transition-all ${
           isPrimary
-            ? "border-gray-200 hover:border-gray-300 hover:shadow-md"
-            : "border-gray-200 hover:border-gray-300 hover:shadow-md"
+            ? "border-gray-300 hover:border-gray-400 hover:shadow-lg"
+            : "border-gray-300 hover:border-gray-400 hover:shadow-lg"
         }`}
       >
         <div className="flex items-start justify-between gap-4">

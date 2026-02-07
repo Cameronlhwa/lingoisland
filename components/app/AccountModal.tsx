@@ -755,29 +755,34 @@ export default function AccountModal({
             {entitlements?.plan === "pro" ? (
               // Pro user - show success/confirmation design
               <div
-                className="relative min-h-[360px] overflow-hidden rounded-2xl border border-emerald-200 p-7 text-white shadow-sm"
+                className="relative min-h-[360px] overflow-hidden rounded-2xl border border-emerald-200 p-7 text-gray-900 shadow-sm"
                 style={{
-                  backgroundImage: "url('/Upgrade-modal.jpg')",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
+                  background: "linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)",
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/70 via-emerald-950/40 to-emerald-950/70" />
+                {/* Capybara boat in bottom left */}
+                <div className="absolute bottom-3 left-3 w-20 md:w-24">
+                  <img
+                    src="/boats/boat-capybara.png"
+                    alt="Capybara in boat"
+                    className="w-full h-auto"
+                  />
+                </div>
                 <div className="relative z-10">
                   <div className="flex items-center gap-2">
                     <span className="text-3xl">✓</span>
-                    <h2 className="text-2xl font-semibold drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]">
+                    <h2 className="text-2xl font-semibold text-gray-900">
                       You're Pro!
                     </h2>
                   </div>
-                  <p className="mt-2 text-sm text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                  <p className="mt-2 text-sm text-gray-700">
                     You have full access to all LingoIsland features.
                   </p>
-                  <div className="mt-7 rounded-2xl border border-white/30 bg-white/15 p-5 text-sm shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-md">
-                    <p className="font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                  <div className="mt-7 rounded-2xl border border-gray-200 bg-white/80 p-5 text-sm shadow-lg backdrop-blur-sm">
+                    <p className="font-semibold text-gray-900">
                       Your Pro Benefits
                     </p>
-                    <ul className="mt-2 space-y-1 text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                    <ul className="mt-2 space-y-1 text-gray-700">
                       <li>
                         ✓ Unlimited Topic Islands (vocab + native examples)
                       </li>
@@ -793,26 +798,31 @@ export default function AccountModal({
             ) : (
               // Free user - show upgrade prompt
               <div
-                className="relative min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 p-7 text-white shadow-sm"
+                className="relative min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 p-7 text-gray-900 shadow-sm"
                 style={{
-                  backgroundImage: "url('/Upgrade-modal.jpg')",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
+                  background: "linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)",
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/40 to-slate-950/70" />
+                {/* Capybara boat in bottom left */}
+                <div className="absolute bottom-3 left-3 w-20 md:w-24">
+                  <img
+                    src="/boats/boat-capybara.png"
+                    alt="Capybara in boat"
+                    className="w-full h-auto"
+                  />
+                </div>
                 <div className="relative z-10">
-                  <h2 className="text-2xl font-semibold drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]">
+                  <h2 className="text-2xl font-semibold text-gray-900">
                     Upgrade to Pro
                   </h2>
-                  <p className="mt-2 text-sm text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                  <p className="mt-2 text-sm text-gray-700">
                     Unlock unlimited stories, decks, and focused practice.
                   </p>
-                  <div className="mt-7 rounded-2xl border border-white/30 bg-white/15 p-5 text-sm shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-md">
-                    <p className="font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                  <div className="mt-7 rounded-2xl border border-gray-200 bg-white/80 p-5 text-sm shadow-lg backdrop-blur-sm">
+                    <p className="font-semibold text-gray-900">
                       What you get
                     </p>
-                    <ul className="mt-2 space-y-1 text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                    <ul className="mt-2 space-y-1 text-gray-700">
                       <li>Unlimited Topic Islands (vocab + native examples)</li>
                       <li>Story regeneration + longer stories</li>
                       <li>

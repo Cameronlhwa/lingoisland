@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "gen:island-library": "tsx scripts/generateIslandLibrary.ts",
-    "backfill:island-covers": "tsx scripts/backfillIslandCovers.ts"
+    "backfill:island-covers": "tsx scripts/backfillIslandCovers.ts",
+    "gen:landing-examples": "tsx scripts/generate-landing-example-islands.ts",
+    "gen:boat-capybara": "tsx scripts/generate-boat-capybara.ts",
+    "gen:testimonial-faces": "tsx scripts/generate-testimonial-faces.ts"
   },
   "dependencies": {
     "@google/genai": "^0.7.0",

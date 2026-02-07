@@ -615,10 +615,15 @@ export default function StoryReader({
                               english: word.english,
                             })
                           }
-                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
-                          title="Ask AI about this word"
+                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md flex items-center gap-1.5"
+                          title="Ask 华华 about this word"
                         >
-                          Ask AI
+                          <img 
+                            src="/capybara-face.png" 
+                            alt="Huáhuá" 
+                            className="h-5 w-5 rounded-full"
+                          />
+                          <span>Ask for help</span>
                         </button>
                         <button
                           onClick={() => handleAddToQuizClick(word.id)}

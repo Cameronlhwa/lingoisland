@@ -8,6 +8,7 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
+import { Volume2 } from "lucide-react";
 
 export default function WhyLingoIsland() {
   const prefersReducedMotion = useReducedMotion();
@@ -20,6 +21,29 @@ export default function WhyLingoIsland() {
   const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
 
   const targetText = "Apartment hunting";
+
+  const playAudio = async (text: string) => {
+    try {
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!response.ok) throw new Error("TTS failed");
+      const data = await response.json();
+      if (!data.audioContent) throw new Error("No audio content");
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audioContent), (c) => c.charCodeAt(0))],
+        { type: "audio/mp3" },
+      );
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.play();
+      audio.onended = () => URL.revokeObjectURL(audioUrl);
+    } catch (error) {
+      console.error("Audio playback failed:", error);
+    }
+  };
 
   // Typing animation - only starts when section is in view
   useEffect(() => {
@@ -109,6 +133,7 @@ export default function WhyLingoIsland() {
               prefersReducedMotion={prefersReducedMotion}
               typedText={typedText}
               showCards={showCards}
+              playAudio={playAudio}
             />
           </div>
 
@@ -121,6 +146,7 @@ export default function WhyLingoIsland() {
                 prefersReducedMotion={prefersReducedMotion}
                 typedText={typedText}
                 showCards={showCards}
+                playAudio={playAudio}
               />
             )}
           </div>
@@ -256,10 +282,12 @@ function TopicPanel({
   prefersReducedMotion,
   typedText,
   showCards,
+  playAudio,
 }: {
   prefersReducedMotion: boolean | null;
   typedText: string;
   showCards: boolean;
+  playAudio: (text: string) => Promise<void>;
 }) {
   const isTyping =
     typedText.length > 0 && typedText.length < "Apartment hunting".length;
@@ -270,22 +298,22 @@ function TopicPanel({
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5 }}
-      className="rounded-2xl border border-gray-900 bg-gray-900 p-8"
+      className="rounded-2xl border border-gray-300 bg-[#CFEFFF] p-8"
       aria-label="LingoIsland topic-based learning approach"
     >
       <div className="mb-6">
-        <h3 className="text-xl font-semibold text-white">
-          LingoIsland's Topic-based Approach
+        <h3 className="text-xl font-semibold text-gray-900">
+          LingoIsland's Personalized Approach
         </h3>
       </div>
 
       {/* Input area */}
-      <div className="mb-6 rounded-xl border border-gray-700 bg-gray-800 p-4">
-        <label className="mb-2 block text-xs font-medium text-gray-400">
+      <div className="mb-6 rounded-xl border border-gray-300 bg-white p-4">
+        <label className="mb-2 block text-xs font-medium text-gray-700">
           Type a topic...
         </label>
         <div className="flex items-center min-h-[28px]">
-          <span className="text-lg text-white">
+          <span className="text-lg text-gray-900">
             {typedText}
             {isTyping && !prefersReducedMotion && (
               <motion.span
@@ -307,72 +335,127 @@ function TopicPanel({
             transition={{ duration: 0.5 }}
             className="mb-4 space-y-3"
           >
-            <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+            <div className="rounded-lg border border-gray-300 bg-white p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-base font-semibold text-white">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => playAudio("租房")}
+                    className="flex-shrink-0 rounded-full p-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                    aria-label="Play audio for 租房"
+                  >
+                    <Volume2 className="h-4 w-4" />
+                  </button>
+                  <span className="text-base font-semibold text-gray-900">
                     租房
                   </span>
-                  <span className="ml-2 text-xs text-gray-400">zū fáng</span>
+                  <span className="ml-2 text-xs text-gray-600">zū fáng</span>
                 </div>
-                <span className="text-xs text-gray-300">rent apartment</span>
+                <span className="text-xs text-gray-600">rent apartment</span>
               </div>
               <div className="mt-3 space-y-1">
-                <div className="text-sm text-gray-200">
-                  我在这个区租房，很方便。
+                <div className="flex items-start gap-2">
+                  <button
+                    onClick={() => playAudio("我在这个区租房，很方便。")}
+                    className="flex-shrink-0 rounded-full p-1 mt-0.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                    aria-label="Play audio for sentence"
+                  >
+                    <Volume2 className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-800">
+                      我在这个区租房，很方便。
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Wǒ zài zhège qū zū fáng, hěn fāngbiàn.
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      I rent an apartment in this area, it&apos;s very
+                      convenient.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-400">
-                  Wǒ zài zhège qū zū fáng, hěn fāngbiàn.
-                </p>
-                <p className="text-xs text-gray-500">
-                  I rent an apartment in this area, it&apos;s very convenient.
-                </p>
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+            <div className="rounded-lg border border-gray-300 bg-white p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-base font-semibold text-white">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => playAudio("地铁站")}
+                    className="flex-shrink-0 rounded-full p-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                    aria-label="Play audio for 地铁站"
+                  >
+                    <Volume2 className="h-4 w-4" />
+                  </button>
+                  <span className="text-base font-semibold text-gray-900">
                     地铁站
                   </span>
-                  <span className="ml-2 text-xs text-gray-400">dìtiězhàn</span>
+                  <span className="ml-2 text-xs text-gray-600">dìtiězhàn</span>
                 </div>
-                <span className="text-xs text-gray-300">subway station</span>
+                <span className="text-xs text-gray-600">subway station</span>
               </div>
               <div className="mt-3 space-y-1">
-                <div className="text-sm text-gray-200">
-                  地铁站离家走路十分钟。
+                <div className="flex items-start gap-2">
+                  <button
+                    onClick={() => playAudio("地铁站离家走路十分钟。")}
+                    className="flex-shrink-0 rounded-full p-1 mt-0.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                    aria-label="Play audio for sentence"
+                  >
+                    <Volume2 className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-800">
+                      地铁站离家走路十分钟。
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Dìtiězhàn lí jiā zǒulù shí fēnzhōng.
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      The subway station is a 10-minute walk from home.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-400">
-                  Dìtiězhàn lí jiā zǒulù shí fēnzhōng.
-                </p>
-                <p className="text-xs text-gray-500">
-                  The subway station is a 10-minute walk from home.
-                </p>
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+            <div className="rounded-lg border border-gray-300 bg-white p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-base font-semibold text-white">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => playAudio("房东")}
+                    className="flex-shrink-0 rounded-full p-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                    aria-label="Play audio for 房东"
+                  >
+                    <Volume2 className="h-4 w-4" />
+                  </button>
+                  <span className="text-base font-semibold text-gray-900">
                     房东
                   </span>
-                  <span className="ml-2 text-xs text-gray-400">fángdōng</span>
+                  <span className="ml-2 text-xs text-gray-600">fángdōng</span>
                 </div>
-                <span className="text-xs text-gray-300">landlord</span>
+                <span className="text-xs text-gray-600">landlord</span>
               </div>
               <div className="mt-3 space-y-1">
-                <div className="text-sm text-gray-200">
-                  房东人很好，也很热心。
+                <div className="flex items-start gap-2">
+                  <button
+                    onClick={() => playAudio("房东人很好，也很热心。")}
+                    className="flex-shrink-0 rounded-full p-1 mt-0.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                    aria-label="Play audio for sentence"
+                  >
+                    <Volume2 className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-800">
+                      房东人很好，也很热心。
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Fángdōng rén hěn hǎo, yě hěn rèxīn.
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      The landlord is nice and very helpful.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-400">
-                  Fángdōng rén hěn hǎo, yě hěn rèxīn.
-                </p>
-                <p className="text-xs text-gray-500">
-                  The landlord is nice and very helpful.
-                </p>
               </div>
             </div>
 
@@ -385,7 +468,7 @@ function TopicPanel({
               ].map((feature) => (
                 <div
                   key={feature}
-                  className="rounded-full border border-gray-700 bg-gray-800 px-3 py-1 text-xs text-gray-300"
+                  className="rounded-full border border-gray-300 bg-white px-3 py-1 text-xs text-gray-700"
                 >
                   {feature}
                 </div>

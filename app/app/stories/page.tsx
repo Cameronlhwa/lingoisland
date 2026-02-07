@@ -4,6 +4,7 @@ import { getLocalDateKey } from "@/lib/utils/date";
 import DailyStoryCard from "@/components/stories/DailyStoryCard";
 import StoriesList from "@/components/stories/StoriesList";
 import type { StorySummary } from "@/components/stories/StoryCard";
+import { OceanBackground } from "@/components/OceanBackground";
 
 export default async function StoriesPage() {
   const supabase = await createClient();
@@ -37,13 +38,14 @@ export default async function StoriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
-      <div className="mx-auto max-w-6xl">
+    <div className="relative min-h-screen p-4 md:p-8">
+      <OceanBackground />
+      <div className="relative z-10 mx-auto max-w-6xl">
         <div className="mb-6 md:mb-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Stories</h1>
           <Link
             href="/app/stories/new"
-            className="rounded-lg border border-gray-900 bg-white px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
+            className="rounded-lg border-2 border-gray-900 bg-white px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-bold uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50 shadow-[0_0_14px_3px_rgba(147,197,253,0.6)]"
           >
             Create new story
           </Link>

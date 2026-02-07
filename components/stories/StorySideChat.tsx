@@ -80,7 +80,18 @@ export default function StorySideChat({
         throw new Error(t || "Failed to load chat history");
       }
       const data = (await res.json()) as { messages?: ChatMessage[] };
-      setMessages(data.messages || []);
+      const loadedMessages = data.messages || [];
+      
+      // Add welcome message if this is the first time opening chat (no messages)
+      if (loadedMessages.length === 0) {
+        setMessages([{
+          role: "assistant",
+          content: "你好！I'm 华华 (Huáhuá), your favorite capybara helper! 🦫\n\nI'm here to help you understand this story better. Ask me about vocabulary, grammar, cultural context, or anything else that's confusing!"
+        }]);
+      } else {
+        setMessages(loadedMessages);
+      }
+      
       hasLoadedRef.current = true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load chat history");
@@ -335,21 +346,18 @@ export default function StorySideChat({
     <>
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-lg transition-all hover:shadow-xl ${
+        className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border-2 border-gray-900 bg-white px-5 py-3 text-gray-900 shadow-lg transition-all hover:shadow-xl hover:scale-105 ${
           open ? "pointer-events-none opacity-0" : ""
         }`}
         aria-label="Open story chat"
-        title="Story chat"
+        title="Chat with Huáhuá about this story"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          className="h-6 w-6"
-        >
-          <path d="M4.804 21.644A1.5 1.5 0 003 20.25V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v8.5A2.25 2.25 0 0118.75 17.5H9.664l-3.47 3.47a1.5 1.5 0 01-1.39.674z" />
-        </svg>
-        <span className="text-sm font-medium">Ask about this story</span>
+        <img 
+          src="/capybara-face.png" 
+          alt="Huáhuá" 
+          className="h-8 w-8 rounded-full"
+        />
+        <span className="text-sm font-semibold">Have any questions?</span>
       </button>
 
       {!isMobile && open ? (

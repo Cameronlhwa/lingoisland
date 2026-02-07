@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
+import { OceanBackground } from "@/components/OceanBackground";
 
 interface QuizIsland {
   id: string;
@@ -113,8 +114,9 @@ export default function QuizIslandsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
-      <div className="mx-auto max-w-6xl">
+    <div className="relative min-h-screen p-4 md:p-8">
+      <OceanBackground />
+      <div className="relative z-10 mx-auto max-w-6xl">
         {/* Header */}
         <div className="mb-6 md:mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -122,7 +124,7 @@ export default function QuizIslandsPage() {
           </h1>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="rounded-lg border border-gray-900 bg-white px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
+            className="rounded-lg border-2 border-gray-900 bg-white px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-bold uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50 shadow-[0_0_14px_3px_rgba(147,197,253,0.6)]"
           >
             Create Quiz Island
           </button>
@@ -136,7 +138,7 @@ export default function QuizIslandsPage() {
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="rounded-lg border border-gray-900 bg-white px-8 py-4 text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
+              className="rounded-lg border-2 border-gray-900 bg-white px-8 py-4 text-base font-bold uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50 shadow-[0_0_14px_3px_rgba(147,197,253,0.6)]"
             >
               Create Quiz Island
             </button>

@@ -1,5 +1,5 @@
 export const cardBaseClass =
-  "rounded-2xl border border-slate-200 bg-white shadow-sm";
+  "rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-sm shadow-sm";
 
 export const cardHoverClass =
   "transition hover:-translate-y-0.5 hover:shadow-md";

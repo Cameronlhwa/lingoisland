@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useTransform, useSpring, type MotionValue } from "framer-motion";
 import { useMemo } from "react";
 
 // Navy color matching the island outline style from base_cappy.png and blank_island.png
@@ -91,80 +91,131 @@ interface WaveParticle {
 interface WaveLayer {
   particles: WaveParticle[];
   opacity: number;
-  scrollXOffset: number; // how many pixels this layer shifts horizontally per full scroll
-  scrollYMultiplier: number; // how much scroll affects vertical parallax
-  driftSpeed?: number; // only used if CALM_SCROLL_ONLY is false
+  scrollXOffset: number;
+  scrollYMultiplier: number;
+  driftSpeed?: number;
+}
+
+// Separate component so useTransform is called at top level (Rules of Hooks)
+function WaveLayerContent({
+  layer,
+  smoothScrollY,
+}: {
+  layer: WaveLayer;
+  smoothScrollY: MotionValue<number>;
+}) {
+  const xOffset = useTransform(
+    smoothScrollY,
+    [0, 2000],
+    [0, layer.scrollXOffset]
+  );
+  const yOffset = useTransform(
+    smoothScrollY,
+    [0, 2000],
+    [0, layer.scrollYMultiplier * 100]
+  );
+
+  return (
+    <motion.div
+      className="absolute inset-0"
+      style={{ x: xOffset, y: yOffset }}
+    >
+      {layer.particles.map((particle) => {
+        const animateProps = CALM_SCROLL_ONLY
+          ? {}
+          : {
+              animate: { x: ["-20vw", "120vw"] },
+              transition: {
+                duration: particle.driftDuration,
+                repeat: Infinity,
+                ease: "linear",
+                repeatType: "loop" as const,
+                delay: particle.animationDelay,
+              },
+            };
+
+        return (
+          <motion.div
+            key={particle.id}
+            className="absolute"
+            style={{
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+              opacity: layer.opacity,
+            }}
+            {...animateProps}
+          >
+            <div style={{ transform: `scale(${particle.scale})` }}>
+              <WaveSquiggle size={particle.size} variant={particle.variant} />
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
 }
 
 export function OceanBackground() {
   const shouldReduceMotion = useReducedMotion();
   const { scrollY } = useScroll();
 
-  // Smooth scroll value with spring physics for nicer feel
   const smoothScrollY = useSpring(scrollY, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001,
   });
 
-  // Baby blue gradient for the sea background - soft and calm
   const seaGradient = {
     top: "#EAF6FF",
     mid: "#CFEFFF",
     bottom: "#B7E5FF",
   };
 
-  // Generate wave particles for each layer (memoized for performance)
   const waveLayers: WaveLayer[] = useMemo(() => {
     const generateParticles = (count: number, baseDuration: number): WaveParticle[] => {
-      const sizes: Array<"small" | "medium" | "large"> = ["small", "medium", "large"];
       return Array.from({ length: count }, (_, i) => {
-        // Mix of sizes with bias toward medium/large for more visibility
-        const sizeWeights = [0.3, 0.4, 0.3]; // 30% small, 40% medium, 30% large
+        const sizeWeights = [0.3, 0.4, 0.3];
         const rand = Math.random();
         let size: "small" | "medium" | "large" = "medium";
         if (rand < sizeWeights[0]) size = "small";
         else if (rand < sizeWeights[0] + sizeWeights[1]) size = "medium";
         else size = "large";
 
-        // Most waves are single crest (80%), only 20% are double crest
         const variant: "single" | "double" = Math.random() > 0.2 ? "single" : "double";
-
         const duration = baseDuration + Math.random() * 40;
 
         return {
           id: `wave-${count}-${i}`,
           x: Math.random() * 100,
           y: Math.random() * 100,
-          scale: 0.7 + Math.random() * 0.5, // 0.7 - 1.2
+          scale: 0.7 + Math.random() * 0.5,
           size,
           variant,
           driftDuration: duration,
-          // Stagger animation start times so waves are distributed throughout the cycle
-          animationDelay: -(Math.random() * duration), // negative delay = start partway through
+          animationDelay: -(Math.random() * duration),
         };
       });
     };
 
     return [
       {
-        particles: generateParticles(40, 80), // increased count + base duration
-        opacity: 0.18, // increased opacity for more visibility
-        scrollXOffset: -150, // dramatic horizontal shift with scroll
+        particles: generateParticles(40, 80),
+        opacity: 0.18,
+        scrollXOffset: -150,
         scrollYMultiplier: -0.6,
-        driftSpeed: 100, // very slow baseline drift (if enabled)
+        driftSpeed: 100,
       },
       {
-        particles: generateParticles(35, 100), // increased count + base duration
-        opacity: 0.12, // increased opacity
-        scrollXOffset: -220, // dramatic medium horizontal shift
+        particles: generateParticles(35, 100),
+        opacity: 0.12,
+        scrollXOffset: -220,
         scrollYMultiplier: -1.0,
         driftSpeed: 140,
       },
       {
-        particles: generateParticles(30, 120), // increased count + base duration
-        opacity: 0.08, // increased opacity
-        scrollXOffset: -300, // dramatic larger horizontal shift
+        particles: generateParticles(30, 120),
+        opacity: 0.08,
+        scrollXOffset: -300,
         scrollYMultiplier: -1.4,
         driftSpeed: 180,
       },
@@ -173,7 +224,6 @@ export function OceanBackground() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      {/* Baby blue sea gradient background */}
       <div
         className="absolute inset-0"
         style={{
@@ -181,70 +231,14 @@ export function OceanBackground() {
         }}
       />
 
-      {/* Wave particle layers */}
-      {!shouldReduceMotion && waveLayers.map((layer, layerIndex) => {
-        // Scroll-coupled horizontal motion: primary movement
-        // Maps scroll position to horizontal offset for this layer
-        const xOffset = useTransform(
-          smoothScrollY,
-          [0, 2000], // scroll range
-          [0, layer.scrollXOffset] // horizontal shift range for this layer
-        );
-
-        // Scroll-reactive vertical parallax: subtle depth effect
-        const yOffset = useTransform(
-          smoothScrollY,
-          [0, 2000],
-          [0, layer.scrollYMultiplier * 100]
-        );
-
-        return (
-          <motion.div
+      {!shouldReduceMotion &&
+        waveLayers.map((layer, layerIndex) => (
+          <WaveLayerContent
             key={`layer-${layerIndex}`}
-            className="absolute inset-0"
-            style={{ 
-              x: xOffset, // scroll-coupled horizontal movement
-              y: yOffset, // scroll-coupled vertical parallax
-            }}
-          >
-            {layer.particles.map((particle) => {
-              // Build animation props based on CALM_SCROLL_ONLY mode
-              const animateProps = CALM_SCROLL_ONLY
-                ? {} // no auto-drift, scroll-only movement
-                : {
-                    // Infinite horizontal loop - waves travel across screen and wrap
-                    animate: {
-                      x: ["-20vw", "120vw"], // Start off-screen left, end off-screen right
-                    },
-                    transition: {
-                      duration: particle.driftDuration,
-                      repeat: Infinity,
-                      ease: "linear",
-                      repeatType: "loop" as const, // Loop (not reverse) for continuous flow
-                      delay: particle.animationDelay, // Stagger start times
-                    },
-                  };
-
-              return (
-                <motion.div
-                  key={particle.id}
-                  className="absolute"
-                  style={{
-                    left: `${particle.x}%`,
-                    top: `${particle.y}%`,
-                    opacity: layer.opacity,
-                  }}
-                  {...animateProps}
-                >
-                  <div style={{ transform: `scale(${particle.scale})` }}>
-                    <WaveSquiggle size={particle.size} variant={particle.variant} />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        );
-      })}
+            layer={layer}
+            smoothScrollY={smoothScrollY}
+          />
+        ))}
     </div>
   );
 }
