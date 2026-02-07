@@ -15,7 +15,7 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
-  undefined
+  undefined,
 );
 
 const translations: Record<string, { en: string; zh: string }> = {
@@ -252,7 +252,7 @@ const translations: Record<string, { en: string; zh: string }> = {
   Add: { en: "Add", zh: "添加" },
   "Adding...": { en: "Adding...", zh: "添加中..." },
   "Account & Settings": { en: "Account & Settings", zh: "账户与设置" },
-  
+
   // Character Set
   Traditional: { en: "Traditional", zh: "繁體" },
   Simplified: { en: "Simplified", zh: "简体" },

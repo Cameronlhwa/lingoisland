@@ -377,7 +377,7 @@ export default function TopicIslandsPage() {
           </h1>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="rounded-lg border border-gray-900 bg-white px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
+            className="rounded-lg border-2 border-gray-900 bg-white px-5 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-bold uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50 shadow-[0_0_14px_3px_rgba(147,197,253,0.6)]"
           >
             {t("Create Topic Island")}
           </button>
@@ -399,7 +399,7 @@ export default function TopicIslandsPage() {
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="rounded-lg border border-gray-900 bg-white px-8 py-4 text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
+              className="rounded-lg border-2 border-gray-900 bg-white px-8 py-4 text-base font-bold uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50 shadow-[0_0_14px_3px_rgba(147,197,253,0.6)]"
             >
               {t("Create Topic Island")}
             </button>
@@ -469,7 +469,7 @@ export default function TopicIslandsPage() {
                     >
                       <div className="flex flex-col items-center">
                         {/* Speech bubble title */}
-                        <div className="relative mb-10 w-auto max-w-[90%] px-6 py-3 bg-white border-[3px] border-black rounded-2xl text-center">
+                        <div className="relative mb-4 w-auto max-w-[90%] px-6 py-3 bg-white border-[3px] border-black rounded-2xl text-center">
                           <h3 className="text-base font-bold uppercase tracking-wide text-gray-900 md:text-lg leading-tight">
                             {convertText(island.topic)}
                           </h3>

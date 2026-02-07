@@ -62,22 +62,10 @@ export default function DailyStoryCard({
 
   return (
     <div className={containerClass}>
-      <div className="mb-3 md:mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500">
-            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 md:h-4 md:w-4">
-              <path
-                fill="currentColor"
-                d="M5 4h12a2 2 0 012 2v13l-3-2-3 2-3-2-3 2-2-1.4V6a2 2 0 012-2z"
-              />
-            </svg>
-          </span>
-          <div>
-            <h2 className="text-lg md:text-xl font-semibold text-gray-900">
-              {convertText(t("Read your Daily story"))}
-            </h2>
-          </div>
-        </div>
+      <div className="mb-3 md:mb-4">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-900">
+          {convertText(t("Read your Daily Story"))}
+        </h2>
       </div>
       {story ? (
         <div className="space-y-2 md:space-y-3">

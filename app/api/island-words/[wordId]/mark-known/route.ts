@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { generateReplacementWord } from '@/lib/deepseek/generate-replacement'
+import { canMarkWordKnown, incrementMarkKnownCount, getEntitlements } from '@/lib/entitlements'
 
 /**
  * POST /api/island-words/[wordId]/mark-known
  * Mark a word as known and replace it with a new one
+ * Free users: 1 per month, Pro users: unlimited
  */
 export async function POST(
   request: Request,
@@ -18,6 +20,19 @@ export async function POST(
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check if user can mark word as known
+    const { allowed, reason } = await canMarkWordKnown(user.id)
+    if (!allowed) {
+      return NextResponse.json(
+        { 
+          error: 'Limit reached',
+          message: reason || 'You have reached your monthly limit for marking words as known',
+          requiresUpgrade: true
+        },
+        { status: 403 }
+      )
     }
 
     const wordId = params.wordId
@@ -139,6 +154,12 @@ export async function POST(
         pinyin: sentence.pinyin,
         english: sentence.english,
       })
+    }
+
+    // Increment usage count for free users
+    const entitlements = await getEntitlements(user.id)
+    if (!entitlements.isPro) {
+      await incrementMarkKnownCount(user.id)
     }
 
     // Get the new word with sentences for response

@@ -4,15 +4,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import DailyStoryCard, {
   type DailyStorySummary,
 } from "@/components/stories/DailyStoryCard";
-import HeroContinueCard from "@/components/app/HeroContinueCard";
 import CreateIslandCard from "@/components/app/CreateIslandCard";
-import StreakCard from "@/components/app/StreakCard";
 import { getLocalDateKey } from "@/lib/utils/date";
+import { OceanBackground } from "@/components/OceanBackground";
 import {
   buttonPrimaryClass,
   buttonSecondaryClass,
@@ -351,8 +352,6 @@ export default function HomeDashboard({
     }
   };
 
-  const hasFlashcardsDue = dueCardCount > 0;
-  const hasDailyStory = Boolean(dailyStoryLocal);
   const showFlashcardsPanel = !flashcardsLoading;
   const deckCards = useMemo<FlashcardDeckCard[]>(() => {
     if (flashcardsLoading) return [];
@@ -384,40 +383,26 @@ export default function HomeDashboard({
 
     return flashcardDecks.map(buildCard);
   }, [flashcardsLoading, flashcardDecks, quizStatsByIsland, t, convertText]);
-  const treeCount = Math.min(5, Math.floor(todayReviewCount / 20));
-  const treePositions = [
-    { x: 70, y: 96, scale: 1 },
-    { x: 118, y: 104, scale: 0.9 },
-    { x: 164, y: 92, scale: 1.05 },
-    { x: 212, y: 104, scale: 0.9 },
-    { x: 256, y: 96, scale: 1 },
-  ].slice(0, treeCount);
+  
+  // Progress island calculation - every 10 reviews = next stage (0-5 index for stages 1-6)
+  const progressStage = Math.min(5, Math.floor(todayReviewCount / 10));
+  const progressImageSrc = `/progress-islands/stage-${progressStage + 1}.png`;
+  const stageProgress = todayReviewCount % 10; // 0-9 within current stage
+  const nextMilestone = (progressStage + 1) * 10;
+  
+  // Status messages based on stage
   const islandStatus =
-    treeCount >= 5
+    progressStage >= 5
+      ? convertText(t("The ultimate magnificent island paradise!"))
+      : progressStage === 4
+      ? convertText(t("The island is prosperous and flourishing!"))
+      : progressStage === 3
       ? convertText(t("The island is thriving!"))
-      : treeCount > 0
-      ? convertText(t("The island is growing, but still needs help..."))
+      : progressStage === 2
+      ? convertText(t("The island is growing well..."))
+      : progressStage === 1
+      ? convertText(t("The island is developing..."))
       : convertText(t("The island is dry with no resources"));
-  const cappedReviews = Math.min(100, todayReviewCount);
-  const chips = useMemo(() => {
-    const values: string[] = [];
-    if (hasDailyStory) values.push(t("Story"));
-    if (hasFlashcardsDue) values.push(t("Flashcards"));
-    if (topicIslands.length > 0) values.push(t("Island"));
-    return values.slice(0, 3);
-  }, [hasDailyStory, hasFlashcardsDue, topicIslands.length, t]);
-
-  const handleContinueStart = () => {
-    if (hasFlashcardsDue) {
-      router.push("/app/quiz");
-      return;
-    }
-    if (dailyStoryLocal?.id) {
-      router.push(`/app/story/${dailyStoryLocal.id}`);
-      return;
-    }
-    router.push("/app/topic-islands");
-  };
 
   const handleCreateIsland = () => {
     router.push("/app/topic-islands");
@@ -456,293 +441,318 @@ export default function HomeDashboard({
   }
 
   return (
-    <div className="bg-gray-50 px-4 py-6 md:px-6 md:py-8 lg:px-10">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-4 md:max-w-none md:gap-6">
-        <div className="grid gap-4 md:gap-6 lg:grid-cols-2 xl:grid-cols-3">
-          <HeroContinueCard
-            chips={chips}
-            onStart={handleContinueStart}
-            nextUpText={
-              hasFlashcardsDue
-                ? `${t("Next")}: ${t("Flashcards")} · 2 ${t(
-                    "min"
-                  )} · ${dueCardCount} ${t("due")}`
-                : `${t("Next")}: ${t("Daily story")} · 2-3 ${t("min")}`
-            }
-          />
+    <div className="relative min-h-screen px-4 py-6 md:px-6 md:py-8 lg:px-10">
+      <OceanBackground />
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-4 md:gap-6">
+        {/* ROW 1: Your Progress Island (full width) */}
+        <div className={`${cardBaseClass} ${cardHoverClass} p-3 md:p-4`}>
+          <div className="mb-2">
+            <h2 className="text-xl md:text-2xl font-semibold text-slate-900">
+              {convertText(t("Your Progress Island"))}
+            </h2>
+            <p className="mt-1.5 text-base md:text-lg text-slate-600">
+              {islandLoading
+                ? convertText(t("Counting today's reviews..."))
+                : progressStage >= 5
+                ? convertText(`${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · Stage 6 (max level!)`)
+                : convertText(`${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · ${stageProgress}/10 to next stage`)}
+            </p>
+            {!islandLoading ? (
+              <p className="mt-1 text-sm text-slate-500">
+                {islandStatus}
+              </p>
+            ) : null}
+          </div>
+          <div 
+            className="relative flex items-center justify-center rounded-xl border-2 border-slate-200 p-2 md:p-3 overflow-visible max-h-40 md:max-h-48 lg:max-h-56"
+            style={{
+              background: 'linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)'
+            }}
+          >
+            {/* Animated wave particles - always visible */}
+            <div className="absolute inset-0 pointer-events-none">
+              <motion.div 
+                className="absolute" 
+                style={{ left: '10%', top: '20%', opacity: 0.15 }}
+                animate={{ x: [0, 50, 0] }}
+                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+              >
+                <svg width="50" height="20" viewBox="0 0 50 20" fill="none">
+                  <path d="M 2 16 Q 10 14, 18 8 Q 24 4, 32 8 Q 40 12, 48 14" stroke="#0B1B3A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                </svg>
+              </motion.div>
+              <motion.div 
+                className="absolute" 
+                style={{ left: '65%', top: '15%', opacity: 0.12 }}
+                animate={{ x: [0, -40, 0] }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear", delay: 1 }}
+              >
+                <svg width="70" height="26" viewBox="0 0 70 26" fill="none">
+                  <path d="M 2 22 Q 14 18, 26 10 Q 34 4, 44 10 Q 54 16, 68 20" stroke="#0B1B3A" strokeWidth="3" strokeLinecap="round" fill="none" />
+                </svg>
+              </motion.div>
+              <motion.div 
+                className="absolute" 
+                style={{ left: '30%', top: '60%', opacity: 0.18 }}
+                animate={{ x: [0, 35, 0] }}
+                transition={{ duration: 18, repeat: Infinity, ease: "linear", delay: 2 }}
+              >
+                <svg width="70" height="26" viewBox="0 0 70 26" fill="none">
+                  <path d="M 2 22 Q 14 18, 26 10 Q 34 4, 44 10 Q 54 16, 68 20" stroke="#0B1B3A" strokeWidth="3" strokeLinecap="round" fill="none" />
+                </svg>
+              </motion.div>
+              <motion.div 
+                className="absolute" 
+                style={{ left: '75%', top: '65%', opacity: 0.15 }}
+                animate={{ x: [0, -45, 0] }}
+                transition={{ duration: 22, repeat: Infinity, ease: "linear", delay: 0.5 }}
+              >
+                <svg width="50" height="20" viewBox="0 0 50 20" fill="none">
+                  <path d="M 2 16 Q 10 14, 18 8 Q 24 4, 32 8 Q 40 12, 48 14" stroke="#0B1B3A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                </svg>
+              </motion.div>
+              <motion.div 
+                className="absolute" 
+                style={{ left: '15%', top: '75%', opacity: 0.12 }}
+                animate={{ x: [0, 50, 0] }}
+                transition={{ duration: 28, repeat: Infinity, ease: "linear", delay: 1.5 }}
+              >
+                <svg width="90" height="30" viewBox="0 0 90 30" fill="none">
+                  <path d="M 2 26 Q 18 22, 34 12 Q 46 4, 58 12 Q 72 20, 88 24" stroke="#0B1B3A" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+                </svg>
+              </motion.div>
+            </div>
+            {!islandLoading && (
+              <Image
+                src={progressImageSrc}
+                alt="Your Progress Island"
+                width={640}
+                height={320}
+                className="relative z-10 h-48 md:h-60 lg:h-72 w-full max-w-3xl object-contain"
+                priority
+              />
+            )}
+            {islandLoading && (
+              <div className="relative z-10 flex items-center justify-center h-48 md:h-60 lg:h-72">
+                <div className="text-gray-600 text-sm">{convertText(t("Loading..."))}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ROW 2: Create Topic Island + Read Daily Story (2 columns on desktop, stack on mobile) */}
+        <div className="grid gap-4 md:gap-6 md:grid-cols-2">
+          <CreateIslandCard onCreate={handleCreateIsland} />
           <DailyStoryCard
             variant="home"
             story={dailyStoryLocal}
             loading={dailyLoading}
           />
-          <CreateIslandCard onCreate={handleCreateIsland} />
         </div>
 
-        <div className="hidden gap-4 md:grid md:gap-6 lg:grid-cols-3">
-          <div className="flex flex-col gap-4 md:gap-6 lg:col-span-2">
-            <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-6`}>
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-base md:text-lg font-semibold text-gray-900">
-                    {convertText(t("Review your islands"))}
-                  </h2>
-                  <p className="mt-1 text-xs md:text-sm text-gray-600">
-                    {convertText(t("Quick refreshes."))}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleScrollIslands("left")}
-                    className={buttonIconClass}
-                    aria-label={convertText(t("Scroll islands left"))}
-                  >
-                    ←
-                  </button>
-                  <button
-                    onClick={() => handleScrollIslands("right")}
-                    className={buttonIconClass}
-                    aria-label={convertText(t("Scroll islands right"))}
-                  >
-                    →
-                  </button>
-                  <Link
-                    href="/app/topic-islands"
-                    className={buttonSecondaryClass}
-                  >
-                    {convertText(t("View All"))}
-                  </Link>
-                </div>
+        {/* ROW 3: Review Topic Islands + Review Quiz Islands (desktop only) */}
+        <div className="hidden md:grid gap-4 md:gap-6 md:grid-cols-2">
+          {/* Review your Topic Islands */}
+          <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-6`}>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-base md:text-lg font-semibold text-gray-900">
+                  {convertText(t("Review your Topic Islands"))}
+                </h2>
+                <p className="mt-1 text-xs md:text-sm text-gray-600">
+                  {convertText(t("Quick refreshes."))}
+                </p>
               </div>
-
-              {topicIslands.length > 0 ? (
-                <div
-                  ref={islandsScrollRef}
-                  className="-mx-2 flex gap-4 overflow-x-auto px-2 pb-2"
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleScrollIslands("left")}
+                  className={buttonIconClass}
+                  aria-label={convertText(t("Scroll islands left"))}
                 >
-                  {topicIslands.map((island, index) => {
-                    const daysSince = Math.max(
-                      1,
-                      Math.round(
-                        (Date.now() - new Date(island.created_at).getTime()) /
-                          (1000 * 60 * 60 * 24)
-                      )
-                    );
-                    const dueCount = (daysSince * 3 + index * 2) % 12;
-                    const statusLabel =
-                      dueCount > 6 ? convertText(t("Due soon")) : convertText(t("On track"));
-                    const lastReviewed = Math.min(9, daysSince);
+                  ←
+                </button>
+                <button
+                  onClick={() => handleScrollIslands("right")}
+                  className={buttonIconClass}
+                  aria-label={convertText(t("Scroll islands right"))}
+                >
+                  →
+                </button>
+                <Link
+                  href="/app/topic-islands"
+                  className={buttonSecondaryClass}
+                >
+                  {convertText(t("View All"))}
+                </Link>
+              </div>
+            </div>
 
-                    return (
-                      <div
-                        key={island.id}
-                        className={`${cardBaseClass} ${cardHoverClass} min-h-[180px] min-w-[180px] sm:min-w-[220px] md:min-w-[240px] max-w-[280px] p-4 flex h-full flex-col`}
+            {topicIslands.length > 0 ? (
+              <div
+                ref={islandsScrollRef}
+                className="-mx-2 flex gap-4 overflow-x-auto px-2 pb-2"
+              >
+                {topicIslands.map((island, index) => {
+                  const daysSince = Math.max(
+                    1,
+                    Math.round(
+                      (Date.now() - new Date(island.created_at).getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    )
+                  );
+                  const dueCount = (daysSince * 3 + index * 2) % 12;
+                  const statusLabel =
+                    dueCount > 6 ? convertText(t("Due soon")) : convertText(t("On track"));
+                  const lastReviewed = Math.min(9, daysSince);
+
+                  return (
+                    <div
+                      key={island.id}
+                      className={`${cardBaseClass} ${cardHoverClass} min-h-[180px] min-w-[180px] sm:min-w-[220px] md:min-w-[240px] max-w-[280px] p-4 flex h-full flex-col`}
+                    >
+                      <h3
+                        className="text-base font-semibold text-gray-900 truncate"
+                        title={island.topic}
                       >
-                        <h3
-                          className="text-base font-semibold text-gray-900 truncate"
-                          title={island.topic}
-                        >
-                          {convertText(island.topic.length > 48
-                            ? `${island.topic.slice(0, 45)}...`
-                            : island.topic)}
-                        </h3>
-                        <p className="mt-1.5 text-sm text-gray-600">
-                          {island.word_target} {convertText(t("words"))} / {island.level}
+                        {convertText(island.topic.length > 48
+                          ? `${island.topic.slice(0, 45)}...`
+                          : island.topic)}
+                      </h3>
+                      <p className="mt-1.5 text-sm text-gray-600">
+                        {island.word_target} {convertText(t("words"))} / {island.level}
+                      </p>
+                      <p className="mt-1.5 text-xs text-gray-500">
+                        {statusLabel} · {Math.max(1, dueCount)} {convertText(t("due"))}
+                        {" · "}
+                        {convertText(t("Last reviewed"))}: {lastReviewed}
+                        {convertText(t("day short"))}
+                      </p>
+                      <Link
+                        href={`/app/topic-islands/${island.id}`}
+                        className={`${buttonPrimaryClass} mt-auto`}
+                      >
+                        {convertText(t("Review"))}
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+                <p className="mb-4 text-sm text-gray-600">
+                  {convertText(t("Create your first island to start reviewing words."))}
+                </p>
+                <button
+                  onClick={handleCreateIsland}
+                  className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+                >
+                  {convertText(t("Create your first island"))}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Review your Quiz Islands */}
+          <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-5`}>
+            <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-base md:text-lg font-semibold text-gray-900">
+                  {convertText(t("Review your Quiz Islands"))}
+                </h2>
+                <p className="mt-1 text-xs md:text-sm text-gray-600">
+                  {convertText(t("Decks ready."))}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleScrollDecks("left")}
+                  className={buttonIconClass}
+                  aria-label={convertText(t("Scroll decks left"))}
+                >
+                  ←
+                </button>
+                <button
+                  onClick={() => handleScrollDecks("right")}
+                  className={buttonIconClass}
+                  aria-label={convertText(t("Scroll decks right"))}
+                >
+                  →
+                </button>
+                <Link href="/app/quiz" className={buttonSecondaryClass}>
+                  {convertText(t("View Decks"))}
+                </Link>
+              </div>
+            </div>
+
+            <div className="relative">
+              {showFlashcardsPanel ? (
+                deckCards.length > 0 ? (
+                  <div
+                    ref={flashcardsScrollRef}
+                    className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-1"
+                  >
+                    {deckCards.map((deck) => (
+                      <div
+                        key={deck.id}
+                        className={`${cardBaseClass} ${cardHoverClass} min-h-[180px] min-w-[180px] sm:min-w-[220px] md:min-w-[240px] max-w-[280px] p-4 flex h-full flex-col snap-start`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div
+                            className="min-w-0 flex-1 text-sm font-semibold text-gray-900 truncate"
+                            title={deck.name}
+                          >
+                            {convertText(deck.name)}
+                          </div>
+                          <span className="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
+                            {deck.dueCount} {convertText(t("due"))}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs text-gray-600">
+                          {deck.statusLabel} · {deck.totalCount} {convertText(t("cards"))}
                         </p>
-                        <p className="mt-1.5 text-xs text-gray-500">
-                          {statusLabel} · {Math.max(1, dueCount)} {convertText(t("due"))}
-                          {" · "}
-                          {convertText(t("Last reviewed"))}: {lastReviewed}
-                          {convertText(t("day short"))}
-                        </p>
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between text-[11px] text-gray-500">
+                            <span>
+                              {deck.totalCount} {convertText(t("cards"))}
+                            </span>
+                            <span>{deck.progressPercent}%</span>
+                          </div>
+                          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                            <div
+                              className="h-full rounded-full bg-gray-900"
+                              style={{ width: `${deck.progressPercent}%` }}
+                            />
+                          </div>
+                        </div>
                         <Link
-                          href={`/app/topic-islands/${island.id}`}
+                          href={`/app/quiz/${deck.id}`}
                           className={`${buttonPrimaryClass} mt-auto`}
                         >
                           {convertText(t("Review"))}
                         </Link>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+                    <p className="mb-4 text-sm text-gray-600">
+                      {convertText(t(
+                        "No flashcard decks yet. Create your first one to start practicing."
+                      ))}
+                    </p>
+                    <Link
+                      href="/app/quiz"
+                      className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+                    >
+                      {convertText(t("Create your first deck"))}
+                    </Link>
+                  </div>
+                )
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-                  <p className="mb-4 text-sm text-gray-600">
-                    {convertText(t("Create your first island to start reviewing words."))}
-                  </p>
-                  <button
-                    onClick={handleCreateIsland}
-                    className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-                  >
-                    {convertText(t("Create your first island"))}
-                  </button>
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+                  {convertText(t("Add a deck to start reviewing flashcards."))}
                 </div>
               )}
-            </div>
-
-            <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-5`}>
-              <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-base md:text-lg font-semibold text-gray-900">
-                    {convertText(t("Flashcards"))}
-                  </h2>
-                  <p className="mt-1 text-xs md:text-sm text-gray-600">
-                    {convertText(t("Decks ready."))}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleScrollDecks("left")}
-                    className={buttonIconClass}
-                    aria-label={convertText(t("Scroll decks left"))}
-                  >
-                    ←
-                  </button>
-                  <button
-                    onClick={() => handleScrollDecks("right")}
-                    className={buttonIconClass}
-                    aria-label={convertText(t("Scroll decks right"))}
-                  >
-                    →
-                  </button>
-                  <Link href="/app/quiz" className={buttonSecondaryClass}>
-                    {convertText(t("View Decks"))}
-                  </Link>
-                </div>
-              </div>
-
-              <div className="relative">
-                {showFlashcardsPanel ? (
-                  deckCards.length > 0 ? (
-                    <div
-                      ref={flashcardsScrollRef}
-                      className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-1"
-                    >
-                      {deckCards.map((deck) => (
-                        <div
-                          key={deck.id}
-                          className={`${cardBaseClass} ${cardHoverClass} flex min-w-[160px] sm:min-w-[200px] md:min-w-[220px] max-w-[240px] snap-start flex-col p-4`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div
-                              className="min-w-0 flex-1 text-sm font-semibold text-gray-900 truncate"
-                              title={deck.name}
-                            >
-                              {convertText(deck.name)}
-                            </div>
-                            <span className="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
-                              {deck.dueCount} {convertText(t("due"))}
-                            </span>
-                          </div>
-                          <p className="mt-2 text-xs text-gray-600">
-                            {deck.statusLabel} · {deck.totalCount} {convertText(t("cards"))}
-                          </p>
-                          <div className="mt-2">
-                            <div className="flex items-center justify-between text-[11px] text-gray-500">
-                              <span>
-                                {deck.totalCount} {convertText(t("cards"))}
-                              </span>
-                              <span>{deck.progressPercent}%</span>
-                            </div>
-                            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                              <div
-                                className="h-full rounded-full bg-gray-900"
-                                style={{ width: `${deck.progressPercent}%` }}
-                              />
-                            </div>
-                          </div>
-                          <Link
-                            href={`/app/quiz/${deck.id}`}
-                            className={`${buttonPrimaryClass} mt-3`}
-                          >
-                            {convertText(t("Review Deck"))}
-                          </Link>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-                      <p className="mb-4 text-sm text-gray-600">
-                        {convertText(t(
-                          "No flashcard decks yet. Create your first one to start practicing."
-                        ))}
-                      </p>
-                      <Link
-                        href="/app/quiz"
-                        className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-                      >
-                        {convertText(t("Create your first deck"))}
-                      </Link>
-                    </div>
-                  )
-                ) : (
-                  <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
-                    {convertText(t("Add a deck to start reviewing flashcards."))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <StreakCard />
-            <div className={`${cardBaseClass} ${cardHoverClass} p-4`}>
-              <div className="mb-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {convertText(t("Your island"))}
-                </h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  {islandLoading
-                    ? convertText(t("Counting today's reviews..."))
-                    : convertText(`${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t(
-                        "today"
-                      )} · ${treeCount}/5 ${t("trees")}`)}
-                </p>
-                {!islandLoading ? (
-                  <p className="mt-1 text-xs text-slate-500">
-                    {islandStatus} · {cappedReviews}/100 {convertText(t("reviews"))}
-                  </p>
-                ) : null}
-              </div>
-              <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-                <svg
-                  viewBox="0 0 320 160"
-                  className="h-28 w-full"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M24 122 C70 96, 122 94, 170 112 C214 128, 258 130, 296 118 L296 150 L24 150 Z"
-                    fill="#0f172a"
-                  />
-                  {treePositions.map((tree, index) => (
-                    <g
-                      key={`${tree.x}-${index}`}
-                      transform={`translate(${tree.x} ${tree.y}) scale(${tree.scale})`}
-                    >
-                      <rect
-                        x="-2"
-                        y="-24"
-                        width="6"
-                        height="26"
-                        fill="#0f172a"
-                      />
-                      <circle cx="-10" cy="-28" r="12" fill="#0f172a" />
-                      <circle cx="8" cy="-32" r="10" fill="#0f172a" />
-                      <circle cx="22" cy="-26" r="9" fill="#0f172a" />
-                    </g>
-                  ))}
-                  <g stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round">
-                    <line x1="250" y1="36" x2="250" y2="28" />
-                    <line x1="250" y1="80" x2="250" y2="88" />
-                    <line x1="228" y1="58" x2="220" y2="58" />
-                    <line x1="272" y1="58" x2="280" y2="58" />
-                    <line x1="235" y1="43" x2="229" y2="37" />
-                    <line x1="265" y1="43" x2="271" y2="37" />
-                    <line x1="235" y1="73" x2="229" y2="79" />
-                    <line x1="265" y1="73" x2="271" y2="79" />
-                    <circle cx="250" cy="58" r="14" fill="#f8fafc" />
-                  </g>
-                </svg>
-              </div>
             </div>
           </div>
         </div>

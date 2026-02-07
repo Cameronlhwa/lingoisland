@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import AppLogo from "@/components/app/AppLogo";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -56,17 +56,8 @@ export default function Sidebar() {
     >
       <div className="flex flex-1 flex-col overflow-y-auto p-6">
         {/* Hide logo on mobile since it's in the header */}
-        <div className="mb-8 hidden md:flex items-center gap-1.5">
-          <Image
-            src="/logo.png"
-            alt="Lingo Island Logo"
-            width={40}
-            height={40}
-            className="rounded-lg"
-          />
-          <h2 className="text-xl font-bold text-gray-900">
-            Lingo<span className="text-gray-500">Island</span>
-          </h2>
+        <div className="mb-8 hidden md:flex">
+          <AppLogo textClassName="text-xl font-bold text-gray-900" />
         </div>
 
         <nav className="space-y-2">

@@ -11,6 +11,7 @@ import IslandSideChat, {
 import SpeakerButton from "@/components/app/SpeakerButton";
 import AccountModal from "@/components/app/AccountModal";
 import UpgradeModal from "@/components/app/UpgradeModal";
+import AddAllWordsModal from "@/components/app/AddAllWordsModal";
 
 interface Sentence {
   id: string;
@@ -94,6 +95,7 @@ export default function TopicIslandDetailPage() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [savingTitle, setSavingTitle] = useState(false);
+  const [showAddAllWordsModal, setShowAddAllWordsModal] = useState(false);
   // Image generation disabled - using pre-generated library images
   // Keeping these for legacy support during migration
   const [imageProgress, setImageProgress] = useState(0);
@@ -264,6 +266,15 @@ export default function TopicIslandDetailPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        
+        // Check if it's a paywall error
+        if (response.status === 403 && errorData.requiresUpgrade) {
+          setUpgradeFeature('"Already know" button');
+          setShowUpgradeModal(true);
+          setMarkingKnown(null);
+          return;
+        }
+        
         throw new Error(
           errorData.message ||
             errorData.error ||
@@ -770,9 +781,19 @@ export default function TopicIslandDetailPage() {
                     </button>
                   </div>
                 )}
-                <div className="mb-6 space-y-1 text-sm text-gray-600">
-                  <p>Level: {island.level}</p>
-                  <p className="capitalize">Status: {island.status}</p>
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <p>Level: {island.level}</p>
+                    <p className="capitalize">Status: {island.status}</p>
+                  </div>
+                  {island.status === "ready" && words.length > 0 && (
+                    <button
+                      onClick={() => setShowAddAllWordsModal(true)}
+                      className="rounded-lg border border-gray-900 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 shadow-sm"
+                    >
+                      Add all words to quiz
+                    </button>
+                  )}
                 </div>
 
                 {/* Progress Bar */}
@@ -1045,10 +1066,15 @@ export default function TopicIslandDetailPage() {
                                   });
                                 }}
                                 disabled={isLocked}
-                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                title={isLocked ? "Upgrade to unlock" : "Ask AI about this word"}
+                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                title={isLocked ? "Upgrade to unlock" : "Ask 华华 about this word"}
                               >
-                                Ask AI
+                                <img 
+                                  src="/capybara-face.png" 
+                                  alt="Huáhuá" 
+                                  className="h-5 w-5 rounded-full"
+                                />
+                                <span>Ask for help</span>
                               </button>
                               <button
                                 onClick={(e) => {
@@ -1456,6 +1482,14 @@ export default function TopicIslandDetailPage() {
             setUpgradeFeature(undefined);
           }}
           feature={upgradeFeature}
+        />
+
+        {/* Add All Words Modal */}
+        <AddAllWordsModal
+          open={showAddAllWordsModal}
+          onClose={() => setShowAddAllWordsModal(false)}
+          words={words}
+          islandId={islandId}
         />
       </div>
     </div>

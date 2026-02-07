@@ -6,7 +6,8 @@ export type Feature =
   | "generate_story"
   | "regenerate_story"
   | "export_decks"
-  | "chat";
+  | "chat"
+  | "mark_known";
 
 export type SubscriptionState =
   | "free"
@@ -22,6 +23,7 @@ const FEATURE_DEFAULTS: Record<Feature, { free: boolean; pro: boolean }> = {
   regenerate_story: { free: false, pro: true },
   export_decks: { free: false, pro: true },
   chat: { free: false, pro: true },
+  mark_known: { free: false, pro: true }, // Free: 1/month, Pro: unlimited
 };
 
 /**
@@ -132,6 +134,7 @@ export async function getOrCreateUsageRow(
   month_key: string;
   topic_islands_created: number;
   stories_created: number;
+  words_marked_known: number;
 } | null> {
   const supabase = await createClient();
 
@@ -161,6 +164,7 @@ export async function getOrCreateUsageRow(
       month_key: monthKey,
       topic_islands_created: 0,
       stories_created: 0,
+      words_marked_known: 0,
     })
     .select()
     .single();
@@ -256,4 +260,69 @@ export function filterUnlockedWords<T extends { position?: number | null }>(
     const pos = word.position ?? 999;
     return pos <= 10;
   });
+}
+
+/**
+ * Check if user can mark a word as known (Free: 1 per month, Pro: unlimited)
+ */
+export async function canMarkWordKnown(
+  userId: string
+): Promise<{ allowed: boolean; reason?: string }> {
+  const entitlements = await getEntitlements(userId);
+
+  // Pro users can mark unlimited words as known
+  if (entitlements.isPro) {
+    return { allowed: true };
+  }
+
+  // Free users: check monthly limit (1 per month)
+  const monthKey = getMonthKey();
+  const usage = await getOrCreateUsageRow(userId, monthKey);
+
+  if (!usage) {
+    return { allowed: false, reason: "Failed to check usage limits" };
+  }
+
+  // Handle potential NULL values from existing rows
+  const wordsMarkedKnown = usage.words_marked_known ?? 0;
+
+  if (wordsMarkedKnown >= 1) {
+    return {
+      allowed: false,
+      reason: 'Free plan allows 1 "Already know" per month. Upgrade to Pro for unlimited replacements.',
+    };
+  }
+
+  return { allowed: true };
+}
+
+/**
+ * Increment words_marked_known count for the current month
+ */
+export async function incrementMarkKnownCount(userId: string): Promise<void> {
+  const supabase = await createClient();
+  const monthKey = getMonthKey();
+
+  // Get or create usage row
+  const usage = await getOrCreateUsageRow(userId, monthKey);
+  if (!usage) {
+    console.error("[USAGE] Failed to get/create usage row for mark known increment");
+    return;
+  }
+
+  // Handle potential NULL values from existing rows
+  const currentCount = usage.words_marked_known ?? 0;
+
+  // Increment count
+  const { error } = await supabase
+    .from("usage_monthly")
+    .update({
+      words_marked_known: currentCount + 1,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", usage.id);
+
+  if (error) {
+    console.error("[USAGE] Error incrementing mark known count:", error);
+  }
 }

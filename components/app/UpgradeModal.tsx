@@ -112,40 +112,45 @@ export default function UpgradeModal({
           <div className="grid md:grid-cols-[1.2fr_1fr]">
             {/* Left side - Success message */}
             <div
-              className="relative min-h-[400px] md:min-h-[600px] overflow-hidden rounded-l-2xl p-10 text-white"
+              className="relative min-h-[400px] md:min-h-[600px] overflow-hidden rounded-l-2xl p-10 text-gray-900"
               style={{
-                backgroundImage: "url('/Upgrade-modal.jpg')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
+                background: "linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)",
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/80 via-emerald-950/60 to-emerald-950/80" />
+              {/* Capybara boat in bottom left */}
+              <div className="absolute bottom-4 left-4 w-24 md:w-32">
+                <img
+                  src="/boats/boat-capybara.png"
+                  alt="Capybara in boat"
+                  className="w-full h-auto"
+                />
+              </div>
               <div className="relative z-10 flex h-full flex-col">
                 <div className="flex items-center gap-3">
                   <span className="text-5xl">✓</span>
-                  <h2 className="text-4xl font-bold drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
+                  <h2 className="text-4xl font-bold text-gray-900">
                     You're Pro!
                   </h2>
                 </div>
-                <p className="mt-3 text-lg text-white/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
+                <p className="mt-3 text-lg text-gray-700">
                   You have full access to all LingoIsland features.
                 </p>
 
-                <div className="mt-8 rounded-2xl border border-white/30 bg-white/15 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.4)] backdrop-blur-md">
-                  <p className="text-lg font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
+                <div className="mt-8 rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-lg backdrop-blur-sm">
+                  <p className="text-lg font-semibold text-gray-900">
                     Your Pro Benefits
                   </p>
-                  <ul className="mt-4 space-y-3 text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                  <ul className="mt-4 space-y-3 text-gray-700">
                     <li className="flex items-start gap-3">
-                      <span className="text-green-400">✓</span>
+                      <span className="text-green-600">✓</span>
                       <span>Unlimited Topic Islands (vocab + native examples)</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <span className="text-green-400">✓</span>
+                      <span className="text-green-600">✓</span>
                       <span>Story regeneration + longer stories</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <span className="text-green-400">✓</span>
+                      <span className="text-green-600">✓</span>
                       <span>24/7 Mandarin coach (instant corrections + explanations)</span>
                     </li>
                   </ul>
@@ -204,42 +209,47 @@ export default function UpgradeModal({
           <div className="grid md:grid-cols-[1.2fr_1fr]">
           {/* Left side - Hero with features */}
           <div
-            className="relative min-h-[400px] md:min-h-[600px] overflow-hidden rounded-l-2xl p-10 text-white"
+            className="relative min-h-[400px] md:min-h-[600px] overflow-hidden rounded-l-2xl p-10 text-gray-900"
             style={{
-              backgroundImage: "url('/Upgrade-modal.jpg')",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
+              background: "linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)",
             }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-950/60 to-slate-950/80" />
+            {/* Capybara boat in bottom left */}
+            <div className="absolute bottom-4 left-4 w-24 md:w-32">
+              <img
+                src="/boats/boat-capybara.png"
+                alt="Capybara in boat"
+                className="w-full h-auto"
+              />
+            </div>
             <div className="relative z-10 flex h-full flex-col">
-              <h2 className="text-4xl font-bold drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
+              <h2 className="text-4xl font-bold text-gray-900">
                 Upgrade to Pro
               </h2>
-              <p className="mt-3 text-lg text-white/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
+              <p className="mt-3 text-lg text-gray-700">
                 Unlock unlimited stories, decks, and focused practice.
               </p>
               {feature && (
-                <p className="mt-2 text-sm text-yellow-300/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
+                <p className="mt-2 text-sm text-blue-700 font-medium">
                   "{feature}" is a Pro feature
                 </p>
               )}
 
-              <div className="mt-8 rounded-2xl border border-white/30 bg-white/15 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.4)] backdrop-blur-md">
-                <p className="text-lg font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
+              <div className="mt-8 rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-lg backdrop-blur-sm">
+                <p className="text-lg font-semibold text-gray-900">
                   What you get
                 </p>
-                <ul className="mt-4 space-y-3 text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                <ul className="mt-4 space-y-3 text-gray-700">
                   <li className="flex items-start gap-3">
-                    <span className="text-green-400">✓</span>
+                    <span className="text-green-600">✓</span>
                     <span>Unlimited Topic Islands (vocab + native examples)</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="text-green-400">✓</span>
+                    <span className="text-green-600">✓</span>
                     <span>Story regeneration + longer stories</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="text-green-400">✓</span>
+                    <span className="text-green-600">✓</span>
                     <span>24/7 Mandarin coach (instant corrections + explanations)</span>
                   </li>
                 </ul>

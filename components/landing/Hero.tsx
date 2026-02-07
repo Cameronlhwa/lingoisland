@@ -7,27 +7,27 @@ export default function Hero() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section className="bg-gradient-to-b from-white to-gray-50 px-6 py-20 md:px-12 md:py-28">
+    <section className="px-6 py-12 md:px-12 md:py-16">
       <div className="mx-auto max-w-7xl">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-20">
-          {/* Left: Headline */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+          {/* Left: Headline — translucent panel for readability over ocean */}
           <motion.div
             initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex max-w-xl flex-col justify-center"
+            className="flex max-w-xl flex-col justify-center rounded-2xl bg-white/90 px-6 py-6 shadow-sm backdrop-blur-sm md:bg-white/85 md:px-8 md:py-8"
           >
-            <h1 className="mb-8 text-4xl leading-tight tracking-tight md:text-6xl lg:text-7xl">
+            <h1 className="mb-5 text-4xl leading-tight tracking-tight md:text-5xl lg:text-6xl">
               <span className="font-serif italic text-gray-500">Learn</span>{" "}
               <span className="font-sans font-bold text-gray-900">
                 Mandarin That Sticks
               </span>
             </h1>
-            <p className="mb-6 text-lg leading-relaxed text-gray-700 md:text-2xl">
+            <p className="mb-4 text-lg leading-relaxed text-gray-700 md:text-xl">
               Overcome the intermediate plateau with personalized stories and
               vocabulary about topics you care about.
             </p>
-            <p className="text-base leading-relaxed text-gray-600 md:text-xl">
+            <p className="text-sm leading-relaxed text-gray-600 md:text-base">
               Relevance + Reinforcement = Retention
             </p>
           </motion.div>
@@ -38,7 +38,7 @@ export default function Hero() {
               href="/onboarding/topic-island"
               title="Create a Topic Island"
               microcopy={[
-                "Build vocabulary around topics that interest you. 10-20 words with pinyin, conventional examples, and translations.",
+                "Build vocabulary around topics that interest you. 10-20 words and conversational examples, each with hanzi, pinyin, audio, and translations.",
               ]}
               tooltip={{
                 label: "What's a Topic Island?",

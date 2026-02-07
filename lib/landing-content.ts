@@ -129,6 +129,11 @@ export const FAQ_ITEMS = [
       "It is designed to help learners break the intermediate plateau, but anyone who wants topic-based vocabulary with real context can use it.",
   },
   {
+    question: "Should I use this instead of a teacher or other resources?",
+    answer:
+      "No. LingoIsland is designed to complement your existing learning, not replace it. Think of it as another tool in your toolkit—it helps you progress faster by focusing on practical, topic-based vocabulary, but works best alongside teachers, conversation practice, and other resources.",
+  },
+  {
     question: "Do you support speaking practice?",
     answer:
       "Not yet. LingoIsland currently focuses on reading, vocabulary, and text chat practice.",

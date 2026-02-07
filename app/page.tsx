@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Nav from "@/components/landing/Nav";
 import Hero from "@/components/landing/Hero";
+import ExampleIslandsMap from "@/components/landing/ExampleIslandsMap";
 import WhyLingoIsland from "@/components/landing/WhyLingoIsland";
 import ProofDemo from "@/components/landing/ProofDemo";
 import FeatureGrid from "@/components/landing/FeatureGrid";
@@ -10,6 +11,7 @@ import SocialProof from "@/components/landing/SocialProof";
 import FAQ from "@/components/landing/FAQ";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
+import { OceanBackground } from "@/components/OceanBackground";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import { FAQ_ITEMS } from "@/lib/landing-content";
 
@@ -76,15 +78,18 @@ const structuredData = {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="relative min-h-screen">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <Nav />
-      <Hero />
-      {/* Why LingoIsland */}
-      <WhyLingoIsland />
+      <OceanBackground />
+      <div className="relative z-10">
+        <Nav />
+        <Hero />
+        <ExampleIslandsMap />
+        {/* Why LingoIsland */}
+        <WhyLingoIsland />
       {/* Proof demo */}
       <ProofDemo />
       {/* How it works loop */}
@@ -100,6 +105,7 @@ export default function Home() {
       {/* Final CTA */}
       <FinalCTA />
       <Footer />
+      </div>
     </main>
   );
 }
