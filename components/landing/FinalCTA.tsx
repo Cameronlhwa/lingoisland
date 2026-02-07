@@ -7,7 +7,7 @@ export default function FinalCTA() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section className="bg-white px-6 py-20 md:px-12">
+    <section className="bg-transparent px-6 py-20 md:px-12">
       <motion.div
         initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
         whileInView={{ opacity: 1, y: 0 }}

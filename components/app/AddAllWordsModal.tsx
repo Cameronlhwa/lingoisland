@@ -382,14 +382,12 @@ export default function AddAllWordsModal({
                   )}
                 </select>
               </div>
-              {quizIslands.length > 0 && (
-                <button
-                  onClick={() => setShowCreateNew(true)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                >
-                  + Create new quiz island
-                </button>
-              )}
+              <button
+                onClick={() => setShowCreateNew(true)}
+                className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                + Create new quiz island
+              </button>
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={onClose}
