@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Image from "next/image";
 
 const testimonials = [
   {
@@ -94,7 +93,7 @@ export default function TestimonialsCarousel() {
   return (
     <div
       ref={carouselRef}
-      className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8"
+      className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-7"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocus={() => setIsPaused(true)}
@@ -109,12 +108,12 @@ export default function TestimonialsCarousel() {
       aria-live="polite"
     >
       {/* Title */}
-      <h3 className="mb-6 text-lg font-semibold text-gray-900">
+      <h3 className="mb-5 text-lg font-semibold text-gray-900">
         What learners say
       </h3>
 
       {/* Testimonial content */}
-      <div className="relative mb-6 min-h-[180px] md:min-h-[160px]">
+      <div className="relative mb-5 min-h-[130px]">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={currentIndex}
@@ -136,38 +135,6 @@ export default function TestimonialsCarousel() {
             <blockquote className="text-lg leading-relaxed text-gray-800 md:text-xl">
               "{currentTestimonial.quote}"
             </blockquote>
-
-            {/* Attribution */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {/* Avatar */}
-                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-blue-50 to-blue-100">
-                  <Image
-                    src={currentTestimonial.image}
-                    alt={`${currentTestimonial.name}'s photo`}
-                    width={48}
-                    height={48}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {currentTestimonial.name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {currentTestimonial.level}
-                  </p>
-                </div>
-              </div>
-              {/* Stars */}
-              <div className="flex gap-0.5 text-blue-900" aria-hidden="true">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-lg">
-                    ★
-                  </span>
-                ))}
-              </div>
-            </div>
           </motion.div>
         </AnimatePresence>
       </div>

@@ -137,7 +137,7 @@ export default function AddAllWordsModal({
     } catch (error) {
       console.error("Error creating quiz island:", error);
       setError(
-        error instanceof Error ? error.message : "Failed to create quiz island"
+        error instanceof Error ? error.message : "Failed to create quiz island",
       );
     } finally {
       setCreatingQuizIsland(false);
@@ -167,16 +167,19 @@ export default function AddAllWordsModal({
       // Add words one by one
       for (const wordId of selectedWordsArray) {
         try {
-          const response = await fetch("/api/quiz-islands/add-from-topic-item", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              quizIslandId,
-              type: "word",
-              sourceId: wordId,
-              createReverse: true, // Words create reverse by default
-            }),
-          });
+          const response = await fetch(
+            "/api/quiz-islands/add-from-topic-item",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                quizIslandId,
+                type: "word",
+                sourceId: wordId,
+                createReverse: true, // Words create reverse by default
+              }),
+            },
+          );
 
           if (response.ok) {
             addedCount++;
@@ -200,7 +203,7 @@ export default function AddAllWordsModal({
         // Optionally show a success message
         if (failedCount > 0) {
           alert(
-            `Added ${addedCount} words to quiz. ${failedCount} words failed to add.`
+            `Added ${addedCount} words to quiz. ${failedCount} words failed to add.`,
           );
         }
       } else {
@@ -209,7 +212,7 @@ export default function AddAllWordsModal({
     } catch (error) {
       console.error("Error adding to quiz:", error);
       setError(
-        error instanceof Error ? error.message : "Failed to add to quiz"
+        error instanceof Error ? error.message : "Failed to add to quiz",
       );
     } finally {
       setLoading(false);
@@ -313,7 +316,9 @@ export default function AddAllWordsModal({
                         {convertText(word.hanzi)}
                       </div>
                       <div className="text-sm text-gray-500">{word.pinyin}</div>
-                      <div className="text-sm text-gray-500">{word.english}</div>
+                      <div className="text-sm text-gray-500">
+                        {word.english}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -398,9 +403,7 @@ export default function AddAllWordsModal({
                 <button
                   onClick={() => handleAddToQuiz()}
                   disabled={
-                    loading ||
-                    !selectedQuizIslandId ||
-                    selectedWords.size === 0
+                    loading || !selectedQuizIslandId || selectedWords.size === 0
                   }
                   className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
                 >
