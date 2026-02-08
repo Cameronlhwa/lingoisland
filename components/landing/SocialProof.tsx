@@ -12,7 +12,7 @@ export default function SocialProof() {
               Built for learners who want real-life Mandarin
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-gray-600">
-              LingoIsland is focused on usable vocabulary and believable
+              LingoIsland is focused on usable vocabulary and practical
               sentences, not flashy claims.
             </p>
 

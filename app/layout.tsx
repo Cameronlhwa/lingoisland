@@ -21,13 +21,13 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   icons: {
-    icon: "/logo.png",
+    icon: "/favicon.png",
     apple: "/logo.png",
   },
   openGraph: {
@@ -118,9 +118,7 @@ export default function RootLayout({
       <body className="antialiased">
         <PostHogProvider>
           <PostHogPageView />
-          <TTSProvider>
-            {children}
-          </TTSProvider>
+          <TTSProvider>{children}</TTSProvider>
         </PostHogProvider>
       </body>
     </html>

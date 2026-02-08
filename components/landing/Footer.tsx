@@ -6,12 +6,12 @@ export default function Footer() {
     <footer className="border-t border-gray-200 bg-gray-900 px-6 py-12 md:px-12">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3 text-white">
-          <div className="rounded-lg bg-white p-1">
+          <div className="flex size-9 items-center justify-center overflow-hidden rounded-lg bg-white p-0.5">
             <Image
               src="/logo.png"
               alt="LingoIsland Logo"
-              width={28}
-              height={28}
+              width={40}
+              height={40}
               className="rounded-md"
             />
           </div>
