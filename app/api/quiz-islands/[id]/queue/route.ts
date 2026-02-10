@@ -34,11 +34,12 @@ export async function GET(
       )
     }
 
-    // Call the RPC (70% new queue cards, 30% review cards for 10-card sessions)
+    // Quiz in groups of 10: request enough so we can fill up to 10 (new first, then review)
+    const SESSION_SIZE = 10
     const { data, error } = await supabase.rpc('get_quiz_queue', {
       p_quiz_island_id: params.id,
-      p_new_limit: 7,      // 70% of 10-card session
-      p_review_limit: 3,   // 30% of 10-card session
+      p_new_limit: SESSION_SIZE,
+      p_review_limit: SESSION_SIZE,
     })
 
     if (error) {
@@ -49,7 +50,9 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({ cards: data || [] })
+    const queue = data || []
+    const cards = queue.slice(0, SESSION_SIZE)
+    return NextResponse.json({ cards })
   } catch (error) {
     console.error('Error in GET /api/quiz-islands/[id]/queue:', error)
     return NextResponse.json(

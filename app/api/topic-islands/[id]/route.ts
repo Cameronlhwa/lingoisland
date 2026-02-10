@@ -55,17 +55,15 @@ export async function GET(
       .eq('island_id', islandId)
       .order('word_id, tier', { ascending: true })
 
-    // Attach sentences to words and add locked flag
-    // If position is null, assign temporary positions based on array order (1-indexed)
+    // Attach sentences to words
+    // Words 11-20 are no longer blurred for free users; they remain visible.
+    // However, free users cannot use "Add to Quiz", "Mark Known", or "Ask AI" on words 11-20.
     const wordsWithSentences = (words || []).map((word, index) => {
-      // Use actual position if exists, otherwise use array index + 1
       const position = word.position ?? (index + 1)
-      const locked = isWordLocked(position, entitlements.isPro)
       
       return {
         ...word,
-        position, // Include the resolved position in response
-        is_locked: locked,
+        position,
         sentences: (sentences || []).filter((s) => s.word_id === word.id),
       }
     })

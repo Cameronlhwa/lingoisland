@@ -1,4 +1,3 @@
-import { LEARNER_BULLETS } from "@/lib/landing-content";
 import TestimonialsCarousel from "./TestimonialsCarousel";
 
 export default function SocialProof() {
@@ -6,7 +5,7 @@ export default function SocialProof() {
     <section className="border-b border-gray-100 bg-white px-6 py-20 md:px-12">
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-10 md:grid-cols-2 md:items-start">
-          {/* Left column: Headline + paragraph + who it's for */}
+          {/* Left column: One H1-level message, then who it's for with H2/H3 hierarchy + chips */}
           <div>
             <h2 className="text-3xl font-semibold text-gray-900 md:text-4xl">
               Built for learners who want real-life Mandarin
@@ -16,23 +15,25 @@ export default function SocialProof() {
               sentences, not flashy claims.
             </p>
 
-            {/* Who it's for - converted to lighter chips */}
+            {/* Who it's for: H2/H3 for SEO, all styled as chips */}
             <div className="mt-6 space-y-2">
               <p className="text-sm font-medium text-gray-500">Who it's for:</p>
               <div className="flex flex-wrap gap-2">
-                {[
-                  "Intermediate plateau breakers",
-                  "Busy professionals",
-                  "Topic-focused learners",
-                  "Self-learners seeking real sentences",
-                ].map((chip) => (
-                  <div
-                    key={chip}
-                    className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-700"
-                  >
-                    {chip}
-                  </div>
-                ))}
+                <h2 className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-normal text-gray-700">
+                  Intermediate Mandarin learners
+                </h2>
+                <h2 className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-normal text-gray-700">
+                  Professionals with Chinese clients
+                </h2>
+                <h2 className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-normal text-gray-700">
+                  Visitors to China or Taiwan
+                </h2>
+                <h3 className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-normal text-gray-700">
+                  Mandarin students
+                </h3>
+                <h3 className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-normal text-gray-700">
+                  Non-native Mandarin speakers
+                </h3>
               </div>
             </div>
           </div>

@@ -28,7 +28,6 @@ interface Word {
   pinyin: string;
   english: string;
   position?: number;
-  is_locked?: boolean;
   sentences: Sentence[];
 }
 
@@ -219,13 +218,6 @@ export default function TopicIslandDetailPage() {
       }
     } catch (error) {
       console.error("Error checking sentences:", error);
-    }
-  };
-
-  const handleLockedWordClick = (word: Word) => {
-    if (word.is_locked) {
-      setUpgradeFeature("Unlock Words 11-20");
-      setShowUpgradeModal(true);
     }
   };
 
@@ -996,43 +988,15 @@ export default function TopicIslandDetailPage() {
                 <div className="space-y-6">
                   {words.map((word, index) => {
                     const anchorId = `word-${word.id || index}`;
-                    const isLocked = word.is_locked || false;
                     
                     return (
                       <div
                         key={anchorId}
                         id={anchorId}
                         data-word-anchor="true"
-                        className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm relative ${isLocked ? 'cursor-pointer' : ''}`}
-                        onClick={() => isLocked && handleLockedWordClick(word)}
+                        className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
                       >
-                        {/* Blur effect and overlay for locked words */}
-                        {isLocked && (
-                          <>
-                            <div className="absolute inset-0 backdrop-blur-sm bg-white/30 rounded-xl z-10" />
-                            <div className="absolute inset-0 z-20 flex items-center justify-center">
-                              <div className="bg-white/95 backdrop-blur-md border border-gray-300 rounded-xl p-6 shadow-xl max-w-sm mx-4 text-center">
-                                <div className="mb-2 text-2xl">🔒</div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                                  Unlock words 11–20
-                                </h3>
-                                <p className="text-sm text-gray-600 mb-4">
-                                  Unlimited islands + stories + full examples
-                                </p>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setUpgradeFeature("Unlock Words 11-20");
-                                  setShowUpgradeModal(true);
-                                }}
-                                className="w-full rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-                              >
-                                Unlock Words
-                              </button>
-                              </div>
-                            </div>
-                          </>
-                        )}
+                        {/* All words visible; no blur or position-based paywall */}
                         <div className="mb-6">
                           {/* Desktop: side-by-side, Mobile: stacked */}
                           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -1055,19 +1019,14 @@ export default function TopicIslandDetailPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (isLocked) {
-                                    handleLockedWordClick(word);
-                                    return;
-                                  }
                                   setAskAIWord({
                                     hanzi: word.hanzi,
                                     pinyin: word.pinyin,
                                     english: word.english,
                                   });
                                 }}
-                                disabled={isLocked}
-                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                                title={isLocked ? "Upgrade to unlock" : "Ask 华华 about this word"}
+                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md flex items-center gap-1.5"
+                                title="Ask 华华 about this word"
                               >
                                 <img 
                                   src="/capybara-face.png" 
@@ -1079,13 +1038,9 @@ export default function TopicIslandDetailPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (isLocked) {
-                                    handleLockedWordClick(word);
-                                    return;
-                                  }
                                   handleAddToQuizClick("word", word.id);
                                 }}
-                                disabled={addedItems.has(`word-${word.id}`) || isLocked}
+                                disabled={addedItems.has(`word-${word.id}`)}
                                 className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                               >
                                 {addedItems.has(`word-${word.id}`)
@@ -1095,13 +1050,9 @@ export default function TopicIslandDetailPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (isLocked) {
-                                    handleLockedWordClick(word);
-                                    return;
-                                  }
                                   handleMarkKnown(word.id);
                                 }}
-                                disabled={markingKnown === word.id || isLocked}
+                                disabled={markingKnown === word.id}
                                 className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 {markingKnown === word.id
@@ -1193,16 +1144,12 @@ export default function TopicIslandDetailPage() {
                                       </div>
                                     </div>
                                     <button
-                                      onClick={() =>
-                                        handleAddToQuizClick(
-                                          "sentence",
-                                          sentence.id,
-                                        )
-                                      }
-                                      disabled={addedItems.has(
-                                        `sentence-${sentence.id}`,
-                                      )}
-                                      className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddToQuizClick("sentence", sentence.id);
+                                      }}
+                                      disabled={addedItems.has(`sentence-${sentence.id}`)}
+                                      className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                                     >
                                       {addedItems.has(`sentence-${sentence.id}`)
                                         ? "✓ In quiz"

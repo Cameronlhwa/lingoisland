@@ -241,10 +241,8 @@ export async function POST(
       }
     }
 
-    // PAYWALL ENFORCEMENT: For Free users, only generate sentences for unlocked words (position <= 10)
-    const wordsToGenerate = entitlements.isPro 
-      ? insertedWords 
-      : insertedWords.filter(w => w.position <= 10)
+    // All words generate sentences (position-based paywall removed)
+    const wordsToGenerate = insertedWords
 
     if (!entitlements.isPro && insertedWords.length > wordsToGenerate.length) {
       console.log(

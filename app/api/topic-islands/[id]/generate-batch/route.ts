@@ -318,16 +318,8 @@ export async function POST(
       }
     }
 
-    // PAYWALL ENFORCEMENT: For Free users, only generate sentences for unlocked words (position <= 10)
-    const wordsToGenerate = entitlements.isPro 
-      ? insertedWords 
-      : insertedWords.filter(w => w.position <= 10)
-
-    if (!entitlements.isPro && insertedWords.length > wordsToGenerate.length) {
-      console.log(
-        `[PAYWALL] Free user ${user.id}: Skipping sentence generation for ${insertedWords.length - wordsToGenerate.length} locked words (positions 11-20)`
-      )
-    }
+    // All words generate sentences (position-based paywall removed)
+    const wordsToGenerate = insertedWords
 
     if (insertedWords.length === 0) {
       // No words were inserted, mark as error
