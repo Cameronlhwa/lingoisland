@@ -8,15 +8,17 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Redirect www to non-www (backup to middleware)
+      // www -> non-www (single hop to canonical)
       {
         source: '/:path*',
-        has: [
-          {
-            type: 'host',
-            value: 'www.lingoisland.com',
-          },
-        ],
+        has: [{ type: 'host', value: 'www.lingoisland.com' }],
+        destination: 'https://lingoisland.com/:path*',
+        permanent: true,
+      },
+      // http -> https (single hop; host may be www or non-www)
+      {
+        source: '/:path*',
+        has: [{ type: 'header', key: 'x-forwarded-proto', value: 'http' }],
         destination: 'https://lingoisland.com/:path*',
         permanent: true,
       },

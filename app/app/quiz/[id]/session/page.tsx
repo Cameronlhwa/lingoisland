@@ -20,7 +20,7 @@ export default function QuizSessionPage() {
   const router = useRouter();
   const params = useParams();
   const quizIslandId = params.id as string;
-  const sessionCardLimit = 10; // One session = this many cards; queue is ordered weak-first so these are relearning + new first
+  const sessionCardLimit = 10; // Quiz in groups of 10 cards at a time when there are enough cards
   const { convertText } = useCharacterSet();
 
   const [cards, setCards] = useState<Card[]>([]);
