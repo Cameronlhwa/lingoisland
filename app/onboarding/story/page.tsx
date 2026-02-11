@@ -141,6 +141,9 @@ export default function OnboardingStoryPage() {
     localStorage.setItem("oauth_origin", origin);
     document.cookie = `oauth_origin=${origin}; ${cookieOptions}`;
 
+    // Track entry source for onboarding nudges (first-time experience)
+    document.cookie = `onboarding_entry=story; ${cookieOptions}`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

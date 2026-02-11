@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { pinyin as pinyinPro } from "pinyin-pro";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import SpeakerButton from "@/components/app/SpeakerButton";
 
 interface Card {
@@ -22,6 +23,7 @@ export default function QuizSessionPage() {
   const quizIslandId = params.id as string;
   const sessionCardLimit = 10; // Quiz in groups of 10 cards at a time when there are enough cards
   const { convertText } = useCharacterSet();
+  const { completeNudge } = useOnboarding();
 
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -105,6 +107,7 @@ export default function QuizSessionPage() {
         setShowAnswer(false);
       } else {
         // Quiz complete
+        completeNudge("try_quiz");
         router.push(`/app/quiz/${quizIslandId}`);
       }
     } catch (error) {

@@ -7,11 +7,13 @@ import StoryReader, {
   type StoryDetail,
   type StoryTargetWord,
 } from "@/components/stories/StoryReader";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 export default function StoryDetailPage() {
   const params = useParams();
   const storyId = params.id as string;
   const supabase = createClient();
+  const { completeNudge } = useOnboarding();
   const [story, setStory] = useState<StoryDetail | null>(null);
   const [targetWords, setTargetWords] = useState<StoryTargetWord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,8 @@ export default function StoryDetailPage() {
       }
 
       setStory(data as StoryDetail);
+      completeNudge("read_first_story");
+      completeNudge("try_story");
 
       if (data.target_word_ids && data.target_word_ids.length > 0) {
         const { data: wordsData, error: wordsError } = await supabase
