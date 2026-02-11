@@ -29,9 +29,11 @@ const reasons = [
 export default function AccountModal({
   open,
   onClose,
+  initialTab = "subscription",
 }: {
   open: boolean;
   onClose: () => void;
+  initialTab?: "subscription" | "profile";
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -46,8 +48,14 @@ export default function AccountModal({
   );
   const [showPlanPicker, setShowPlanPicker] = useState(false);
   const [activeTab, setActiveTab] = useState<"subscription" | "profile">(
-    "subscription",
+    initialTab,
   );
+
+  // When modal opens, sync tab to initialTab (e.g. nudge opens to Profile)
+  useEffect(() => {
+    if (open) setActiveTab(initialTab);
+  }, [open, initialTab]);
+
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">(
     "monthly",
   );

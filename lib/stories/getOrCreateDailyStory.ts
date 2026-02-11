@@ -55,7 +55,26 @@ function extractJsonObject(content: string) {
   if (start === -1 || end === -1 || end <= start) {
     return trimmed;
   }
-  return trimmed.slice(start, end + 1);
+  let extracted = trimmed.slice(start, end + 1);
+  
+  // Fix common JSON issues from LLM responses
+  // 1. Replace smart quotes with regular quotes
+  extracted = extracted.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
+  
+  // 2. Fix unescaped newlines in strings (common in Chinese text)
+  try {
+    // Try to parse first
+    JSON.parse(extracted);
+    return extracted;
+  } catch (e) {
+    // If it fails, try to fix common issues
+    // Replace literal newlines inside strings with \n
+    extracted = extracted.replace(/("(?:[^"\\]|\\.)*?")/g, (match) => {
+      return match.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+    });
+  }
+  
+  return extracted;
 }
 
 async function generateDailyStory({
@@ -180,8 +199,16 @@ Output STRICT JSON only with this shape:
       story_pinyin?: string | null;
     };
     try {
-      parsed = JSON.parse(extractJsonObject(content));
+      const extracted = extractJsonObject(content);
+      parsed = JSON.parse(extracted);
     } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("[Daily Story] Failed to parse DeepSeek response:", {
+          error: error instanceof Error ? error.message : error,
+          attempt,
+          contentPreview: content.substring(0, 200),
+        });
+      }
       lastError = new Error(`Failed to parse DeepSeek JSON: ${error}`);
       extraNote =
         "Return STRICT JSON only. Do not include extra text or markdown.";

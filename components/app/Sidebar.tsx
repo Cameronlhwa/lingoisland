@@ -8,21 +8,35 @@ import { createClient } from "@/lib/supabase/browser";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import { useGlossary } from "@/contexts/GlossaryContext";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { sidebarItems } from "@/components/app/sidebar-items";
 import AccountModal from "@/components/app/AccountModal";
 import { useSidebar } from "@/components/app/AppLayoutClient";
 
-export default function Sidebar() {
+export default function Sidebar({
+  isAccountModalOpen,
+  setIsAccountModalOpen,
+  accountModalInitialTab = "subscription",
+}: {
+  isAccountModalOpen?: boolean;
+  setIsAccountModalOpen?: (open: boolean) => void;
+  accountModalInitialTab?: "subscription" | "profile";
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
   const { isChineseMode, toggleChineseMode, t } = useLanguage();
   const { convertText } = useCharacterSet();
   const { entries, activeWordId } = useGlossary();
+  const { completeNudge } = useOnboarding();
   const glossaryListRef = useRef<HTMLDivElement | null>(null);
   const isTopicIslandDetail = pathname.startsWith("/app/topic-islands/");
-  const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [localIsAccountOpen, setLocalIsAccountOpen] = useState(false);
   const { isOpen: sidebarOpen, setIsOpen: setSidebarOpen } = useSidebar();
+  
+  // Use parent-controlled state if provided, otherwise use local state
+  const isAccountOpen = isAccountModalOpen ?? localIsAccountOpen;
+  const setIsAccountOpen = setIsAccountModalOpen ?? setLocalIsAccountOpen;
 
   useEffect(() => {
     if (!isTopicIslandDetail || !activeWordId || !glossaryListRef.current) {
@@ -159,7 +173,10 @@ export default function Sidebar() {
         </div>
 
         <button
-          onClick={() => setIsAccountOpen(true)}
+          onClick={() => {
+            setIsAccountOpen(true);
+            completeNudge("customize_settings");
+          }}
           className="mb-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
         >
           {convertText(t("Account & Settings"))}
@@ -179,6 +196,7 @@ export default function Sidebar() {
       <AccountModal
         open={isAccountOpen}
         onClose={() => setIsAccountOpen(false)}
+        initialTab={accountModalInitialTab}
       />
     </aside>
   );

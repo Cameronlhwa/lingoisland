@@ -221,6 +221,9 @@ function OnboardingTopicIslandContent() {
     // Set cookie that expires in 10 minutes (enough for OAuth flow)
     document.cookie = `oauth_origin=${origin}; ${cookieOptions}`;
 
+    // Track entry source for onboarding nudges (first-time experience)
+    document.cookie = `onboarding_entry=topic_island; ${cookieOptions}`;
+
     // Start Google OAuth
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
