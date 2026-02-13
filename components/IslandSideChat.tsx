@@ -277,7 +277,12 @@ export default function IslandSideChat({
   const Header = (
     <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
       <div className="flex items-center gap-2">
-        <div className="text-sm font-semibold text-gray-900">AI Chat</div>
+        <img 
+          src="/capybara-face.png" 
+          alt="Huáhuá" 
+          className="h-5 w-5 rounded-full"
+        />
+        <div className="text-sm font-semibold text-gray-900">Ask for help</div>
         <select
           value={modelMode}
           onChange={(e) => setModelMode(e.target.value as "chat" | "thinking")}
@@ -343,7 +348,7 @@ export default function IslandSideChat({
           <div className="text-sm text-gray-600">Loading chat…</div>
         ) : messages.length === 0 ? (
           <div className="text-sm text-gray-600">
-            Start by asking a question (or tap “Ask AI” on a word).
+            Start by asking a question (or tap “Ask for help” on a word).
           </div>
         ) : (
           <div className="space-y-3">
@@ -413,7 +418,7 @@ export default function IslandSideChat({
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Message AI…"
+            placeholder="Ask Huáhuá…"
             rows={2}
             className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
           />
@@ -435,7 +440,7 @@ export default function IslandSideChat({
       <UpgradeModal
         open={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        feature="AI Chat (unlimited messages)"
+        feature="Unlimited help from Huáhuá"
       />
 
       {/* Floating button */}
@@ -444,8 +449,8 @@ export default function IslandSideChat({
         className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border-2 border-gray-900 bg-white px-5 py-3 text-gray-900 shadow-lg transition-all hover:shadow-xl hover:scale-105 ${
           open ? "opacity-0 pointer-events-none" : ""
         }`}
-        aria-label="Open AI chat"
-        title="Chat with Huáhuá"
+        aria-label="Ask for help"
+        title="Ask Huáhuá for help"
       >
         <img 
           src="/capybara-face.png" 

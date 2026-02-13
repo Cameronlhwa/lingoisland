@@ -73,6 +73,7 @@ export async function POST(
       Number.isFinite(requestedCount) ? Math.floor(requestedCount) : 7
     )
     const recycleOldWords = body.recycleOldWords !== false
+    const customLevel = body.level ? String(body.level).trim() : null
     const rawSuggestions = Array.isArray(body.suggestions) ? body.suggestions : []
     const suggestions: string[] = Array.from(
       new Set(
@@ -120,8 +121,10 @@ export async function POST(
       (word) => !existingWordsSet.has(normalizeHanzi(word))
     )
 
-    const baseLevel = mapToBaseLevel(island.level as string)
-    const detailedLevel = island.level as string
+    // Use custom level if provided, otherwise use island's level
+    const levelToUse = customLevel || (island.level as string)
+    const baseLevel = mapToBaseLevel(levelToUse)
+    const detailedLevel = levelToUse
     const grammarTarget = island.grammar_target || 0
 
     let grammarTags: string[] = []
