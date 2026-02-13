@@ -165,9 +165,9 @@ export async function generateWordSentences({
   const levelGuidance = {
     A1: `\n\nSTYLE FOR A1: Very basic phrases (4-8 chars), simple present tense, concrete survival vocabulary (food, numbers, basic actions), NO slang.`,
     A2: `\n\nSTYLE FOR A2: Natural everyday Chinese, simple friendly tone, common expressions (就、也、都、很), practical for daily situations.`,
-    B1: `\n\nSTYLE FOR B1: Conversational chat-with-friends tone, casual connectors (其实、感觉、有点、挺、就), authentic not textbooky.`,
-    B2: `\n\nSTYLE FOR B2: What 20-30 year olds say to friends, casual connectors (其实、感觉、有点、挺、蛮、真的、太…了), light modern expressions OK (max 1): 不卷、躺平、emo.`,
-    C1: `\n\nSTYLE FOR C1: Sophisticated yet natural, idioms and subtle meanings OK, modern slang welcome, complex structures, near-native expressiveness, cultural references OK.`,
+    B1: `\n\nSTYLE FOR B1: Conversational chat-with-friends tone, casual connectors (其实、感觉、有点、挺、就), authentic not textbooky (these are just recomended connectors. You can use other connectors similar in level if they fit naturally.).`,
+    B2: `\n\nSTYLE FOR B2: What 20-30 year olds say to friends, casual connectors (其实、感觉、有点、挺、蛮、真的、太…了). Recommended slang examples (you can also use similar expressions not in this list): 不卷、躺平、摆烂、上头、真香. Use only when they fit naturally; do not use them all the time. If you use any, max 1 per word. Most sentences should be natural without slang.`,
+    C1: `\n\nSTYLE FOR C1: Sophisticated yet natural, idioms and subtle meanings are OK, complex structures (that are still natural and conversational), native Chinese expressiveness.`,
   }
 
   const prompt = `You are a Mandarin Chinese learning assistant. Generate example sentences for a single vocabulary word.
@@ -191,7 +191,7 @@ CRITICAL: All example sentences must be CONVERSATIONAL and CASUAL - exactly what
 
 Requirements:
 - Use Simplified Chinese (not Traditional)
-- Use natural, high-frequency vocabulary appropriate for A2-B2 learners
+- Use natural, high-frequency vocabulary appropriate for A2-C1 learners
 - Do NOT use rare idioms or classical Chinese
 - Provide accurate pinyin with tone marks
 - Each sentence should be practical and useful
@@ -200,7 +200,7 @@ Requirements:
 - Write sentences as if texting or talking to a friend - casual, conversational, authentic
 - Include the target word in each sentence (hanzi must contain "${word.hanzi}")
 - Use casual connectors: 其实、感觉、有点、挺、蛮、就、真的、太…了、别…了 (some, not all)
-- Light slang is allowed but not forced (e.g., 离谱、emo、摆烂、上头、真香) — at most 1 slang word total per word
+- Recommended slang examples — you can also use similar expressions not in the list (e.g., 离谱、摆烂、上头、真香). Use only when they fit naturally; do not use them all the time. At most 1 slang word total per word; most sentences should be natural without slang.
 - Avoid textbooky patterns like “为了…所以…” and repetitive templates
 - Vary sentence structures across the three outputs
 - Do NOT prefix sentences with bullets, numbers, or list markers (e.g., '-', '•', '1.')

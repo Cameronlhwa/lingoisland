@@ -57,7 +57,7 @@ export async function GET(
 
     // Attach sentences to words
     // Words 11-20 are no longer blurred for free users; they remain visible.
-    // However, free users cannot use "Add to Quiz", "Mark Known", or "Ask AI" on words 11-20.
+    // However, free users cannot use "Add to Quiz", "Mark Known", or "Ask for help" on words 11-20.
     const wordsWithSentences = (words || []).map((word, index) => {
       const position = word.position ?? (index + 1)
       

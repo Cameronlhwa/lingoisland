@@ -203,7 +203,12 @@ export default function StorySideChat({
   const Header = (
     <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
       <div className="flex items-center gap-2">
-        <div className="text-sm font-semibold text-gray-900">Story Chat</div>
+        <img 
+          src="/capybara-face.png" 
+          alt="Huáhuá" 
+          className="h-5 w-5 rounded-full"
+        />
+        <div className="text-sm font-semibold text-gray-900">Ask for help</div>
         <select
           value={modelMode}
           onChange={(e) => setModelMode(e.target.value as "chat" | "thinking")}
@@ -326,7 +331,7 @@ export default function StorySideChat({
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Message AI…"
+            placeholder="Ask Huáhuá…"
             rows={2}
             className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
           />
@@ -349,8 +354,8 @@ export default function StorySideChat({
         className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border-2 border-gray-900 bg-white px-5 py-3 text-gray-900 shadow-lg transition-all hover:shadow-xl hover:scale-105 ${
           open ? "pointer-events-none opacity-0" : ""
         }`}
-        aria-label="Open story chat"
-        title="Chat with Huáhuá about this story"
+        aria-label="Ask for help"
+        title="Ask Huáhuá for help with this story"
       >
         <img 
           src="/capybara-face.png" 
