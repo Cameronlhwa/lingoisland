@@ -19,7 +19,6 @@ interface Sentence {
   hanzi: string;
   pinyin: string;
   english: string;
-  grammar_tag?: string | null;
 }
 
 interface Word {
@@ -29,6 +28,26 @@ interface Word {
   english: string;
   position?: number;
   sentences: Sentence[];
+}
+
+interface GrammarExample {
+  id: string;
+  grammar_focus_id: string;
+  tier: "warmup" | "target";
+  hanzi: string;
+  pinyin: string;
+  english: string;
+}
+
+interface GrammarFocus {
+  id: string;
+  hanzi: string;
+  pinyin: string;
+  english: string;
+  pattern: string;
+  when_to_use?: string | null;
+  position: number;
+  examples: GrammarExample[];
 }
 
 interface Island {
@@ -55,6 +74,7 @@ export default function TopicIslandDetailPage() {
 
   const [island, setIsland] = useState<Island | null>(null);
   const [words, setWords] = useState<Word[]>([]);
+  const [grammarFocus, setGrammarFocus] = useState<GrammarFocus[]>([]);
   const [loading, setLoading] = useState(true);
   const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
   const [showAccountModal, setShowAccountModal] = useState(false);
@@ -113,6 +133,7 @@ export default function TopicIslandDetailPage() {
   const [showQuizResults, setShowQuizResults] = useState(false);
   const [showFlashcardAnswer, setShowFlashcardAnswer] = useState(false);
   const [flashcardDirection, setFlashcardDirection] = useState<("zh-en" | "en-zh")[]>([]);
+  const [recentlyQuizzedIds, setRecentlyQuizzedIds] = useState<Set<string>>(new Set());
   // Drag and drop state
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dropMatches, setDropMatches] = useState<Record<string, string>>({});
@@ -203,6 +224,7 @@ export default function TopicIslandDetailPage() {
       const previousStatus = island?.status;
       setIsland(data.island);
       setWords(data.words);
+      setGrammarFocus(data.grammarFocus || []);
       setUserPlan(data.user_plan || "free");
       setLoading(false);
       
@@ -629,26 +651,6 @@ export default function TopicIslandDetailPage() {
   const imageProgressPercentage = (island.cover_key || island.image_url) ? 100 : 0;
   const imageProgressLabel = (island.cover_key || island.image_url) ? "Ready" : "Loading...";
 
-  // Group sentences by grammar pattern (if any)
-  const grammarMap = new Map<
-    string,
-    { easy?: Sentence; same?: Sentence; hard?: Sentence }
-  >();
-  for (const word of words) {
-    for (const sentence of word.sentences) {
-      if (!sentence.grammar_tag) continue;
-      if (!grammarMap.has(sentence.grammar_tag)) {
-        grammarMap.set(sentence.grammar_tag, {});
-      }
-      const group = grammarMap.get(sentence.grammar_tag)!;
-      if (sentence.tier === "easy" && !group.easy) group.easy = sentence;
-      if (sentence.tier === "same" && !group.same) group.same = sentence;
-      if (sentence.tier === "hard" && !group.hard) group.hard = sentence;
-    }
-  }
-
-  const grammarEntries = Array.from(grammarMap.entries());
-
   const handleAddWords = async () => {
     if (addingWords) return;
     setAddingWords(true);
@@ -750,8 +752,46 @@ export default function TopicIslandDetailPage() {
       return;
     }
 
-    // Take up to 10 random words
-    const quizSet = shuffleArray(selectedWords).slice(0, Math.min(10, selectedWords.length));
+    // Smart selection: prioritize words that haven't been quizzed recently
+    const notRecentlyQuizzed = selectedWords.filter(w => !recentlyQuizzedIds.has(w.id));
+    const recentlyQuizzed = selectedWords.filter(w => recentlyQuizzedIds.has(w.id));
+    
+    // If we have enough fresh words, use those; otherwise mix in some recent ones
+    let quizPool: Word[];
+    if (notRecentlyQuizzed.length >= 10) {
+      // Plenty of fresh words - use only those
+      quizPool = shuffleArray(notRecentlyQuizzed);
+    } else if (notRecentlyQuizzed.length > 0) {
+      // Mix fresh words with some recent ones
+      const freshCount = Math.min(notRecentlyQuizzed.length, 7);
+      const recentCount = Math.min(10 - freshCount, recentlyQuizzed.length);
+      quizPool = [
+        ...shuffleArray(notRecentlyQuizzed).slice(0, freshCount),
+        ...shuffleArray(recentlyQuizzed).slice(0, recentCount),
+      ];
+      quizPool = shuffleArray(quizPool); // Shuffle the combined set
+    } else {
+      // All words have been quizzed recently - reset and use all
+      quizPool = shuffleArray(selectedWords);
+      setRecentlyQuizzedIds(new Set()); // Clear the recently quizzed set
+    }
+
+    // Take up to 10 words
+    const quizSet = quizPool.slice(0, Math.min(10, quizPool.length));
+    
+    // Mark these words as recently quizzed
+    setRecentlyQuizzedIds(prev => {
+      const newSet = new Set(prev);
+      quizSet.forEach(w => newSet.add(w.id));
+      
+      // Keep only last 20 quizzed IDs to prevent the set from growing forever
+      if (newSet.size > 20) {
+        const arr = Array.from(newSet);
+        return new Set(arr.slice(-20));
+      }
+      return newSet;
+    });
+
     setQuizWords(quizSet);
     setQuizMode(mode);
     setCurrentQuizIndex(0);
@@ -921,94 +961,112 @@ export default function TopicIslandDetailPage() {
                 </div>
               </div>
 
-              {/* Grammar Focus */}
-              {grammarEntries.length > 0 && (
+              {/* Grammar Focus - Sleek Design */}
+              {grammarFocus.length > 0 && (
                 <div className="mb-10 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                  <h2 className="mb-4 text-xl font-semibold text-gray-900">
-                    Grammar Focus
-                  </h2>
+                  <div className="mb-5">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Grammar Focus
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                      {grammarFocus.length} pattern{grammarFocus.length > 1 ? 's' : ''} to practice
+                    </p>
+                  </div>
+                  
                   <div className="space-y-6">
-                    {grammarEntries.map(([tag, tiers]) => (
-                      <div
-                        key={tag}
-                        className="border-t border-gray-100 pt-4 first:border-t-0 first:pt-0"
-                      >
-                        <h3 className="mb-2 text-base font-semibold text-gray-900">
-                          {tag}
-                        </h3>
-                        <div className="space-y-3 text-sm text-gray-700">
-                          {tiers.easy && (
-                            <div>
-                              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Easy
-                              </div>
-                              <div className="mt-1 flex items-center gap-2">
-                                <div className="text-base text-gray-900">
-                                  {convertText(tiers.easy.hanzi)}
-                                </div>
-                                <SpeakerButton
-                                  text={tiers.easy.hanzi}
-                                  type="sentence"
-                                  size="sm"
-                                />
-                              </div>
-                              <div className="text-sm text-gray-700">
-                                {tiers.easy.pinyin}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {tiers.easy.english}
-                              </div>
+                    {grammarFocus.map((point) => {
+                      const warmupExample = point.examples.find(ex => ex.tier === 'warmup');
+                      const targetExample = point.examples.find(ex => ex.tier === 'target');
+                      
+                      return (
+                        <div
+                          key={point.id}
+                          className="rounded-lg border border-gray-100 bg-gray-50 p-4"
+                        >
+                          {/* Header Row: Hanzi + Pinyin chip + English */}
+                          <div className="mb-3 flex flex-wrap items-center gap-2">
+                            <h3 className="text-lg font-bold text-gray-900">
+                              {convertText(point.hanzi)}
+                            </h3>
+                            <span className="rounded-full border border-gray-300 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                              {point.pinyin}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              {point.english}
+                            </span>
+                          </div>
+
+                          {/* Pattern Line */}
+                          <div className="mb-3 text-sm text-gray-700">
+                            <span className="font-medium">Pattern:</span> {convertText(point.pattern)}
+                          </div>
+
+                          {/* When to Use (optional) */}
+                          {point.when_to_use && (
+                            <div className="mb-3 text-sm italic text-gray-600">
+                              {point.when_to_use}
                             </div>
                           )}
-                          {tiers.same && (
-                            <div>
-                              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Your level
-                              </div>
-                              <div className="mt-1 flex items-center gap-2">
-                                <div className="text-base text-gray-900">
-                                  {convertText(tiers.same.hanzi)}
+
+                          {/* Examples: Warmup + Target */}
+                          <div className="space-y-3">
+                            {/* Warmup Example */}
+                            {warmupExample && (
+                              <div className="rounded-md border border-gray-200 bg-white p-3">
+                                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                  Warmup
                                 </div>
-                                <SpeakerButton
-                                  text={tiers.same.hanzi}
-                                  type="sentence"
-                                  size="sm"
-                                />
-                              </div>
-                              <div className="text-sm text-gray-700">
-                                {tiers.same.pinyin}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {tiers.same.english}
-                              </div>
-                            </div>
-                          )}
-                          {tiers.hard && (
-                            <div>
-                              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Slightly harder
-                              </div>
-                              <div className="mt-1 flex items-center gap-2">
-                                <div className="text-base text-gray-900">
-                                  {convertText(tiers.hard.hanzi)}
+                                <div className="flex items-start gap-2">
+                                  <div className="flex-1">
+                                    <div className="mb-1 text-base text-gray-900">
+                                      {convertText(warmupExample.hanzi)}
+                                    </div>
+                                    <div className="mb-0.5 text-sm text-gray-600">
+                                      {warmupExample.pinyin}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      {warmupExample.english}
+                                    </div>
+                                  </div>
+                                  <SpeakerButton
+                                    text={warmupExample.hanzi}
+                                    type="sentence"
+                                    size="sm"
+                                  />
                                 </div>
-                                <SpeakerButton
-                                  text={tiers.hard.hanzi}
-                                  type="sentence"
-                                  size="sm"
-                                />
                               </div>
-                              <div className="text-sm text-gray-700">
-                                {tiers.hard.pinyin}
+                            )}
+
+                            {/* Target Level Example */}
+                            {targetExample && (
+                              <div className="rounded-md border border-gray-200 bg-white p-3">
+                                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                  Your level
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <div className="flex-1">
+                                    <div className="mb-1 text-base text-gray-900">
+                                      {convertText(targetExample.hanzi)}
+                                    </div>
+                                    <div className="mb-0.5 text-sm text-gray-600">
+                                      {targetExample.pinyin}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      {targetExample.english}
+                                    </div>
+                                  </div>
+                                  <SpeakerButton
+                                    text={targetExample.hanzi}
+                                    type="sentence"
+                                    size="sm"
+                                  />
+                                </div>
                               </div>
-                              <div className="text-sm text-gray-600">
-                                {tiers.hard.english}
-                              </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1457,6 +1515,20 @@ export default function TopicIslandDetailPage() {
                       <p className="text-sm text-gray-600 mb-4">
                         Choose which words you want to practice. At least 5 words required.
                       </p>
+
+                      {recentlyQuizzedIds.size > 0 && (
+                        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                          <p className="text-sm text-blue-900">
+                            <span className="font-medium">Smart Quiz Active:</span> Prioritizing words you haven't seen recently ({words.length - recentlyQuizzedIds.size} fresh words available).{" "}
+                            <button
+                              onClick={() => setRecentlyQuizzedIds(new Set())}
+                              className="font-medium underline hover:no-underline"
+                            >
+                              Reset history
+                            </button>
+                          </p>
+                        </div>
+                      )}
                       
                       <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
                         <span className="text-sm font-medium text-gray-700">
@@ -1708,6 +1780,7 @@ export default function TopicIslandDetailPage() {
                                   <span className={`font-medium ${hasMatch ? "text-cyan-900" : "text-gray-900"}`}>
                                     {convertText(word.hanzi)}
                                   </span>
+                                  <SpeakerButton text={word.hanzi} type="word" size="sm" />
                                   <span className={`text-sm ${hasMatch ? "text-cyan-700" : "text-gray-600"}`}>
                                     ({word.pinyin})
                                   </span>

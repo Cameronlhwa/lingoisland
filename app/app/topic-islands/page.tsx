@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/browser";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -25,6 +25,8 @@ interface TopicIsland {
 
 export default function TopicIslandsPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const { t } = useLanguage();
   const { convertText } = useCharacterSet();
@@ -49,8 +51,49 @@ export default function TopicIslandsPage() {
   const [processingPendingRequest, setProcessingPendingRequest] =
     useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const didHydrateFromQuery = useRef(false);
+  const topicFromQueryParams = useRef<string | null>(null);
 
   const STORAGE_KEY = "pending_topic_island_request";
+
+  // Handle query params for modal control - SINGLE EFFECT
+  useEffect(() => {
+    console.log("[Topic Islands] Query params effect triggered");
+    const createParam = searchParams.get("create");
+    const topicParam = searchParams.get("topic");
+
+    console.log("[Topic Islands] Params - create:", createParam, "topic:", topicParam, "didHydrate:", didHydrateFromQuery.current);
+
+    if (createParam === "1") {
+      if (!didHydrateFromQuery.current && topicParam) {
+        // First time seeing these params - hydrate the form
+        const decodedTopic = decodeURIComponent(topicParam);
+        topicFromQueryParams.current = decodedTopic;
+        console.log("[Topic Islands] Decoded topic:", decodedTopic);
+        
+        // Set form data with the topic - use functional update to ensure we get latest state
+        setFormData({
+          topic: decodedTopic,
+          level: userDefaultLevel || "B1",
+          wordTarget: 12,
+          grammarTarget: 0,
+          wantsGrammar: false,
+          includeReviewVocab: false,
+          reviewVocabMode: "random",
+          selectedReviewIslands: [],
+        });
+        
+        didHydrateFromQuery.current = true;
+        console.log("[Topic Islands] Form data set to:", { topic: decodedTopic });
+      }
+      
+      // Always open modal if create=1
+      if (!showCreateModal) {
+        console.log("[Topic Islands] Opening modal");
+        setShowCreateModal(true);
+      }
+    }
+  }, [searchParams, userDefaultLevel, showCreateModal]);
 
   useEffect(() => {
     // Check for pending request first
@@ -63,14 +106,6 @@ export default function TopicIslandsPage() {
     }
     
     loadUserProfile();
-
-    // Check if we should open the create modal from URL parameter
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("create") === "true") {
-      setShowCreateModal(true);
-      // Clean up URL
-      window.history.replaceState({}, "", "/app/topic-islands");
-    }
   }, []);
 
   const loadUserProfile = async () => {
@@ -78,21 +113,25 @@ export default function TopicIslandsPage() {
       const response = await fetch("/api/profile");
       if (response.ok) {
         const data = await response.json();
-        setUserDefaultLevel(data.cefrLevel || "B1");
+        const profileLevel = data.cefrLevel || "B1";
+        setUserDefaultLevel(profileLevel);
+        
+        // Update form data with profile level if form is still at default
+        setFormData(prev => ({
+          ...prev,
+          level: prev.level === "B1" ? profileLevel : prev.level,
+        }));
       }
     } catch (error) {
       console.error("Error loading user profile:", error);
     }
   };
 
+  // Handle modal open/close and form reset
   useEffect(() => {
-    if (showCreateModal) {
-      setFormData((prev) => ({
-        ...prev,
-        level: userDefaultLevel,
-      }));
-    } else {
+    if (!showCreateModal) {
       // Reset form when modal closes
+      console.log("[Topic Islands] Modal closed - resetting form");
       setFormData({
         topic: "",
         level: userDefaultLevel,
@@ -103,8 +142,15 @@ export default function TopicIslandsPage() {
         reviewVocabMode: "random",
         selectedReviewIslands: [],
       });
+      didHydrateFromQuery.current = false;
+      topicFromQueryParams.current = null;
+
+      // Clean up query params from URL when modal closes
+      if (searchParams.get("create") || searchParams.get("topic")) {
+        router.replace(pathname, { scroll: false });
+      }
     }
-  }, [showCreateModal, userDefaultLevel]);
+  }, [showCreateModal, userDefaultLevel, pathname, router, searchParams]);
 
   // Infinite scroll: load more islands automatically
   useEffect(() => {
@@ -511,7 +557,9 @@ export default function TopicIslandsPage() {
         )}
 
         {/* Create Modal */}
-        {showCreateModal && (
+        {showCreateModal && (() => {
+          console.log("[Topic Islands] Rendering modal with formData.topic:", formData.topic);
+          return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
             <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-5 md:p-8 shadow-xl">
               <h2 className="mb-6 text-2xl font-bold text-gray-900">
@@ -796,7 +844,8 @@ export default function TopicIslandsPage() {
               </form>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* Upgrade Modal */}
         <UpgradeModal 

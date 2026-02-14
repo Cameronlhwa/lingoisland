@@ -85,6 +85,7 @@ export default function HomeDashboard({
   const [quizStatsByIsland, setQuizStatsByIsland] = useState<
     Record<string, QuizStatsRow>
   >({});
+  const [last7DaysActivity, setLast7DaysActivity] = useState<{ date: string; count: number }[]>([]);
   const islandsScrollRef = useRef<HTMLDivElement | null>(null);
   const flashcardsScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -233,6 +234,7 @@ export default function HomeDashboard({
       );
       if (!response.ok) {
         setTodayReviewCount(0);
+        setLast7DaysActivity([]);
         return;
       }
       const data = await response.json();
@@ -241,9 +243,28 @@ export default function HomeDashboard({
         (entry: { date: string; count: number }) => entry.date === todayKey
       );
       setTodayReviewCount(todayEntry?.count ?? 0);
+
+      // Get last 7 days of activity
+      const activityMap = new Map<string, number>();
+      (data.activity || []).forEach((entry: { date: string; count: number }) => {
+        activityMap.set(entry.date, entry.count);
+      });
+
+      const last7Days: { date: string; count: number }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateKey = date.toISOString().split('T')[0];
+        last7Days.push({
+          date: dateKey,
+          count: activityMap.get(dateKey) || 0,
+        });
+      }
+      setLast7DaysActivity(last7Days);
     } catch (error) {
       console.error("Error loading review count:", error);
       setTodayReviewCount(0);
+      setLast7DaysActivity([]);
     } finally {
       setIslandLoading(false);
     }
@@ -468,22 +489,75 @@ export default function HomeDashboard({
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-4 md:gap-6">
         {/* ROW 1: Your Progress Island (full width) */}
         <div className={`${cardBaseClass} ${cardHoverClass} p-3 md:p-4`}>
-          <div className="mb-2">
-            <h2 className="text-xl md:text-2xl font-semibold text-slate-900">
-              {convertText(t("Your Progress Island"))}
-            </h2>
-            <p className="mt-1.5 text-base md:text-lg text-slate-600">
-              {islandLoading
-                ? convertText(t("Counting today's reviews..."))
-                : progressStage >= 5
-                ? convertText(`${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · Stage 6 (max level!)`)
-                : convertText(`${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · ${stageProgress}/10 to next stage`)}
-            </p>
-            {!islandLoading ? (
-              <p className="mt-1 text-sm text-slate-500">
-                {islandStatus}
+          <div className="mb-2 flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <h2 className="text-xl md:text-2xl font-semibold text-slate-900">
+                {convertText(t("Your Progress Island"))}
+              </h2>
+              <p className="mt-1.5 text-base md:text-lg text-slate-600">
+                {islandLoading
+                  ? convertText(t("Counting today's reviews..."))
+                  : progressStage >= 5
+                  ? convertText(`${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · Stage 6 (max level!)`)
+                  : convertText(`${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · ${stageProgress}/10 to next stage`)}
               </p>
-            ) : null}
+              {!islandLoading ? (
+                <p className="mt-1 text-sm text-slate-500">
+                  {islandStatus}
+                </p>
+              ) : null}
+            </div>
+            
+            {/* Last 7 days activity squares */}
+            {!islandLoading && last7DaysActivity.length > 0 && (
+              <div className="flex flex-col items-end gap-1.5">
+                <p className="text-xs font-medium text-slate-600">Last 7 days</p>
+                <div className="flex gap-2">
+                  {last7DaysActivity.map((day, index) => {
+                    const isToday = index === last7DaysActivity.length - 1;
+                    const count = day.count;
+                    const date = new Date(day.date);
+                    const month = date.getMonth() + 1;
+                    const dayOfMonth = date.getDate();
+                    
+                    // Navy blue color intensity based on count
+                    let bgColor = 'bg-slate-100';
+                    let customBg = '';
+                    if (count >= 50) {
+                      bgColor = '';
+                      customBg = '#0B1B3A'; // Dark navy
+                    } else if (count >= 30) {
+                      bgColor = '';
+                      customBg = '#1e3a5f'; // Medium-dark navy
+                    } else if (count >= 15) {
+                      bgColor = '';
+                      customBg = '#3b5998'; // Medium navy
+                    } else if (count > 0) {
+                      bgColor = '';
+                      customBg = '#6b8cbe'; // Light navy
+                    }
+                    
+                    return (
+                      <div
+                        key={day.date}
+                        className="flex flex-col items-center gap-0.5"
+                      >
+                        <div
+                          className={`h-8 w-8 rounded ${bgColor} ${
+                            isToday ? 'ring-2 ring-slate-900' : ''
+                          } transition-all hover:scale-110`}
+                          style={customBg ? { backgroundColor: customBg } : undefined}
+                          title={`${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${count} cards reviewed`}
+                        />
+                        <span className="text-[10px] font-medium text-slate-600">
+                          {month}/{dayOfMonth}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
           <div 
             className="relative flex items-center justify-center rounded-xl border-2 border-slate-200 p-2 md:p-3 overflow-visible max-h-40 md:max-h-48 lg:max-h-56"

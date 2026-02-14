@@ -31,7 +31,6 @@ export default function QuizSessionPage() {
   const [showPinyin, setShowPinyin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [grading, setGrading] = useState(false);
-  const [tierMessage, setTierMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadQueue();
@@ -92,14 +91,6 @@ export default function QuizSessionPage() {
       if (!response.ok) throw new Error("Failed to grade");
 
       const result = await response.json();
-      const newTier = result?.reviewState?.mastery_tier;
-      if (newTier === "easy") {
-        setTierMessage("Moved to Easy stack!");
-        setTimeout(() => setTierMessage(null), 2500);
-      } else if (newTier === "good" && rating === "easy") {
-        setTierMessage("One more Easy to get back to Easy stack");
-        setTimeout(() => setTierMessage(null), 2500);
-      }
 
       // Move to next card
       if (currentIndex < cards.length - 1) {
@@ -280,11 +271,6 @@ export default function QuizSessionPage() {
                 </button>
               </div>
 
-              {tierMessage && (
-                <div className="mt-4 rounded-lg bg-green-50 px-4 py-2 text-center text-sm font-medium text-green-800">
-                  {tierMessage}
-                </div>
-              )}
               {/* Hint text */}
               <div className="mt-6 text-center text-xs text-gray-500">
                 Rate how well you remembered this card

@@ -4,6 +4,7 @@ import { generateWordList } from '@/lib/deepseek/generate-word-list'
 import { generateWordSentences, type Word } from '@/lib/deepseek/generate-word-sentences'
 import { limitConcurrency } from '@/lib/utils/concurrency'
 import { getEntitlements } from '@/lib/entitlements'
+import { generateGrammarFocus } from '@/lib/deepseek/generate-grammar-focus'
 
 /**
  * POST /api/topic-islands/[id]/generate-batch
@@ -259,21 +260,88 @@ export async function POST(
         )
       }
 
-    // Determine grammar patterns if grammarTarget > 0
-    let grammarTags: string[] = []
+    // Generate Grammar Focus if grammarTarget > 0
+    // This happens BEFORE word sentence generation
     if (grammarTarget > 0) {
-      // Generate grammar patterns based on level
-      const grammarPatternsByLevel: Record<string, string[]> = {
-        'A1': ['吗 (yes/no question)', '呢 (question particle)', '了 (completed action)', '很 + adjective'],
-        'A2': ['了 (change of state)', '过 (experience)', '在/正在 (progressive)', '会/能/可以 (ability)', '要/得/应该 (need/should)'],
-        'B1': ['比 (comparison)', '把 (only if natural)', '被 (passive)', '结果补语 (e.g., 好/完/到)', '起来/下去/出来 (directional)', '一边…一边…', '先…再…'],
-        'B2': ['连…都…', '即使…也…', '既然…就…', '不但…而且…', '越…越…', '反正…', '干脆…'],
-        'C1': ['无论…都…', '哪怕…也…', '以至于…', '难怪…', '与其…不如…', '再说…', '总之…'],
-      }
+      try {
+        // Get recently learned grammar patterns to avoid repetition
+        const { data: recentGrammar } = await supabase
+          .from('island_grammar_focus')
+          .select('hanzi')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10)
+        
+        const recentPatterns = Array.from(new Set(recentGrammar?.map(g => g.hanzi) || []))
+        
+        // Generate variety hint (timestamp + user ID hash)
+        const varietyHint = `${Date.now()}-${userId?.slice(0, 8)}`
+        
+        console.log(`Generating ${grammarTarget} grammar points for "${island.topic}" (${baseLevel})...`)
+        if (recentPatterns.length > 0) {
+          console.log(`Avoiding recently learned patterns:`, recentPatterns)
+        }
+        
+        const grammarFocusResult = await generateGrammarFocus({
+          topic: island.topic,
+          level: baseLevel,
+          detailedLevel,
+          grammarCount: grammarTarget,
+          varietyHint,
+          recentPatterns,
+        })
 
-      const patterns = grammarPatternsByLevel[baseLevel] || grammarPatternsByLevel['B1']
-      // Select patterns based on grammarTarget
-      grammarTags = patterns.slice(0, Math.min(grammarTarget, patterns.length))
+        // Store grammar focus in database
+        if (grammarFocusResult.points.length > 0) {
+          for (let i = 0; i < grammarFocusResult.points.length; i++) {
+            const point = grammarFocusResult.points[i]
+            
+            const { data: grammarFocus, error: grammarError } = await supabase
+              .from('island_grammar_focus')
+              .insert({
+                island_id: islandId,
+                user_id: user.id,
+                hanzi: point.hanzi,
+                pinyin: point.pinyin,
+                english: point.english,
+                pattern: point.pattern,
+                when_to_use: point.whenToUse || null,
+                position: i + 1,
+              })
+              .select()
+              .single()
+
+            if (grammarError) {
+              console.error('Error inserting grammar focus:', grammarError)
+              continue
+            }
+
+            if (grammarFocus) {
+              // Insert examples
+              for (const example of point.examples) {
+                const { error: exampleError } = await supabase
+                  .from('island_grammar_examples')
+                  .insert({
+                    grammar_focus_id: grammarFocus.id,
+                    tier: example.tier,
+                    hanzi: example.hanzi,
+                    pinyin: example.pinyin,
+                    english: example.english,
+                  })
+
+                if (exampleError) {
+                  console.error('Error inserting grammar example:', exampleError)
+                }
+              }
+            }
+          }
+          
+          console.log(`Successfully stored ${grammarFocusResult.points.length} grammar points`)
+        }
+      } catch (error) {
+        console.error('Error generating/storing grammar focus:', error)
+        // Don't fail the whole generation if grammar fails - just log and continue
+      }
     }
 
     // Insert words into database first
@@ -501,8 +569,6 @@ export async function POST(
             topic: island.topic,
             level: baseLevel,
             detailedLevel,
-            grammarTarget,
-            grammarTags: grammarTags.length > 0 ? grammarTags : undefined,
             knownWords: knownWords.length > 0 ? knownWords : undefined,
             wordIndex: index,
             totalWords: wordsToGenerate.length,
@@ -634,7 +700,6 @@ export async function POST(
           hanzi: sentence.hanzi,
           pinyin: sentence.pinyin,
           english: sentence.english,
-          grammar_tag: sentence.grammarTag || null,
         }))
 
           const { error: sentenceError } = await dbClient

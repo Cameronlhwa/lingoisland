@@ -55,6 +55,25 @@ export async function GET(
       .eq('island_id', islandId)
       .order('word_id, tier', { ascending: true })
 
+    // Get grammar focus points
+    const { data: grammarFocus } = await supabase
+      .from('island_grammar_focus')
+      .select('*')
+      .eq('island_id', islandId)
+      .order('position', { ascending: true })
+
+    // Get grammar examples for each focus point
+    const { data: grammarExamples } = await supabase
+      .from('island_grammar_examples')
+      .select('*')
+      .in('grammar_focus_id', (grammarFocus || []).map(g => g.id))
+
+    // Attach examples to grammar focus points
+    const grammarFocusWithExamples = (grammarFocus || []).map(focus => ({
+      ...focus,
+      examples: (grammarExamples || []).filter(ex => ex.grammar_focus_id === focus.id)
+    }))
+
     // Attach sentences to words
     // Words 11-20 are no longer blurred for free users; they remain visible.
     // However, free users cannot use "Add to Quiz", "Mark Known", or "Ask for help" on words 11-20.
@@ -71,6 +90,7 @@ export async function GET(
     return NextResponse.json({
       island,
       words: wordsWithSentences,
+      grammarFocus: grammarFocusWithExamples,
       user_plan: entitlements.isPro ? 'pro' : 'free',
     })
   } catch (error) {

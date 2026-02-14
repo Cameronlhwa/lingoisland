@@ -253,6 +253,46 @@ const translations: Record<string, { en: string; zh: string }> = {
   "Adding...": { en: "Adding...", zh: "添加中..." },
   "Account & Settings": { en: "Account & Settings", zh: "账户与设置" },
 
+  // Browse Topics
+  "Browse Topics": { en: "Browse Topics", zh: "浏览主题" },
+  "Pick something people actually talk about → generate your Topic Island.": {
+    en: "Pick something people actually talk about → generate your Topic Island.",
+    zh: "选择人们实际谈论的话题 → 生成您的主题岛。",
+  },
+  "Filter by category": { en: "Filter by category", zh: "按类别筛选" },
+  "Select a category to narrow your results": {
+    en: "Select a category to narrow your results",
+    zh: "选择类别缩小搜索结果",
+  },
+  "Trending this week": { en: "Trending this week", zh: "本周热门" },
+  "All topics": { en: "All topics", zh: "所有主题" },
+  Results: { en: "Results", zh: "结果" },
+  "No topics found. Try adjusting your filters.": {
+    en: "No topics found. Try adjusting your filters.",
+    zh: "未找到主题，请调整筛选条件。",
+  },
+  "Load more": { en: "Load more", zh: "加载更多" },
+  "remaining": { en: "remaining", zh: "剩余" },
+  "Create Island": { en: "Create Island", zh: "创建岛屿" },
+  Preview: { en: "Preview", zh: "预览" },
+  Close: { en: "Close", zh: "关闭" },
+  "Conversation starters:": { en: "Conversation starters:", zh: "对话开场白：" },
+  Trending: { en: "Trending", zh: "热门" },
+  "Loading topics...": { en: "Loading topics...", zh: "加载主题中..." },
+  
+  // Categories
+  All: { en: "All", zh: "全部" },
+  "Everyday errands": { en: "Everyday errands", zh: "日常琐事" },
+  Travel: { en: "Travel", zh: "旅行" },
+  Health: { en: "Health", zh: "健康" },
+  "Food & going out": { en: "Food & going out", zh: "美食与外出" },
+  "Social life": { en: "Social life", zh: "社交生活" },
+  "Work/School": { en: "Work/School", zh: "工作/学校" },
+  "Money & adulting": { en: "Money & adulting", zh: "财务与成人生活" },
+  "Entertainment & hobbies": { en: "Entertainment & hobbies", zh: "娱乐与爱好" },
+  "Opinions & hot takes": { en: "Opinions & hot takes", zh: "观点与热议" },
+  "Unexpected problems": { en: "Unexpected problems", zh: "突发问题" },
+
   // Character Set
   Traditional: { en: "Traditional", zh: "繁體" },
   Simplified: { en: "Simplified", zh: "简体" },

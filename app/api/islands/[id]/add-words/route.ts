@@ -125,56 +125,6 @@ export async function POST(
     const levelToUse = customLevel || (island.level as string)
     const baseLevel = mapToBaseLevel(levelToUse)
     const detailedLevel = levelToUse
-    const grammarTarget = island.grammar_target || 0
-
-    let grammarTags: string[] = []
-    if (grammarTarget > 0) {
-      const grammarPatternsByLevel: Record<string, string[]> = {
-        A1: [
-          '吗 (yes/no question)',
-          '呢 (question particle)',
-          '了 (completed action)',
-          '很 + adjective',
-        ],
-        A2: [
-          '了 (change of state)',
-          '过 (experience)',
-          '在/正在 (progressive)',
-          '会/能/可以 (ability)',
-          '要/得/应该 (need/should)',
-        ],
-        B1: [
-          '比 (comparison)',
-          '把 (only if natural)',
-          '被 (passive)',
-          '结果补语 (e.g., 好/完/到)',
-          '起来/下去/出来 (directional)',
-          '一边…一边…',
-          '先…再…',
-        ],
-        B2: [
-          '连…都…',
-          '即使…也…',
-          '既然…就…',
-          '不但…而且…',
-          '越…越…',
-          '反正…',
-          '干脆…',
-        ],
-        C1: [
-          '无论…都…',
-          '哪怕…也…',
-          '以至于…',
-          '难怪…',
-          '与其…不如…',
-          '再说…',
-          '总之…',
-        ],
-      }
-
-      const patterns = grammarPatternsByLevel[baseLevel] || grammarPatternsByLevel.B1
-      grammarTags = patterns.slice(0, Math.min(grammarTarget, patterns.length))
-    }
 
     const wordList = await generateWordList({
       topic: island.topic,
@@ -290,8 +240,6 @@ export async function POST(
             topic: island.topic,
             level: baseLevel,
             detailedLevel,
-            grammarTarget,
-            grammarTags: grammarTags.length > 0 ? grammarTags : undefined,
             knownWords,
             wordIndex: index,
             totalWords: wordsToGenerate.length,
@@ -323,7 +271,6 @@ export async function POST(
         hanzi: sanitizeSentenceText(sentence.hanzi),
         pinyin: sanitizeSentenceText(sentence.pinyin),
         english: sanitizeSentenceText(sentence.english),
-        grammar_tag: sentence.grammarTag || null,
       }))
 
       const { error: sentenceError } = await supabase
