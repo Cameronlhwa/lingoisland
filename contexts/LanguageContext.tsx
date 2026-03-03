@@ -44,6 +44,7 @@ const translations: Record<string, { en: string; zh: string }> = {
   },
   "Create a Topic Island": { en: "Create a Topic Island", zh: "创建主题岛" },
   "Create Topic Island": { en: "Create Topic Island", zh: "创建主题岛" },
+  "Create Topic Island →": { en: "Create Topic Island →", zh: "创建主题岛 →" },
   "View Island Details": { en: "View Island Details", zh: "查看岛屿详情" },
 
   // Deck Manager
@@ -187,9 +188,14 @@ const translations: Record<string, { en: string; zh: string }> = {
     en: "A quick session to keep your streak going.",
     zh: "快速学习，保持连续记录。",
   },
+  "2 min setup": { en: "2 min setup", zh: "2分钟设置" },
   "2 min setup → instant vocab + examples": {
     en: "2 min setup → instant vocab + examples",
     zh: "2分钟设置 → 立即获取词汇与例句",
+  },
+  "Instant vocab + examples at your level.": {
+    en: "Instant vocab + examples at your level.",
+    zh: "即时获取适合你水平的词汇与例句。",
   },
   "Pick a topic. Learn words you'll actually use.": {
     en: "Pick a topic. Learn words you'll actually use.",
@@ -255,6 +261,14 @@ const translations: Record<string, { en: string; zh: string }> = {
 
   // Browse Topics
   "Browse Topics": { en: "Browse Topics", zh: "浏览主题" },
+  "No topic in mind? Browse topics →": {
+    en: "No topic in mind? Browse topics →",
+    zh: "还没想好主题？浏览主题 →",
+  },
+  "No topic in mind? Explore popular topics and get inspired.": {
+    en: "No topic in mind? Explore popular topics and get inspired.",
+    zh: "还没想好主题？浏览热门主题找灵感。",
+  },
   "Pick something people actually talk about → generate your Topic Island.": {
     en: "Pick something people actually talk about → generate your Topic Island.",
     zh: "选择人们实际谈论的话题 → 生成您的主题岛。",

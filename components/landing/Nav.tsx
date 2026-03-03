@@ -29,6 +29,9 @@ export default function Nav() {
           <Link href="/#topics" className="hover:text-gray-900">
             Topics
           </Link>
+          <Link href="/founder" className="hover:text-gray-900">
+            Founder
+          </Link>
           <Link href="/#faq" className="hover:text-gray-900">
             FAQ
           </Link>
@@ -93,6 +96,13 @@ export default function Nav() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Topics
+            </Link>
+            <Link 
+              href="/founder" 
+              className="text-sm text-gray-600 hover:text-gray-900"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Founder
             </Link>
             <Link 
               href="/#faq" 
