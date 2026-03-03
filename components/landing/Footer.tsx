@@ -24,6 +24,9 @@ export default function Footer() {
           <Link href="/#topics" className="hover:text-white">
             Topics
           </Link>
+          <Link href="/founder" className="hover:text-white">
+            Founder
+          </Link>
           <Link href="/login" className="hover:text-white">
             Sign in
           </Link>

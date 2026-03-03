@@ -150,7 +150,7 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* Always visible footer with settings and sign out */}
+      {/* Footer with settings and sign out */}
       <div className="border-t border-gray-200 bg-white p-6">
         {/* Chinese Mode Toggle */}
         <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">

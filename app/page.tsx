@@ -6,6 +6,7 @@ import WhyLingoIsland from "@/components/landing/WhyLingoIsland";
 import ProofDemo from "@/components/landing/ProofDemo";
 import FeatureGrid from "@/components/landing/FeatureGrid";
 import HowItWorks from "@/components/landing/HowItWorks";
+import FounderStrip from "@/components/landing/FounderStrip";
 import TopicsGrid from "@/components/landing/TopicsGrid";
 import SocialProof from "@/components/landing/SocialProof";
 import FAQ from "@/components/landing/FAQ";
@@ -94,6 +95,8 @@ export default function Home() {
       <ProofDemo />
       {/* How it works loop */}
       <HowItWorks />
+      {/* Founder strip — trust before conversion */}
+      <FounderStrip />
       {/* Feature highlights */}
       <FeatureGrid />
       {/* Browse topics */}

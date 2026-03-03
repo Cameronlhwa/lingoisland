@@ -203,3 +203,82 @@ export const LEARNER_BULLETS = [
   "Self-learners who want real sentences, not lists.",
 ];
 
+// Founder strip (landing) and full founder page — Cameron Lim
+export const FOUNDER_STRIP = {
+  headline: "Built by Cameron — YouTube Creator + Mandarin learner",
+  blurb:
+    "I built LingoIsland after getting stuck at the intermediate level. It’s designed around what works: topic-based learning + recycling, so you don’t forget everything tomorrow.",
+  metrics: [
+    { label: "120K+ subs", value: "120K+ subs" },
+    { label: "2M+ views", value: "2M+ views" },
+  ],
+  ctaLabel: "Meet Cameron",
+  ctaHref: "/founder",
+};
+
+export const FOUNDER_PAGE = {
+  hero: {
+    title: "About Cameron Lim",
+    intro:
+      "I built LingoIsland because I wanted the kind of Mandarin-learning system I couldn’t find—topic-first, level-tuned, and designed to recycle vocabulary until it actually sticks.",
+    ctaPrimary: { label: "Try LingoIsland", href: "/onboarding/topic-island" },
+    ctaSecondary: { label: "Watch on YouTube", href: "#" },
+  },
+  story: {
+    title: "My story",
+    steps: [
+      {
+        title: "Making Chinese friends",
+        body: "While attending the University of Waterloo I started making a lot of Chinese friends in class. I really wanted to connect with them, but quickly realized my Mandarin still needed work when it came to talking about certain topics and local slang. What I knew from textbooks wasn't enough for real conversation.",
+      },
+      {
+        title: "Why LingoIsland",
+        body: "That gap—between wanting to connect and actually being able to connect in Mandarin is what led me to build LingoIsland. I wanted to learn the vocabulary and expressions people really use, on the topics that come up in life and in friendship.",
+      },
+      {
+        title: "Authentic Mandarin, with help from friends",
+        body: "I got my Chinese friends involved from the start. They help make sure the site teaches authentic, actually used Mandarin — the kind you hear in real life and in casual chat, not just formal or textbook Chinese. That's the Mandarin LingoIsland is built around.",
+      },
+    ],
+  },
+  proof: {
+    title: "Me on YouTube",
+    body: "I run a study-vlog channel focused on studying smarter and staying consistent. Creating content for 120K+ subscribers taught me what actually helps people stick with it: clarity, structure, and feedback. That’s the same approach behind LingoIsland.",
+    chips: [
+      "Clear teaching, not fluff",
+      "Feedback-driven iteration",
+      "Practical systems that stick",
+    ],
+    metrics: [
+      { value: "120K+", label: "Subscribers", icon: "subscribers" },
+      { value: "2M+", label: "Views", icon: "views" },
+    ],
+    microCaption: "Built with feedback loops.",
+    ctaLabel: "Watch my videos",
+    ctaHref: "https://www.youtube.com/@cameronlim",
+  },
+  principles: {
+    title: "How I build",
+    items: [
+      { title: "Real-life topics first", line: "Vocabulary you’ll actually use—not textbook filler." },
+      { title: "Recycling beats cramming", line: "Stories and review bring words back at the right time." },
+      { title: "CEFR control and clarity", line: "You choose your level; content stays comprehensible." },
+      { title: "Sleek UI that doesn’t feel like homework", line: "Clean, focused, minimal friction." },
+      { title: "Fast iteration via feedback", line: "Ship, learn, and improve from real learners." },
+      { title: "Small daily wins", line: "Progress you can feel every day." },
+    ],
+  },
+  roadmap: {
+    title: "What’s next",
+    bullets: [
+      "More topics and better sentence variety at each level.",
+      "Stronger story generation and more review modes.",
+      "Listening and speaking features once the foundation is solid.",
+    ],
+  },
+  finalCta: {
+    title: "Start your first Topic Island",
+    subline: "Pick a topic, get level-tuned words and sentences, then close the loop with stories and review.",
+    ctaPrimary: { label: "Start your first Topic Island", href: "/onboarding/topic-island" },
+  },
+};
