@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: getCanonicalUrl("pricing"),
   },
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     title: "Pricing — Lingo Island",
     description:

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useAnalytics } from "@/lib/posthog/client";
 
 // Base CEFR levels for onboarding (simplified)
 type CEFRLevel = "A1" | "A2" | "B1" | "B2" | "C1";
@@ -86,6 +87,7 @@ function OnboardingTopicIslandContent() {
   const pathname = usePathname();
   const supabase = createClient();
   const searchParams = useSearchParams();
+  const { captureEvent } = useAnalytics();
 
   const [state, setState] = useState<WizardState>({
     step: 1,
@@ -107,6 +109,15 @@ function OnboardingTopicIslandContent() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Prefill topic from URL so it's there as soon as user reaches step 2 (and keep editable)
+  useEffect(() => {
+    const topicFromUrl = searchParams.get("topic");
+    if (topicFromUrl?.trim()) {
+      setState((prev) => ({ ...prev, topic: topicFromUrl.trim() }));
+      captureEvent("onboarding_start_from_topics", { topic: topicFromUrl.trim() });
+    }
+  }, [searchParams, captureEvent]);
 
   // Check if user is already authenticated - if so, redirect to processing page
   useEffect(() => {

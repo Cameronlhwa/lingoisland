@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { pinyin as pinyinPro } from "pinyin-pro";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useProgressIslandUpgrade, checkAndShowUpgrade } from "@/contexts/ProgressIslandUpgradeContext";
 import SpeakerButton from "@/components/app/SpeakerButton";
 
 interface Card {
@@ -24,6 +25,7 @@ export default function QuizSessionPage() {
   const sessionCardLimit = 10; // Quiz in groups of 10 cards at a time when there are enough cards
   const { convertText } = useCharacterSet();
   const { completeNudge } = useOnboarding();
+  const progressUpgrade = useProgressIslandUpgrade();
 
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -31,10 +33,17 @@ export default function QuizSessionPage() {
   const [showPinyin, setShowPinyin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [grading, setGrading] = useState(false);
+  const navTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadQueue();
   }, [quizIslandId]);
+
+  useEffect(() => {
+    return () => {
+      if (navTimeoutRef.current != null) clearTimeout(navTimeoutRef.current);
+    };
+  }, []);
 
   const isChinese = (lang: string | null | undefined) =>
     typeof lang === "string" && lang.toLowerCase().startsWith("zh");
@@ -79,18 +88,27 @@ export default function QuizSessionPage() {
     setGrading(true);
 
     try {
+      const tzOffset = new Date().getTimezoneOffset();
       const response = await fetch(
         `/api/quiz-islands/${quizIslandId}/grade`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cardId: currentCard.id, rating }),
+          body: JSON.stringify({ cardId: currentCard.id, rating, tzOffset }),
         }
       );
 
       if (!response.ok) throw new Error("Failed to grade");
 
       const result = await response.json();
+
+      let didShowUpgrade = false;
+      if (typeof result?.todayCount === "number" && progressUpgrade) {
+        didShowUpgrade = checkAndShowUpgrade(
+          result.todayCount,
+          progressUpgrade.showUpgrade
+        );
+      }
 
       // Move to next card
       if (currentIndex < cards.length - 1) {
@@ -99,7 +117,14 @@ export default function QuizSessionPage() {
       } else {
         // Quiz complete
         completeNudge("try_quiz");
-        router.push(`/app/quiz/${quizIslandId}`);
+        // If we're showing the Progress Island upgrade popup, delay navigation
+        // so the popup has time to render before leaving the page.
+        if (didShowUpgrade) {
+          const timeoutId = setTimeout(() => router.push(`/app/quiz/${quizIslandId}`), 400);
+          navTimeoutRef.current = timeoutId;
+        } else {
+          router.push(`/app/quiz/${quizIslandId}`);
+        }
       }
     } catch (error) {
       console.error("Error grading:", error);

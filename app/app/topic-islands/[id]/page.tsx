@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useGlossary } from "@/contexts/GlossaryContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
+import { useProgressIslandUpgrade, checkAndShowUpgrade } from "@/contexts/ProgressIslandUpgradeContext";
 import IslandSideChat, {
   type IslandChatSelectedWord,
 } from "@/components/IslandSideChat";
@@ -71,6 +72,7 @@ export default function TopicIslandDetailPage() {
   const islandId = params.id as string;
   const { t } = useLanguage();
   const { convertText } = useCharacterSet();
+  const progressUpgrade = useProgressIslandUpgrade();
 
   const [island, setIsland] = useState<Island | null>(null);
   const [words, setWords] = useState<Word[]>([]);
@@ -813,7 +815,22 @@ export default function TopicIslandDetailPage() {
   const handleFlashcardGrade = (correct: boolean) => {
     const currentWord = quizWords[currentQuizIndex];
     setQuizAnswers(prev => ({ ...prev, [currentWord.id]: correct }));
-    
+
+    // Record for Progress Island and show upgrade popup if milestone reached
+    const tzOffset = new Date().getTimezoneOffset();
+    fetch("/api/quiz-activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tzOffset }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data?.todayCount === "number" && progressUpgrade) {
+          checkAndShowUpgrade(data.todayCount, progressUpgrade.showUpgrade);
+        }
+      })
+      .catch(() => {});
+
     if (currentQuizIndex < quizWords.length - 1) {
       setCurrentQuizIndex(currentQuizIndex + 1);
       setShowFlashcardAnswer(false);
@@ -830,6 +847,21 @@ export default function TopicIslandDetailPage() {
     });
     setQuizAnswers(answers);
     setShowQuizResults(true);
+    if (quizWords.length > 0 && progressUpgrade) {
+      const tzOffset = new Date().getTimezoneOffset();
+      fetch("/api/quiz-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count: quizWords.length, tzOffset }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (typeof data?.todayCount === "number") {
+            checkAndShowUpgrade(data.todayCount, progressUpgrade.showUpgrade);
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   const handleResetQuiz = () => {
