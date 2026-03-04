@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useId } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 type CTAButtonCardProps = {
@@ -24,7 +24,6 @@ export default function CTAButtonCard({
 }: CTAButtonCardProps) {
   const tooltipId = useId();
   const prefersReducedMotion = useReducedMotion();
-  const isPrimary = variant === "primary";
 
   return (
     <Link href={href} className="block">
@@ -32,11 +31,7 @@ export default function CTAButtonCard({
         initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className={`flex min-h-[150px] flex-col rounded-2xl border bg-white p-6 shadow-md transition-all ${
-          isPrimary
-            ? "border-gray-300 hover:border-gray-400 hover:shadow-lg"
-            : "border-gray-300 hover:border-gray-400 hover:shadow-lg"
-        }`}
+        className="flex min-h-[150px] flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-gray-400 hover:shadow-lg"
       >
         <div className="flex items-start justify-between gap-4">
           <div>

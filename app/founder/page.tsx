@@ -25,6 +25,15 @@ export default function FounderPage() {
         {/* Hero */}
         <section className="px-6 py-16 md:px-12 md:py-24">
           <div className="mx-auto max-w-6xl">
+            <Link
+              href="/"
+              className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 rounded"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to home
+            </Link>
             <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
               <motion.div
                 initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
