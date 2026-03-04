@@ -14,6 +14,7 @@ import DailyStoryCard, {
 import CreateIslandCard from "@/components/app/CreateIslandCard";
 import { getLocalDateKey } from "@/lib/utils/date";
 import { OceanBackground } from "@/components/OceanBackground";
+import { useProgressIslandUpgrade, checkAndShowUpgrade } from "@/contexts/ProgressIslandUpgradeContext";
 import {
   buttonPrimaryClass,
   buttonSecondaryClass,
@@ -86,6 +87,7 @@ export default function HomeDashboard({
     Record<string, QuizStatsRow>
   >({});
   const [last7DaysActivity, setLast7DaysActivity] = useState<{ date: string; count: number }[]>([]);
+  const progressUpgrade = useProgressIslandUpgrade();
   const islandsScrollRef = useRef<HTMLDivElement | null>(null);
   const flashcardsScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -111,6 +113,17 @@ export default function HomeDashboard({
     loadFlashcardsSummary();
     loadTodayReviewCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Refetch today's review count when tab becomes visible so Progress Island updates after quiz sessions
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadTodayReviewCount();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, []);
 
   useEffect(() => {
@@ -410,7 +423,13 @@ export default function HomeDashboard({
   const progressImageSrc = `/progress-islands/stage-${progressStage + 1}.png`;
   const stageProgress = todayReviewCount % 10; // 0-9 within current stage
   const nextMilestone = (progressStage + 1) * 10;
-  
+
+  // When on Home, show upgrade popup if progress stage increased (e.g. after returning from quiz)
+  useEffect(() => {
+    if (islandLoading || !progressUpgrade) return;
+    checkAndShowUpgrade(todayReviewCount, progressUpgrade.showUpgrade);
+  }, [todayReviewCount, islandLoading, progressUpgrade]);
+
   // Status messages based on stage
   const islandStatus =
     progressStage >= 5
@@ -486,9 +505,10 @@ export default function HomeDashboard({
   return (
     <div className="relative min-h-screen px-4 py-6 md:px-6 md:py-8 lg:px-10">
       <OceanBackground />
+
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-4 md:gap-6">
         {/* ROW 1: Your Progress Island (full width) */}
-        <div className={`${cardBaseClass} ${cardHoverClass} p-3 md:p-4`}>
+        <div id="progress-island-card" className={`${cardBaseClass} ${cardHoverClass} p-3 md:p-4`}>
           <div className="mb-2 flex items-start justify-between gap-4">
             <div className="flex-1">
               <h2 className="text-xl md:text-2xl font-semibold text-slate-900">

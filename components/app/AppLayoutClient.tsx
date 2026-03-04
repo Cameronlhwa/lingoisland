@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import Sidebar from "@/components/app/Sidebar";
 import AppLogo from "@/components/app/AppLogo";
 import { OnboardingProvider, useOnboarding } from "@/contexts/OnboardingContext";
+import { ProgressIslandUpgradeProvider } from "@/contexts/ProgressIslandUpgradeContext";
 import OnboardingNudgeCard from "@/components/Onboarding/OnboardingNudgeCard";
+import ProgressIslandUpgradePopup from "@/components/app/ProgressIslandUpgradePopup";
 import type { EntrySource } from "@/types/onboarding";
 
 // Create a context for sidebar state
@@ -119,8 +121,14 @@ export default function AppLayoutClient({
   );
 
   return (
-    <OnboardingProvider>
-      <SidebarContext.Provider value={sidebarContextValue}>
+    <ProgressIslandUpgradeProvider
+      PopupSlot={({ show, stage, onClose }) => (
+        <ProgressIslandUpgradePopup show={show} stage={stage} onClose={onClose} />
+      )}
+    >
+      {/* Progress Island upgrade modal: global across all app pages; auto-appears when quiz or topic-island actions hit a 10-review milestone */}
+      <OnboardingProvider>
+        <SidebarContext.Provider value={sidebarContextValue}>
         <OnboardingBootstrap />
         <div className="min-h-screen bg-white">
           {/* Mobile Header with Menu Button */}
@@ -165,7 +173,8 @@ export default function AppLayoutClient({
           </main>
           <PersistentSettingsNudge />
         </div>
-      </SidebarContext.Provider>
-    </OnboardingProvider>
+        </SidebarContext.Provider>
+      </OnboardingProvider>
+    </ProgressIslandUpgradeProvider>
   );
 }

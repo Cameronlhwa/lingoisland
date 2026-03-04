@@ -218,10 +218,13 @@ export default function QuizIslandDetailPage() {
               </h2>
               <button
                 onClick={() => router.push(`/app/quiz/${quizIslandId}/session`)}
-                className="mb-4 w-full rounded-lg border border-gray-900 bg-gray-900 px-6 py-4 text-center text-base font-medium text-white transition-colors hover:bg-gray-800"
+                className="mb-2 w-full rounded-lg border border-gray-900 bg-gray-900 px-6 py-4 text-center text-base font-medium text-white transition-colors hover:bg-gray-800"
               >
                 Start Quiz
               </button>
+              <p className="mb-4 text-sm text-gray-500">
+                Reviews here count toward your Progress Island on Home — every 10 cards levels up the island.
+              </p>
               <div className="mt-4 flex gap-3">
                 <Link
                   href={`/app/quiz/${quizIslandId}/add`}

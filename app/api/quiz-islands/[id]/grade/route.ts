@@ -34,8 +34,8 @@ export async function POST(
       )
     }
 
-    const body = await request.json()
-    const { cardId, rating } = body
+    const body = await request.json().catch(() => ({}))
+    const { cardId, rating, tzOffset } = body
 
     if (!cardId || typeof cardId !== 'string') {
       return NextResponse.json(
@@ -77,7 +77,21 @@ export async function POST(
       console.error('Error logging quiz activity:', activityError)
     }
 
-    return NextResponse.json({ success: true, reviewState: data })
+    // Return today's review count so client can show Progress Island upgrade popup
+    let todayCount = 0
+    const tzOffsetMinutes = typeof tzOffset === 'number' ? tzOffset : new Date().getTimezoneOffset()
+    const now = new Date()
+    const startUtcMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - tzOffsetMinutes * 60 * 1000
+    const endUtcMs = startUtcMs + 24 * 60 * 60 * 1000
+    const start = new Date(startUtcMs)
+    const end = new Date(endUtcMs)
+    const [qRes, tRes] = await Promise.all([
+      supabase.from('quiz_activity_events').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('reviewed_at', start.toISOString()).lt('reviewed_at', end.toISOString()),
+      supabase.from('topic_island_review_events').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('reviewed_at', start.toISOString()).lt('reviewed_at', end.toISOString()),
+    ])
+    todayCount = (qRes.count ?? 0) + (tRes.count ?? 0)
+
+    return NextResponse.json({ success: true, reviewState: data, todayCount })
   } catch (error) {
     console.error('Error in POST /api/quiz-islands/[id]/grade:', error)
     return NextResponse.json(

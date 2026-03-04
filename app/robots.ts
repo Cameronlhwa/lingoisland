@@ -2,9 +2,23 @@ import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/utils/site-url";
 
 /**
- * Only truly private paths are disallowed so crawlers never waste budget on API/app/auth.
- * We do NOT disallow /login or /onboarding/ so Google can crawl them, discover the noindex
- * directive, and avoid indexing those thin pages without blocking discovery.
+ * SEO crawl/indexing rules (must align with sitemap and page-level meta robots).
+ *
+ * ALLOW (crawlable):
+ *   - /         Home, indexable
+ *   - /pricing  Indexable
+ *   - /founder  Indexable
+ *   - /topics   Indexable hub
+ *   - /topics/[slug]  Indexable when page has full content; noindex set in metadata otherwise
+ *   - /login    Crawlable but noindex (thin)
+ *   - /onboarding/*   Crawlable but noindex (thin)
+ *
+ * DISALLOW (do not crawl):
+ *   - /api/     Backend only
+ *   - /app/     Logged-in app (noindex,nofollow in layout)
+ *   - /auth/     OAuth callbacks, not useful to index
+ *
+ * Sitemap lists only indexable URLs; no URL in sitemap is disallowed or noindex.
  */
 export default function robots(): MetadataRoute.Robots {
   const siteUrl = getSiteUrl();

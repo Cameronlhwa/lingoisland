@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { TOPIC_TILES } from "@/lib/landing-content";
 import TopicTile from "./TopicTile";
 import { motion, useReducedMotion } from "framer-motion";
@@ -29,6 +30,20 @@ export default function TopicsGrid() {
             <TopicTile key={topic.slug} topic={topic} />
           ))}
         </div>
+        <motion.div
+          initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.4 }}
+          className="mt-10 text-center"
+        >
+          <Link
+            href="/topics"
+            className="inline-flex rounded-lg border-2 border-gray-900 bg-white px-6 py-3 font-semibold text-gray-900 transition-colors hover:bg-gray-50"
+          >
+            View more topics
+          </Link>
+        </motion.div>
       </div>
     </section>
   );

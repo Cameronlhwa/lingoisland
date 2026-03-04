@@ -163,6 +163,19 @@ const translations: Record<string, { en: string; zh: string }> = {
     en: "The island is dry with no resources",
     zh: "岛屿干涸，没有资源",
   },
+  "Your Progress Island leveled up!": {
+    en: "Your Progress Island leveled up!",
+    zh: "你的进度岛升级了！",
+  },
+  Stage: { en: "Stage", zh: "阶段" },
+  "华华 is waiting for you!": {
+    en: "华华 is waiting for you!",
+    zh: "华华在等你哦！",
+  },
+  "Click to see 华华!": {
+    en: "Click to see 华华!",
+    zh: "点击去看华华！",
+  },
   "Creating your topic island...": {
     en: "Creating your topic island...",
     zh: "正在创建你的主题岛...",
