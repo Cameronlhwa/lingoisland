@@ -72,6 +72,27 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Google tag (gtag.js) — single installation for Google Ads. Load in head with beforeInteractive
+            so Google Ads "Test installation" and Tag Assistant detect it reliably.
+            Purchase conversion is URL-based (page load on .../app?checkout=success); no gtag('event') needed.
+            Verify: Tag Assistant in incognito on lingoisland.com/app; Google Ads "Test installation" after deploy.
+            In Google Ads → Purchase conversion → Count: set to "One" (not "Every conversion") to avoid double-count on refresh. */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+          strategy="beforeInteractive"
+        />
+        <Script
+          id="gtag-config"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GOOGLE_ADS_ID}');
+            `,
+          }}
+        />
         {/* Inline script to catch OAuth redirects immediately, before React hydrates */}
         <script
           dangerouslySetInnerHTML={{
@@ -119,26 +140,6 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        {/* Google tag (gtag.js) — site-wide, single installation for Google Ads.
-            Purchase conversion is URL-based (Page load: .../app?checkout=success); no event snippet.
-            In Google Ads set Count to "One" to avoid double-counting on refresh.
-            Verify after deploy: Google Ads "Test installation" or Tag Assistant. */}
-        <Script
-          id="gtag-config"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${GOOGLE_ADS_ID}');
-            `,
-          }}
-        />
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
-          strategy="afterInteractive"
-        />
         <PostHogProvider>
           <PostHogPageView />
           <TTSProvider>{children}</TTSProvider>
