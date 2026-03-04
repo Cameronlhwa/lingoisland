@@ -10,12 +10,12 @@ export default function Hero() {
     <section className="px-6 py-12 md:px-12 md:py-16">
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
-          {/* Left: Headline — translucent panel for readability over ocean */}
+          {/* Left: Headline — solid panel for clear readability */}
           <motion.div
             initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex max-w-xl flex-col justify-center rounded-2xl bg-white/90 px-6 py-6 shadow-sm backdrop-blur-sm md:bg-white/85 md:px-8 md:py-8"
+            className="flex max-w-xl flex-col justify-center rounded-2xl bg-white px-6 py-6 shadow-md md:px-8 md:py-8"
           >
             <h1 className="mb-5 text-4xl leading-tight tracking-tight md:text-5xl lg:text-6xl">
               <span className="font-serif italic text-gray-500">Learn</span>{" "}
@@ -38,7 +38,7 @@ export default function Hero() {
               href="/onboarding/topic-island"
               title="Create a Topic Island"
               microcopy={[
-                "Build vocabulary around topics that interest you. 10-20 words and conversational examples, each with hanzi, pinyin, audio, and translations.",
+                "Build vocabulary around topics that interest you. 10-20 words and conversational examples, each with Hanzi, Pinyin, audio, and translations.",
               ]}
               tooltip={{
                 label: "What's a Topic Island?",

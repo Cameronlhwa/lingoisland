@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import { TTSProvider } from "@/contexts/TTSContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { PostHogPageView } from "@/components/PostHogPageView";
+
+const GOOGLE_ADS_ID = "AW-17988323365";
 
 const siteUrl = getSiteUrl();
 
@@ -116,6 +119,26 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        {/* Google tag (gtag.js) — site-wide, single installation for Google Ads.
+            Purchase conversion is URL-based (Page load: .../app?checkout=success); no event snippet.
+            In Google Ads set Count to "One" to avoid double-counting on refresh.
+            Verify after deploy: Google Ads "Test installation" or Tag Assistant. */}
+        <Script
+          id="gtag-config"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GOOGLE_ADS_ID}');
+            `,
+          }}
+        />
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+          strategy="afterInteractive"
+        />
         <PostHogProvider>
           <PostHogPageView />
           <TTSProvider>{children}</TTSProvider>

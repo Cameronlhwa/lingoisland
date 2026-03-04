@@ -205,9 +205,9 @@ export const LEARNER_BULLETS = [
 
 // Founder strip (landing) and full founder page — Cameron Lim
 export const FOUNDER_STRIP = {
-  headline: "Built by Cameron — YouTube Creator + Mandarin learner",
+  headline: "Built by Cameron — YouTube Creator + Mandarin Learner",
   blurb:
-    "I built LingoIsland after getting stuck at the intermediate level. It’s designed around what works: topic-based learning + recycling, so you don’t forget everything tomorrow.",
+    "It’s designed around what works: Topics that you care about + Reinforcement, so that learning is practical and actually sticks!",
   metrics: [
     { label: "120K+ subs", value: "120K+ subs" },
     { label: "2M+ views", value: "2M+ views" },
@@ -220,7 +220,7 @@ export const FOUNDER_PAGE = {
   hero: {
     title: "About Cameron Lim",
     intro:
-      "I built LingoIsland because I wanted the kind of Mandarin-learning system I couldn’t find—topic-first, level-tuned, and designed to recycle vocabulary until it actually sticks.",
+      "I built LingoIsland because I wanted the kind of Mandarin-learning system I couldn’t find elsewhere—topic-first, level-tuned, and designed to recycle vocabulary until it actually sticks.",
     ctaPrimary: { label: "Try LingoIsland", href: "/onboarding/topic-island" },
     ctaSecondary: { label: "Watch on YouTube", href: "#" },
   },
