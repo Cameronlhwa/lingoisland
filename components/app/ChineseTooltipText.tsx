@@ -86,7 +86,7 @@ function toneMarks(pinyin: string): string {
 // Unicode code-point helper for the "not found" fallback
 // ---------------------------------------------------------------------------
 function toCodePoints(s: string): string {
-  return [...s]
+  return Array.from(s)
     .map(
       (c) => `U+${c.codePointAt(0)!.toString(16).toUpperCase().padStart(4, "0")}`,
     )
@@ -231,7 +231,7 @@ function loadMods(): Promise<Mods> {
           if (direct) return direct;
 
           // Step 3: multi-char word — try each character individually
-          if ([...word].length > 1) {
+          if (Array.from(word).length > 1) {
             for (const char of word) {
               if (!isChinese(char)) continue;
               const charEntry = cedictBest(cedict, char);
