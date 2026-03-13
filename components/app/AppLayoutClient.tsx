@@ -165,9 +165,23 @@ export default function AppLayoutClient({
 
   useEffect(() => {
     setMounted(true);
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setIsAnonymous(user?.is_anonymous ?? false);
+
+    // Read initial session synchronously from cookies (no network call)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAnonymous(session?.user?.is_anonymous ?? false);
     });
+
+    // Subscribe to auth state changes so is_anonymous updates in real-time:
+    //  - after linkIdentity (OAuth) completes and session is refreshed
+    //  - after email verification
+    //  - after sign-out
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAnonymous(session?.user?.is_anonymous ?? false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const openSignupModal = useCallback((feature = "") => {

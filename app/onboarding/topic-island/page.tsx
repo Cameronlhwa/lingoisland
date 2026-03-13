@@ -127,13 +127,16 @@ function OnboardingTopicIslandContent() {
 
     setCheckingAuth(false);
 
-    // If user is authenticated and has a pending request, redirect to topic-islands
-    // page where it will be processed and redirected to the island detail page
     if (user) {
       const pendingRequest = localStorage.getItem(STORAGE_KEY);
       if (pendingRequest) {
+        // Has a pending island request — process it
         router.replace("/app/topic-islands/loading");
+      } else if (!user.is_anonymous) {
+        // Authenticated permanent user with nothing pending — go straight to the app
+        router.replace("/app");
       }
+      // Anonymous user with no pending request: stay on the page so they can start
     }
   };
 
@@ -206,19 +209,24 @@ function OnboardingTopicIslandContent() {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingRequest));
 
-    const { error } = await supabase.auth.signInAnonymously();
+    // Check if already authenticated (anonymous or permanent) — skip signInAnonymously
+    const { data: { user: existingUser } } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error("Error signing in anonymously:", error);
-      // 422 usually means Anonymous sign-in is disabled in Supabase (Auth → Providers → Anonymous)
-      const is422 = (error as { status?: number }).status === 422;
-      setLevelError(
-        is422
-          ? "Try without account isn’t available right now. Please sign up with Google or email to continue."
-          : "Something went wrong. Please try again."
-      );
-      setLevelSubmitting(false);
-      return;
+    if (!existingUser) {
+      // Not signed in at all — create an anonymous session
+      const { error } = await supabase.auth.signInAnonymously();
+      if (error) {
+        console.error("Error signing in anonymously:", error);
+        // 422 means Anonymous sign-in is disabled in Supabase (Auth → Providers → Anonymous)
+        const is422 = (error as { status?: number }).status === 422;
+        setLevelError(
+          is422
+            ? "Try without account isn’t available right now. Please sign up with Google or email to continue."
+            : "Something went wrong. Please try again."
+        );
+        setLevelSubmitting(false);
+        return;
+      }
     }
 
     // Full page navigation so session cookies are sent and server layout sees the user
