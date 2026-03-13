@@ -14,6 +14,7 @@ import IslandSideChat, {
   type IslandChatSelectedWord,
 } from "@/components/IslandSideChat";
 import SpeakerButton from "@/components/app/SpeakerButton";
+import ChineseTooltipText from "@/components/app/ChineseTooltipText";
 import AccountModal from "@/components/app/AccountModal";
 import UpgradeModal from "@/components/app/UpgradeModal";
 import AddAllWordsModal from "@/components/app/AddAllWordsModal";
@@ -1139,9 +1140,10 @@ export default function TopicIslandDetailPage() {
                                 </div>
                                 <div className="flex items-start gap-2">
                                   <div className="flex-1">
-                                    <div className="mb-1 text-base text-gray-900">
-                                      {convertText(warmupExample.hanzi)}
-                                    </div>
+                                    <ChineseTooltipText
+                                      text={warmupExample.hanzi}
+                                      className="mb-1 block text-base text-gray-900"
+                                    />
                                     <div className="mb-0.5 text-sm text-gray-600">
                                       {warmupExample.pinyin}
                                     </div>
@@ -1166,9 +1168,10 @@ export default function TopicIslandDetailPage() {
                                 </div>
                                 <div className="flex items-start gap-2">
                                   <div className="flex-1">
-                                    <div className="mb-1 text-base text-gray-900">
-                                      {convertText(targetExample.hanzi)}
-                                    </div>
+                                    <ChineseTooltipText
+                                      text={targetExample.hanzi}
+                                      className="mb-1 block text-base text-gray-900"
+                                    />
                                     <div className="mb-0.5 text-sm text-gray-600">
                                       {targetExample.pinyin}
                                     </div>
@@ -1469,9 +1472,10 @@ export default function TopicIslandDetailPage() {
                                         {sentence.tier}
                                       </div>
                                       <div className="mb-1 flex items-center gap-2">
-                                        <div className="text-base font-medium text-gray-900">
-                                          {convertText(sentence.hanzi)}
-                                        </div>
+                                        <ChineseTooltipText
+                                          text={sentence.hanzi}
+                                          className="text-base font-medium text-gray-900"
+                                        />
                                         <SpeakerButton
                                           text={sentence.hanzi}
                                           type="sentence"

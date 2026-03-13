@@ -8,6 +8,7 @@ import StorySideChat from "@/components/stories/StorySideChat";
 import type { IslandChatSelectedWord } from "@/components/IslandSideChat";
 import { pinyin } from "pinyin-pro";
 import SpeakerButton from "@/components/app/SpeakerButton";
+import ChineseTooltipText from "@/components/app/ChineseTooltipText";
 
 export type StoryDetail = {
   id: string;
@@ -562,7 +563,7 @@ export default function StoryReader({
                   </div>
                 ) : (
                   <div className="text-2xl leading-relaxed text-gray-900">
-                    {convertText(story.story_zh)}
+                    <ChineseTooltipText text={story.story_zh} />
                   </div>
                 )}
                 {showEnglish && (storyEnglish || story.story_en) ? (
