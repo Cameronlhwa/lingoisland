@@ -29,6 +29,12 @@ function LoginPageContent() {
         case "oauth_expired":
           setErrorMessage("OAuth session expired. Please sign in again.");
           break;
+        case "identity_exists":
+          setErrorMessage("That Google account is already linked to an existing account. Sign in below.");
+          break;
+        case "oauth_failed":
+          setErrorMessage("Sign-in failed. Please try again.");
+          break;
         case "verification_failed":
           setErrorMessage("Verification failed. Please try again.");
           break;
@@ -164,8 +170,12 @@ function LoginPageContent() {
       }
 
       const nextFromQuery = searchParams.get("next");
-      const nextPath =
-        nextFromQuery && nextFromQuery.startsWith("/") ? nextFromQuery : "/app";
+      // Sanitize: never redirect back to /login or /onboarding (same rule as auth callback)
+      const isUnsafe = !nextFromQuery ||
+        !nextFromQuery.startsWith("/") ||
+        nextFromQuery === "/login" ||
+        nextFromQuery.startsWith("/onboarding");
+      const nextPath = isUnsafe ? "/app" : nextFromQuery;
       router.push(nextPath);
     } finally {
       setIsSubmitting(false);

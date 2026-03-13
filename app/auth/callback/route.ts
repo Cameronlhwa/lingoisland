@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const error_code = requestUrl.searchParams.get('error_code')
   const error_description = requestUrl.searchParams.get('error_description')
   
-  // Log OAuth errors for debugging
+  // Log OAuth errors for debugging and return early — never fall through to code exchange
   if (error) {
     console.error('[AUTH CALLBACK] OAuth error received:', {
       error,
@@ -32,17 +32,17 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
       url: requestUrl.href,
     })
-    
-    // Handle flow_state_not_found specifically - this often means the user's session expired during OAuth
+    const origin = getOriginFromRequest(request)
     if (error_code === 'flow_state_not_found') {
-      console.error('[AUTH CALLBACK] Flow state not found - user may need to retry login. This can happen if:')
-      console.error('  1. User took too long during OAuth flow (session expired)')
-      console.error('  2. Browser cookies were cleared during OAuth')
-      console.error('  3. User clicked back/forward during OAuth')
-      const origin = getOriginFromRequest(request)
-      const loginUrl = new URL('/login?error=oauth_expired', origin)
-      return NextResponse.redirect(loginUrl)
+      console.error('[AUTH CALLBACK] Flow state not found - session expired or cookies cleared during OAuth')
+      return NextResponse.redirect(new URL('/login?error=oauth_expired', origin))
     }
+    if (error_code === 'identity_already_exists') {
+      // User's Google account is already a separate Supabase user — send them to sign-in directly
+      return NextResponse.redirect(new URL('/login?error=identity_exists', origin))
+    }
+    // Any other OAuth error: redirect to login with a generic message
+    return NextResponse.redirect(new URL('/login?error=oauth_failed', origin))
   }
   
   // Try to get 'next' from cookie first (stored before OAuth), then from URL, then default
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
     }
   )
 
-  // Handle OAuth code exchange (Google login)
+  // Handle OAuth code exchange (Google login / linkIdentity)
   if (code) {
     // Exchange code for session
     const { error } = await supabase.auth.exchangeCodeForSession(code)
@@ -111,6 +111,10 @@ export async function GET(request: NextRequest) {
       const errorUrl = new URL('/login?error=auth_failed', origin)
       return NextResponse.redirect(errorUrl)
     }
+
+    // Refresh the session so that is_anonymous is updated to false after linkIdentity.
+    // Without this, the JWT may still carry is_anonymous:true until the next token refresh.
+    await supabase.auth.refreshSession()
 
     // Get the user
     const {
