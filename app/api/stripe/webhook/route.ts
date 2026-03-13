@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
+import { captureServerEvent } from "@/lib/posthog/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -246,6 +247,20 @@ export async function POST(request: Request) {
 
         console.log("[STRIPE WEBHOOK] Resolved user ID:", userId);
         await upsertActiveSubscription(userId, subscription);
+
+        // Track checkout completion in PostHog
+        const interval = subscription.items.data[0]?.price?.recurring?.interval ?? "unknown";
+        captureServerEvent({
+          distinctId: userId,
+          event: "checkout_completed",
+          properties: {
+            subscription_id: subscription.id,
+            interval,
+            amount: session.amount_total ? session.amount_total / 100 : undefined,
+            currency: session.currency ?? undefined,
+          },
+        }).catch(() => {});
+
         break;
       }
       case "customer.subscription.updated": {

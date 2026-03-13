@@ -46,8 +46,14 @@ function LoginPageContent() {
     const { origin, redirectTo, cookieOptions } = getOAuthRedirectConfig();
 
     // Store the next path separately (will be read from cookie in callback)
-    // Don't redirect back to /login - default to /app instead
-    const nextPath = pathname && pathname !== "/login" ? pathname : "/app";
+    // Prefer ?next= query (e.g. from onboarding), then pathname, else /app
+    const nextFromQuery = searchParams.get("next");
+    const nextPath =
+      nextFromQuery && nextFromQuery.startsWith("/")
+        ? nextFromQuery
+        : pathname && pathname !== "/login"
+          ? pathname
+          : "/app";
     localStorage.setItem("oauth_next", nextPath);
     document.cookie = `oauth_next=${nextPath}; ${cookieOptions}`;
 
@@ -157,7 +163,10 @@ function LoginPageContent() {
         return;
       }
 
-      router.push("/app");
+      const nextFromQuery = searchParams.get("next");
+      const nextPath =
+        nextFromQuery && nextFromQuery.startsWith("/") ? nextFromQuery : "/app";
+      router.push(nextPath);
     } finally {
       setIsSubmitting(false);
     }

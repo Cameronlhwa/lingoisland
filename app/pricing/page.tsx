@@ -1,16 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useAnalytics } from "@/lib/posthog/client";
 
 type Interval = "monthly" | "yearly";
 
 export default function PricingPage() {
   const [loading, setLoading] = useState<Interval | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { captureEvent } = useAnalytics();
 
   const startCheckout = async (interval: Interval) => {
     setLoading(interval);
     setError(null);
+    captureEvent("checkout_initiated", { interval, location: "pricing_page" });
     try {
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",

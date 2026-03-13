@@ -37,12 +37,12 @@ export function checkAndShowUpgrade(
   const dateKey = new Date().toISOString().split("T")[0];
   const storageKey = `${STORAGE_KEY}_${dateKey}`;
   const lastSeenRaw = sessionStorage.getItem(storageKey);
-  const lastSeen = lastSeenRaw !== null ? parseInt(lastSeenRaw, 10) : null;
-  const stage = Math.min(5, Math.floor(todayCount / 10));
-  if (lastSeen === null) {
-    sessionStorage.setItem(storageKey, String(stage));
-    return false;
+  // Use -1 as the "never seen" sentinel so any stage >= 1 triggers the popup
+  const lastSeen = lastSeenRaw !== null ? parseInt(lastSeenRaw, 10) : -1;
+  if (lastSeenRaw === null) {
+    sessionStorage.setItem(storageKey, "-1");
   }
+  const stage = Math.min(5, Math.floor(todayCount / 10));
   if (stage > lastSeen && stage >= 1) {
     sessionStorage.setItem(storageKey, String(stage));
     showUpgrade(stage + 1); // display 1–6
@@ -74,9 +74,13 @@ export function ProgressIslandUpgradeProvider({
 
   const onClose = useCallback(() => {
     setShow(false);
-    const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+    if (typeof window === "undefined") return;
+    const pathname = window.location.pathname;
     if (pathname === "/app" || pathname === "/app/") {
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       document.getElementById("progress-island-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.location.href = "/app";
     }
   }, []);
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import { useAnalytics } from "@/lib/posthog/client";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -22,6 +23,7 @@ export default function UpgradeModal({
   feature,
 }: UpgradeModalProps) {
   const router = useRouter();
+  const { captureEvent } = useAnalytics();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("monthly");
   const [checkoutLoading, setCheckoutLoading] = useState<"monthly" | "yearly" | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -55,6 +57,7 @@ export default function UpgradeModal({
   const startCheckout = async (interval: "monthly" | "yearly") => {
     if (checkoutLoading) return;
     setCheckoutLoading(interval);
+    captureEvent("checkout_initiated", { interval, location: "upgrade_modal", feature: feature ?? undefined });
     try {
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",

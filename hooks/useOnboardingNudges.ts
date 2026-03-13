@@ -26,7 +26,7 @@ const NUDGE_COPY: Record<
   },
   try_flashcards: {
     title: "Meet your study buddy",
-    body: "Your capybara island upgrades every 10 cards you review! Create a quiz from your topic island words to start.",
+    body: "华华, your capybara pet, gets a life improvement every 10 cards you review through quizzes! Create a quiz from your topic island words to start.",
     cta: "Create quiz",
     ctaHref: "/app/quiz",
   },

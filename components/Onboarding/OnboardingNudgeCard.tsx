@@ -21,6 +21,7 @@ export default function OnboardingNudgeCard({
     if (onCtaClick) {
       e.preventDefault();
       onCtaClick();
+      return; // Don't advance to the next card when intercepted (e.g. opening signup modal)
     }
     onComplete();
   };

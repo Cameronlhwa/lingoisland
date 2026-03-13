@@ -14,7 +14,11 @@ import DailyStoryCard, {
 import CreateIslandCard from "@/components/app/CreateIslandCard";
 import { getLocalDateKey } from "@/lib/utils/date";
 import { OceanBackground } from "@/components/OceanBackground";
-import { useProgressIslandUpgrade, checkAndShowUpgrade } from "@/contexts/ProgressIslandUpgradeContext";
+import {
+  useProgressIslandUpgrade,
+  checkAndShowUpgrade,
+} from "@/contexts/ProgressIslandUpgradeContext";
+import { useSidebar } from "@/components/app/AppLayoutClient";
 import {
   buttonPrimaryClass,
   buttonSecondaryClass,
@@ -72,8 +76,6 @@ export default function HomeDashboard({
   const { convertText } = useCharacterSet();
   const [topicIslands, setTopicIslands] = useState<TopicIsland[]>([]);
   const [loading, setLoading] = useState(true);
-  const [processingPendingRequest, setProcessingPendingRequest] =
-    useState(false);
   const [dailyStoryLocal, setDailyStoryLocal] =
     useState<DailyStorySummary | null>(dailyStory);
   const [dailyLoading, setDailyLoading] = useState(false);
@@ -86,8 +88,11 @@ export default function HomeDashboard({
   const [quizStatsByIsland, setQuizStatsByIsland] = useState<
     Record<string, QuizStatsRow>
   >({});
-  const [last7DaysActivity, setLast7DaysActivity] = useState<{ date: string; count: number }[]>([]);
+  const [last7DaysActivity, setLast7DaysActivity] = useState<
+    { date: string; count: number }[]
+  >([]);
   const progressUpgrade = useProgressIslandUpgrade();
+  const { isAnonymous, openSignupModal } = useSidebar();
   const islandsScrollRef = useRef<HTMLDivElement | null>(null);
   const flashcardsScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -96,20 +101,13 @@ export default function HomeDashboard({
   }, [dailyStory]);
 
   useEffect(() => {
-    // Check for pending request first, before loading islands
+    // If there's a pending island request, defer to the dedicated loading page
     const pendingRequestStr = localStorage.getItem(STORAGE_KEY);
-    const params = new URLSearchParams(window.location.search);
-    const islandParam = params.get("island");
-    if (islandParam) {
-      // Keep for compatibility with existing links, even if not used directly.
-      params.delete("island");
-    }
     if (pendingRequestStr) {
-      setProcessingPendingRequest(true);
-      handlePendingRequest();
-    } else {
-      loadTopicIslands();
+      router.replace("/app/topic-islands/loading");
+      return;
     }
+    loadTopicIslands();
     loadFlashcardsSummary();
     loadTodayReviewCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,7 +121,8 @@ export default function HomeDashboard({
       }
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange);
   }, []);
 
   useEffect(() => {
@@ -221,7 +220,7 @@ export default function HomeDashboard({
           }
           const row = Array.isArray(data) ? data[0] : data;
           return [island.id, (row as QuizStatsRow) || null] as const;
-        })
+        }),
       );
       const next: Record<string, QuizStatsRow> = {};
       results.forEach(([id, stats]) => {
@@ -243,7 +242,7 @@ export default function HomeDashboard({
       const month = now.getMonth() + 1;
       const response = await fetch(
         `/api/quiz-activity?year=${year}&month=${month}&tzOffset=${tzOffset}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
       if (!response.ok) {
         setTodayReviewCount(0);
@@ -253,21 +252,23 @@ export default function HomeDashboard({
       const data = await response.json();
       const todayKey = getLocalDateKey();
       const todayEntry = (data.activity || []).find(
-        (entry: { date: string; count: number }) => entry.date === todayKey
+        (entry: { date: string; count: number }) => entry.date === todayKey,
       );
       setTodayReviewCount(todayEntry?.count ?? 0);
 
       // Get last 7 days of activity
       const activityMap = new Map<string, number>();
-      (data.activity || []).forEach((entry: { date: string; count: number }) => {
-        activityMap.set(entry.date, entry.count);
-      });
+      (data.activity || []).forEach(
+        (entry: { date: string; count: number }) => {
+          activityMap.set(entry.date, entry.count);
+        },
+      );
 
       const last7Days: { date: string; count: number }[] = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
-        const dateKey = date.toISOString().split('T')[0];
+        const dateKey = date.toISOString().split("T")[0];
         last7Days.push({
           date: dateKey,
           count: activityMap.get(dateKey) || 0,
@@ -283,116 +284,13 @@ export default function HomeDashboard({
     }
   };
 
-  const handlePendingRequest = async () => {
-    // Check for pending topic island request from onboarding
-    const pendingRequestStr = localStorage.getItem(STORAGE_KEY);
-    if (!pendingRequestStr) {
-      setProcessingPendingRequest(false);
-      loadTopicIslands();
-      return;
-    }
-
-    try {
-      const pendingRequest = JSON.parse(pendingRequestStr);
-
-      // Skip if already processing
-      if (pendingRequest.processing) {
-        setProcessingPendingRequest(false);
-        loadTopicIslands();
-        return;
-      }
-
-      // Mark as processing immediately to avoid duplicate handling in rare re-mount cases
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ ...pendingRequest, processing: true })
-      );
-
-      // Get current user
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        console.error("[APP PAGE] Error getting user:", userError);
-        setProcessingPendingRequest(false);
-        loadTopicIslands();
-        return;
-      }
-
-      // Update user profile with CEFR level if provided
-      if (pendingRequest.cefrLevel) {
-        await supabase
-          .from("user_profiles")
-          .update({ cefr_level: pendingRequest.cefrLevel })
-          .eq("user_id", user.id);
-      }
-
-      // Create topic island via API
-      const grammarTarget =
-        pendingRequest.wantsGrammar && pendingRequest.grammarCount
-          ? pendingRequest.grammarCount
-          : 0;
-
-      const createResponse = await fetch("/api/topic-islands", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topic: pendingRequest.topic,
-          level: pendingRequest.cefrLevel || "B1",
-          wordTarget: pendingRequest.wordCount,
-          grammarTarget,
-        }),
-      });
-
-      if (!createResponse.ok) {
-        const errorData = await createResponse.json().catch(() => ({}));
-        throw new Error(
-          errorData.error ||
-            errorData.details ||
-            "Failed to create topic island"
-        );
-      }
-
-      const { islandId } = await createResponse.json();
-
-      if (!islandId) {
-        throw new Error("No island ID returned from API");
-      }
-
-      // Clear pending request before redirecting
-      localStorage.removeItem(STORAGE_KEY);
-
-      // Start generation in the background (fire-and-forget).
-      // The island detail page will show a loading state while content is generated.
-      fetch(`/api/topic-islands/${islandId}/generate-batch`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ batchSize: 5 }),
-      }).catch((err) =>
-        console.error("Error starting topic island generation:", err)
-      );
-      // Image generation disabled - using pre-generated library images for cost savings
-
-      // Redirect to island detail page using replace to avoid adding to history
-      router.replace(`/app/topic-islands/${islandId}`);
-    } catch (error) {
-      console.error("Error handling pending request:", error);
-      // Clear the pending request on error to avoid infinite loops
-      localStorage.removeItem(STORAGE_KEY);
-      setProcessingPendingRequest(false);
-      loadTopicIslands();
-    }
-  };
-
   const showFlashcardsPanel = !flashcardsLoading;
   const deckCards = useMemo<FlashcardDeckCard[]>(() => {
     if (flashcardsLoading) return [];
 
     const buildCard = (
       deck: QuizIslandSummary,
-      index: number
+      index: number,
     ): FlashcardDeckCard => {
       const stats = quizStatsByIsland[deck.id];
       const dueCount = (stats?.forgot_count ?? 0) + (stats?.hard_count ?? 0);
@@ -401,10 +299,14 @@ export default function HomeDashboard({
         100,
         totalCount > 0
           ? Math.round(((totalCount - dueCount) / totalCount) * 100)
-          : 0
+          : 0,
       );
       const statusLabel =
-        dueCount > 8 ? convertText(t("Review")) : dueCount > 4 ? convertText(t("Practice")) : convertText(t("New"));
+        dueCount > 8
+          ? convertText(t("Review"))
+          : dueCount > 4
+            ? convertText(t("Practice"))
+            : convertText(t("New"));
 
       return {
         ...deck,
@@ -417,7 +319,7 @@ export default function HomeDashboard({
 
     return flashcardDecks.map(buildCard);
   }, [flashcardsLoading, flashcardDecks, quizStatsByIsland, t, convertText]);
-  
+
   // Progress island calculation - every 10 reviews = next stage (0-5 index for stages 1-6)
   const progressStage = Math.min(5, Math.floor(todayReviewCount / 10));
   const progressImageSrc = `/progress-islands/stage-${progressStage + 1}.png`;
@@ -430,21 +332,41 @@ export default function HomeDashboard({
     checkAndShowUpgrade(todayReviewCount, progressUpgrade.showUpgrade);
   }, [todayReviewCount, islandLoading, progressUpgrade]);
 
-  // Status messages based on stage
+  // Status messages based on stage — each tied to what's visible in the stage image
+  const cardsToNext = 10 - stageProgress;
+  const cardWord = cardsToNext === 1 ? "card" : "cards";
   const islandStatus =
     progressStage >= 5
-      ? convertText(t("The ultimate magnificent island paradise!"))
+      ? convertText(
+          t(
+            "华华 made it — mansion, BYD, and a skyline. He'd like to personally thank your flashcard streak.",
+          ),
+        )
       : progressStage === 4
-      ? convertText(t("The island is prosperous and flourishing!"))
-      : progressStage === 3
-      ? convertText(t("The island is thriving!"))
-      : progressStage === 2
-      ? convertText(t("The island is growing well..."))
-      : progressStage === 1
-      ? convertText(t("The island is developing..."))
-      : convertText(t("The island is dry with no resources"));
+        ? convertText(
+            `华华 put on a suit and built himself a city — review ${cardsToNext} more ${cardWord} to see what's next!`,
+          )
+        : progressStage === 3
+          ? convertText(
+              `华华 upgraded to a cozy sweater and his neighbourhood is thriving — ${cardsToNext} more ${cardWord} to level up again!`,
+            )
+          : progressStage === 2
+            ? convertText(
+                `华华 has a proper village with cottages and flowers — review ${cardsToNext} more ${cardWord} to keep him moving up!`,
+              )
+            : progressStage === 1
+              ? convertText(
+                  `华华 put on his overalls and started building — review ${cardsToNext} more ${cardWord} for his next upgrade!`,
+                )
+              : convertText(
+                  `华华 is hungry and his houses are falling apart — review ${cardsToNext} ${cardWord} to start improving his life!`,
+                );
 
   const handleCreateIsland = () => {
+    if (isAnonymous) {
+      openSignupModal("Topic Islands");
+      return;
+    }
     router.push("/app/topic-islands");
   };
 
@@ -468,7 +390,7 @@ export default function HomeDashboard({
     });
   };
 
-  if (loading || processingPendingRequest) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex items-center gap-3 text-gray-600">
@@ -492,11 +414,7 @@ export default function HomeDashboard({
               d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
             />
           </svg>
-          <span>
-            {processingPendingRequest
-              ? convertText(t("Creating your topic island..."))
-              : convertText(t("Loading..."))}
-          </span>
+          <span>{convertText(t("Loading..."))}</span>
         </div>
       </div>
     );
@@ -508,7 +426,10 @@ export default function HomeDashboard({
 
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-4 md:gap-6">
         {/* ROW 1: Your Progress Island (full width) */}
-        <div id="progress-island-card" className={`${cardBaseClass} ${cardHoverClass} p-3 md:p-4`}>
+        <div
+          id="progress-island-card"
+          className={`${cardBaseClass} ${cardHoverClass} p-3 md:p-4`}
+        >
           <div className="mb-2 flex items-start justify-between gap-4">
             <div className="flex-1">
               <h2 className="text-xl md:text-2xl font-semibold text-slate-900">
@@ -518,20 +439,35 @@ export default function HomeDashboard({
                 {islandLoading
                   ? convertText(t("Counting today's reviews..."))
                   : progressStage >= 5
-                  ? convertText(`${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · Stage 6 (max level!)`)
-                  : convertText(`${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · ${stageProgress}/10 to next stage`)}
+                    ? convertText(
+                        `${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · Stage 6 (max level!)`,
+                      )
+                    : convertText(
+                        `${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · ${stageProgress}/10 to next stage`,
+                      )}
               </p>
               {!islandLoading ? (
-                <p className="mt-1 text-sm text-slate-500">
-                  {islandStatus}
-                </p>
+                <p className="mt-1 text-sm text-slate-500">{islandStatus}</p>
               ) : null}
             </div>
-            
-            {/* Last 7 days activity squares */}
+
+            {/* Last 7 days activity squares - hidden on mobile */}
             {!islandLoading && last7DaysActivity.length > 0 && (
-              <div className="flex flex-col items-end gap-1.5">
-                <p className="text-xs font-medium text-slate-600">Last 7 days</p>
+              <div className="hidden sm:flex sm:flex-col sm:items-end sm:gap-1.5">
+                <p className="flex items-center gap-1 text-xs font-medium text-slate-600">
+                  Last 7 days
+                  <span
+                    className="inline-flex h-3.5 w-3.5 flex-shrink-0 cursor-help items-center justify-center rounded-full bg-slate-300 text-[10px] font-bold leading-none text-slate-600"
+                    title={convertText(
+                      t(
+                        "Each square is one day (oldest to newest). Darker = more cards reviewed. Ring = today.",
+                      ),
+                    )}
+                    aria-label={convertText(t("How the weekly calendar works"))}
+                  >
+                    i
+                  </span>
+                </p>
                 <div className="flex gap-2">
                   {last7DaysActivity.map((day, index) => {
                     const isToday = index === last7DaysActivity.length - 1;
@@ -539,24 +475,24 @@ export default function HomeDashboard({
                     const date = new Date(day.date);
                     const month = date.getMonth() + 1;
                     const dayOfMonth = date.getDate();
-                    
+
                     // Navy blue color intensity based on count
-                    let bgColor = 'bg-slate-100';
-                    let customBg = '';
+                    let bgColor = "bg-slate-100";
+                    let customBg = "";
                     if (count >= 50) {
-                      bgColor = '';
-                      customBg = '#0B1B3A'; // Dark navy
+                      bgColor = "";
+                      customBg = "#0B1B3A"; // Dark navy
                     } else if (count >= 30) {
-                      bgColor = '';
-                      customBg = '#1e3a5f'; // Medium-dark navy
+                      bgColor = "";
+                      customBg = "#1e3a5f"; // Medium-dark navy
                     } else if (count >= 15) {
-                      bgColor = '';
-                      customBg = '#3b5998'; // Medium navy
+                      bgColor = "";
+                      customBg = "#3b5998"; // Medium navy
                     } else if (count > 0) {
-                      bgColor = '';
-                      customBg = '#6b8cbe'; // Light navy
+                      bgColor = "";
+                      customBg = "#6b8cbe"; // Light navy
                     }
-                    
+
                     return (
                       <div
                         key={day.date}
@@ -564,10 +500,12 @@ export default function HomeDashboard({
                       >
                         <div
                           className={`h-8 w-8 rounded ${bgColor} ${
-                            isToday ? 'ring-2 ring-slate-900' : ''
+                            isToday ? "ring-2 ring-slate-900" : ""
                           } transition-all hover:scale-110`}
-                          style={customBg ? { backgroundColor: customBg } : undefined}
-                          title={`${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${count} cards reviewed`}
+                          style={
+                            customBg ? { backgroundColor: customBg } : undefined
+                          }
+                          title={`${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${count} cards reviewed`}
                         />
                         <span className="text-[10px] font-medium text-slate-600">
                           {month}/{dayOfMonth}
@@ -579,62 +517,113 @@ export default function HomeDashboard({
               </div>
             )}
           </div>
-          <div 
+          <div
             className="relative flex items-center justify-center rounded-xl border-2 border-slate-200 p-2 md:p-3 overflow-visible max-h-40 md:max-h-48 lg:max-h-56"
             style={{
-              background: 'linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)'
+              background:
+                "linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)",
             }}
           >
             {/* Animated wave particles - always visible */}
             <div className="absolute inset-0 pointer-events-none">
-              <motion.div 
-                className="absolute" 
-                style={{ left: '10%', top: '20%', opacity: 0.15 }}
+              <motion.div
+                className="absolute"
+                style={{ left: "10%", top: "20%", opacity: 0.15 }}
                 animate={{ x: [0, 50, 0] }}
                 transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
               >
                 <svg width="50" height="20" viewBox="0 0 50 20" fill="none">
-                  <path d="M 2 16 Q 10 14, 18 8 Q 24 4, 32 8 Q 40 12, 48 14" stroke="#0B1B3A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                  <path
+                    d="M 2 16 Q 10 14, 18 8 Q 24 4, 32 8 Q 40 12, 48 14"
+                    stroke="#0B1B3A"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
                 </svg>
               </motion.div>
-              <motion.div 
-                className="absolute" 
-                style={{ left: '65%', top: '15%', opacity: 0.12 }}
+              <motion.div
+                className="absolute"
+                style={{ left: "65%", top: "15%", opacity: 0.12 }}
                 animate={{ x: [0, -40, 0] }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear", delay: 1 }}
+                transition={{
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: 1,
+                }}
               >
                 <svg width="70" height="26" viewBox="0 0 70 26" fill="none">
-                  <path d="M 2 22 Q 14 18, 26 10 Q 34 4, 44 10 Q 54 16, 68 20" stroke="#0B1B3A" strokeWidth="3" strokeLinecap="round" fill="none" />
+                  <path
+                    d="M 2 22 Q 14 18, 26 10 Q 34 4, 44 10 Q 54 16, 68 20"
+                    stroke="#0B1B3A"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
                 </svg>
               </motion.div>
-              <motion.div 
-                className="absolute" 
-                style={{ left: '30%', top: '60%', opacity: 0.18 }}
+              <motion.div
+                className="absolute"
+                style={{ left: "30%", top: "60%", opacity: 0.18 }}
                 animate={{ x: [0, 35, 0] }}
-                transition={{ duration: 18, repeat: Infinity, ease: "linear", delay: 2 }}
+                transition={{
+                  duration: 18,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: 2,
+                }}
               >
                 <svg width="70" height="26" viewBox="0 0 70 26" fill="none">
-                  <path d="M 2 22 Q 14 18, 26 10 Q 34 4, 44 10 Q 54 16, 68 20" stroke="#0B1B3A" strokeWidth="3" strokeLinecap="round" fill="none" />
+                  <path
+                    d="M 2 22 Q 14 18, 26 10 Q 34 4, 44 10 Q 54 16, 68 20"
+                    stroke="#0B1B3A"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
                 </svg>
               </motion.div>
-              <motion.div 
-                className="absolute" 
-                style={{ left: '75%', top: '65%', opacity: 0.15 }}
+              <motion.div
+                className="absolute"
+                style={{ left: "75%", top: "65%", opacity: 0.15 }}
                 animate={{ x: [0, -45, 0] }}
-                transition={{ duration: 22, repeat: Infinity, ease: "linear", delay: 0.5 }}
+                transition={{
+                  duration: 22,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: 0.5,
+                }}
               >
                 <svg width="50" height="20" viewBox="0 0 50 20" fill="none">
-                  <path d="M 2 16 Q 10 14, 18 8 Q 24 4, 32 8 Q 40 12, 48 14" stroke="#0B1B3A" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                  <path
+                    d="M 2 16 Q 10 14, 18 8 Q 24 4, 32 8 Q 40 12, 48 14"
+                    stroke="#0B1B3A"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
                 </svg>
               </motion.div>
-              <motion.div 
-                className="absolute" 
-                style={{ left: '15%', top: '75%', opacity: 0.12 }}
+              <motion.div
+                className="absolute"
+                style={{ left: "15%", top: "75%", opacity: 0.12 }}
                 animate={{ x: [0, 50, 0] }}
-                transition={{ duration: 28, repeat: Infinity, ease: "linear", delay: 1.5 }}
+                transition={{
+                  duration: 28,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: 1.5,
+                }}
               >
                 <svg width="90" height="30" viewBox="0 0 90 30" fill="none">
-                  <path d="M 2 26 Q 18 22, 34 12 Q 46 4, 58 12 Q 72 20, 88 24" stroke="#0B1B3A" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+                  <path
+                    d="M 2 26 Q 18 22, 34 12 Q 46 4, 58 12 Q 72 20, 88 24"
+                    stroke="#0B1B3A"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
                 </svg>
               </motion.div>
             </div>
@@ -650,19 +639,98 @@ export default function HomeDashboard({
             )}
             {islandLoading && (
               <div className="relative z-10 flex items-center justify-center h-48 md:h-60 lg:h-72">
-                <div className="text-gray-600 text-sm">{convertText(t("Loading..."))}</div>
+                <div className="text-gray-600 text-sm">
+                  {convertText(t("Loading..."))}
+                </div>
               </div>
             )}
           </div>
+
+          {/* Last 7 days strip - mobile only, below island */}
+          {!islandLoading && last7DaysActivity.length > 0 && (
+            <div className="mt-3 flex flex-col gap-1.5 border-t border-slate-200 pt-3 sm:hidden">
+              <p className="flex items-center gap-1 text-xs font-medium text-slate-600">
+                Last 7 days
+                <span
+                  className="inline-flex h-3.5 w-3.5 flex-shrink-0 cursor-help items-center justify-center rounded-full bg-slate-300 text-[10px] font-bold leading-none text-slate-600"
+                  title={convertText(
+                    t(
+                      "Each square is one day (oldest to newest). Darker = more cards reviewed. Ring = today.",
+                    ),
+                  )}
+                  aria-label={convertText(t("How the weekly calendar works"))}
+                >
+                  i
+                </span>
+              </p>
+              <div className="flex justify-between gap-1">
+                {last7DaysActivity.map((day, index) => {
+                  const isToday = index === last7DaysActivity.length - 1;
+                  const count = day.count;
+                  const date = new Date(day.date);
+                  const month = date.getMonth() + 1;
+                  const dayOfMonth = date.getDate();
+                  let bgColor = "bg-slate-100";
+                  let customBg = "";
+                  if (count >= 50) {
+                    customBg = "#0B1B3A";
+                  } else if (count >= 30) {
+                    customBg = "#1e3a5f";
+                  } else if (count >= 15) {
+                    customBg = "#3b5998";
+                  } else if (count > 0) {
+                    customBg = "#6b8cbe";
+                  }
+                  return (
+                    <div
+                      key={day.date}
+                      className="flex flex-1 flex-col items-center gap-0.5"
+                    >
+                      <div
+                        className={`h-6 w-6 rounded ${bgColor} ${
+                          isToday ? "ring-2 ring-slate-900" : ""
+                        }`}
+                        style={
+                          customBg ? { backgroundColor: customBg } : undefined
+                        }
+                        title={`${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${count} cards reviewed`}
+                      />
+                      <span className="text-[10px] font-medium text-slate-600">
+                        {month}/{dayOfMonth}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ROW 2: Create Topic Island + Read Daily Story (2 columns on desktop, stack on mobile) */}
         <div className="grid gap-4 md:gap-6 md:grid-cols-2">
-          <CreateIslandCard onCreate={handleCreateIsland} />
+          <CreateIslandCard
+            onCreate={handleCreateIsland}
+            onBrowse={
+              isAnonymous
+                ? (e) => {
+                    e.preventDefault();
+                    openSignupModal("Browse Topics");
+                  }
+                : undefined
+            }
+          />
           <DailyStoryCard
             variant="home"
             story={dailyStoryLocal}
             loading={dailyLoading}
+            onRead={
+              isAnonymous
+                ? (e) => {
+                    e.preventDefault();
+                    openSignupModal("Stories");
+                  }
+                : undefined
+            }
           />
         </div>
 
@@ -697,6 +765,14 @@ export default function HomeDashboard({
                 <Link
                   href="/app/topic-islands"
                   className={buttonSecondaryClass}
+                  onClick={
+                    isAnonymous
+                      ? (e) => {
+                          e.preventDefault();
+                          openSignupModal("Topic Islands");
+                        }
+                      : undefined
+                  }
                 >
                   {convertText(t("View All"))}
                 </Link>
@@ -713,12 +789,14 @@ export default function HomeDashboard({
                     1,
                     Math.round(
                       (Date.now() - new Date(island.created_at).getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    )
+                        (1000 * 60 * 60 * 24),
+                    ),
                   );
                   const dueCount = (daysSince * 3 + index * 2) % 12;
                   const statusLabel =
-                    dueCount > 6 ? convertText(t("Due soon")) : convertText(t("On track"));
+                    dueCount > 6
+                      ? convertText(t("Due soon"))
+                      : convertText(t("On track"));
                   const lastReviewed = Math.min(9, daysSince);
 
                   return (
@@ -730,15 +808,19 @@ export default function HomeDashboard({
                         className="text-base font-semibold text-gray-900 truncate"
                         title={island.topic}
                       >
-                        {convertText(island.topic.length > 48
-                          ? `${island.topic.slice(0, 45)}...`
-                          : island.topic)}
+                        {convertText(
+                          island.topic.length > 48
+                            ? `${island.topic.slice(0, 45)}...`
+                            : island.topic,
+                        )}
                       </h3>
                       <p className="mt-1.5 text-sm text-gray-600">
-                        {island.word_target} {convertText(t("words"))} / {island.level}
+                        {island.word_target} {convertText(t("words"))} /{" "}
+                        {island.level}
                       </p>
                       <p className="mt-1.5 text-xs text-gray-500">
-                        {statusLabel} · {Math.max(1, dueCount)} {convertText(t("due"))}
+                        {statusLabel} · {Math.max(1, dueCount)}{" "}
+                        {convertText(t("due"))}
                         {" · "}
                         {convertText(t("Last reviewed"))}: {lastReviewed}
                         {convertText(t("day short"))}
@@ -746,6 +828,14 @@ export default function HomeDashboard({
                       <Link
                         href={`/app/topic-islands/${island.id}`}
                         className={`${buttonPrimaryClass} mt-auto`}
+                        onClick={
+                          isAnonymous
+                            ? (e) => {
+                                e.preventDefault();
+                                openSignupModal("Topic Islands");
+                              }
+                            : undefined
+                        }
                       >
                         {convertText(t("Review"))}
                       </Link>
@@ -756,13 +846,21 @@ export default function HomeDashboard({
             ) : (
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
                 <p className="mb-4 text-sm text-gray-600">
-                  {convertText(t("Create your first island to start reviewing words."))}
+                  {convertText(
+                    t("Create your first island to start reviewing words."),
+                  )}
                 </p>
                 <button
                   onClick={handleCreateIsland}
                   className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
                 >
-                  {convertText(t("Create your first island"))}
+                  {convertText(
+                    t(
+                      isAnonymous
+                        ? "Create Account to Start"
+                        : "Create your first island",
+                    ),
+                  )}
                 </button>
               </div>
             )}
@@ -794,7 +892,18 @@ export default function HomeDashboard({
                 >
                   →
                 </button>
-                <Link href="/app/quiz" className={buttonSecondaryClass}>
+                <Link
+                  href="/app/quiz"
+                  className={buttonSecondaryClass}
+                  onClick={
+                    isAnonymous
+                      ? (e) => {
+                          e.preventDefault();
+                          openSignupModal("Quizzes");
+                        }
+                      : undefined
+                  }
+                >
                   {convertText(t("View Decks"))}
                 </Link>
               </div>
@@ -824,7 +933,8 @@ export default function HomeDashboard({
                           </span>
                         </div>
                         <p className="mt-2 text-xs text-gray-600">
-                          {deck.statusLabel} · {deck.totalCount} {convertText(t("cards"))}
+                          {deck.statusLabel} · {deck.totalCount}{" "}
+                          {convertText(t("cards"))}
                         </p>
                         <div className="mt-2">
                           <div className="flex items-center justify-between text-[11px] text-gray-500">
@@ -843,6 +953,14 @@ export default function HomeDashboard({
                         <Link
                           href={`/app/quiz/${deck.id}`}
                           className={`${buttonPrimaryClass} mt-auto`}
+                          onClick={
+                            isAnonymous
+                              ? (e) => {
+                                  e.preventDefault();
+                                  openSignupModal("Quizzes");
+                                }
+                              : undefined
+                          }
                         >
                           {convertText(t("Review"))}
                         </Link>
@@ -852,15 +970,31 @@ export default function HomeDashboard({
                 ) : (
                   <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
                     <p className="mb-4 text-sm text-gray-600">
-                      {convertText(t(
-                        "No flashcard decks yet. Create your first one to start practicing."
-                      ))}
+                      {convertText(
+                        t(
+                          "No flashcard decks yet. Create your first one to start practicing.",
+                        ),
+                      )}
                     </p>
                     <Link
                       href="/app/quiz"
                       className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+                      onClick={
+                        isAnonymous
+                          ? (e) => {
+                              e.preventDefault();
+                              openSignupModal("Quizzes");
+                            }
+                          : undefined
+                      }
                     >
-                      {convertText(t("Create your first deck"))}
+                      {convertText(
+                        t(
+                          isAnonymous
+                            ? "Create Account to Start"
+                            : "Create your first deck",
+                        ),
+                      )}
                     </Link>
                   </div>
                 )

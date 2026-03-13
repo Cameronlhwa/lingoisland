@@ -4,12 +4,12 @@ This doc defines how public, thin, and private pages are handled so robots.ts, s
 
 ## 1. Public marketing & SEO pages (indexable)
 
-| Path | Meta robots | In sitemap | Notes |
-|------|-------------|------------|--------|
-| `/` | index, follow | ✅ | Home |
-| `/pricing` | index, follow | ✅ | Pricing |
-| `/founder` | index, follow | ✅ | About founder |
-| `/topics` | index, follow | ✅ | Topics hub |
+| Path             | Meta robots                                                                                        | In sitemap             | Notes                          |
+| ---------------- | -------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------ |
+| `/`              | index, follow                                                                                      | ✅                     | Home                           |
+| `/pricing`       | index, follow                                                                                      | ✅                     | Pricing                        |
+| `/founder`       | index, follow                                                                                      | ✅                     | About founder                  |
+| `/topics`        | index, follow                                                                                      | ✅                     | Topics hub                     |
 | `/topics/[slug]` | index, follow **only if** content meets minimum (150–300 words intro, 12–25 vocab, 6–12 sentences) | ✅ only when indexable | Topic pages; noindex when thin |
 
 **Canonical:** Each has `alternates.canonical` to the canonical origin (e.g. `https://lingoisland.com/...`). One URL per page; no duplicate variants.
@@ -20,10 +20,10 @@ This doc defines how public, thin, and private pages are handled so robots.ts, s
 
 Crawlers are **allowed** to request these so they can see the noindex directive and not index them.
 
-| Path | Meta robots | In sitemap |
-|------|-------------|------------|
-| `/login` | noindex, follow | ❌ |
-| `/onboarding/*` | noindex, follow | ❌ |
+| Path            | Meta robots     | In sitemap |
+| --------------- | --------------- | ---------- |
+| `/login`        | noindex, follow | ❌         |
+| `/onboarding/*` | noindex, follow | ❌         |
 
 **robots.txt:** Does **not** disallow these paths so Google can crawl and respect noindex.
 
@@ -31,11 +31,11 @@ Crawlers are **allowed** to request these so they can see the noindex directive 
 
 ## 3. Private / waste (disallow and/or noindex)
 
-| Path | robots.txt | Meta robots | In sitemap |
-|------|------------|-------------|------------|
-| `/api/*` | disallow | N/A | ❌ |
-| `/app/*` | disallow | noindex, nofollow | ❌ |
-| `/auth/*` | disallow | noindex, follow | ❌ |
+| Path      | robots.txt | Meta robots       | In sitemap |
+| --------- | ---------- | ----------------- | ---------- |
+| `/api/*`  | disallow   | N/A               | ❌         |
+| `/app/*`  | disallow   | noindex, nofollow | ❌         |
+| `/auth/*` | disallow   | noindex, follow   | ❌         |
 
 **robots.txt** disallows these so crawlers don’t waste budget. `/app` layout also sets noindex,nofollow for defense in depth.
 
@@ -65,4 +65,4 @@ Crawlers are **allowed** to request these so they can see the noindex directive 
 
 ---
 
-*Last updated: audit implemented with sitemap (founder + indexable-only topic slugs), explicit robots on public pages, robots.ts comments, and topics hub JSON-LD + intro.*
+_Last updated: audit implemented with sitemap (founder + indexable-only topic slugs), explicit robots on public pages, robots.ts comments, and topics hub JSON-LD + intro._

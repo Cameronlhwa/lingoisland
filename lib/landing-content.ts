@@ -261,7 +261,7 @@ export const FOUNDER_PAGE = {
     title: "How I build",
     items: [
       { title: "Real-life topics first", line: "Vocabulary you’ll actually use—not textbook filler." },
-      { title: "Recycling beats cramming", line: "Stories and review bring words back at the right time." },
+      { title: "Reinforcement beats cramming", line: "Stories and review bring words back at the right time." },
       { title: "CEFR control and clarity", line: "You choose your level; content stays comprehensible." },
       { title: "Sleek UI that doesn’t feel like homework", line: "Clean, focused, minimal friction." },
       { title: "Fast iteration via feedback", line: "Ship, learn, and improve from real learners." },
@@ -271,7 +271,7 @@ export const FOUNDER_PAGE = {
   roadmap: {
     title: "What’s next",
     bullets: [
-      "More topics and better sentence variety at each level.",
+      "Better topic creation and better sentence variety at each level.",
       "Stronger story generation and more review modes.",
       "Listening and speaking features once the foundation is solid.",
     ],
