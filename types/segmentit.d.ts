@@ -15,6 +15,12 @@ declare module "segmentit" {
     doSegment(text: string, options?: SegmentOptions & { simple: false }): SegmentToken[];
     doSegment(text: string, options: SegmentOptions & { simple: true }): string[];
     doSegment(text: string, options?: SegmentOptions): SegmentToken[] | string[];
+    /** Load a newline-delimited custom dictionary string (word|POS|frequency) */
+    loadDict(dict: string | string[]): this;
+    /** Load a newline-delimited synonym dictionary string (word1,word2) */
+    loadSynonymDict(dict: string | string[]): this;
+    /** Attach tokenizer/optimizer modules */
+    use(modules: unknown[]): this;
   }
 
   export function useDefault(segment: Segment): Segment;
