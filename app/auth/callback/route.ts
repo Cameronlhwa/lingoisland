@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getOriginFromRequest } from '@/lib/utils/origin'
+import { captureServerEvent } from '@/lib/posthog/server'
 
 /**
  * Auth callback route
@@ -144,6 +145,9 @@ export async function GET(request: NextRequest) {
       if (insertError) {
         console.error('[AUTH CALLBACK] Error creating user_profiles:', insertError)
       }
+
+      // New user — track signup completion (Google OAuth)
+      captureServerEvent({ distinctId: user.id, event: 'signup_completed', properties: { method: 'google' } }).catch(() => {})
     } else {
       console.log('[AUTH CALLBACK] User profile already exists for:', user.id)
     }
@@ -221,6 +225,9 @@ export async function GET(request: NextRequest) {
         if (insertError) {
           console.error('[AUTH CALLBACK] Error creating user_profiles:', insertError)
         }
+
+        // New user — track signup completion (email verification)
+        captureServerEvent({ distinctId: user.id, event: 'signup_completed', properties: { method: 'email', requires_verification: true } }).catch(() => {})
       }
 
       // Also create billing profile

@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
+const MOBILE_MAX_WIDTH = 768;
+
 const BOAT_IMAGE = "/boats/boat-capybara.png";
 
 function getCenter(el: HTMLElement | null, container: DOMRect): { x: number; y: number } | null {
@@ -40,7 +42,16 @@ interface BoatRouteProps {
 export default function BoatRoute({ containerRef, islandRefs }: BoatRouteProps) {
   const [pathD, setPathD] = useState<string | null>(null);
   const [boatLoaded, setBoatLoaded] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   const updatePath = useCallback(() => {
     const container = containerRef.current;
@@ -72,8 +83,8 @@ export default function BoatRoute({ containerRef, islandRefs }: BoatRouteProps) 
       className="absolute inset-0 pointer-events-none"
       aria-hidden
     >
-      {/* Boat: continuously loops along the path unless motion is reduced */}
-      {pathD && boatLoaded && !prefersReducedMotion && (
+      {/* Boat: continuously loops along the path unless motion is reduced or on mobile */}
+      {pathD && boatLoaded && !prefersReducedMotion && !isMobile && (
         <motion.div
           className="absolute w-48 h-48 md:w-56 md:h-56 z-20"
           style={{

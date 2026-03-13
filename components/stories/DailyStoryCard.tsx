@@ -43,11 +43,13 @@ export default function DailyStoryCard({
   variant,
   previewHref = "/app/story/daily",
   loading = false,
+  onRead,
 }: {
   story: DailyStorySummary | null;
   variant: "home" | "stories";
   previewHref?: string;
   loading?: boolean;
+  onRead?: (e: React.MouseEvent) => void;
 }) {
   const { t } = useLanguage();
   const { convertText } = useCharacterSet();
@@ -99,7 +101,7 @@ export default function DailyStoryCard({
               {convertText(story.story_zh)}
             </p>
           )}
-          <Link href={`/app/story/${story.id}`} className={buttonPrimaryClass}>
+          <Link href={`/app/story/${story.id}`} className={buttonPrimaryClass} onClick={onRead}>
             {convertText(t("Read"))}
           </Link>
         </div>
@@ -111,7 +113,7 @@ export default function DailyStoryCard({
           <span>
             {loading ? convertText(t("Generating...")) : convertText(t("Today's story is on the way."))}
           </span>
-          <Link href={previewHref} className={buttonPrimaryClass}>
+          <Link href={previewHref} className={buttonPrimaryClass} onClick={onRead}>
             {convertText(t("Read"))}
           </Link>
         </div>

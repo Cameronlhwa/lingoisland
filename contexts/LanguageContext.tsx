@@ -299,14 +299,17 @@ const translations: Record<string, { en: string; zh: string }> = {
     zh: "未找到主题，请调整筛选条件。",
   },
   "Load more": { en: "Load more", zh: "加载更多" },
-  "remaining": { en: "remaining", zh: "剩余" },
+  remaining: { en: "remaining", zh: "剩余" },
   "Create Island": { en: "Create Island", zh: "创建岛屿" },
   Preview: { en: "Preview", zh: "预览" },
   Close: { en: "Close", zh: "关闭" },
-  "Conversation starters:": { en: "Conversation starters:", zh: "对话开场白：" },
+  "Conversation starters:": {
+    en: "Conversation starters:",
+    zh: "对话开场白：",
+  },
   Trending: { en: "Trending", zh: "热门" },
   "Loading topics...": { en: "Loading topics...", zh: "加载主题中..." },
-  
+
   // Categories
   All: { en: "All", zh: "全部" },
   "Everyday errands": { en: "Everyday errands", zh: "日常琐事" },
@@ -316,7 +319,10 @@ const translations: Record<string, { en: string; zh: string }> = {
   "Social life": { en: "Social life", zh: "社交生活" },
   "Work/School": { en: "Work/School", zh: "工作/学校" },
   "Money & adulting": { en: "Money & adulting", zh: "财务与成人生活" },
-  "Entertainment & hobbies": { en: "Entertainment & hobbies", zh: "娱乐与爱好" },
+  "Entertainment & hobbies": {
+    en: "Entertainment & hobbies",
+    zh: "娱乐与爱好",
+  },
   "Opinions & hot takes": { en: "Opinions & hot takes", zh: "观点与热议" },
   "Unexpected problems": { en: "Unexpected problems", zh: "突发问题" },
 

@@ -6,6 +6,8 @@ export type GlossaryEntry = {
   anchorId: string;
   hanzi: string;
   english?: string | null;
+  /** When true, entry is blurred (e.g. locked words on anonymous onboarding) */
+  blur?: boolean;
 };
 
 type GlossaryContextValue = {

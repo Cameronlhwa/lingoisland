@@ -241,7 +241,7 @@ export default function AccountModal({
     if (checkoutLoading) return;
     setCheckoutLoading(interval);
     
-    captureEvent("checkout_started", {
+    captureEvent("checkout_initiated", {
       interval,
       location: "account_modal",
     });

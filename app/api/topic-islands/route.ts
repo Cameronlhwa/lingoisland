@@ -18,6 +18,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Ensure user_profiles and profiles exist (e.g. for anonymous users who skip OAuth callback)
+    const [userProfileRes, profileRes] = await Promise.all([
+      supabase.from('user_profiles').select('user_id').eq('user_id', user.id).maybeSingle(),
+      supabase.from('profiles').select('id').eq('id', user.id).maybeSingle(),
+    ])
+    if (!userProfileRes.data) {
+      await supabase.from('user_profiles').insert({ user_id: user.id, cefr_level: 'B1' })
+    }
+    if (!profileRes.data) {
+      await supabase.from('profiles').insert({ id: user.id, plan: 'free' })
+    }
+
     // Check if user can create a topic island (Free: 1/month, Pro: unlimited)
     const { allowed, reason } = await canCreateTopicIsland(user.id)
     if (!allowed) {
@@ -67,11 +79,11 @@ export async function POST(request: Request) {
     if (
       !wordTarget ||
       typeof wordTarget !== 'number' ||
-      wordTarget < 10 ||
+      wordTarget < 5 ||
       wordTarget > 20
     ) {
       return NextResponse.json(
-        { error: 'wordTarget must be between 10 and 20' },
+        { error: 'wordTarget must be between 5 and 20' },
         { status: 400 }
       )
     }

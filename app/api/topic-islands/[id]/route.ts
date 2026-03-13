@@ -92,6 +92,7 @@ export async function GET(
       words: wordsWithSentences,
       grammarFocus: grammarFocusWithExamples,
       user_plan: entitlements.isPro ? 'pro' : 'free',
+      is_anonymous: user?.is_anonymous ?? false,
     })
   } catch (error) {
     console.error('Error in GET /api/topic-islands/[id]:', error)

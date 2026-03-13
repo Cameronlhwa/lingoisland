@@ -6,8 +6,10 @@ import { cardBaseClass, cardHoverClass } from "@/components/app/ui/styles";
 
 export default function CreateIslandCard({
   onCreate,
+  onBrowse,
 }: {
   onCreate: () => void;
+  onBrowse?: (e: React.MouseEvent) => void;
 }) {
   const { t } = useLanguage();
 
@@ -47,6 +49,7 @@ export default function CreateIslandCard({
           </button>
           <Link
             href="/app/browse-topics"
+            onClick={onBrowse}
             className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-[#0B1B3A]/85 transition-colors hover:text-[#0B1B3A] hover:underline focus:outline-none focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 rounded"
           >
             <svg

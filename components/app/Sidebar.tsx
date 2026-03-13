@@ -32,7 +32,7 @@ export default function Sidebar({
   const glossaryListRef = useRef<HTMLDivElement | null>(null);
   const isTopicIslandDetail = pathname.startsWith("/app/topic-islands/");
   const [localIsAccountOpen, setLocalIsAccountOpen] = useState(false);
-  const { isOpen: sidebarOpen, setIsOpen: setSidebarOpen } = useSidebar();
+  const { isOpen: sidebarOpen, setIsOpen: setSidebarOpen, isAnonymous, openSignupModal } = useSidebar();
   
   // Use parent-controlled state if provided, otherwise use local state
   const isAccountOpen = isAccountModalOpen ?? localIsAccountOpen;
@@ -79,23 +79,37 @@ export default function Sidebar({
             // More precise active state detection
             let isActive = false;
             if (item.href === "/app") {
-              // For home, only match exactly or if no other routes match
               isActive = pathname === "/app";
             } else {
-              // For other routes, check if pathname starts with the href
               isActive =
                 pathname === item.href || pathname.startsWith(item.href + "/");
+            }
+
+            const btnClass = `flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-base font-medium text-gray-900 transition-colors ${
+              isActive
+                ? "border-gray-900 bg-white"
+                : "border-gray-300 bg-white hover:bg-gray-50"
+            }`;
+
+            if (isAnonymous) {
+              return (
+                <button
+                  key={item.href}
+                  type="button"
+                  onClick={() => openSignupModal(item.label)}
+                  className={btnClass}
+                >
+                  {item.icon()}
+                  {convertText(t(item.label))}
+                </button>
+              );
             }
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-base font-medium text-gray-900 transition-colors ${
-                  isActive
-                    ? "border-gray-900 bg-white"
-                    : "border-gray-300 bg-white hover:bg-gray-50"
-                }`}
+                className={btnClass}
               >
                 {item.icon()}
                 {convertText(t(item.label))}
@@ -120,6 +134,7 @@ export default function Sidebar({
                       key={entry.anchorId}
                       type="button"
                       onClick={() => {
+                        if (entry.blur) return;
                         const target = document.getElementById(entry.anchorId);
                         if (target) {
                           target.scrollIntoView({
@@ -130,14 +145,20 @@ export default function Sidebar({
                       }}
                       data-glossary-id={entry.anchorId}
                       className={`w-full rounded-lg border px-2 text-center transition-colors ${
-                        isActive
-                          ? "border-gray-900 bg-gray-50 py-2 text-sm font-semibold text-gray-900"
-                          : "border-gray-200 bg-white py-1.5 text-xs text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                        entry.blur
+                          ? "pointer-events-none cursor-default border-gray-200 bg-gray-50 py-2 text-sm"
+                          : isActive
+                            ? "border-gray-900 bg-gray-50 py-2 text-sm font-semibold text-gray-900"
+                            : "border-gray-200 bg-white py-1.5 text-xs text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                     >
-                      <div>{convertText(entry.hanzi)}</div>
+                      <div className={entry.blur ? "blur-sm select-none" : ""}>
+                        {convertText(entry.hanzi)}
+                      </div>
                       {entry.english && (
-                        <div className="truncate text-[10px] text-gray-500">
+                        <div
+                          className={`truncate text-[10px] ${entry.blur ? "blur-sm select-none" : "text-gray-500"}`}
+                        >
                           {entry.english}
                         </div>
                       )}
@@ -174,12 +195,16 @@ export default function Sidebar({
 
         <button
           onClick={() => {
+            if (isAnonymous) {
+              openSignupModal("Account & Settings");
+              return;
+            }
             setIsAccountOpen(true);
             completeNudge("customize_settings");
           }}
           className="mb-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
         >
-          {convertText(t("Account & Settings"))}
+          {convertText(t(isAnonymous ? "Create Account" : "Account & Settings"))}
         </button>
         <button
           onClick={handleSignOut}
