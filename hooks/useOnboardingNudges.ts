@@ -143,16 +143,14 @@ export function useOnboardingNudges() {
 
       const now = new Date();
       const created_at = (user as { created_at?: string }).created_at;
-      // Use 2 hours from account creation only if account is still within that window;
-      // otherwise use 2 hours from first app use (so existing users get one window)
       const createdMs = created_at ? new Date(created_at).getTime() : 0;
       const windowFromCreationEnd = createdMs + ONBOARDING_WINDOW_MINUTES * 60 * 1000;
-      const useFirstAppUse =
-        !created_at || now.getTime() >= windowFromCreationEnd;
-      const startedAt = useFirstAppUse ? now : new Date(created_at);
-      const endsAt = useFirstAppUse
-        ? new Date(now.getTime() + ONBOARDING_WINDOW_MINUTES * 60 * 1000)
-        : new Date(createdMs + ONBOARDING_WINDOW_MINUTES * 60 * 1000);
+
+      // Only show onboarding to new users whose account is still within the creation window
+      if (!created_at || now.getTime() >= windowFromCreationEnd) return;
+
+      const startedAt = new Date(created_at);
+      const endsAt = new Date(windowFromCreationEnd);
 
       const { data: existing } = await supabase
         .from("user_onboarding")
