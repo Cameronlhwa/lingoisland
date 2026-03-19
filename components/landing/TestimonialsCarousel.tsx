@@ -8,37 +8,22 @@ const testimonials = [
   {
     quote:
       "I finally stopped memorizing random lists. Picking my own topics made my Mandarin actually usable in conversations.",
-    name: "Ava",
-    level: "B1 learner",
-    image: "/testimonials/ava.png",
   },
   {
     quote:
       "The topic-island approach is the first thing that's helped me break the intermediate plateau. It feels targeted, not generic.",
-    name: "Daniel",
-    level: "B2 learner",
-    image: "/testimonials/daniel.png",
   },
   {
     quote:
       "No gimmicks, just real sentences I can actually use. It's refreshingly straightforward.",
-    name: "Mina",
-    level: "Self-learner",
-    image: "/testimonials/mina.png",
   },
   {
     quote:
       "I made an island for hospital visits and used the phrases the same week. This is the most practical Mandarin tool I've tried.",
-    name: "Chris",
-    level: "Busy professional",
-    image: "/testimonials/chris.png",
   },
   {
     quote:
       "I grew up speaking Mandarin at home, but only knew how to talk about food and family stuff. This helped me finally sound fluent in work meetings and everyday situations.",
-    name: "Jason",
-    level: "Heritage learner",
-    image: "/testimonials/jason.png",
   },
 ];
 
@@ -53,37 +38,25 @@ export default function TestimonialsCarousel() {
   }, []);
 
   const goToPrevious = useCallback(() => {
-    setCurrentIndex(
-      (prev) => (prev - 1 + testimonials.length) % testimonials.length,
-    );
+    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   }, []);
 
   const goToSlide = useCallback((index: number) => {
     setCurrentIndex(index);
   }, []);
 
-  // Auto-advance every 6 seconds, unless paused or reduced motion
   useEffect(() => {
     if (prefersReducedMotion || isPaused) return;
-
     const interval = setInterval(goToNext, 6000);
     return () => clearInterval(interval);
   }, [goToNext, isPaused, prefersReducedMotion]);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!carouselRef.current?.contains(document.activeElement)) return;
-
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        goToPrevious();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        goToNext();
-      }
+      if (e.key === "ArrowLeft") { e.preventDefault(); goToPrevious(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); goToNext(); }
     };
-
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [goToNext, goToPrevious]);
@@ -93,86 +66,111 @@ export default function TestimonialsCarousel() {
   return (
     <div
       ref={carouselRef}
-      className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-7"
+      style={{
+        background: "#EAF4FB",
+        borderRadius: 16,
+        border: "1px solid rgba(33,118,174,0.15)",
+        padding: 28,
+      }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocus={() => setIsPaused(true)}
       onBlur={(e) => {
-        // Only unpause if focus leaves the carousel entirely
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          setIsPaused(false);
-        }
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsPaused(false);
       }}
       role="region"
       aria-label="Testimonials carousel"
       aria-live="polite"
     >
-      {/* Title */}
-      <h3 className="mb-5 text-lg font-semibold text-gray-900">
+      <h3
+        style={{
+          fontSize: 14,
+          fontWeight: 600,
+          color: "#071E2E",
+          marginBottom: 20,
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+        }}
+      >
         What learners say
       </h3>
 
-      {/* Testimonial content */}
-      <div className="relative mb-5 min-h-[130px]">
+      <div style={{ position: "relative", minHeight: 130, marginBottom: 20 }}>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={currentIndex}
-            initial={
-              prefersReducedMotion
-                ? { opacity: 0 }
-                : { opacity: 0, y: 10 }
-            }
+            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={
-              prefersReducedMotion
-                ? { opacity: 0 }
-                : { opacity: 0, y: -10 }
-            }
+            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="space-y-4"
           >
-            {/* Quote */}
-            <blockquote className="text-lg leading-relaxed text-gray-800 md:text-xl">
-              "{currentTestimonial.quote}"
+            <blockquote
+              style={{
+                fontFamily: "'Lora', Georgia, serif",
+                fontStyle: "italic",
+                fontSize: 16,
+                lineHeight: 1.65,
+                color: "#071E2E",
+                marginBottom: 12,
+              }}
+            >
+              &ldquo;{currentTestimonial.quote}&rdquo;
             </blockquote>
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         {/* Navigation arrows */}
-        <div className="flex gap-2">
-          <button
-            onClick={goToPrevious}
-            className="rounded-full border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
-            aria-label="Previous testimonial"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={goToNext}
-            className="rounded-full border border-gray-300 p-2 text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
-            aria-label="Next testimonial"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          {[
+            { fn: goToPrevious, label: "Previous testimonial", icon: ChevronLeft },
+            { fn: goToNext, label: "Next testimonial", icon: ChevronRight },
+          ].map(({ fn, label, icon: Icon }) => (
+            <button
+              key={label}
+              onClick={fn}
+              aria-label={label}
+              style={{
+                borderRadius: "50%",
+                border: "1px solid rgba(33,118,174,0.2)",
+                background: "#fff",
+                width: 32,
+                height: 32,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "#3a6e88",
+                transition: "background 0.15s",
+              }}
+            >
+              <Icon style={{ width: 16, height: 16 }} />
+            </button>
+          ))}
         </div>
 
         {/* Dot indicators */}
-        <div className="flex gap-2" role="tablist" aria-label="Testimonials">
+        <div style={{ display: "flex", gap: 6 }} role="tablist" aria-label="Testimonials">
           {testimonials.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`h-2 w-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 ${
-                index === currentIndex
-                  ? "w-6 bg-gray-900"
-                  : "bg-gray-300 hover:bg-gray-400"
-              }`}
               aria-label={`Go to testimonial ${index + 1}`}
               aria-selected={index === currentIndex}
               role="tab"
+              style={{
+                height: 6,
+                width: index === currentIndex ? 18 : 6,
+                borderRadius: index === currentIndex ? 3 : "50%",
+                background: index === currentIndex ? "#2176AE" : "#C2D8E8",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                padding: 0,
+              }}
             />
           ))}
         </div>

@@ -9,37 +9,72 @@ export default function TopicsGrid() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section id="topics" className="bg-gray-50 px-6 py-24 md:px-12">
-      <div className="mx-auto max-w-6xl">
+    <section
+      id="topics"
+      className="fade-section"
+      style={{ background: "#F4F8FB", padding: "80px 24px" }}
+    >
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <motion.div
           initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.4 }}
-          className="mb-12 text-center"
+          style={{ textAlign: "center", marginBottom: 48 }}
         >
-          <h2 className="text-3xl font-semibold text-gray-900 md:text-4xl">
+          <h2
+            style={{
+              fontFamily: "'Lora', Georgia, serif",
+              fontWeight: 600,
+              fontSize: 36,
+              lineHeight: 1.15,
+              color: "#071E2E",
+              marginBottom: 12,
+            }}
+          >
             Browse topics
           </h2>
-          <p className="mt-3 text-lg text-gray-600">
+          <p
+            style={{
+              fontSize: 16,
+              color: "#3a6e88",
+              lineHeight: 1.65,
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+            }}
+          >
             Pick a topic and jump straight into practical, real-world vocabulary.
           </p>
         </motion.div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {TOPIC_TILES.map((topic) => (
             <TopicTile key={topic.slug} topic={topic} />
           ))}
         </div>
+
         <motion.div
           initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.4 }}
-          className="mt-10 text-center"
+          style={{ textAlign: "center", marginTop: 40 }}
         >
           <Link
             href="/topics"
-            className="inline-flex rounded-lg border-2 border-gray-900 bg-white px-6 py-3 font-semibold text-gray-900 transition-colors hover:bg-gray-50"
+            style={{
+              display: "inline-flex",
+              borderRadius: 8,
+              border: "1.5px solid #071E2E",
+              background: "#fff",
+              padding: "10px 24px",
+              fontWeight: 600,
+              fontSize: 14,
+              color: "#071E2E",
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              textDecoration: "none",
+              transition: "background 0.15s",
+            }}
+            className="hover:bg-[#F4F8FB]"
           >
             View more topics
           </Link>
@@ -48,4 +83,3 @@ export default function TopicsGrid() {
     </section>
   );
 }
-

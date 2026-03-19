@@ -11,50 +11,116 @@ export default function FounderStrip() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section id="founder-strip" className="border-y border-gray-100 bg-white px-6 py-16 md:px-12">
-      <div className="mx-auto max-w-6xl">
+    <section
+      id="founder-strip"
+      className="fade-section"
+      style={{ background: "#fff", padding: "80px 24px" }}
+    >
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <motion.div
           initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.4 }}
-          className="flex flex-col items-start gap-6 rounded-2xl border border-gray-200 bg-gradient-to-br from-gray-50/80 to-white p-6 shadow-sm transition-shadow hover:shadow-md md:flex-row md:items-center md:gap-8 md:p-8"
+          style={{
+            background: "#EAF4FB",
+            borderRadius: 20,
+            border: "1px solid rgba(33,118,174,0.15)",
+            padding: "36px 40px",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 32,
+            flexWrap: "wrap",
+          }}
         >
-          <div className="relative size-20 shrink-0 overflow-hidden rounded-full md:size-24">
+          {/* Avatar */}
+          <div
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              overflow: "hidden",
+              flexShrink: 0,
+              border: "3px solid #fff",
+              boxShadow: "0 2px 12px rgba(33,118,174,0.15)",
+            }}
+          >
             <Image
               src={FOUNDER_IMAGE}
               alt="Cameron Lim, founder of LingoIsland"
-              width={96}
-              height={96}
-              className="object-cover"
-              sizes="(max-width: 768px) 80px, 96px"
+              width={80}
+              height={80}
+              style={{ objectFit: "cover", width: "100%", height: "100%" }}
+              sizes="80px"
             />
           </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-semibold text-gray-900 md:text-2xl">
+
+          {/* Text */}
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <h2
+              style={{
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+                fontWeight: 600,
+                fontSize: 18,
+                color: "#071E2E",
+                marginBottom: 6,
+              }}
+            >
               {FOUNDER_STRIP.headline}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600 md:text-base">
+            <p
+              style={{
+                fontSize: 14,
+                color: "#3a6e88",
+                lineHeight: 1.65,
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+                marginBottom: 14,
+              }}
+            >
               {FOUNDER_STRIP.blurb}
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {FOUNDER_STRIP.metrics.map((m) => (
                 <span
                   key={m.value}
-                  className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700"
+                  style={{
+                    background: "#fff",
+                    border: "1px solid rgba(0,80,120,0.15)",
+                    borderRadius: 20,
+                    padding: "4px 14px",
+                    fontSize: 12,
+                    color: "#2176AE",
+                    fontWeight: 500,
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                  }}
                 >
                   {m.value}
                 </span>
               ))}
-              <Link
-                href={FOUNDER_STRIP.ctaHref}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
-              >
-                {FOUNDER_STRIP.ctaLabel}
-                <span aria-hidden>→</span>
-              </Link>
             </div>
           </div>
+
+          {/* CTA */}
+          <Link
+            href={FOUNDER_STRIP.ctaHref}
+            style={{
+              background: "#071E2E",
+              color: "#fff",
+              borderRadius: 10,
+              padding: "10px 20px",
+              fontSize: 14,
+              fontWeight: 500,
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              transition: "transform 0.15s ease, box-shadow 0.15s ease",
+            }}
+            className="hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(7,30,46,0.2)]"
+          >
+            {FOUNDER_STRIP.ctaLabel} →
+          </Link>
         </motion.div>
       </div>
     </section>

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Nav from "@/components/landing/Nav";
 import Hero from "@/components/landing/Hero";
-import ExampleIslandsMap from "@/components/landing/ExampleIslandsMap";
 import WhyLingoIsland from "@/components/landing/WhyLingoIsland";
 import ProofDemo from "@/components/landing/ProofDemo";
 import FeatureGrid from "@/components/landing/FeatureGrid";
@@ -12,7 +11,7 @@ import SocialProof from "@/components/landing/SocialProof";
 import FAQ from "@/components/landing/FAQ";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
-import { OceanBackground } from "@/components/OceanBackground";
+import FadeSectionObserver from "@/components/landing/FadeSectionObserver";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import { FAQ_ITEMS } from "@/lib/landing-content";
 
@@ -79,36 +78,24 @@ const structuredData = {
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen">
+    <main style={{ background: "#fff" }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <OceanBackground />
-      <div className="relative z-10">
-        <Nav />
-        <Hero />
-        <ExampleIslandsMap />
-        {/* Why LingoIsland */}
-        <WhyLingoIsland />
-      {/* Proof demo */}
+      <FadeSectionObserver />
+      <Nav />
+      <Hero />
+      <WhyLingoIsland />
       <ProofDemo />
-      {/* How it works loop */}
       <HowItWorks />
-      {/* Founder strip — trust before conversion */}
       <FounderStrip />
-      {/* Feature highlights */}
       <FeatureGrid />
-      {/* Browse topics */}
       <TopicsGrid />
-      {/* Social proof */}
       <SocialProof />
-      {/* FAQ */}
       <FAQ />
-      {/* Final CTA */}
       <FinalCTA />
       <Footer />
-      </div>
     </main>
   );
 }

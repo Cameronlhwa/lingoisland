@@ -132,11 +132,8 @@ function OnboardingTopicIslandContent() {
       if (pendingRequest) {
         // Has a pending island request — process it
         router.replace("/app/topic-islands/loading");
-      } else if (!user.is_anonymous) {
-        // Authenticated permanent user with nothing pending — go straight to the app
-        router.replace("/app");
       }
-      // Anonymous user with no pending request: stay on the page so they can start
+      // Otherwise stay on the page so they can build a new island
     }
   };
 

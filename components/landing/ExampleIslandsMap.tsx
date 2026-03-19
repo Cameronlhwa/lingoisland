@@ -23,7 +23,7 @@ export default function ExampleIslandsMap() {
   return (
     <section
       ref={containerRef}
-      className="relative overflow-visible px-4 py-4 md:px-8 md:py-6"
+      className="relative hidden overflow-visible px-4 py-4 md:block md:px-8 md:py-6"
     >
       {/* Boat layer must be direct child of section so path coordinates match */}
       <BoatRoute
