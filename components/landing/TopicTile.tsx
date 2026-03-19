@@ -14,25 +14,80 @@ export default function TopicTile({ topic }: TopicTileProps) {
   return (
     <motion.div
       whileHover={prefersReducedMotion ? undefined : { y: -4 }}
-      className="h-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:border-gray-300"
+      style={{
+        background: "#fff",
+        borderRadius: 14,
+        border: "1px solid rgba(0,0,0,0.07)",
+        padding: "22px 24px",
+        height: "100%",
+        transition: "transform 0.2s",
+      }}
     >
-      <Link href={`/onboarding/topic-island?topic=${encodeURIComponent(topic.title)}`} className="block">
-        <h3 className="text-lg font-semibold text-gray-900">{topic.title}</h3>
-        <p className="mt-2 text-sm text-gray-600">{topic.description}</p>
-        <div className="mt-4 space-y-2 text-sm text-gray-700">
+      <Link
+        href={`/onboarding/topic-island?topic=${encodeURIComponent(topic.title)}`}
+        style={{ display: "block", textDecoration: "none" }}
+      >
+        <h3
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            color: "#071E2E",
+            marginBottom: 6,
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+          }}
+        >
+          {topic.title}
+        </h3>
+        <p
+          style={{
+            fontSize: 12,
+            color: "#7a9aaa",
+            marginBottom: 16,
+            lineHeight: 1.5,
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+          }}
+        >
+          {topic.description}
+        </p>
+
+        {/* Vocab rows */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
           {topic.sampleWords.map((word) => (
-            <div key={word.hanzi} className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900">{word.hanzi}</span>
-              <span className="text-xs text-gray-500">{word.pinyin}</span>
-              <span className="text-xs text-gray-500">• {word.meaning}</span>
+            <div
+              key={word.hanzi}
+              style={{ display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#071E2E",
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                }}
+              >
+                {word.hanzi}
+              </span>
+              <span style={{ fontSize: 11, color: "#7aA0b4" }}>{word.pinyin}</span>
+              <span style={{ fontSize: 11, color: "#7aA0b4" }}>• {word.meaning}</span>
             </div>
           ))}
         </div>
-        <p className="mt-4 rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-700">
+
+        {/* Sample sentence */}
+        <p
+          style={{
+            background: "#F4F8FB",
+            borderRadius: 8,
+            padding: "8px 12px",
+            fontSize: 12,
+            color: "#3a6e88",
+            lineHeight: 1.6,
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+          }}
+        >
           {topic.sampleSentence}
         </p>
       </Link>
     </motion.div>
   );
 }
-

@@ -12,9 +12,7 @@ import { Volume2 } from "lucide-react";
 
 export default function WhyLingoIsland() {
   const prefersReducedMotion = useReducedMotion();
-  const [mobileView, setMobileView] = useState<"traditional" | "topic">(
-    "topic",
-  );
+  const [mobileView, setMobileView] = useState<"traditional" | "topic">("topic");
   const [typedText, setTypedText] = useState("");
   const [showCards, setShowCards] = useState(false);
   const sectionRef = useRef(null);
@@ -45,29 +43,22 @@ export default function WhyLingoIsland() {
     }
   };
 
-  // Typing animation - only starts when section is in view
   useEffect(() => {
     if (!isInView) return;
-
     if (prefersReducedMotion) {
       setTypedText(targetText);
       setShowCards(true);
       return;
     }
-
     let currentIndex = 0;
     const typingInterval = setInterval(() => {
       currentIndex++;
       setTypedText(targetText.slice(0, currentIndex));
       if (currentIndex >= targetText.length) {
         clearInterval(typingInterval);
-        // Show cards after typing completes
-        setTimeout(() => {
-          setShowCards(true);
-        }, 300);
+        setTimeout(() => setShowCards(true), 300);
       }
     }, 100);
-
     return () => clearInterval(typingInterval);
   }, [isInView, prefersReducedMotion]);
 
@@ -75,100 +66,139 @@ export default function WhyLingoIsland() {
     <section
       id="why"
       ref={sectionRef}
-      className="bg-white px-6 pb-24 pt-8 md:px-12 md:pb-32 md:pt-12"
+      className="fade-section"
+      style={{ background: "#fff", padding: "80px 24px" }}
     >
-      <div className="mx-auto max-w-7xl">
-        {/* Part 1: Primer */}
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.5 }}
-          className="mx-auto max-w-4xl text-center"
+          style={{ textAlign: "center", marginBottom: 48 }}
         >
-          <h3 className="mb-12 text-4xl font-semibold text-gray-900 md:text-5xl">
+          <h2
+            style={{
+              fontFamily: "'Lora', Georgia, serif",
+              fontWeight: 600,
+              fontSize: 36,
+              lineHeight: 1.15,
+              color: "#071E2E",
+              marginBottom: 16,
+            }}
+          >
             Why LingoIsland
-          </h3>
-          <h2 className="mx-auto mb-6 max-w-2xl text-2xl font-semibold leading-relaxed text-gray-800 md:text-3xl">
-            Build vocabulary around topics that interest you
           </h2>
-          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-gray-600 md:text-xl">
-            LingoIsland helps you remember Mandarin with topic-based
-            vocabulary—built around your life. Pick a topic and the words you
-            want. We turn them into a "Topic Island" with level-tuned sentences,
-            then reuse them in stories + review so they stick.
+          <p
+            style={{
+              fontSize: 16,
+              color: "#3a6e88",
+              lineHeight: 1.65,
+              maxWidth: 560,
+              margin: "0 auto",
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+            }}
+          >
+            Build vocabulary around topics that interest you. Pick a topic and
+            get words you actually need — with level-tuned sentences, audio, and
+            review that makes them stick.
           </p>
         </motion.div>
 
-        {/* Part 2: Split-screen animation */}
-        <div className="mt-16 md:mt-20">
-          {/* Mobile segmented control */}
-          <div className="mb-6 flex rounded-lg border border-gray-300 bg-gray-50 p-1 md:hidden">
+        {/* Mobile toggle */}
+        <div
+          className="mb-6 flex md:hidden"
+          style={{
+            borderRadius: 10,
+            border: "1px solid rgba(0,80,120,0.15)",
+            background: "#F4F8FB",
+            padding: 4,
+          }}
+        >
+          {(["traditional", "topic"] as const).map((view) => (
             <button
-              onClick={() => setMobileView("traditional")}
-              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                mobileView === "traditional"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600"
-              }`}
+              key={view}
+              onClick={() => setMobileView(view)}
+              style={{
+                flex: 1,
+                borderRadius: 8,
+                padding: "8px 16px",
+                fontSize: 13,
+                fontWeight: 500,
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                background: mobileView === view ? "#fff" : "transparent",
+                color: mobileView === view ? "#071E2E" : "#3a6e88",
+                boxShadow: mobileView === view ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              }}
             >
-              Curriculum-based
+              {view === "traditional" ? "Curriculum-based" : "Topic-based"}
             </button>
-            <button
-              onClick={() => setMobileView("topic")}
-              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                mobileView === "topic"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600"
-              }`}
-            >
-              Topic-based
-            </button>
-          </div>
+          ))}
+        </div>
 
-          {/* Desktop: side-by-side */}
-          <div className="hidden grid-cols-2 gap-8 md:grid">
+        {/* Desktop: side-by-side */}
+        <div className="hidden grid-cols-2 gap-6 md:grid" style={{ alignItems: "stretch" }}>
+          <TraditionalPanel prefersReducedMotion={prefersReducedMotion} />
+          <TopicPanel
+            prefersReducedMotion={prefersReducedMotion}
+            typedText={typedText}
+            showCards={showCards}
+            playAudio={playAudio}
+          />
+        </div>
+
+        {/* Mobile: toggled */}
+        <div className="md:hidden">
+          {mobileView === "traditional" ? (
             <TraditionalPanel prefersReducedMotion={prefersReducedMotion} />
+          ) : (
             <TopicPanel
               prefersReducedMotion={prefersReducedMotion}
               typedText={typedText}
               showCards={showCards}
               playAudio={playAudio}
             />
-          </div>
-
-          {/* Mobile: stacked with toggle */}
-          <div className="md:hidden">
-            {mobileView === "traditional" ? (
-              <TraditionalPanel prefersReducedMotion={prefersReducedMotion} />
-            ) : (
-              <TopicPanel
-                prefersReducedMotion={prefersReducedMotion}
-                typedText={typedText}
-                showCards={showCards}
-                playAudio={playAudio}
-              />
-            )}
-          </div>
+          )}
         </div>
 
-        {/* CTA Section */}
+        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.5 }}
-          className="mt-16 flex flex-col items-center gap-4 text-center"
+          style={{ marginTop: 48, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
         >
           <Link
             href="/onboarding/topic-island"
-            className="rounded-lg bg-gray-900 px-8 py-4 text-base font-semibold text-white shadow-sm transition-all hover:bg-gray-800 hover:shadow-md"
+            style={{
+              background: "#071E2E",
+              color: "#fff",
+              borderRadius: 10,
+              padding: "13px 26px",
+              fontSize: 15,
+              fontWeight: 500,
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              textDecoration: "none",
+              transition: "transform 0.15s ease, box-shadow 0.15s ease",
+            }}
+            className="hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(7,30,46,0.22)]"
           >
             Create your first Topic Island
           </Link>
           <a
             href="#demo"
-            className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+            style={{
+              color: "#2176AE",
+              fontSize: 14,
+              fontWeight: 500,
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              textDecoration: "none",
+            }}
           >
             See an example island ↓
           </a>
@@ -178,12 +208,7 @@ export default function WhyLingoIsland() {
   );
 }
 
-// Traditional Panel Component
-function TraditionalPanel({
-  prefersReducedMotion,
-}: {
-  prefersReducedMotion: boolean | null;
-}) {
+function TraditionalPanel({ prefersReducedMotion }: { prefersReducedMotion: boolean | null }) {
   const units = [
     { unit: "Unit 1", title: "Greetings", page: "p. 12" },
     { unit: "Unit 2", title: "Numbers", page: "p. 24" },
@@ -191,35 +216,50 @@ function TraditionalPanel({
     { unit: "Unit 4", title: "Food", page: "p. 51" },
     { unit: "Unit 5", title: "Weather", page: "p. 67" },
   ];
-
-  const vocabularyList = [
-    "1. earthquake (地震)",
-    "2. typhoon (台风)",
-    "3. temperature (温度)",
-    "4. forecast (预报)",
-  ];
-
   return (
     <motion.div
       initial={{ opacity: 0, x: prefersReducedMotion ? 0 : -20 }}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5 }}
-      className="rounded-2xl border-2 border-slate-300 bg-white p-8 shadow-sm"
       aria-label="Traditional curriculum-based learning approach"
+      style={{
+        borderRadius: 16,
+        border: "1px solid rgba(0,0,0,0.08)",
+        background: "#fafafa",
+        padding: 32,
+        display: "flex",
+        flexDirection: "column",
+      }}
     >
-      <div className="mb-6 border-b-2 border-slate-300 pb-4">
-        <h3 className="font-serif text-2xl font-bold text-slate-800">
-          Most Mandarin Apps
-        </h3>
-        <p className="mt-1 font-serif text-sm text-slate-500">
+      <p
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+          color: "#9ab0bc",
+          marginBottom: 12,
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+        }}
+      >
+        Most Mandarin Apps
+      </p>
+      <div style={{ borderBottom: "2px solid #e2e8f0", paddingBottom: 16, marginBottom: 20 }}>
+        <h3 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 20, fontWeight: 600, color: "#334155" }}>
           Appendix • Table of Contents
-        </p>
+        </h3>
       </div>
-
-      {/* Units table of contents */}
-      <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <p className="mb-3 font-serif text-xs font-semibold uppercase tracking-wide text-slate-600">
+      <div
+        style={{
+          borderRadius: 8,
+          border: "1px solid #e2e8f0",
+          background: "#f1f5f9",
+          padding: 16,
+          marginBottom: 16,
+        }}
+      >
+        <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b", marginBottom: 12 }}>
           Course Units
         </p>
         {units.map((unit, idx) => (
@@ -229,55 +269,39 @@ function TraditionalPanel({
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.3, delay: idx * 0.1 }}
-            className="mb-2 flex items-baseline justify-between border-b border-slate-200 py-2 last:border-b-0"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              padding: "8px 0",
+              borderBottom: idx < units.length - 1 ? "1px solid #e2e8f0" : "none",
+            }}
           >
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-xs font-bold text-slate-700">
-                {unit.unit}
-              </span>
-              <span className="font-serif text-sm text-slate-600">
-                {unit.title}
-              </span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: "#475569" }}>{unit.unit}</span>
+              <span style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 13, color: "#64748b" }}>{unit.title}</span>
             </div>
-            <span className="font-mono text-xs text-slate-400">
-              {unit.page}
-            </span>
+            <span style={{ fontFamily: "monospace", fontSize: 11, color: "#94a3b8" }}>{unit.page}</span>
           </motion.div>
         ))}
       </div>
-
-      {/* Unit 5 content */}
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <p className="mb-3 font-serif text-sm font-bold uppercase tracking-wide text-slate-700">
-          Unit 5: Weather
-        </p>
-        <div className="space-y-2 text-xs text-slate-600">
-          <p className="font-semibold text-slate-700">Vocabulary:</p>
-          {vocabularyList.map((item, idx) => (
-            <motion.div
-              key={item}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: 0.5 + idx * 0.1 }}
-              className="font-mono"
-            >
-              {item}
-            </motion.div>
-          ))}
-          <div className="mt-4 border-t border-slate-200 pt-3">
-            <p className="mb-2 font-semibold text-slate-700">Grammar Point:</p>
-            <p className="italic">
-              The particle 吗 (ma) is used to form yes/no questions.
-            </p>
-          </div>
-        </div>
-      </div>
+      <p
+        style={{
+          fontSize: 13,
+          color: "#aaaaaa",
+          fontStyle: "italic",
+          lineHeight: 1.5,
+          marginTop: "auto",
+          paddingTop: 16,
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+        }}
+      >
+        You follow their curriculum. Whether it matches your life or not.
+      </p>
     </motion.div>
   );
 }
 
-// Topic Panel Component - With typing animation
 function TopicPanel({
   prefersReducedMotion,
   typedText,
@@ -289,8 +313,13 @@ function TopicPanel({
   showCards: boolean;
   playAudio: (text: string) => Promise<void>;
 }) {
-  const isTyping =
-    typedText.length > 0 && typedText.length < "Apartment hunting".length;
+  const isTyping = typedText.length > 0 && typedText.length < "Apartment hunting".length;
+
+  const vocabRows = [
+    { hanzi: "租房", pinyin: "zū fáng", en: "rent apartment", sentence: "我在这个区租房，很方便。", sentencePinyin: "Wǒ zài zhège qū zū fáng, hěn fāngbiàn.", sentenceEn: "I rent an apartment here — very convenient." },
+    { hanzi: "地铁站", pinyin: "dìtiězhàn", en: "subway station", sentence: "地铁站离家走路十分钟。", sentencePinyin: "Dìtiězhàn lí jiā zǒulù shí fēnzhōng.", sentenceEn: "The subway station is a 10-min walk from home." },
+    { hanzi: "房东", pinyin: "fángdōng", en: "landlord", sentence: "房东人很好，也很热心。", sentencePinyin: "Fángdōng rén hěn hǎo, yě hěn rèxīn.", sentenceEn: "The landlord is nice and very helpful." },
+  ];
 
   return (
     <motion.div
@@ -298,28 +327,48 @@ function TopicPanel({
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5 }}
-      className="rounded-2xl border border-gray-300 bg-[#CFEFFF] p-8"
       aria-label="LingoIsland topic-based learning approach"
+      style={{
+        borderRadius: 16,
+        border: "1px solid rgba(33,118,174,0.2)",
+        background: "#EAF4FB",
+        padding: 32,
+      }}
     >
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold text-gray-900">
-          LingoIsland's Personalized Approach
-        </h3>
-      </div>
-
+      <p
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+          color: "#2176AE",
+          marginBottom: 12,
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+        }}
+      >
+        LingoIsland&apos;s Personalized Approach
+      </p>
       {/* Input area */}
-      <div className="mb-6 rounded-xl border border-gray-300 bg-white p-4">
-        <label className="mb-2 block text-xs font-medium text-gray-700">
+      <div
+        style={{
+          borderRadius: 10,
+          border: "1px solid rgba(33,118,174,0.2)",
+          background: "#fff",
+          padding: 16,
+          marginBottom: 16,
+        }}
+      >
+        <label style={{ fontSize: 11, fontWeight: 600, color: "#3a6e88", display: "block", marginBottom: 8, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
           Type a topic...
         </label>
-        <div className="flex items-center min-h-[28px]">
-          <span className="text-lg text-gray-900">
+        <div style={{ minHeight: 28 }}>
+          <span style={{ fontSize: 16, color: "#071E2E", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
             {typedText}
             {isTyping && !prefersReducedMotion && (
               <motion.span
                 animate={{ opacity: [1, 0, 1] }}
                 transition={{ duration: 0.8, repeat: Infinity }}
-                className="ml-0.5 inline-block h-5 w-0.5 bg-white"
+                style={{ display: "inline-block", width: 2, height: 18, background: "#2176AE", marginLeft: 2, verticalAlign: "middle" }}
               />
             )}
           </span>
@@ -333,147 +382,49 @@ function TopicPanel({
             initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="mb-4 space-y-3"
+            style={{ display: "flex", flexDirection: "column", gap: 10 }}
           >
-            <div className="rounded-lg border border-gray-300 bg-white p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => playAudio("租房")}
-                    className="flex-shrink-0 rounded-full p-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-                    aria-label="Play audio for 租房"
-                  >
-                    <Volume2 className="h-4 w-4" />
-                  </button>
-                  <span className="text-base font-semibold text-gray-900">
-                    租房
-                  </span>
-                  <span className="ml-2 text-xs text-gray-600">zū fáng</span>
+            {vocabRows.map((row) => (
+              <div
+                key={row.hanzi}
+                style={{
+                  borderRadius: 8,
+                  border: "1px solid rgba(33,118,174,0.12)",
+                  background: "#fff",
+                  padding: 14,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <button
+                      onClick={() => playAudio(row.hanzi)}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 4, borderRadius: "50%", color: "#3a6e88" }}
+                      aria-label={`Play audio for ${row.hanzi}`}
+                    >
+                      <Volume2 style={{ width: 16, height: 16 }} />
+                    </button>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: "#071E2E" }}>{row.hanzi}</span>
+                    <span style={{ fontSize: 12, color: "#7aA0b4" }}>{row.pinyin}</span>
+                  </div>
+                  <span style={{ fontSize: 12, color: "#7aA0b4" }}>{row.en}</span>
                 </div>
-                <span className="text-xs text-gray-600">rent apartment</span>
-              </div>
-              <div className="mt-3 space-y-1">
-                <div className="flex items-start gap-2">
+                <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "flex-start" }}>
                   <button
-                    onClick={() => playAudio("我在这个区租房，很方便。")}
-                    className="flex-shrink-0 rounded-full p-1 mt-0.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                    onClick={() => playAudio(row.sentence)}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: 4, borderRadius: "50%", color: "#3a6e88", flexShrink: 0, marginTop: 2 }}
                     aria-label="Play audio for sentence"
                   >
-                    <Volume2 className="h-3.5 w-3.5" />
+                    <Volume2 style={{ width: 14, height: 14 }} />
                   </button>
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-800">
-                      我在这个区租房，很方便。
-                    </div>
-                    <p className="text-xs text-gray-400">
-                      Wǒ zài zhège qū zū fáng, hěn fāngbiàn.
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      I rent an apartment in this area, it&apos;s very
-                      convenient.
-                    </p>
+                  <div>
+                    <div style={{ fontSize: 13, color: "#071E2E", lineHeight: 1.5 }}>{row.sentence}</div>
+                    <div style={{ fontSize: 11, color: "#7aA0b4", marginTop: 2 }}>{row.sentencePinyin}</div>
+                    <div style={{ fontSize: 11, color: "#3a6e88", marginTop: 2 }}>{row.sentenceEn}</div>
                   </div>
                 </div>
               </div>
-            </div>
+            ))}
 
-            <div className="rounded-lg border border-gray-300 bg-white p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => playAudio("地铁站")}
-                    className="flex-shrink-0 rounded-full p-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-                    aria-label="Play audio for 地铁站"
-                  >
-                    <Volume2 className="h-4 w-4" />
-                  </button>
-                  <span className="text-base font-semibold text-gray-900">
-                    地铁站
-                  </span>
-                  <span className="ml-2 text-xs text-gray-600">dìtiězhàn</span>
-                </div>
-                <span className="text-xs text-gray-600">subway station</span>
-              </div>
-              <div className="mt-3 space-y-1">
-                <div className="flex items-start gap-2">
-                  <button
-                    onClick={() => playAudio("地铁站离家走路十分钟。")}
-                    className="flex-shrink-0 rounded-full p-1 mt-0.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-                    aria-label="Play audio for sentence"
-                  >
-                    <Volume2 className="h-3.5 w-3.5" />
-                  </button>
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-800">
-                      地铁站离家走路十分钟。
-                    </div>
-                    <p className="text-xs text-gray-400">
-                      Dìtiězhàn lí jiā zǒulù shí fēnzhōng.
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      The subway station is a 10-minute walk from home.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-gray-300 bg-white p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => playAudio("房东")}
-                    className="flex-shrink-0 rounded-full p-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-                    aria-label="Play audio for 房东"
-                  >
-                    <Volume2 className="h-4 w-4" />
-                  </button>
-                  <span className="text-base font-semibold text-gray-900">
-                    房东
-                  </span>
-                  <span className="ml-2 text-xs text-gray-600">fángdōng</span>
-                </div>
-                <span className="text-xs text-gray-600">landlord</span>
-              </div>
-              <div className="mt-3 space-y-1">
-                <div className="flex items-start gap-2">
-                  <button
-                    onClick={() => playAudio("房东人很好，也很热心。")}
-                    className="flex-shrink-0 rounded-full p-1 mt-0.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-                    aria-label="Play audio for sentence"
-                  >
-                    <Volume2 className="h-3.5 w-3.5" />
-                  </button>
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-800">
-                      房东人很好，也很热心。
-                    </div>
-                    <p className="text-xs text-gray-400">
-                      Fángdōng rén hěn hǎo, yě hěn rèxīn.
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      The landlord is nice and very helpful.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature chips */}
-            <div className="mt-6 flex flex-wrap gap-2">
-              {[
-                "Choose your words",
-                "Reuse recent words",
-                "Sentences tuned to your level",
-              ].map((feature) => (
-                <div
-                  key={feature}
-                  className="rounded-full border border-gray-300 bg-white px-3 py-1 text-xs text-gray-700"
-                >
-                  {feature}
-                </div>
-              ))}
-            </div>
           </motion.div>
         )}
       </AnimatePresence>

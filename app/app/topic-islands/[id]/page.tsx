@@ -164,7 +164,9 @@ export default function TopicIslandDetailPage() {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dropMatches, setDropMatches] = useState<Record<string, string>>({});
   const [shuffledEnglishWords, setShuffledEnglishWords] = useState<Word[]>([]);
-  const [selectedEnglishWord, setSelectedEnglishWord] = useState<string | null>(null);
+  const [selectedEnglishWord, setSelectedEnglishWord] = useState<string | null>(
+    null,
+  );
   const [useTapMode, setUseTapMode] = useState(false);
 
   useEffect(() => {
@@ -1307,9 +1309,15 @@ export default function TopicIslandDetailPage() {
                             How to use this island
                           </h3>
                           <p className="mt-1.5 text-sm leading-relaxed text-gray-300">
-                            Read through each word and its example sentences,
-                            all around your level, to get familiar with them.
-                            Then scroll down and hit{" "}
+                            Read through each word and its{" "}
+                            <span className="font-semibold text-white">
+                              example sentences
+                            </span>
+                            , all around your level, to get familiar with them.{" "}
+                            <span className="font-semibold text-white">
+                              Hover over any word
+                            </span>{" "}
+                            to see its meaning. Then scroll down and hit{" "}
                             <span className="font-semibold text-white">
                               Quiz me on this island
                             </span>{" "}
@@ -2137,7 +2145,8 @@ export default function TopicIslandDetailPage() {
                                 dropMatches,
                               ).includes(word.english);
                               const isSelected =
-                                useTapMode && selectedEnglishWord === word.english;
+                                useTapMode &&
+                                selectedEnglishWord === word.english;
                               const isDragging =
                                 !useTapMode && draggedItem === word.english;
                               return (
@@ -2151,18 +2160,27 @@ export default function TopicIslandDetailPage() {
                                   onClick={() => {
                                     if (!useTapMode || isUsed) return;
                                     setSelectedEnglishWord((prev) =>
-                                      prev === word.english ? null : word.english,
+                                      prev === word.english
+                                        ? null
+                                        : word.english,
                                     );
                                   }}
                                   role={useTapMode ? "button" : undefined}
-                                  tabIndex={useTapMode && !isUsed ? 0 : undefined}
+                                  tabIndex={
+                                    useTapMode && !isUsed ? 0 : undefined
+                                  }
                                   onKeyDown={
                                     useTapMode && !isUsed
                                       ? (e) => {
-                                          if (e.key === "Enter" || e.key === " ") {
+                                          if (
+                                            e.key === "Enter" ||
+                                            e.key === " "
+                                          ) {
                                             e.preventDefault();
                                             setSelectedEnglishWord((prev) =>
-                                              prev === word.english ? null : word.english,
+                                              prev === word.english
+                                                ? null
+                                                : word.english,
                                             );
                                           }
                                         }
@@ -2192,7 +2210,9 @@ export default function TopicIslandDetailPage() {
                               return (
                                 <div
                                   key={`zh-${word.id}`}
-                                  onDragOver={(e) => !useTapMode && e.preventDefault()}
+                                  onDragOver={(e) =>
+                                    !useTapMode && e.preventDefault()
+                                  }
                                   onDrop={() => {
                                     if (!useTapMode && draggedItem) {
                                       setDropMatches((prev) => ({
@@ -2217,7 +2237,8 @@ export default function TopicIslandDetailPage() {
                                     useTapMode
                                       ? (e) => {
                                           if (
-                                            (e.key === "Enter" || e.key === " ") &&
+                                            (e.key === "Enter" ||
+                                              e.key === " ") &&
                                             selectedEnglishWord
                                           ) {
                                             e.preventDefault();

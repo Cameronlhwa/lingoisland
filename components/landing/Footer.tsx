@@ -3,36 +3,82 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-gray-200 bg-gray-900 px-6 py-12 md:px-12">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3 text-white">
-          <div className="flex size-9 items-center justify-center overflow-hidden rounded-lg bg-white p-0.5">
+    <footer
+      style={{
+        background: "#071E2E",
+        padding: "32px 48px",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1100,
+          margin: "0 auto",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 20,
+        }}
+      >
+        {/* Logo */}
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              overflow: "hidden",
+              background: "#fff",
+              padding: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Image
               src="/logo.png"
               alt="LingoIsland Logo"
-              width={40}
-              height={40}
-              className="rounded-md"
+              width={28}
+              height={28}
+              style={{ borderRadius: 6 }}
             />
           </div>
-          <span className="text-lg font-semibold">LingoIsland</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-6 text-sm text-gray-300">
-          <Link href="/" className="hover:text-white">
-            Home
-          </Link>
-          <Link href="/#topics" className="hover:text-white">
-            Topics
-          </Link>
-          <Link href="/founder" className="hover:text-white">
-            Founder
-          </Link>
-          <Link href="/login" className="hover:text-white">
-            Sign in
-          </Link>
-          <Link href="/onboarding/topic-island" className="hover:text-white">
-            Create Topic Island
-          </Link>
+          <span
+            style={{
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: 15,
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+            }}
+          >
+            LingoIsland
+          </span>
+        </Link>
+
+        {/* Links */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "center" }}>
+          {[
+            { href: "/", label: "Home" },
+            { href: "/#topics", label: "Topics" },
+            { href: "/founder", label: "Founder" },
+            { href: "/login", label: "Sign in" },
+            { href: "/onboarding/topic-island", label: "Create Topic Island" },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              style={{
+                fontSize: 13,
+                color: "rgba(255,255,255,0.5)",
+                textDecoration: "none",
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+                transition: "color 0.15s",
+              }}
+              className="hover:text-white"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
       </div>
     </footer>

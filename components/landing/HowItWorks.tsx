@@ -7,41 +7,117 @@ export default function HowItWorks() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section id="how-it-works" className="bg-gray-50 px-6 py-24 md:px-12">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-16 text-center">
-          <h2 className="text-3xl font-semibold text-gray-900 md:text-4xl">
+    <section
+      id="how-it-works"
+      className="fade-section"
+      style={{ background: "#F4F8FB", padding: "80px 24px" }}
+    >
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <h2
+            style={{
+              fontFamily: "'Lora', Georgia, serif",
+              fontWeight: 600,
+              fontSize: 36,
+              lineHeight: 1.15,
+              color: "#071E2E",
+              marginBottom: 12,
+            }}
+          >
             How it works
           </h2>
-          <p className="mt-3 text-lg text-gray-600">
+          <p
+            style={{
+              fontSize: 16,
+              color: "#3a6e88",
+              lineHeight: 1.65,
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+            }}
+          >
             A simple loop designed for consistent, real-life vocabulary growth.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3" style={{ position: "relative" }}>
           {HOW_IT_WORKS_STEPS.map((step, index) => (
             <motion.div
               key={step.title}
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
-              className="relative"
+              transition={{ duration: 0.4, delay: index * 0.08 }}
+              style={{ position: "relative" }}
             >
-              <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="mb-6 text-4xl font-semibold text-[#0f172a]">
+              <div
+                style={{
+                  background: "#fff",
+                  borderRadius: 16,
+                  border: "1px solid rgba(0,0,0,0.07)",
+                  padding: "28px 24px",
+                  height: "100%",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Watermark step number */}
+                <div
+                  aria-hidden
+                  style={{
+                    fontFamily: "'Lora', Georgia, serif",
+                    fontSize: 72,
+                    fontWeight: 600,
+                    color: "#D6EEF8",
+                    lineHeight: 1,
+                    position: "absolute",
+                    top: 12,
+                    right: 16,
+                    userSelect: "none",
+                    pointerEvents: "none",
+                  }}
+                >
                   {index + 1}
                 </div>
-                <h3 className="mb-3 text-xl font-semibold text-gray-900">
+                <h3
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 600,
+                    color: "#071E2E",
+                    marginBottom: 10,
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    position: "relative",
+                    zIndex: 1,
+                  }}
+                >
                   {step.title}
                 </h3>
-                <p className="text-sm leading-relaxed text-gray-600">
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "#5a7a88",
+                    lineHeight: 1.65,
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    position: "relative",
+                    zIndex: 1,
+                  }}
+                >
                   {step.description}
                 </p>
               </div>
+
+              {/* Dashed connector */}
               {index < HOW_IT_WORKS_STEPS.length - 1 && (
-                <div className="absolute right-0 top-1/2 hidden -translate-y-1/2 translate-x-1/2 md:block">
-                  <div className="h-0.5 w-12 border-t-2 border-dashed border-gray-300"></div>
-                </div>
+                <div
+                  className="hidden md:block"
+                  style={{
+                    position: "absolute",
+                    right: -13,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 24,
+                    borderTop: "2px dashed #C2D8E8",
+                    zIndex: 2,
+                  }}
+                />
               )}
             </motion.div>
           ))}
