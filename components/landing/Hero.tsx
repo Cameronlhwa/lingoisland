@@ -23,11 +23,11 @@ const TOPICS = [
 
 // Order must match TOPICS exactly so activeTopic index aligns
 const CHIPS: { label: string; icon: React.ElementType }[] = [
-  { label: "Coffee Shop",    icon: MdLocalCafe },
-  { label: "Finance",        icon: MdAttachMoney },
-  { label: "AI & Tech",      icon: MdSmartToy },
+  { label: "Coffee Shop", icon: MdLocalCafe },
+  { label: "Finance", icon: MdAttachMoney },
+  { label: "AI & Tech", icon: MdSmartToy },
   { label: "Hospital Visit", icon: MdLocalHospital },
-  { label: "Travel",         icon: MdFlight },
+  { label: "Travel", icon: MdFlight },
 ];
 
 // ─── Step 1: Pick a topic ──────────────────────────────────────────────────────
@@ -494,26 +494,26 @@ function HowItWorksFlow() {
               {/* Label row */}
               <div
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 600,
-                  letterSpacing: "0.08em",
+                  letterSpacing: "0.07em",
                   textTransform: "uppercase",
-                  color: "#7aA0b4",
+                  color: "#3a6e88",
                   marginBottom: 8,
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
+                  gap: 8,
                   fontFamily: "'DM Sans', system-ui, sans-serif",
                 }}
               >
                 <div
                   style={{
-                    width: 18,
-                    height: 18,
+                    width: 20,
+                    height: 20,
                     borderRadius: "50%",
                     background: "#2176AE",
                     color: "#fff",
-                    fontSize: 9,
+                    fontSize: 10,
                     fontWeight: 700,
                     display: "flex",
                     alignItems: "center",
@@ -566,26 +566,26 @@ function HowItWorksFlow() {
             <div className={`flow-step${visible[i * 2] ? " visible" : ""}`}>
               <div
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 600,
-                  letterSpacing: "0.08em",
+                  letterSpacing: "0.07em",
                   textTransform: "uppercase",
-                  color: "#7aA0b4",
+                  color: "#3a6e88",
                   marginBottom: 8,
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
+                  gap: 8,
                   fontFamily: "'DM Sans', system-ui, sans-serif",
                 }}
               >
                 <div
                   style={{
-                    width: 18,
-                    height: 18,
+                    width: 20,
+                    height: 20,
                     borderRadius: "50%",
                     background: "#2176AE",
                     color: "#fff",
-                    fontSize: 9,
+                    fontSize: 10,
                     fontWeight: 700,
                     display: "flex",
                     alignItems: "center",
@@ -682,7 +682,7 @@ export default function Hero() {
       {/* ── Text content ── */}
       <div
         style={{
-          maxWidth: 700,
+          maxWidth: 900,
           margin: "0 auto",
           textAlign: "center",
           padding: "72px 24px 0",
@@ -700,7 +700,8 @@ export default function Hero() {
             marginBottom: 20,
           }}
         >
-          Learn the Words You{" "}
+          Learn Mandarin You
+          <br />
           <em
             style={{ fontStyle: "italic", color: "#2176AE", fontWeight: 600 }}
           >
