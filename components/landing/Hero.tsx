@@ -23,11 +23,11 @@ const TOPICS = [
 
 // Order must match TOPICS exactly so activeTopic index aligns
 const CHIPS: { label: string; icon: React.ElementType }[] = [
-  { label: "Coffee Shop",    icon: MdLocalCafe },
-  { label: "Finance",        icon: MdAttachMoney },
-  { label: "AI & Tech",      icon: MdSmartToy },
+  { label: "Coffee Shop", icon: MdLocalCafe },
+  { label: "Finance", icon: MdAttachMoney },
+  { label: "AI & Tech", icon: MdSmartToy },
   { label: "Hospital Visit", icon: MdLocalHospital },
-  { label: "Travel",         icon: MdFlight },
+  { label: "Travel", icon: MdFlight },
 ];
 
 // ─── Step 1: Pick a topic ──────────────────────────────────────────────────────
@@ -682,7 +682,7 @@ export default function Hero() {
       {/* ── Text content ── */}
       <div
         style={{
-          maxWidth: 700,
+          maxWidth: 900,
           margin: "0 auto",
           textAlign: "center",
           padding: "72px 24px 0",
@@ -700,7 +700,8 @@ export default function Hero() {
             marginBottom: 20,
           }}
         >
-          Learn the Words You{" "}
+          Learn Mandarin You
+          <br />
           <em
             style={{ fontStyle: "italic", color: "#2176AE", fontWeight: 600 }}
           >
