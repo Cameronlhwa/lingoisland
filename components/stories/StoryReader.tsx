@@ -587,9 +587,9 @@ export default function StoryReader({
                   {targetWords.map((word) => (
                     <div
                       key={word.id}
-                      className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+                      className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4"
                     >
-                      <div className="flex-1">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <div className="text-2xl font-semibold text-gray-900">
                             {convertText(word.hanzi)}
@@ -607,7 +607,7 @@ export default function StoryReader({
                           {word.english}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                         <button
                           onClick={() =>
                             setAskAIWord({
@@ -616,7 +616,7 @@ export default function StoryReader({
                               english: word.english,
                             })
                           }
-                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md flex items-center gap-1.5"
+                          className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
                           title="Ask 华华 about this word"
                         >
                           <img 
