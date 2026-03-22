@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getEntitlements, isWordLocked } from '@/lib/entitlements'
+import { getEntitlements, isWordLocked, canCreateTopicIsland } from '@/lib/entitlements'
 
 /**
  * GET /api/topic-islands/[id]
@@ -74,6 +74,13 @@ export async function GET(
       examples: (grammarExamples || []).filter(ex => ex.grammar_focus_id === focus.id)
     }))
 
+    const { count: topicIslandCount } = await supabase
+      .from('topic_islands')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    const createIslandEligibility = await canCreateTopicIsland(user.id)
+
     // Attach sentences to words
     // Words 11-20 are no longer blurred for free users; they remain visible.
     // However, free users cannot use "Add to Quiz", "Mark Known", or "Ask for help" on words 11-20.
@@ -93,6 +100,8 @@ export async function GET(
       grammarFocus: grammarFocusWithExamples,
       user_plan: entitlements.isPro ? 'pro' : 'free',
       is_anonymous: user?.is_anonymous ?? false,
+      user_topic_island_count: topicIslandCount ?? 0,
+      can_create_topic_island: createIslandEligibility.allowed,
     })
   } catch (error) {
     console.error('Error in GET /api/topic-islands/[id]:', error)

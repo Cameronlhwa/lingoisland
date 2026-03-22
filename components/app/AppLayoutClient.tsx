@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "@/components/app/Sidebar";
+import MobileTabBar from "@/components/app/MobileTabBar";
 import AppLogo from "@/components/app/AppLogo";
 import {
   OnboardingProvider,
@@ -133,7 +134,7 @@ function PersistentSettingsNudge() {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 md:left-[272px] max-w-sm">
+    <div className="fixed bottom-24 left-4 z-50 max-w-sm md:bottom-4 md:left-[272px]">
       <OnboardingNudgeCard
         key={persistentSettingsNudge.key}
         nudge={persistentSettingsNudge}
@@ -271,10 +272,14 @@ export default function AppLayoutClient({
               setIsAccountModalOpen={setAccountModalOpen}
               accountModalInitialTab={accountModalInitialTab}
             />
-            <main className="pt-16 md:pt-0 md:ml-64">
+            <main className="min-h-0 pt-16 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:ml-64 md:pb-0 md:pt-0">
               <OnboardingNudgeSlot />
               {children}
             </main>
+            <MobileTabBar
+              sidebarOpen={sidebarOpen}
+              onOpenSidebar={() => setSidebarOpen(true)}
+            />
             <PersistentSettingsNudge />
           </div>
         </SidebarContext.Provider>

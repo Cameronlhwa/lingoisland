@@ -446,8 +446,8 @@ export default function IslandSideChat({
       {/* Floating button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border-2 border-gray-900 bg-white px-5 py-3 text-gray-900 shadow-lg transition-all hover:shadow-xl hover:scale-105 ${
-          open ? "opacity-0 pointer-events-none" : ""
+        className={`fixed z-40 flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full border-2 border-gray-900 bg-white px-4 py-3 text-gray-900 shadow-lg transition-all hover:shadow-xl hover:scale-105 max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] max-md:right-4 md:bottom-6 md:right-6 md:px-5 ${
+          open ? "pointer-events-none opacity-0" : ""
         }`}
         aria-label="Ask for help"
         title="Ask Huáhuá for help"
@@ -457,7 +457,9 @@ export default function IslandSideChat({
           alt="Huáhuá" 
           className="h-8 w-8 rounded-full"
         />
-        <span className="text-sm font-semibold">Have any questions?</span>
+        <span className="truncate text-sm font-semibold max-md:max-w-[11rem]">
+          Have any questions?
+        </span>
       </button>
 
       {/* Desktop split-screen sidebar (normal flex child) */}

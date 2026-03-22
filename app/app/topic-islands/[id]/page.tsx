@@ -20,6 +20,8 @@ import UpgradeModal from "@/components/app/UpgradeModal";
 import AddAllWordsModal from "@/components/app/AddAllWordsModal";
 import { createClient } from "@/lib/supabase/browser";
 import { useSidebar } from "@/components/app/AppLayoutClient";
+import { BsCardChecklist } from "react-icons/bs";
+import { TbLock, TbMap2 } from "react-icons/tb";
 
 interface Sentence {
   id: string;
@@ -88,6 +90,8 @@ export default function TopicIslandDetailPage() {
   const [loading, setLoading] = useState(true);
   const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [userTopicIslandCount, setUserTopicIslandCount] = useState(0);
+  const [canCreateTopicIsland, setCanCreateTopicIsland] = useState(true);
 
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -209,6 +213,12 @@ export default function TopicIslandDetailPage() {
     [words, lockedWordIds],
   );
 
+  /** Onboarding-style bottom: anonymous first island, or signed-in free user with only one island */
+  const showOnboardingIslandBottom = useMemo(
+    () => isAnonymous || (userPlan === "free" && userTopicIslandCount === 1),
+    [isAnonymous, userPlan, userTopicIslandCount],
+  );
+
   useEffect(() => {
     setImageProgress(0);
     setImageError(null);
@@ -280,6 +290,12 @@ export default function TopicIslandDetailPage() {
       setGrammarFocus(data.grammarFocus || []);
       setUserPlan(data.user_plan || "free");
       setIsAnonymous(data.is_anonymous ?? false);
+      setUserTopicIslandCount(
+        typeof data.user_topic_island_count === "number"
+          ? data.user_topic_island_count
+          : 0,
+      );
+      setCanCreateTopicIsland(data.can_create_topic_island !== false);
       setLoading(false);
 
       // Set default level for adding words if not already set
@@ -876,6 +892,23 @@ export default function TopicIslandDetailPage() {
     }
   };
 
+  const handleStartFlashcardsAllWords = () => {
+    const pool = shuffleArray([...selectableWords]);
+    if (pool.length < 2) {
+      alert("You need at least two words to start flashcards.");
+      return;
+    }
+    setQuizWords(pool);
+    setQuizMode("flashcard");
+    setCurrentQuizIndex(0);
+    setQuizAnswers({});
+    setShowQuizResults(false);
+    setShowFlashcardAnswer(false);
+    setFlashcardDirection(
+      pool.map(() => (Math.random() > 0.5 ? "zh-en" : "en-zh")),
+    );
+  };
+
   // Show the capybara teaser popup for anonymous users who finish a 5-word quiz
   const maybeShowCapybaraTeaser = (wordCount: number) => {
     if (!isAnonymous || wordCount < 5) return;
@@ -1319,7 +1352,9 @@ export default function TopicIslandDetailPage() {
                             </span>{" "}
                             to see its meaning. Then scroll down and hit{" "}
                             <span className="font-semibold text-white">
-                              Quiz me on this island
+                              {showOnboardingIslandBottom
+                                ? "Start Flashcards"
+                                : "Quiz me on this island"}
                             </span>{" "}
                             to test how many you remember!
                           </p>
@@ -1334,6 +1369,54 @@ export default function TopicIslandDetailPage() {
                   ).map((word, index) => {
                     const anchorId = `word-${word.id || index}`;
 
+                    const wordActionButtons = (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAskAIWord({
+                              hanzi: word.hanzi,
+                              pinyin: word.pinyin,
+                              english: word.english,
+                            });
+                          }}
+                          className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+                          title="Ask 华华 about this word"
+                        >
+                          <img
+                            src="/capybara-face.png"
+                            alt="Huáhuá"
+                            className="h-5 w-5 rounded-full"
+                          />
+                          <span>Ask for help</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToQuizClick("word", word.id);
+                          }}
+                          disabled={addedItems.has(`word-${word.id}`)}
+                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
+                        >
+                          {addedItems.has(`word-${word.id}`)
+                            ? "✓ In quiz"
+                            : t("Add to quiz")}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkKnown(word.id);
+                          }}
+                          disabled={markingKnown === word.id}
+                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {markingKnown === word.id
+                            ? "Updating..."
+                            : "Already know"}
+                        </button>
+                      </>
+                    );
+
                     return (
                       <div
                         key={anchorId}
@@ -1343,8 +1426,7 @@ export default function TopicIslandDetailPage() {
                       >
                         {/* Word content */}
                         <div className="mb-6">
-                          {/* Desktop: side-by-side, Mobile: stacked */}
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                             <div className="flex-1">
                               <div className="mb-2 flex items-center gap-3">
                                 <div className="text-3xl font-bold text-gray-900">
@@ -1363,51 +1445,9 @@ export default function TopicIslandDetailPage() {
                                 {word.english}
                               </div>
                             </div>
-                            {/* Buttons - stack on mobile, horizontal on desktop */}
-                            <div className="flex flex-col sm:flex-row gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setAskAIWord({
-                                    hanzi: word.hanzi,
-                                    pinyin: word.pinyin,
-                                    english: word.english,
-                                  });
-                                }}
-                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md flex items-center gap-1.5"
-                                title="Ask 华华 about this word"
-                              >
-                                <img
-                                  src="/capybara-face.png"
-                                  alt="Huáhuá"
-                                  className="h-5 w-5 rounded-full"
-                                />
-                                <span>Ask for help</span>
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAddToQuizClick("word", word.id);
-                                }}
-                                disabled={addedItems.has(`word-${word.id}`)}
-                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
-                              >
-                                {addedItems.has(`word-${word.id}`)
-                                  ? "✓ In quiz"
-                                  : t("Add to quiz")}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMarkKnown(word.id);
-                                }}
-                                disabled={markingKnown === word.id}
-                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                {markingKnown === word.id
-                                  ? "Updating..."
-                                  : "Already know"}
-                              </button>
+                            {/* Desktop/tablet: actions beside the word */}
+                            <div className="hidden flex-col gap-2 sm:flex sm:flex-row">
+                              {wordActionButtons}
                             </div>
                           </div>
                         </div>
@@ -1518,6 +1558,11 @@ export default function TopicIslandDetailPage() {
                                 </div>
                               ))
                           )}
+                        </div>
+
+                        {/* Mobile: actions below example sentences (clear of floating Huáhuá + tab bar) */}
+                        <div className="mt-6 flex flex-col gap-2 border-t border-gray-200 pt-6 sm:hidden">
+                          {wordActionButtons}
                         </div>
                       </div>
                     );
@@ -1655,749 +1700,841 @@ export default function TopicIslandDetailPage() {
                 </div>
               )}
 
-              {/* Tabbed Card for Add Words and Quiz */}
-              <div className="mt-10 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                {/* Tab Navigation */}
-                <div className="flex border-b border-gray-200">
-                  <button
-                    onClick={() => setActiveTab("quiz")}
-                    className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                      activeTab === "quiz"
-                        ? "border-gray-900 text-gray-900 bg-white"
-                        : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    }`}
-                  >
-                    Quiz me on this island
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (isAnonymous) {
-                        openSignupModal("Topic Islands");
-                        return;
-                      }
-                      setActiveTab("add");
-                    }}
-                    className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                      activeTab === "add"
-                        ? "border-gray-900 text-gray-900 bg-white"
-                        : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    }`}
-                  >
-                    Add more words
-                  </button>
-                </div>
-
-                {/* Tab Content */}
-                <div className="p-6">
-                  {activeTab === "add" ? (
-                    /* Add More Words Tab */
-                    <div>
-                      <div className="mb-6 flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            Add more words
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            Add more vocabulary that fits this island.
-                          </p>
-                        </div>
-                        <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600">
-                          Add {addCount} words
-                        </span>
-                      </div>
-
-                      <div className="space-y-5">
-                        <div>
-                          <label className="mb-2 block text-sm font-medium text-gray-900">
-                            Count
-                          </label>
-                          <input
-                            type="range"
-                            min={5}
-                            max={10}
-                            step={1}
-                            value={addCount}
-                            onChange={(e) =>
-                              setAddCount(Number(e.target.value))
-                            }
-                            className="w-full accent-gray-900"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="mb-2 block text-sm font-medium text-gray-900">
-                            Level
-                          </label>
-                          <select
-                            value={addWordsLevel}
-                            onChange={(e) => setAddWordsLevel(e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                          >
-                            <option value="A1">A1 - Beginner</option>
-                            <option value="A2">A2 - Elementary</option>
-                            <option value="B1">B1 - Intermediate</option>
-                            <option value="B2">B2 - Upper Intermediate</option>
-                            <option value="C1">C1 - Advanced</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="mb-2 block text-sm font-medium text-gray-900">
-                            Suggested words
-                          </label>
-                          <input
-                            type="text"
-                            value={suggestionsInput}
-                            onChange={(e) =>
-                              setSuggestionsInput(e.target.value)
-                            }
-                            placeholder="Describe the type of words you want (optional)"
-                            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                          />
-                          {alreadyInIslandSuggestions.length > 0 && (
-                            <p className="mt-2 text-xs text-gray-500">
-                              Already in island:{" "}
-                              {alreadyInIslandSuggestions.join(", ")}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <label className="flex items-center gap-3 text-sm text-gray-700">
-                            <input
-                              type="checkbox"
-                              checked={recycleOldWords}
-                              onChange={(e) =>
-                                setRecycleOldWords(e.target.checked)
-                              }
-                              className="h-4 w-4 rounded border-gray-300 text-gray-900 accent-gray-900 focus:ring-gray-200"
-                            />
-                            Recycle existing words from this island into the
-                            sentence examples of the new words
-                          </label>
-                          <button
-                            onClick={
-                              userPlan === "free"
-                                ? () => {
-                                    setUpgradeFeature("Add More Words");
-                                    setShowUpgradeModal(true);
-                                  }
-                                : handleAddWords
-                            }
-                            disabled={
-                              userPlan === "pro" &&
-                              (addingWords ||
-                                island.status !== "ready" ||
-                                addCount < 5)
-                            }
-                            className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {addingWords
-                              ? "Generating..."
-                              : `Add ${addCount} words`}
-                          </button>
-                        </div>
-                      </div>
+              {/* Add Words + Quiz (full UI) or onboarding-only flashcards + create island */}
+              {showOnboardingIslandBottom &&
+              island.status === "ready" &&
+              quizMode === null &&
+              !showQuizResults ? (
+                <div className="mt-10 space-y-10">
+                  <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+                    <div className="mb-5 flex justify-center" aria-hidden>
+                      <BsCardChecklist className="h-12 w-12 text-[#121926]" />
                     </div>
-                  ) : quizMode === null ? (
-                    /* Quiz Tab - Mode Selection */
-                    <div>
-                      {!isAnonymous && (
-                        <div className="mb-6">
-                          <button
-                            type="button"
-                            onClick={() => setWordSelectionOpen((o) => !o)}
-                            className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100"
-                          >
-                            <div>
-                              <span className="text-sm font-medium text-gray-900">
-                                Select only certain words to quiz
-                              </span>
-                              <span className="ml-2 text-xs text-gray-500">
-                                (optional - all words are selected by default)
-                              </span>
-                            </div>
-                            <svg
-                              className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${wordSelectionOpen ? "rotate-180" : ""}`}
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 9l-7 7-7-7"
-                              />
-                            </svg>
-                          </button>
-
-                          {wordSelectionOpen && (
-                            <div className="mt-2 rounded-lg border border-gray-200 bg-white p-4">
-                              <p className="text-sm text-gray-600 mb-4">
-                                Choose which words you want to practice. At
-                                least 5 words required.
-                              </p>
-
-                              {recentlyQuizzedIds.size > 0 && (
-                                <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                                  <p className="text-sm text-blue-900">
-                                    <span className="font-medium">
-                                      Smart Quiz Active:
-                                    </span>{" "}
-                                    Prioritizing words you haven't seen recently
-                                    ({words.length - recentlyQuizzedIds.size}{" "}
-                                    fresh words available).{" "}
-                                    <button
-                                      onClick={() =>
-                                        setRecentlyQuizzedIds(new Set())
-                                      }
-                                      className="font-medium underline hover:no-underline"
-                                    >
-                                      Reset history
-                                    </button>
-                                  </p>
-                                </div>
-                              )}
-
-                              <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
-                                <span className="text-sm font-medium text-gray-700">
-                                  {selectedWordIds.size} of {words.length} words
-                                  selected
-                                </span>
-                                <button
-                                  onClick={toggleSelectAll}
-                                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-                                >
-                                  {selectableWords.every((w) =>
-                                    selectedWordIds.has(w.id),
-                                  )
-                                    ? "Deselect all"
-                                    : "Select all"}
-                                </button>
-                              </div>
-
-                              <div className="max-h-64 overflow-y-auto space-y-2">
-                                {words.map((word, index) => {
-                                  const isLocked = false;
-                                  return (
-                                    <label
-                                      key={word.id}
-                                      className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                                        isLocked
-                                          ? "pointer-events-none relative cursor-default"
-                                          : "hover:bg-gray-50 cursor-pointer"
-                                      }`}
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={selectedWordIds.has(word.id)}
-                                        onChange={() =>
-                                          toggleWordSelection(word.id)
-                                        }
-                                        disabled={isLocked}
-                                        tabIndex={isLocked ? -1 : 0}
-                                        aria-disabled={isLocked}
-                                        className={`h-4 w-4 rounded border-gray-300 text-gray-900 accent-gray-900 focus:ring-gray-200 disabled:opacity-50 ${isLocked ? "pointer-events-none" : ""}`}
-                                      />
-                                      <div
-                                        className={`flex-1 flex items-center gap-2 ${
-                                          isLocked ? "blur-sm select-none" : ""
-                                        }`}
-                                      >
-                                        <span className="font-medium text-gray-900">
-                                          {convertText(word.hanzi)}
-                                        </span>
-                                        <span className="text-gray-600">•</span>
-                                        <span className="text-gray-600">
-                                          {word.english}
-                                        </span>
-                                      </div>
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="border-t border-gray-200 pt-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Choose quiz type
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Drag & Drop Quiz Card */}
-                          <button
-                            onClick={() => handleStartQuiz("drag-drop")}
-                            disabled={selectedWordIds.size < 2}
-                            className="group text-left p-6 rounded-xl border-2 border-cyan-300 bg-white hover:border-gray-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-cyan-300 disabled:hover:shadow-none"
-                          >
-                            <div className="mb-3">
-                              <svg
-                                className="h-10 w-10 text-gray-900"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                                />
-                              </svg>
-                            </div>
-                            <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                              Drag & Drop Matching
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              Match up to 10 English words with their Chinese
-                              translations
-                            </p>
-                          </button>
-
-                          {/* Flashcard Quiz Card */}
-                          <button
-                            onClick={() => handleStartQuiz("flashcard")}
-                            disabled={selectedWordIds.size < 2}
-                            className="group text-left p-6 rounded-xl border-2 border-cyan-300 bg-white hover:border-gray-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-cyan-300 disabled:hover:shadow-none"
-                          >
-                            <div className="mb-3">
-                              <svg
-                                className="h-10 w-10 text-gray-900"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                                />
-                              </svg>
-                            </div>
-                            <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                              Flashcards
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              Flip through cards and test your memory in both
-                              directions
-                            </p>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : !showQuizResults ? (
-                    /* Active Quiz */
-                    quizMode === "flashcard" ? (
-                      /* Flashcard Quiz */
-                      <div>
-                        <div className="mb-6 flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-600">
-                            Card {currentQuizIndex + 1} of {quizWords.length}
-                          </span>
-                          <button
-                            onClick={handleResetQuiz}
-                            className="text-sm font-medium text-gray-600 hover:text-gray-900"
-                          >
-                            Exit Quiz
-                          </button>
-                        </div>
-
-                        <div className="mb-8">
-                          <div className="h-2 w-full rounded-full bg-gray-200">
-                            <div
-                              className="h-full rounded-full bg-gray-900 transition-all"
-                              style={{
-                                width: `${((currentQuizIndex + 1) / quizWords.length) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {quizWords[currentQuizIndex] && (
-                          <div className="flex flex-col items-center">
-                            <div className="w-full max-w-md">
-                              <div className="mb-8 rounded-2xl border-2 border-gray-200 bg-gray-50 p-12 text-center">
-                                <div className="mb-4 text-sm font-medium uppercase tracking-wide text-gray-500">
-                                  {flashcardDirection[currentQuizIndex] ===
-                                  "zh-en"
-                                    ? "Chinese"
-                                    : "English"}
-                                </div>
-                                <div className="flex items-center justify-center gap-3 mb-8">
-                                  <div className="text-4xl font-bold text-gray-900">
-                                    {flashcardDirection[currentQuizIndex] ===
-                                    "zh-en"
-                                      ? convertText(
-                                          quizWords[currentQuizIndex].hanzi,
-                                        )
-                                      : quizWords[currentQuizIndex].english}
-                                  </div>
-                                  {flashcardDirection[currentQuizIndex] ===
-                                    "zh-en" && (
-                                    <SpeakerButton
-                                      text={quizWords[currentQuizIndex].hanzi}
-                                      type="word"
-                                      size="lg"
-                                    />
-                                  )}
-                                </div>
-
-                                {flashcardDirection[currentQuizIndex] ===
-                                  "zh-en" && (
-                                  <div className="text-lg text-gray-600 mb-8">
-                                    {quizWords[currentQuizIndex].pinyin}
-                                  </div>
-                                )}
-
-                                {showFlashcardAnswer && (
-                                  <div className="border-t-2 border-gray-300 pt-8 mt-8">
-                                    <div className="mb-2 text-sm font-medium uppercase tracking-wide text-gray-500">
-                                      Answer
-                                    </div>
-                                    <div className="text-2xl font-semibold text-gray-900">
-                                      {flashcardDirection[currentQuizIndex] ===
-                                      "zh-en"
-                                        ? quizWords[currentQuizIndex].english
-                                        : convertText(
-                                            quizWords[currentQuizIndex].hanzi,
-                                          )}
-                                    </div>
-                                    {flashcardDirection[currentQuizIndex] ===
-                                      "en-zh" && (
-                                      <>
-                                        <div className="mt-2 text-lg text-gray-600">
-                                          {quizWords[currentQuizIndex].pinyin}
-                                        </div>
-                                        <div className="mt-4">
-                                          <SpeakerButton
-                                            text={
-                                              quizWords[currentQuizIndex].hanzi
-                                            }
-                                            type="word"
-                                            size="lg"
-                                          />
-                                        </div>
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-
-                              {!showFlashcardAnswer ? (
-                                <button
-                                  onClick={() => setShowFlashcardAnswer(true)}
-                                  className="w-full rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
-                                >
-                                  Show Answer
-                                </button>
-                              ) : (
-                                <div className="flex gap-3">
-                                  <button
-                                    onClick={() => handleFlashcardGrade(false)}
-                                    className="flex-1 rounded-lg border-2 border-red-500 bg-white px-6 py-3 text-base font-medium text-red-700 transition-colors hover:bg-red-50"
-                                  >
-                                    I didn't know it
-                                  </button>
-                                  <button
-                                    onClick={() => handleFlashcardGrade(true)}
-                                    className="flex-1 rounded-lg border-2 border-green-500 bg-white px-6 py-3 text-base font-medium text-green-700 transition-colors hover:bg-green-50"
-                                  >
-                                    I knew it
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      /* Drag & Drop Quiz */
-                      <div>
-                        <div className="mb-6 flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            Match the pairs
-                          </h3>
-                          <button
-                            onClick={handleResetQuiz}
-                            className="text-sm font-medium text-gray-600 hover:text-gray-900"
-                          >
-                            Exit Quiz
-                          </button>
-                        </div>
-
-                        <p className="mb-6 text-sm text-gray-600">
-                          {useTapMode
-                            ? "Tap a word, then tap a slot to match."
-                            : "Drag English words to match with their Chinese translations"}
+                    <h3 className="text-center text-xl font-semibold text-gray-900">
+                      Flashcard practice
+                    </h3>
+                    <p className="mt-2 text-center text-sm leading-relaxed text-gray-600">
+                      Flip through cards for every word on this island—Chinese,
+                      English, and pinyin—until you&apos;re comfortable with
+                      them.
+                    </p>
+                    <div className="mt-8">
+                      <button
+                        type="button"
+                        onClick={handleStartFlashcardsAllWords}
+                        disabled={selectableWords.length < 2}
+                        className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-[#121926] px-6 py-4 text-base font-semibold text-white shadow-none transition-shadow duration-200 ease-out hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none"
+                      >
+                        Start Flashcards →
+                      </button>
+                      {selectableWords.length < 2 ? (
+                        <p className="mt-3 text-center text-xs text-gray-500">
+                          Add at least two words to start flashcards.
                         </p>
+                      ) : null}
+                    </div>
+                  </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                          {/* Left column - Draggable English words (or tap-to-select on mobile) */}
-                          <div className="space-y-3">
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                              English
-                            </h4>
-                            {shuffledEnglishWords.map((word) => {
-                              const isUsed = Object.values(
-                                dropMatches,
-                              ).includes(word.english);
-                              const isSelected =
-                                useTapMode &&
-                                selectedEnglishWord === word.english;
-                              const isDragging =
-                                !useTapMode && draggedItem === word.english;
-                              return (
-                                <div
-                                  key={`en-${word.id}`}
-                                  draggable={!useTapMode && !isUsed}
-                                  onDragStart={() =>
-                                    !isUsed && setDraggedItem(word.english)
-                                  }
-                                  onDragEnd={() => setDraggedItem(null)}
-                                  onClick={() => {
-                                    if (!useTapMode || isUsed) return;
-                                    setSelectedEnglishWord((prev) =>
-                                      prev === word.english
-                                        ? null
-                                        : word.english,
-                                    );
-                                  }}
-                                  role={useTapMode ? "button" : undefined}
-                                  tabIndex={
-                                    useTapMode && !isUsed ? 0 : undefined
-                                  }
-                                  onKeyDown={
-                                    useTapMode && !isUsed
-                                      ? (e) => {
-                                          if (
-                                            e.key === "Enter" ||
-                                            e.key === " "
-                                          ) {
-                                            e.preventDefault();
-                                            setSelectedEnglishWord((prev) =>
-                                              prev === word.english
-                                                ? null
-                                                : word.english,
-                                            );
-                                          }
-                                        }
-                                      : undefined
-                                  }
-                                  className={`p-4 rounded-lg border-2 transition-all ${
-                                    isUsed
-                                      ? "border-cyan-300 bg-cyan-50 text-cyan-900 opacity-60 cursor-not-allowed"
-                                      : isSelected || isDragging
-                                        ? "border-gray-900 bg-gray-900 text-white shadow-lg cursor-grabbing"
-                                        : "border-gray-200 bg-white text-gray-900 hover:border-gray-400 hover:shadow-md cursor-grab"
-                                  } ${useTapMode && !isUsed ? "cursor-pointer" : ""}`}
-                                >
-                                  {word.english}
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Right column - Drop zones with Chinese words */}
-                          <div className="space-y-3">
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                              Chinese
-                            </h4>
-                            {quizWords.map((word) => {
-                              const hasMatch = !!dropMatches[word.hanzi];
-                              return (
-                                <div
-                                  key={`zh-${word.id}`}
-                                  onDragOver={(e) =>
-                                    !useTapMode && e.preventDefault()
-                                  }
-                                  onDrop={() => {
-                                    if (!useTapMode && draggedItem) {
-                                      setDropMatches((prev) => ({
-                                        ...prev,
-                                        [word.hanzi]: draggedItem,
-                                      }));
-                                      setDraggedItem(null);
-                                    }
-                                  }}
-                                  onClick={() => {
-                                    if (useTapMode && selectedEnglishWord) {
-                                      setDropMatches((prev) => ({
-                                        ...prev,
-                                        [word.hanzi]: selectedEnglishWord,
-                                      }));
-                                      setSelectedEnglishWord(null);
-                                    }
-                                  }}
-                                  role={useTapMode ? "button" : undefined}
-                                  tabIndex={useTapMode ? 0 : undefined}
-                                  onKeyDown={
-                                    useTapMode
-                                      ? (e) => {
-                                          if (
-                                            (e.key === "Enter" ||
-                                              e.key === " ") &&
-                                            selectedEnglishWord
-                                          ) {
-                                            e.preventDefault();
-                                            setDropMatches((prev) => ({
-                                              ...prev,
-                                              [word.hanzi]: selectedEnglishWord,
-                                            }));
-                                            setSelectedEnglishWord(null);
-                                          }
-                                        }
-                                      : undefined
-                                  }
-                                  className={`p-4 rounded-lg border-2 min-h-[56px] flex items-center justify-between transition-all ${
-                                    hasMatch
-                                      ? "border-cyan-300 bg-cyan-50 border-solid"
-                                      : "border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100"
-                                  } ${useTapMode ? "cursor-pointer" : ""}`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span
-                                      className={`font-medium ${hasMatch ? "text-cyan-900" : "text-gray-900"}`}
-                                    >
-                                      {convertText(word.hanzi)}
-                                    </span>
-                                    <SpeakerButton
-                                      text={word.hanzi}
-                                      type="word"
-                                      size="sm"
-                                    />
-                                    <span
-                                      className={`text-sm ${hasMatch ? "text-cyan-700" : "text-gray-600"}`}
-                                    >
-                                      ({word.pinyin})
-                                    </span>
-                                  </div>
-                                  {dropMatches[word.hanzi] && (
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm font-medium text-cyan-800">
-                                        {dropMatches[word.hanzi]}
-                                      </span>
-                                      <button
-                                        onClick={() => {
-                                          setDropMatches((prev) => {
-                                            const newMatches = { ...prev };
-                                            delete newMatches[word.hanzi];
-                                            return newMatches;
-                                          });
-                                        }}
-                                        className="ml-1 text-cyan-600 hover:text-cyan-800 font-semibold"
-                                        title="Remove match"
-                                      >
-                                        ✕
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end">
-                          <button
-                            onClick={handleDragDropSubmit}
-                            disabled={
-                              Object.keys(dropMatches).length !==
-                              quizWords.length
-                            }
-                            className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Submit Answers
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  ) : (
-                    /* Quiz Results */
-                    <div>
-                      <div className="text-center mb-8">
-                        <h3 className="text-3xl font-bold text-gray-900 mb-2">
-                          Quiz Complete!
-                        </h3>
-                        {(() => {
-                          const correctCount =
-                            Object.values(quizAnswers).filter(Boolean).length;
-                          const totalCount = Object.keys(quizAnswers).length;
-                          const percentage = Math.round(
-                            (correctCount / totalCount) * 100,
-                          );
-                          return (
-                            <>
-                              <p className="text-5xl font-bold text-gray-900 my-6">
-                                {percentage}%
-                              </p>
-                              <p className="text-lg text-gray-600">
-                                You got {correctCount} out of {totalCount}{" "}
-                                correct
-                              </p>
-                            </>
-                          );
-                        })()}
-                      </div>
-
-                      <div className="mb-8 space-y-3">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-4">
-                          Breakdown:
-                        </h4>
-                        {quizWords.map((word) => {
-                          const isCorrect = quizAnswers[word.id];
-                          return (
-                            <div
-                              key={word.id}
-                              className={`p-4 rounded-lg border-2 ${
-                                isCorrect
-                                  ? "border-green-200 bg-green-50"
-                                  : "border-red-200 bg-red-50"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-xl">
-                                    {isCorrect ? "✓" : "✗"}
-                                  </span>
-                                  <div>
-                                    <div className="font-medium text-gray-900">
-                                      {convertText(word.hanzi)} ({word.pinyin})
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                      {word.english}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="flex gap-3 justify-center">
+                  <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+                    <div className="mb-5 flex justify-center" aria-hidden>
+                      <TbMap2 className="h-12 w-12 text-[#121926]" />
+                    </div>
+                    <h3 className="text-center text-xl font-semibold text-gray-900">
+                      Create New Island
+                    </h3>
+                    <p className="mt-2 text-center text-sm leading-relaxed text-gray-600">
+                      Learn vocab on any topic you care about
+                    </p>
+                    <div className="mt-8">
+                      {isAnonymous ? (
                         <button
-                          onClick={handleResetQuiz}
-                          className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                          type="button"
+                          onClick={() => openSignupModal("Topic Islands")}
+                          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#121926] px-5 py-3 text-sm font-semibold text-white shadow-none transition-shadow duration-200 ease-out hover:shadow-xl"
                         >
-                          Back to Island
+                          <TbLock className="h-5 w-5 shrink-0" aria-hidden />
+                          Sign up free →
                         </button>
+                      ) : userPlan === "pro" || canCreateTopicIsland ? (
+                        <Link
+                          href="/app/topic-islands"
+                          className="flex min-h-[48px] w-full items-center justify-center rounded-xl bg-[#121926] px-5 py-3 text-sm font-semibold text-white shadow-none transition-shadow duration-200 ease-out hover:shadow-xl"
+                        >
+                          Create Island →
+                        </Link>
+                      ) : (
                         <button
+                          type="button"
                           onClick={() => {
-                            setShowQuizResults(false);
-                            setQuizMode(null);
+                            setUpgradeFeature("Topic Islands");
+                            setShowUpgradeModal(true);
                           }}
-                          className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+                          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#121926] px-5 py-3 text-sm font-semibold text-white shadow-none transition-shadow duration-200 ease-out hover:shadow-xl"
                         >
-                          Try Again
+                          <TbLock className="h-5 w-5 shrink-0" aria-hidden />
+                          Upgrade to unlock →
                         </button>
-                      </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-10 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                  {!showOnboardingIslandBottom && (
+                    <div className="flex border-b border-gray-200">
+                      <button
+                        onClick={() => setActiveTab("quiz")}
+                        className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                          activeTab === "quiz"
+                            ? "border-gray-900 text-gray-900 bg-white"
+                            : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
+                        Quiz me on this island
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (isAnonymous) {
+                            openSignupModal("Topic Islands");
+                            return;
+                          }
+                          setActiveTab("add");
+                        }}
+                        className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                          activeTab === "add"
+                            ? "border-gray-900 text-gray-900 bg-white"
+                            : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
+                        Add more words
+                      </button>
                     </div>
                   )}
+
+                  <div className="p-6">
+                    {activeTab === "add" && !showOnboardingIslandBottom ? (
+                      /* Add More Words Tab */
+                      <div>
+                        <div className="mb-6 flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              Add more words
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              Add more vocabulary that fits this island.
+                            </p>
+                          </div>
+                          <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600">
+                            Add {addCount} words
+                          </span>
+                        </div>
+
+                        <div className="space-y-5">
+                          <div>
+                            <label className="mb-2 block text-sm font-medium text-gray-900">
+                              Count
+                            </label>
+                            <input
+                              type="range"
+                              min={5}
+                              max={10}
+                              step={1}
+                              value={addCount}
+                              onChange={(e) =>
+                                setAddCount(Number(e.target.value))
+                              }
+                              className="w-full accent-gray-900"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="mb-2 block text-sm font-medium text-gray-900">
+                              Level
+                            </label>
+                            <select
+                              value={addWordsLevel}
+                              onChange={(e) => setAddWordsLevel(e.target.value)}
+                              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                            >
+                              <option value="A1">A1 - Beginner</option>
+                              <option value="A2">A2 - Elementary</option>
+                              <option value="B1">B1 - Intermediate</option>
+                              <option value="B2">
+                                B2 - Upper Intermediate
+                              </option>
+                              <option value="C1">C1 - Advanced</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="mb-2 block text-sm font-medium text-gray-900">
+                              Suggested words
+                            </label>
+                            <input
+                              type="text"
+                              value={suggestionsInput}
+                              onChange={(e) =>
+                                setSuggestionsInput(e.target.value)
+                              }
+                              placeholder="Describe the type of words you want (optional)"
+                              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                            />
+                            {alreadyInIslandSuggestions.length > 0 && (
+                              <p className="mt-2 text-xs text-gray-500">
+                                Already in island:{" "}
+                                {alreadyInIslandSuggestions.join(", ")}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <label className="flex items-center gap-3 text-sm text-gray-700">
+                              <input
+                                type="checkbox"
+                                checked={recycleOldWords}
+                                onChange={(e) =>
+                                  setRecycleOldWords(e.target.checked)
+                                }
+                                className="h-4 w-4 rounded border-gray-300 text-gray-900 accent-gray-900 focus:ring-gray-200"
+                              />
+                              Recycle existing words from this island into the
+                              sentence examples of the new words
+                            </label>
+                            <button
+                              onClick={
+                                userPlan === "free"
+                                  ? () => {
+                                      setUpgradeFeature("Add More Words");
+                                      setShowUpgradeModal(true);
+                                    }
+                                  : handleAddWords
+                              }
+                              disabled={
+                                userPlan === "pro" &&
+                                (addingWords ||
+                                  island.status !== "ready" ||
+                                  addCount < 5)
+                              }
+                              className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {addingWords
+                                ? "Generating..."
+                                : `Add ${addCount} words`}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : quizMode === null && !showOnboardingIslandBottom ? (
+                      /* Quiz Tab - Mode Selection */
+                      <div>
+                        {!isAnonymous && (
+                          <div className="mb-6">
+                            <button
+                              type="button"
+                              onClick={() => setWordSelectionOpen((o) => !o)}
+                              className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100"
+                            >
+                              <div>
+                                <span className="text-sm font-medium text-gray-900">
+                                  Select only certain words to quiz
+                                </span>
+                                <span className="ml-2 text-xs text-gray-500">
+                                  (optional - all words are selected by default)
+                                </span>
+                              </div>
+                              <svg
+                                className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${wordSelectionOpen ? "rotate-180" : ""}`}
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 9l-7 7-7-7"
+                                />
+                              </svg>
+                            </button>
+
+                            {wordSelectionOpen && (
+                              <div className="mt-2 rounded-lg border border-gray-200 bg-white p-4">
+                                <p className="text-sm text-gray-600 mb-4">
+                                  Choose which words you want to practice. At
+                                  least 5 words required.
+                                </p>
+
+                                {recentlyQuizzedIds.size > 0 && (
+                                  <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                                    <p className="text-sm text-blue-900">
+                                      <span className="font-medium">
+                                        Smart Quiz Active:
+                                      </span>{" "}
+                                      Prioritizing words you haven't seen
+                                      recently (
+                                      {words.length - recentlyQuizzedIds.size}{" "}
+                                      fresh words available).{" "}
+                                      <button
+                                        onClick={() =>
+                                          setRecentlyQuizzedIds(new Set())
+                                        }
+                                        className="font-medium underline hover:no-underline"
+                                      >
+                                        Reset history
+                                      </button>
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {selectedWordIds.size} of {words.length}{" "}
+                                    words selected
+                                  </span>
+                                  <button
+                                    onClick={toggleSelectAll}
+                                    className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                                  >
+                                    {selectableWords.every((w) =>
+                                      selectedWordIds.has(w.id),
+                                    )
+                                      ? "Deselect all"
+                                      : "Select all"}
+                                  </button>
+                                </div>
+
+                                <div className="max-h-64 overflow-y-auto space-y-2">
+                                  {words.map((word, index) => {
+                                    const isLocked = false;
+                                    return (
+                                      <label
+                                        key={word.id}
+                                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                                          isLocked
+                                            ? "pointer-events-none relative cursor-default"
+                                            : "hover:bg-gray-50 cursor-pointer"
+                                        }`}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedWordIds.has(word.id)}
+                                          onChange={() =>
+                                            toggleWordSelection(word.id)
+                                          }
+                                          disabled={isLocked}
+                                          tabIndex={isLocked ? -1 : 0}
+                                          aria-disabled={isLocked}
+                                          className={`h-4 w-4 rounded border-gray-300 text-gray-900 accent-gray-900 focus:ring-gray-200 disabled:opacity-50 ${isLocked ? "pointer-events-none" : ""}`}
+                                        />
+                                        <div
+                                          className={`flex-1 flex items-center gap-2 ${
+                                            isLocked
+                                              ? "blur-sm select-none"
+                                              : ""
+                                          }`}
+                                        >
+                                          <span className="font-medium text-gray-900">
+                                            {convertText(word.hanzi)}
+                                          </span>
+                                          <span className="text-gray-600">
+                                            •
+                                          </span>
+                                          <span className="text-gray-600">
+                                            {word.english}
+                                          </span>
+                                        </div>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="border-t border-gray-200 pt-6">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Choose quiz type
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Drag & Drop Quiz Card */}
+                            <button
+                              onClick={() => handleStartQuiz("drag-drop")}
+                              disabled={selectedWordIds.size < 2}
+                              className="group text-left p-6 rounded-xl border-2 border-cyan-300 bg-white hover:border-gray-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-cyan-300 disabled:hover:shadow-none"
+                            >
+                              <div className="mb-3">
+                                <svg
+                                  className="h-10 w-10 text-gray-900"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                                  />
+                                </svg>
+                              </div>
+                              <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                                Drag & Drop Matching
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                Match up to 10 English words with their Chinese
+                                translations
+                              </p>
+                            </button>
+
+                            {/* Flashcard Quiz Card */}
+                            <button
+                              onClick={() => handleStartQuiz("flashcard")}
+                              disabled={selectedWordIds.size < 2}
+                              className="group text-left p-6 rounded-xl border-2 border-cyan-300 bg-white hover:border-gray-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-cyan-300 disabled:hover:shadow-none"
+                            >
+                              <div className="mb-3">
+                                <svg
+                                  className="h-10 w-10 text-gray-900"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                  />
+                                </svg>
+                              </div>
+                              <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                                Flashcards
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                Flip through cards and test your memory in both
+                                directions
+                              </p>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : !showQuizResults && quizMode !== null ? (
+                      /* Active Quiz */
+                      quizMode === "flashcard" ? (
+                        /* Flashcard Quiz */
+                        <div>
+                          <div className="mb-6 flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600">
+                              Card {currentQuizIndex + 1} of {quizWords.length}
+                            </span>
+                            <button
+                              onClick={handleResetQuiz}
+                              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                            >
+                              Exit Quiz
+                            </button>
+                          </div>
+
+                          <div className="mb-8">
+                            <div className="h-2 w-full rounded-full bg-gray-200">
+                              <div
+                                className="h-full rounded-full bg-gray-900 transition-all"
+                                style={{
+                                  width: `${((currentQuizIndex + 1) / quizWords.length) * 100}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {quizWords[currentQuizIndex] && (
+                            <div className="flex flex-col items-center">
+                              <div className="w-full max-w-md">
+                                <div className="mb-8 rounded-2xl border-2 border-gray-200 bg-gray-50 p-12 text-center">
+                                  <div className="mb-4 text-sm font-medium uppercase tracking-wide text-gray-500">
+                                    {flashcardDirection[currentQuizIndex] ===
+                                    "zh-en"
+                                      ? "Chinese"
+                                      : "English"}
+                                  </div>
+                                  <div className="flex items-center justify-center gap-3 mb-8">
+                                    <div className="text-4xl font-bold text-gray-900">
+                                      {flashcardDirection[currentQuizIndex] ===
+                                      "zh-en"
+                                        ? convertText(
+                                            quizWords[currentQuizIndex].hanzi,
+                                          )
+                                        : quizWords[currentQuizIndex].english}
+                                    </div>
+                                    {flashcardDirection[currentQuizIndex] ===
+                                      "zh-en" && (
+                                      <SpeakerButton
+                                        text={quizWords[currentQuizIndex].hanzi}
+                                        type="word"
+                                        size="lg"
+                                      />
+                                    )}
+                                  </div>
+
+                                  {flashcardDirection[currentQuizIndex] ===
+                                    "zh-en" && (
+                                    <div className="text-lg text-gray-600 mb-8">
+                                      {quizWords[currentQuizIndex].pinyin}
+                                    </div>
+                                  )}
+
+                                  {showFlashcardAnswer && (
+                                    <div className="border-t-2 border-gray-300 pt-8 mt-8">
+                                      <div className="mb-2 text-sm font-medium uppercase tracking-wide text-gray-500">
+                                        Answer
+                                      </div>
+                                      <div className="text-2xl font-semibold text-gray-900">
+                                        {flashcardDirection[
+                                          currentQuizIndex
+                                        ] === "zh-en"
+                                          ? quizWords[currentQuizIndex].english
+                                          : convertText(
+                                              quizWords[currentQuizIndex].hanzi,
+                                            )}
+                                      </div>
+                                      {flashcardDirection[currentQuizIndex] ===
+                                        "en-zh" && (
+                                        <>
+                                          <div className="mt-2 text-lg text-gray-600">
+                                            {quizWords[currentQuizIndex].pinyin}
+                                          </div>
+                                          <div className="mt-4">
+                                            <SpeakerButton
+                                              text={
+                                                quizWords[currentQuizIndex]
+                                                  .hanzi
+                                              }
+                                              type="word"
+                                              size="lg"
+                                            />
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {!showFlashcardAnswer ? (
+                                  <button
+                                    onClick={() => setShowFlashcardAnswer(true)}
+                                    className="w-full rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+                                  >
+                                    Show Answer
+                                  </button>
+                                ) : (
+                                  <div className="flex gap-3">
+                                    <button
+                                      onClick={() =>
+                                        handleFlashcardGrade(false)
+                                      }
+                                      className="flex-1 rounded-lg border-2 border-red-500 bg-white px-6 py-3 text-base font-medium text-red-700 transition-colors hover:bg-red-50"
+                                    >
+                                      I didn't know it
+                                    </button>
+                                    <button
+                                      onClick={() => handleFlashcardGrade(true)}
+                                      className="flex-1 rounded-lg border-2 border-green-500 bg-white px-6 py-3 text-base font-medium text-green-700 transition-colors hover:bg-green-50"
+                                    >
+                                      I knew it
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        /* Drag & Drop Quiz */
+                        <div>
+                          <div className="mb-6 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              Match the pairs
+                            </h3>
+                            <button
+                              onClick={handleResetQuiz}
+                              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                            >
+                              Exit Quiz
+                            </button>
+                          </div>
+
+                          <p className="mb-6 text-sm text-gray-600">
+                            {useTapMode
+                              ? "Tap a word, then tap a slot to match."
+                              : "Drag English words to match with their Chinese translations"}
+                          </p>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            {/* Left column - Draggable English words (or tap-to-select on mobile) */}
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                                English
+                              </h4>
+                              {shuffledEnglishWords.map((word) => {
+                                const isUsed = Object.values(
+                                  dropMatches,
+                                ).includes(word.english);
+                                const isSelected =
+                                  useTapMode &&
+                                  selectedEnglishWord === word.english;
+                                const isDragging =
+                                  !useTapMode && draggedItem === word.english;
+                                return (
+                                  <div
+                                    key={`en-${word.id}`}
+                                    draggable={!useTapMode && !isUsed}
+                                    onDragStart={() =>
+                                      !isUsed && setDraggedItem(word.english)
+                                    }
+                                    onDragEnd={() => setDraggedItem(null)}
+                                    onClick={() => {
+                                      if (!useTapMode || isUsed) return;
+                                      setSelectedEnglishWord((prev) =>
+                                        prev === word.english
+                                          ? null
+                                          : word.english,
+                                      );
+                                    }}
+                                    role={useTapMode ? "button" : undefined}
+                                    tabIndex={
+                                      useTapMode && !isUsed ? 0 : undefined
+                                    }
+                                    onKeyDown={
+                                      useTapMode && !isUsed
+                                        ? (e) => {
+                                            if (
+                                              e.key === "Enter" ||
+                                              e.key === " "
+                                            ) {
+                                              e.preventDefault();
+                                              setSelectedEnglishWord((prev) =>
+                                                prev === word.english
+                                                  ? null
+                                                  : word.english,
+                                              );
+                                            }
+                                          }
+                                        : undefined
+                                    }
+                                    className={`p-4 rounded-lg border-2 transition-all ${
+                                      isUsed
+                                        ? "border-cyan-300 bg-cyan-50 text-cyan-900 opacity-60 cursor-not-allowed"
+                                        : isSelected || isDragging
+                                          ? "border-gray-900 bg-gray-900 text-white shadow-lg cursor-grabbing"
+                                          : "border-gray-200 bg-white text-gray-900 hover:border-gray-400 hover:shadow-md cursor-grab"
+                                    } ${useTapMode && !isUsed ? "cursor-pointer" : ""}`}
+                                  >
+                                    {word.english}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Right column - Drop zones with Chinese words */}
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                                Chinese
+                              </h4>
+                              {quizWords.map((word) => {
+                                const hasMatch = !!dropMatches[word.hanzi];
+                                return (
+                                  <div
+                                    key={`zh-${word.id}`}
+                                    onDragOver={(e) =>
+                                      !useTapMode && e.preventDefault()
+                                    }
+                                    onDrop={() => {
+                                      if (!useTapMode && draggedItem) {
+                                        setDropMatches((prev) => ({
+                                          ...prev,
+                                          [word.hanzi]: draggedItem,
+                                        }));
+                                        setDraggedItem(null);
+                                      }
+                                    }}
+                                    onClick={() => {
+                                      if (useTapMode && selectedEnglishWord) {
+                                        setDropMatches((prev) => ({
+                                          ...prev,
+                                          [word.hanzi]: selectedEnglishWord,
+                                        }));
+                                        setSelectedEnglishWord(null);
+                                      }
+                                    }}
+                                    role={useTapMode ? "button" : undefined}
+                                    tabIndex={useTapMode ? 0 : undefined}
+                                    onKeyDown={
+                                      useTapMode
+                                        ? (e) => {
+                                            if (
+                                              (e.key === "Enter" ||
+                                                e.key === " ") &&
+                                              selectedEnglishWord
+                                            ) {
+                                              e.preventDefault();
+                                              setDropMatches((prev) => ({
+                                                ...prev,
+                                                [word.hanzi]:
+                                                  selectedEnglishWord,
+                                              }));
+                                              setSelectedEnglishWord(null);
+                                            }
+                                          }
+                                        : undefined
+                                    }
+                                    className={`p-4 rounded-lg border-2 min-h-[56px] flex items-center justify-between transition-all ${
+                                      hasMatch
+                                        ? "border-cyan-300 bg-cyan-50 border-solid"
+                                        : "border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100"
+                                    } ${useTapMode ? "cursor-pointer" : ""}`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className={`font-medium ${hasMatch ? "text-cyan-900" : "text-gray-900"}`}
+                                      >
+                                        {convertText(word.hanzi)}
+                                      </span>
+                                      <SpeakerButton
+                                        text={word.hanzi}
+                                        type="word"
+                                        size="sm"
+                                      />
+                                      <span
+                                        className={`text-sm ${hasMatch ? "text-cyan-700" : "text-gray-600"}`}
+                                      >
+                                        ({word.pinyin})
+                                      </span>
+                                    </div>
+                                    {dropMatches[word.hanzi] && (
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-cyan-800">
+                                          {dropMatches[word.hanzi]}
+                                        </span>
+                                        <button
+                                          onClick={() => {
+                                            setDropMatches((prev) => {
+                                              const newMatches = { ...prev };
+                                              delete newMatches[word.hanzi];
+                                              return newMatches;
+                                            });
+                                          }}
+                                          className="ml-1 text-cyan-600 hover:text-cyan-800 font-semibold"
+                                          title="Remove match"
+                                        >
+                                          ✕
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end">
+                            <button
+                              onClick={handleDragDropSubmit}
+                              disabled={
+                                Object.keys(dropMatches).length !==
+                                quizWords.length
+                              }
+                              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Submit Answers
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    ) : showQuizResults ? (
+                      /* Quiz Results */
+                      <div>
+                        <div className="text-center mb-8">
+                          <h3 className="text-3xl font-bold text-gray-900 mb-2">
+                            Quiz Complete!
+                          </h3>
+                          {(() => {
+                            const correctCount =
+                              Object.values(quizAnswers).filter(Boolean).length;
+                            const totalCount = Object.keys(quizAnswers).length;
+                            const percentage = Math.round(
+                              (correctCount / totalCount) * 100,
+                            );
+                            return (
+                              <>
+                                <p className="text-5xl font-bold text-gray-900 my-6">
+                                  {percentage}%
+                                </p>
+                                <p className="text-lg text-gray-600">
+                                  You got {correctCount} out of {totalCount}{" "}
+                                  correct
+                                </p>
+                              </>
+                            );
+                          })()}
+                        </div>
+
+                        <div className="mb-8 space-y-3">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-4">
+                            Breakdown:
+                          </h4>
+                          {quizWords.map((word) => {
+                            const isCorrect = quizAnswers[word.id];
+                            return (
+                              <div
+                                key={word.id}
+                                className={`p-4 rounded-lg border-2 ${
+                                  isCorrect
+                                    ? "border-green-200 bg-green-50"
+                                    : "border-red-200 bg-red-50"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-xl">
+                                      {isCorrect ? "✓" : "✗"}
+                                    </span>
+                                    <div>
+                                      <div className="font-medium text-gray-900">
+                                        {convertText(word.hanzi)} ({word.pinyin}
+                                        )
+                                      </div>
+                                      <div className="text-sm text-gray-600">
+                                        {word.english}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div className="flex gap-3 justify-center">
+                          <button
+                            onClick={handleResetQuiz}
+                            className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                          >
+                            Back to Island
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowQuizResults(false);
+                              setQuizMode(null);
+                            }}
+                            className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+                          >
+                            Try Again
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Capybara teaser popup — shown once per session to anonymous users after a 5-word quiz */}
               {showCapybaraTeaser && (
@@ -2574,7 +2711,7 @@ export default function TopicIslandDetailPage() {
         </div>
 
         {addToast && (
-          <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-lg">
+          <div className="fixed bottom-24 right-4 z-50 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-lg md:bottom-6 md:right-6">
             {addToast}
           </div>
         )}
