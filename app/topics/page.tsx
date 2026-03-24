@@ -93,7 +93,7 @@ export default function TopicsHubPage() {
                   const isTrending = TRENDING_TOPIC_SLUGS.has(slug);
                   const href = isPriority
                     ? `/topics/${slug}`
-                    : `/onboarding/topic-island?topic=${encodeURIComponent(name)}`;
+                    : `/onboarding/journey?topic=${encodeURIComponent(name)}`;
                   return (
                     <li key={slug} data-topic-name={name} data-topic-slug={slug}>
                       <Link

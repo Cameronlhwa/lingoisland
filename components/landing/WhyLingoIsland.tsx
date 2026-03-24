@@ -174,7 +174,7 @@ export default function WhyLingoIsland() {
           style={{ marginTop: 48, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
         >
           <Link
-            href="/onboarding/topic-island"
+            href="/onboarding/journey"
             style={{
               background: "#071E2E",
               color: "#fff",

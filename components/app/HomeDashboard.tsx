@@ -4,20 +4,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import DailyStoryCard, {
   type DailyStorySummary,
 } from "@/components/stories/DailyStoryCard";
 import CreateIslandCard from "@/components/app/CreateIslandCard";
+import JourneyHero from "@/components/app/JourneyHero";
+import CapybaraStrip from "@/components/app/CapybaraStrip";
 import { getLocalDateKey } from "@/lib/utils/date";
-import { OceanBackground } from "@/components/OceanBackground";
-import {
-  useProgressIslandUpgrade,
-  checkAndShowUpgrade,
-} from "@/contexts/ProgressIslandUpgradeContext";
 import { useSidebar } from "@/components/app/AppLayoutClient";
 import {
   buttonPrimaryClass,
@@ -91,7 +86,29 @@ export default function HomeDashboard({
   const [last7DaysActivity, setLast7DaysActivity] = useState<
     { date: string; count: number }[]
   >([]);
-  const progressUpgrade = useProgressIslandUpgrade();
+  const [totalWordsLearned, setTotalWordsLearned] = useState(0);
+  const [activeJourney, setActiveJourney] = useState<{
+    id: string;
+    topic: string;
+    words_per_week: number | null;
+    completed_at: string | null;
+  } | null>(null);
+  const [activeJourneyNodes, setActiveJourneyNodes] = useState<
+    Array<{
+      id: string;
+      order: number;
+      position: number;
+      node_type: "island" | "story";
+      name: string;
+      hint: string | null;
+      word_count: number | null;
+      completed_at: string | null;
+      island_id: string | null;
+    }>
+  >([]);
+  const [huahuaStage, setHuahuaStage] = useState(1);
+  const [huahuaTotalReviews, setHuahuaTotalReviews] = useState(0);
+  const [capybaraOpen, setCapybaraOpen] = useState(false);
   const { isAnonymous, openSignupModal } = useSidebar();
   const islandsScrollRef = useRef<HTMLDivElement | null>(null);
   const flashcardsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -110,6 +127,32 @@ export default function HomeDashboard({
     loadTopicIslands();
     loadFlashcardsSummary();
     loadTodayReviewCount();
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { count } = await supabase
+        .from("island_words")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      setTotalWordsLearned(count ?? 0);
+      const jr = await fetch("/api/journey/active", { cache: "no-store" });
+      if (jr.ok) {
+        const d = await jr.json();
+        setActiveJourney(d.journey);
+        setActiveJourneyNodes(d.nodes ?? d.islands ?? []);
+      }
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("huahua_stage, huahua_total_reviews")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profile) {
+        setHuahuaStage(profile.huahua_stage ?? 1);
+        setHuahuaTotalReviews(profile.huahua_total_reviews ?? 0);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -320,47 +363,14 @@ export default function HomeDashboard({
     return flashcardDecks.map(buildCard);
   }, [flashcardsLoading, flashcardDecks, quizStatsByIsland, t, convertText]);
 
-  // Progress island calculation - every 10 reviews = next stage (0-5 index for stages 1-6)
-  const progressStage = Math.min(5, Math.floor(todayReviewCount / 10));
-  const progressImageSrc = `/progress-islands/stage-${progressStage + 1}.png`;
-  const stageProgress = todayReviewCount % 10; // 0-9 within current stage
-  const nextMilestone = (progressStage + 1) * 10;
-
-  // When on Home, show upgrade popup if progress stage increased (e.g. after returning from quiz)
-  useEffect(() => {
-    if (islandLoading || !progressUpgrade) return;
-    checkAndShowUpgrade(todayReviewCount, progressUpgrade.showUpgrade);
-  }, [todayReviewCount, islandLoading, progressUpgrade]);
-
-  // Status messages based on stage — each tied to what's visible in the stage image
-  const cardsToNext = 10 - stageProgress;
-  const cardWord = cardsToNext === 1 ? "card" : "cards";
-  const islandStatus =
-    progressStage >= 5
-      ? convertText(
-          t(
-            "华华 made it — mansion, BYD, and a skyline. He'd like to personally thank your flashcard streak.",
-          ),
-        )
-      : progressStage === 4
-        ? convertText(
-            `华华 put on a suit and built himself a city — review ${cardsToNext} more ${cardWord} to see what's next!`,
-          )
-        : progressStage === 3
-          ? convertText(
-              `华华 upgraded to a cozy sweater and his neighbourhood is thriving — ${cardsToNext} more ${cardWord} to level up again!`,
-            )
-          : progressStage === 2
-            ? convertText(
-                `华华 has a proper village with cottages and flowers — review ${cardsToNext} more ${cardWord} to keep him moving up!`,
-              )
-            : progressStage === 1
-              ? convertText(
-                  `华华 put on his overalls and started building — review ${cardsToNext} more ${cardWord} for his next upgrade!`,
-                )
-              : convertText(
-                  `华华 is hungry and his houses are falling apart — review ${cardsToNext} ${cardWord} to start improving his life!`,
-                );
+  const streakDays = useMemo(() => {
+    let s = 0;
+    for (let i = last7DaysActivity.length - 1; i >= 0; i--) {
+      if (last7DaysActivity[i].count > 0) s += 1;
+      else break;
+    }
+    return s;
+  }, [last7DaysActivity]);
 
   const handleCreateIsland = () => {
     if (isAnonymous) {
@@ -421,289 +431,51 @@ export default function HomeDashboard({
   }
 
   return (
-    <div className="relative min-h-screen px-4 py-6 md:px-6 md:py-8 lg:px-10">
-      <OceanBackground />
-
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-4 md:gap-6">
-        {/* ROW 1: Your Progress Island (full width) */}
-        <div
-          id="progress-island-card"
-          className={`${cardBaseClass} ${cardHoverClass} p-3 md:p-4`}
-        >
-          <div className="mb-2 flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <h2 className="text-xl md:text-2xl font-semibold text-slate-900">
-                {convertText(t("Your Progress Island"))}
-              </h2>
-              <p className="mt-1.5 text-base md:text-lg text-slate-600">
-                {islandLoading
-                  ? convertText(t("Counting today's reviews..."))
-                  : progressStage >= 5
-                    ? convertText(
-                        `${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · Stage 6 (max level!)`,
-                      )
-                    : convertText(
-                        `${t("Reviewed")} ${todayReviewCount} ${t("cards")} ${t("today")} · ${stageProgress}/10 to next stage`,
-                      )}
-              </p>
-              {!islandLoading ? (
-                <p className="mt-1 text-sm text-slate-500">{islandStatus}</p>
-              ) : null}
-            </div>
-
-            {/* Last 7 days activity squares - hidden on mobile */}
-            {!islandLoading && last7DaysActivity.length > 0 && (
-              <div className="hidden sm:flex sm:flex-col sm:items-end sm:gap-1.5">
-                <p className="flex items-center gap-1 text-xs font-medium text-slate-600">
-                  Last 7 days
-                  <span
-                    className="inline-flex h-3.5 w-3.5 flex-shrink-0 cursor-help items-center justify-center rounded-full bg-slate-300 text-[10px] font-bold leading-none text-slate-600"
-                    title={convertText(
-                      t(
-                        "Each square is one day (oldest to newest). Darker = more cards reviewed. Ring = today.",
-                      ),
-                    )}
-                    aria-label={convertText(t("How the weekly calendar works"))}
-                  >
-                    i
-                  </span>
-                </p>
-                <div className="flex gap-2">
-                  {last7DaysActivity.map((day, index) => {
-                    const isToday = index === last7DaysActivity.length - 1;
-                    const count = day.count;
-                    const date = new Date(day.date);
-                    const month = date.getMonth() + 1;
-                    const dayOfMonth = date.getDate();
-
-                    // Navy blue color intensity based on count
-                    let bgColor = "bg-slate-100";
-                    let customBg = "";
-                    if (count >= 50) {
-                      bgColor = "";
-                      customBg = "#0B1B3A"; // Dark navy
-                    } else if (count >= 30) {
-                      bgColor = "";
-                      customBg = "#1e3a5f"; // Medium-dark navy
-                    } else if (count >= 15) {
-                      bgColor = "";
-                      customBg = "#3b5998"; // Medium navy
-                    } else if (count > 0) {
-                      bgColor = "";
-                      customBg = "#6b8cbe"; // Light navy
-                    }
-
-                    return (
-                      <div
-                        key={day.date}
-                        className="flex flex-col items-center gap-0.5"
-                      >
-                        <div
-                          className={`h-8 w-8 rounded ${bgColor} ${
-                            isToday ? "ring-2 ring-slate-900" : ""
-                          } transition-all hover:scale-110`}
-                          style={
-                            customBg ? { backgroundColor: customBg } : undefined
-                          }
-                          title={`${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${count} cards reviewed`}
-                        />
-                        <span className="text-[10px] font-medium text-slate-600">
-                          {month}/{dayOfMonth}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+    <div className="min-h-screen bg-white px-4 py-6 md:px-6 md:py-8 lg:px-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 md:gap-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-900">
+              🔥 {streakDays} day streak
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-white px-3 py-1.5 text-sm text-teal-700">
+              🧠 {totalWordsLearned} words learned
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700">
+              ⏰ {dueCardCount} due for review
+            </span>
+            {!islandLoading && last7DaysActivity.length > 0 ? (
+              <div className="hidden items-center gap-1 sm:flex" title="Last 7 days">
+                {last7DaysActivity.map((day) => (
+                  <div
+                    key={day.date}
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      day.count > 0 ? "bg-teal-500" : "bg-slate-200"
+                    }`}
+                  />
+                ))}
               </div>
-            )}
-          </div>
-          <div
-            className="relative flex items-center justify-center rounded-xl border-2 border-slate-200 p-2 md:p-3 overflow-visible max-h-40 md:max-h-48 lg:max-h-56"
-            style={{
-              background:
-                "linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)",
-            }}
-          >
-            {/* Animated wave particles - always visible */}
-            <div className="absolute inset-0 pointer-events-none">
-              <motion.div
-                className="absolute"
-                style={{ left: "10%", top: "20%", opacity: 0.15 }}
-                animate={{ x: [0, 50, 0] }}
-                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-              >
-                <svg width="50" height="20" viewBox="0 0 50 20" fill="none">
-                  <path
-                    d="M 2 16 Q 10 14, 18 8 Q 24 4, 32 8 Q 40 12, 48 14"
-                    stroke="#0B1B3A"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
-              </motion.div>
-              <motion.div
-                className="absolute"
-                style={{ left: "65%", top: "15%", opacity: 0.12 }}
-                animate={{ x: [0, -40, 0] }}
-                transition={{
-                  duration: 20,
-                  repeat: Infinity,
-                  ease: "linear",
-                  delay: 1,
-                }}
-              >
-                <svg width="70" height="26" viewBox="0 0 70 26" fill="none">
-                  <path
-                    d="M 2 22 Q 14 18, 26 10 Q 34 4, 44 10 Q 54 16, 68 20"
-                    stroke="#0B1B3A"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
-              </motion.div>
-              <motion.div
-                className="absolute"
-                style={{ left: "30%", top: "60%", opacity: 0.18 }}
-                animate={{ x: [0, 35, 0] }}
-                transition={{
-                  duration: 18,
-                  repeat: Infinity,
-                  ease: "linear",
-                  delay: 2,
-                }}
-              >
-                <svg width="70" height="26" viewBox="0 0 70 26" fill="none">
-                  <path
-                    d="M 2 22 Q 14 18, 26 10 Q 34 4, 44 10 Q 54 16, 68 20"
-                    stroke="#0B1B3A"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
-              </motion.div>
-              <motion.div
-                className="absolute"
-                style={{ left: "75%", top: "65%", opacity: 0.15 }}
-                animate={{ x: [0, -45, 0] }}
-                transition={{
-                  duration: 22,
-                  repeat: Infinity,
-                  ease: "linear",
-                  delay: 0.5,
-                }}
-              >
-                <svg width="50" height="20" viewBox="0 0 50 20" fill="none">
-                  <path
-                    d="M 2 16 Q 10 14, 18 8 Q 24 4, 32 8 Q 40 12, 48 14"
-                    stroke="#0B1B3A"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
-              </motion.div>
-              <motion.div
-                className="absolute"
-                style={{ left: "15%", top: "75%", opacity: 0.12 }}
-                animate={{ x: [0, 50, 0] }}
-                transition={{
-                  duration: 28,
-                  repeat: Infinity,
-                  ease: "linear",
-                  delay: 1.5,
-                }}
-              >
-                <svg width="90" height="30" viewBox="0 0 90 30" fill="none">
-                  <path
-                    d="M 2 26 Q 18 22, 34 12 Q 46 4, 58 12 Q 72 20, 88 24"
-                    stroke="#0B1B3A"
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
-              </motion.div>
-            </div>
-            {!islandLoading && (
-              <Image
-                src={progressImageSrc}
-                alt="Your Progress Island"
-                width={640}
-                height={320}
-                className="relative z-10 h-48 md:h-60 lg:h-72 w-full max-w-3xl object-contain"
-                priority
-              />
-            )}
-            {islandLoading && (
-              <div className="relative z-10 flex items-center justify-center h-48 md:h-60 lg:h-72">
-                <div className="text-gray-600 text-sm">
-                  {convertText(t("Loading..."))}
-                </div>
-              </div>
-            )}
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setCapybaraOpen((o) => !o)}
+              className={`ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+                capybaraOpen
+                  ? "border-gray-900 bg-gray-900 text-white"
+                  : "border-gray-200 bg-white text-gray-500 hover:border-gray-400"
+              }`}
+            >
+              <span>🦫</span>
+              <span>华华</span>
+              <span className="opacity-40">{capybaraOpen ? "▲" : "▼"}</span>
+            </button>
           </div>
 
-          {/* Last 7 days strip - mobile only, below island */}
-          {!islandLoading && last7DaysActivity.length > 0 && (
-            <div className="mt-3 flex flex-col gap-1.5 border-t border-slate-200 pt-3 sm:hidden">
-              <p className="flex items-center gap-1 text-xs font-medium text-slate-600">
-                Last 7 days
-                <span
-                  className="inline-flex h-3.5 w-3.5 flex-shrink-0 cursor-help items-center justify-center rounded-full bg-slate-300 text-[10px] font-bold leading-none text-slate-600"
-                  title={convertText(
-                    t(
-                      "Each square is one day (oldest to newest). Darker = more cards reviewed. Ring = today.",
-                    ),
-                  )}
-                  aria-label={convertText(t("How the weekly calendar works"))}
-                >
-                  i
-                </span>
-              </p>
-              <div className="flex justify-between gap-1">
-                {last7DaysActivity.map((day, index) => {
-                  const isToday = index === last7DaysActivity.length - 1;
-                  const count = day.count;
-                  const date = new Date(day.date);
-                  const month = date.getMonth() + 1;
-                  const dayOfMonth = date.getDate();
-                  let bgColor = "bg-slate-100";
-                  let customBg = "";
-                  if (count >= 50) {
-                    customBg = "#0B1B3A";
-                  } else if (count >= 30) {
-                    customBg = "#1e3a5f";
-                  } else if (count >= 15) {
-                    customBg = "#3b5998";
-                  } else if (count > 0) {
-                    customBg = "#6b8cbe";
-                  }
-                  return (
-                    <div
-                      key={day.date}
-                      className="flex flex-1 flex-col items-center gap-0.5"
-                    >
-                      <div
-                        className={`h-6 w-6 rounded ${bgColor} ${
-                          isToday ? "ring-2 ring-slate-900" : ""
-                        }`}
-                        style={
-                          customBg ? { backgroundColor: customBg } : undefined
-                        }
-                        title={`${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${count} cards reviewed`}
-                      />
-                      <span className="text-[10px] font-medium text-slate-600">
-                        {month}/{dayOfMonth}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {capybaraOpen ? (
+            <CapybaraStrip stage={huahuaStage} totalReviews={huahuaTotalReviews} />
+          ) : null}
+
+          <JourneyHero journey={activeJourney} nodes={activeJourneyNodes} />
         </div>
 
         {/* ROW 2: Create Topic Island + Read Daily Story (2 columns on desktop, stack on mobile) */}
@@ -734,8 +506,8 @@ export default function HomeDashboard({
           />
         </div>
 
-        {/* ROW 3: Review Topic Islands + Review Quiz Islands (desktop only) */}
-        <div className="hidden md:grid gap-4 md:gap-6 md:grid-cols-2">
+        {/* ROW 3: Review Topic Islands + Review Quiz Islands */}
+        <div className="grid gap-4 md:gap-6 md:grid-cols-2">
           {/* Review your Topic Islands */}
           <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-6`}>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">

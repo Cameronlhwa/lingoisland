@@ -170,11 +170,14 @@ function LoginPageContent() {
       }
 
       const nextFromQuery = searchParams.get("next");
-      // Sanitize: never redirect back to /login or /onboarding (same rule as auth callback)
-      const isUnsafe = !nextFromQuery ||
+      const allowedOnboarding =
+        nextFromQuery?.startsWith("/onboarding/topic-island") ||
+        nextFromQuery?.startsWith("/onboarding/journey");
+      const isUnsafe =
+        !nextFromQuery ||
         !nextFromQuery.startsWith("/") ||
         nextFromQuery === "/login" ||
-        nextFromQuery.startsWith("/onboarding");
+        (nextFromQuery.startsWith("/onboarding") && !allowedOnboarding);
       const nextPath = isUnsafe ? "/app" : nextFromQuery;
       router.push(nextPath);
     } finally {

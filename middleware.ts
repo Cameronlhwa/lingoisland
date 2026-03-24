@@ -19,7 +19,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(newUrl, 301)
   }
 
-  return NextResponse.next()
+  // So /app/* server layout can send users to login?next=<intended path> (incl. query).
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set(
+    'x-login-next',
+    request.nextUrl.pathname + request.nextUrl.search,
+  )
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  })
 }
 
 // Apply to all routes except API, _next/static, _next/image, and favicon

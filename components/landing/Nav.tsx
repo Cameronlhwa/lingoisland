@@ -86,7 +86,7 @@ export default function Nav() {
             Sign in
           </Link>
           <Link
-            href="/onboarding/topic-island"
+            href="/onboarding/journey"
             style={{
               background: "#071E2E",
               color: "#fff",
@@ -174,7 +174,7 @@ export default function Nav() {
                 Sign in
               </Link>
               <Link
-                href="/onboarding/topic-island"
+                href="/onboarding/journey"
                 style={{
                   background: "#071E2E",
                   color: "#fff",

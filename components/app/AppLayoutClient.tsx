@@ -20,6 +20,10 @@ import OnboardingNudgeCard from "@/components/Onboarding/OnboardingNudgeCard";
 import ProgressIslandUpgradePopup from "@/components/app/ProgressIslandUpgradePopup";
 import type { EntrySource } from "@/types/onboarding";
 import { createClient } from "@/lib/supabase/browser";
+import {
+  evaluateJourneyOnboardingGate,
+  markJourneyOnboardingComplete,
+} from "@/lib/onboarding/journeyOnboardingGate";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 
 const SIGNUP_FEATURES = [
@@ -75,6 +79,41 @@ function getOnboardingEntrySource(): EntrySource {
 function clearOnboardingEntryCookie() {
   if (typeof document === "undefined") return;
   document.cookie = "onboarding_entry=; path=/; max-age=0; SameSite=Lax";
+}
+
+function OnboardingRedirect() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    if (!pathname?.startsWith("/app")) return;
+    if (pathname.startsWith("/app/onboarding")) return;
+    if (pathname.startsWith("/app/topic-islands/")) return;
+
+    let cancelled = false;
+    const run = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const gate = await evaluateJourneyOnboardingGate(supabase, user.id);
+      if (cancelled) return;
+      if (gate.shouldMarkOnboardingComplete) {
+        await markJourneyOnboardingComplete(supabase, user.id);
+        return;
+      }
+      if (gate.needsJourneyWizard) {
+        router.replace("/app/onboarding");
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, router, supabase]);
+
+  return null;
 }
 
 function OnboardingBootstrap() {
@@ -210,6 +249,10 @@ export default function AppLayoutClient({
     setAccountModalOpen(true);
   }, []);
 
+  const pathname = usePathname();
+  /** Journey onboarding: full-page like legacy /onboarding — no sidebar, tab bar, or app chrome */
+  const isFullscreenOnboarding = pathname === "/app/onboarding";
+
   const sidebarContextValue = useMemo(
     () => ({
       isOpen: sidebarOpen,
@@ -234,54 +277,63 @@ export default function AppLayoutClient({
       {/* Progress Island upgrade modal: global across all app pages; auto-appears when quiz or topic-island actions hit a 10-review milestone */}
       <OnboardingProvider>
         <SidebarContext.Provider value={sidebarContextValue}>
+          <OnboardingRedirect />
           <OnboardingBootstrap />
-          <div className="min-h-screen bg-white">
-            {/* Mobile Header with Menu Button */}
-            <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 md:hidden">
-              <AppLogo
-                size="sm"
-                textClassName="text-lg font-bold text-gray-900"
-              />
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="flex flex-col gap-1.5 p-2"
-                aria-label="Toggle sidebar"
-              >
-                <span
-                  className={`h-0.5 w-6 bg-gray-900 transition-all ${sidebarOpen ? "rotate-45 translate-y-2" : ""}`}
-                />
-                <span
-                  className={`h-0.5 w-6 bg-gray-900 transition-all ${sidebarOpen ? "opacity-0" : ""}`}
-                />
-                <span
-                  className={`h-0.5 w-6 bg-gray-900 transition-all ${sidebarOpen ? "-rotate-45 -translate-y-2" : ""}`}
-                />
-              </button>
+          {isFullscreenOnboarding ? (
+            <div className="min-h-screen bg-white">
+              <main className="flex min-h-screen w-full flex-col bg-white">
+                {children}
+              </main>
             </div>
+          ) : (
+            <div className="min-h-screen bg-white">
+              {/* Mobile Header with Menu Button */}
+              <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 md:hidden">
+                <AppLogo
+                  size="sm"
+                  textClassName="text-lg font-bold text-gray-900"
+                />
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="flex flex-col gap-1.5 p-2"
+                  aria-label="Toggle sidebar"
+                >
+                  <span
+                    className={`h-0.5 w-6 bg-gray-900 transition-all ${sidebarOpen ? "rotate-45 translate-y-2" : ""}`}
+                  />
+                  <span
+                    className={`h-0.5 w-6 bg-gray-900 transition-all ${sidebarOpen ? "opacity-0" : ""}`}
+                  />
+                  <span
+                    className={`h-0.5 w-6 bg-gray-900 transition-all ${sidebarOpen ? "-rotate-45 -translate-y-2" : ""}`}
+                  />
+                </button>
+              </div>
 
-            {/* Backdrop for mobile */}
-            {sidebarOpen && (
-              <div
-                className="fixed inset-0 z-40 bg-black/50 md:hidden"
-                onClick={() => setSidebarOpen(false)}
+              {/* Backdrop for mobile */}
+              {sidebarOpen && (
+                <div
+                  className="fixed inset-0 z-40 bg-black/50 md:hidden"
+                  onClick={() => setSidebarOpen(false)}
+                />
+              )}
+
+              <Sidebar
+                isAccountModalOpen={accountModalOpen}
+                setIsAccountModalOpen={setAccountModalOpen}
+                accountModalInitialTab={accountModalInitialTab}
               />
-            )}
-
-            <Sidebar
-              isAccountModalOpen={accountModalOpen}
-              setIsAccountModalOpen={setAccountModalOpen}
-              accountModalInitialTab={accountModalInitialTab}
-            />
-            <main className="min-h-0 pt-16 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:ml-64 md:pb-0 md:pt-0">
-              <OnboardingNudgeSlot />
-              {children}
-            </main>
-            <MobileTabBar
-              sidebarOpen={sidebarOpen}
-              onOpenSidebar={() => setSidebarOpen(true)}
-            />
-            <PersistentSettingsNudge />
-          </div>
+              <main className="min-h-0 pt-16 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:ml-64 md:pb-0 md:pt-0">
+                <OnboardingNudgeSlot />
+                {children}
+              </main>
+              <MobileTabBar
+                sidebarOpen={sidebarOpen}
+                onOpenSidebar={() => setSidebarOpen(true)}
+              />
+              <PersistentSettingsNudge />
+            </div>
+          )}
         </SidebarContext.Provider>
       </OnboardingProvider>
 

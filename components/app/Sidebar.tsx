@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import AppLogo from "@/components/app/AppLogo";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
@@ -24,6 +24,11 @@ export default function Sidebar({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  // Topic island opened from a journey → highlight "Journey" in the nav
+  const isJourneyIsland =
+    pathname.startsWith("/app/topic-islands/") &&
+    searchParams.get("journeyFirst") === "1";
   const supabase = createClient();
   const { isChineseMode, toggleChineseMode, t } = useLanguage();
   const { convertText } = useCharacterSet();
@@ -80,6 +85,18 @@ export default function Sidebar({
             let isActive = false;
             if (item.href === "/app") {
               isActive = pathname === "/app";
+            } else if (item.href === "/app/journey") {
+              // Highlight Journey when on a journey-originated island page
+              isActive =
+                pathname === item.href ||
+                pathname.startsWith(item.href + "/") ||
+                isJourneyIsland;
+            } else if (item.href === "/app/topic-islands") {
+              // Suppress My Islands highlight when the island belongs to a journey
+              isActive =
+                !isJourneyIsland &&
+                (pathname === item.href ||
+                  pathname.startsWith(item.href + "/"));
             } else {
               isActive =
                 pathname === item.href || pathname.startsWith(item.href + "/");

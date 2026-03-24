@@ -45,7 +45,7 @@ export default function ExampleIslandsMap() {
               <Link
                 key={island.id}
                 ref={ref as React.RefObject<HTMLAnchorElement>}
-                href={`/onboarding/topic-island?example=${island.id}`}
+                href={`/onboarding/journey?example=${island.id}`}
                 className={`group relative flex flex-col items-center ${positions[index]}`}
               >
                 <div className="mb-0 transition-shadow duration-200">

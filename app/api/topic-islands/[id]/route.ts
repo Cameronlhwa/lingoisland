@@ -81,6 +81,51 @@ export async function GET(
 
     const createIslandEligibility = await canCreateTopicIsland(user.id)
 
+    const { data: jiRow } = await supabase
+      .from('journey_islands')
+      .select('id, step_order, name, zh, journey_id')
+      .eq('island_id', islandId)
+      .maybeSingle()
+
+    let journeyContext: {
+      journeyIslandId: string
+      order: number
+      journeyId: string
+      name: string
+      zh: string | null
+      journeyTopic: string
+      wordsPerWeek: number
+      lockedIslands: Array<{ order: number; name: string; zh: string | null }>
+    } | null = null
+
+    if (jiRow) {
+      const { data: jr } = await supabase
+        .from('journeys')
+        .select('topic, words_per_week')
+        .eq('id', jiRow.journey_id)
+        .maybeSingle()
+      const { data: siblings } = await supabase
+        .from('journey_islands')
+        .select('step_order, name, zh')
+        .eq('journey_id', jiRow.journey_id)
+        .gt('step_order', 1)
+        .order('step_order', { ascending: true })
+      journeyContext = {
+        journeyIslandId: jiRow.id,
+        order: jiRow.step_order,
+        journeyId: jiRow.journey_id,
+        name: jiRow.name,
+        zh: jiRow.zh,
+        journeyTopic: jr?.topic ?? '',
+        wordsPerWeek: jr?.words_per_week ?? 0,
+        lockedIslands: (siblings ?? []).map((s) => ({
+          order: s.step_order,
+          name: s.name,
+          zh: s.zh,
+        })),
+      }
+    }
+
     // Attach sentences to words
     // Words 11-20 are no longer blurred for free users; they remain visible.
     // However, free users cannot use "Add to Quiz", "Mark Known", or "Ask for help" on words 11-20.
@@ -102,6 +147,7 @@ export async function GET(
       is_anonymous: user?.is_anonymous ?? false,
       user_topic_island_count: topicIslandCount ?? 0,
       can_create_topic_island: createIslandEligibility.allowed,
+      journeyContext,
     })
   } catch (error) {
     console.error('Error in GET /api/topic-islands/[id]:', error)

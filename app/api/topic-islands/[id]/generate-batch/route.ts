@@ -76,6 +76,8 @@ export async function POST(
     const reviewVocabConfig = body.reviewVocab as
       | { mode: 'random' | 'select'; islandIds?: string[] }
       | undefined
+    const sentenceTierMode =
+      body.sentenceTierMode === 'easy_same' ? 'easy_same' : 'full'
 
     // Update status to selecting
     await supabase
@@ -135,7 +137,8 @@ export async function POST(
     const detailedLevel = island.level as string
     const grammarTarget = island.grammar_target || 0
 
-    const sentenceTasksTotal = island.word_target * 3
+    const tiersPerWord = sentenceTierMode === 'easy_same' ? 2 : 3
+    const sentenceTasksTotal = island.word_target * tiersPerWord
     let wordsSelected = 0
     let sentencesGenerated = 0
     let sentenceAttempts = 0
@@ -526,7 +529,12 @@ export async function POST(
 
     const sentenceGenerationTasks = wordsToGenerate.map((word, index) => {
       return async () => {
-        const styleCount = Math.random() < 0.5 ? 2 : 3
+        const styleCount =
+          sentenceTierMode === 'easy_same'
+            ? 2
+            : Math.random() < 0.5
+              ? 2
+              : 3
         const contextCount = Math.random() < 0.5 ? 1 : 2
         const chosenStyles = pickRandomUnique(SENTENCE_STYLES, styleCount)
         const chosenContexts = pickRandomUnique(CONTEXTS, contextCount)
@@ -577,6 +585,7 @@ export async function POST(
             avoidOpeners: avoidOpeners.length > 0 ? avoidOpeners : undefined,
             avoidPatterns: avoidPatterns.length > 0 ? avoidPatterns : undefined,
               retryHint,
+              sentenceTierMode,
               generationConfig,
           })
           } catch (error) {

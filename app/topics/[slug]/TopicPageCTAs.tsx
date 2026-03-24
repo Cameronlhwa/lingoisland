@@ -10,7 +10,7 @@ export function TopicPageCTAs({
   topicName: string;
   slug: string;
 }) {
-  const onboardingHref = `/onboarding/topic-island?topic=${encodeURIComponent(topicName)}`;
+  const onboardingHref = `/onboarding/journey?topic=${encodeURIComponent(topicName)}`;
   const { captureEvent } = useAnalytics();
 
   const handleStartIsland = () => {

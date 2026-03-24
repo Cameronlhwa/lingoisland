@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { BsCardChecklist } from "react-icons/bs";
-import { TbHome, TbMap2, TbMenu2 } from "react-icons/tb";
+import { TbHome, TbMenu2 } from "react-icons/tb";
+import { Map } from "lucide-react";
 
 const iconClass = "h-6 w-6 shrink-0";
 
@@ -21,13 +22,18 @@ export default function MobileTabBar({
   onOpenSidebar: () => void;
 }) {
   const pathname = usePathname() ?? "";
+  const searchParams = useSearchParams();
+  const isJourneyIsland =
+    pathname.startsWith("/app/topic-islands/") &&
+    searchParams.get("journeyFirst") === "1";
 
   const homeActive = pathname === "/app";
   const reviewActive =
     pathname === "/app/quiz" || pathname.startsWith("/app/quiz/");
-  const islandsActive =
-    pathname === "/app/topic-islands" ||
-    pathname.startsWith("/app/topic-islands/");
+  const journeyActive =
+    pathname === "/app/journey" ||
+    pathname.startsWith("/app/journey/") ||
+    isJourneyIsland;
   const moreActive = sidebarOpen;
 
   return (
@@ -45,9 +51,9 @@ export default function MobileTabBar({
           <BsCardChecklist className={iconClass} aria-hidden />
           <span>Review</span>
         </Link>
-        <Link href="/app/topic-islands" className={tabStyles(islandsActive)}>
-          <TbMap2 className={iconClass} aria-hidden />
-          <span>Islands</span>
+        <Link href="/app/journey" className={tabStyles(journeyActive)}>
+          <Map className={iconClass} aria-hidden strokeWidth={2} />
+          <span>Journey</span>
         </Link>
         <button
           type="button"

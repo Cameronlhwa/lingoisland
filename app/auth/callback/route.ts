@@ -50,8 +50,15 @@ export async function GET(request: NextRequest) {
   const nextFromUrl = requestUrl.searchParams.get('next')
   let next = nextFromCookie || nextFromUrl || '/app'
   
-  // Safety check: never redirect back to /login or /onboarding after successful auth
-  if (next === '/login' || next.startsWith('/onboarding')) {
+  // Safety: never send users back to /login or thin onboarding after auth.
+  // Allow public journey entry URLs under /onboarding/…
+  const allowedOnboarding =
+    next.startsWith('/onboarding/topic-island') ||
+    next.startsWith('/onboarding/journey')
+  const onboardingIsUnsafe =
+    next === '/login' ||
+    (next.startsWith('/onboarding') && !allowedOnboarding)
+  if (onboardingIsUnsafe) {
     next = '/app'
   }
 

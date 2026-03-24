@@ -50,8 +50,8 @@ export function TopicsHubClient({ children }: { children: React.ReactNode }) {
         captureEvent("onboarding_start_from_topics", { topic });
       }
       const url = topic
-        ? `/onboarding/topic-island?topic=${encodeURIComponent(topic)}`
-        : "/onboarding/topic-island";
+        ? `/onboarding/journey?topic=${encodeURIComponent(topic)}`
+        : "/onboarding/journey";
       router.push(url);
     },
     [topicInput, captureEvent, router],
