@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { BsCardChecklist } from "react-icons/bs";
 import { TbHome, TbMenu2 } from "react-icons/tb";
 import { Map } from "lucide-react";
@@ -22,12 +22,18 @@ export default function MobileTabBar({
   onOpenSidebar: () => void;
 }) {
   const pathname = usePathname() ?? "";
+  const searchParams = useSearchParams();
+  const isJourneyIsland =
+    pathname.startsWith("/app/topic-islands/") &&
+    searchParams.get("journeyFirst") === "1";
 
   const homeActive = pathname === "/app";
   const reviewActive =
     pathname === "/app/quiz" || pathname.startsWith("/app/quiz/");
   const journeyActive =
-    pathname === "/app/journey" || pathname.startsWith("/app/journey/");
+    pathname === "/app/journey" ||
+    pathname.startsWith("/app/journey/") ||
+    isJourneyIsland;
   const moreActive = sidebarOpen;
 
   return (

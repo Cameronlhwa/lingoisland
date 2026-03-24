@@ -41,12 +41,28 @@ export async function GET() {
       .eq('journey_id', journey.id)
       .order('step_order', { ascending: true })
 
-    const islandsOut = (islands ?? []).map((row) => {
-      const { step_order, ...rest } = row as typeof row & { step_order: number }
-      return { ...rest, order: step_order }
-    })
+    const nodesOut = (islands ?? []).map((row: any) => {
+      const stepOrder = Number(row.step_order ?? 0)
 
-    return NextResponse.json({ journey, islands: islandsOut })
+      if (row.node_type != null && row.position != null) {
+        return { ...row, order: stepOrder }
+      }
+
+      // Legacy schema — remap to 7-node path positions.
+      // 7-node path: I1(1) · I2(2) · SA(3) · I3(4) · I4(5) · I5(6) · SB(7)
+      const nodeType: 'island' | 'story' = stepOrder > 100 ? 'story' : 'island'
+      let position: number
+      if (nodeType === 'story') {
+        position = stepOrder === 102 ? 3 : 7
+      } else {
+        const map: Record<number, number> = { 1: 1, 2: 2, 3: 4, 4: 5, 5: 6 }
+        position = map[stepOrder] ?? stepOrder
+      }
+      return { ...row, order: stepOrder, node_type: nodeType, position }
+    })
+    const islandsOut = nodesOut.filter((row) => row.node_type !== 'story')
+
+    return NextResponse.json({ journey, islands: islandsOut, nodes: nodesOut })
   } catch (e) {
     console.error('[journey/active]', e)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

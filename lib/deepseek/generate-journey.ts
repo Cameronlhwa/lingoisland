@@ -3,15 +3,22 @@
  */
 
 export interface JourneyIslandPlan {
-  order: number
-  name: string
+  position: number
+  topic: string
+  wordCount: number
   zh: string
-  storyIdea: string
+}
+
+export interface JourneyStoryPlan {
+  afterIsland: 2 | 5
+  title: string
+  hint: string
 }
 
 export interface JourneyPlan {
   journeyTitle: string
   islands: JourneyIslandPlan[]
+  stories: JourneyStoryPlan[]
 }
 
 export async function generateJourneyPlan({
@@ -33,21 +40,27 @@ export async function generateJourneyPlan({
 The user wants to learn vocabulary about: "${topic}"
 Their reason for learning: "${why}"
 
-Generate a learning journey with exactly 5 sub-topic islands. Each island should:
-- Be a specific, practical sub-topic of "${topic}"
-- Have a Chinese title (2–4 characters)
-- Have a short one-sentence story idea in English (max 12 words)
-- Feel like a natural progression (easiest/most fundamental first)
+Generate a learning journey with exactly 5 sub-topic islands and 2 story checkpoints.
+
+RULES:
+- Island 1 has 5 words.
+- Islands 2-5 have 10 words each.
+- Add a story checkpoint after island 2 and after island 5.
+- Keep islands practical and progressively harder.
 
 Respond in this exact JSON format:
 {
   "journeyTitle": "${topic}",
   "islands": [
-    { "order": 1, "name": "Getting Around", "zh": "出行交通", "storyIdea": "Taking the Beijing subway for the first time" },
-    { "order": 2, "name": "Booking a Hotel", "zh": "预订酒店", "storyIdea": "Checking into a hostel in Shanghai" },
-    { "order": 3, "name": "...", "zh": "...", "storyIdea": "..." },
-    { "order": 4, "name": "...", "zh": "...", "storyIdea": "..." },
-    { "order": 5, "name": "...", "zh": "...", "storyIdea": "..." }
+    { "position": 1, "topic": "Getting Around", "wordCount": 5, "zh": "出行交通" },
+    { "position": 2, "topic": "Booking a Hotel", "wordCount": 10, "zh": "预订酒店" },
+    { "position": 3, "topic": "...", "wordCount": 10, "zh": "..." },
+    { "position": 4, "topic": "...", "wordCount": 10, "zh": "..." },
+    { "position": 5, "topic": "...", "wordCount": 10, "zh": "..." }
+  ],
+  "stories": [
+    { "afterIsland": 2, "title": "...", "hint": "Uses words from islands 1-2" },
+    { "afterIsland": 5, "title": "...", "hint": "Reviews all journey words" }
   ]
 }`
 
@@ -103,11 +116,49 @@ Respond in this exact JSON format:
     throw new Error('Journey must contain exactly 5 islands')
   }
 
-  for (const island of parsed.islands) {
-    if (!island.name || !island.zh || !island.storyIdea) {
-      throw new Error(`Invalid island row: ${JSON.stringify(island)}`)
+  const normalizedIslands: JourneyIslandPlan[] = parsed.islands.map((raw: any, idx) => {
+    const position = Number(raw.position ?? raw.order ?? idx + 1)
+    const topicName = String(raw.topic ?? raw.name ?? '').trim()
+    const zh = String(raw.zh ?? '').trim()
+    if (!topicName || !zh) {
+      throw new Error(`Invalid island row: ${JSON.stringify(raw)}`)
     }
+    return {
+      position,
+      topic: topicName,
+      wordCount: position === 1 ? 5 : 10,
+      zh,
+    }
+  })
+
+  const normalizedStories: JourneyStoryPlan[] = Array.isArray((parsed as any).stories)
+    ? (parsed as any).stories
+        .map((raw: any) => {
+          const afterIsland = Number(raw.afterIsland)
+          if (afterIsland !== 2 && afterIsland !== 5) return null
+          const title = String(raw.title ?? '').trim()
+          const hint = String(raw.hint ?? '').trim()
+          if (!title || !hint) return null
+          return {
+            afterIsland: afterIsland as 2 | 5,
+            title,
+            hint,
+          }
+        })
+        .filter(Boolean) as JourneyStoryPlan[]
+    : []
+
+  if (normalizedStories.length < 2) {
+    normalizedStories.length = 0
+    normalizedStories.push(
+      { afterIsland: 2, title: `${topic} checkpoint`, hint: 'Uses words from islands 1-2' },
+      { afterIsland: 5, title: `${topic} finale`, hint: 'Reviews all journey words' }
+    )
   }
 
-  return parsed
+  return {
+    journeyTitle: parsed.journeyTitle || topic,
+    islands: normalizedIslands.sort((a, b) => a.position - b.position),
+    stories: normalizedStories.sort((a, b) => a.afterIsland - b.afterIsland),
+  }
 }

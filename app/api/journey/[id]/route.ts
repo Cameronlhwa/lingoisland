@@ -37,12 +37,31 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to load islands' }, { status: 500 })
     }
 
-    const islandsOut = (islands ?? []).map((row) => {
-      const { step_order, ...rest } = row as typeof row & { step_order: number }
-      return { ...rest, order: step_order }
-    })
+    const nodesOut = (islands ?? []).map((row: any) => {
+      const stepOrder = Number(row.step_order ?? 0)
 
-    return NextResponse.json({ journey, islands: islandsOut })
+      // When new columns exist, use them directly.
+      if (row.node_type != null && row.position != null) {
+        return { ...row, order: stepOrder }
+      }
+
+      // Legacy schema: node_type and position columns not yet migrated.
+      // Stories are stored at step_order 102 (Story A) and 105 (Story B).
+      // Re-map to the correct 7-node path positions so they sort in between islands.
+      //   7-node path: I1(1) · I2(2) · SA(3) · I3(4) · I4(5) · I5(6) · SB(7)
+      const nodeType: 'island' | 'story' = stepOrder > 100 ? 'story' : 'island'
+      let position: number
+      if (nodeType === 'story') {
+        position = stepOrder === 102 ? 3 : 7
+      } else {
+        const map: Record<number, number> = { 1: 1, 2: 2, 3: 4, 4: 5, 5: 6 }
+        position = map[stepOrder] ?? stepOrder
+      }
+      return { ...row, order: stepOrder, node_type: nodeType, position }
+    })
+    const islandsOut = nodesOut.filter((row) => row.node_type !== 'story')
+
+    return NextResponse.json({ journey, islands: islandsOut, nodes: nodesOut })
   } catch (e) {
     console.error('[journey/id GET]', e)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import AppLogo from "@/components/app/AppLogo";
-import { Loader2, Lock } from "lucide-react";
+import { BookOpen, Loader2, Lock } from "lucide-react";
 
 /** Primary actions — same language as /onboarding/story & StoryWizard */
 const BTN_PRIMARY =
@@ -33,6 +33,19 @@ const POPULAR_CHIPS = [
   "Technology & AI",
   "Going to the gym",
 ];
+
+const TOPIC_TYPING_SAMPLES = [
+  "Travel in China",
+  "Chinese street food",
+  "Business Mandarin",
+  "Dating & relationships",
+  "Technology & AI",
+  "conversations with my boss",
+  "Coffee shop chats",
+  "Startup meetings",
+  "Weekend plans",
+  "Living in Shanghai",
+] as const;
 
 const TIME_OPTIONS = [
   { label: "5min", value: "5min", mins: 5 },
@@ -128,14 +141,29 @@ const GEN_STEPS = [
   "Finalizing your plan…",
 ];
 
+const JOURNEY_TOTAL_WORDS = 45; // Island 1 has 5 words, islands 2-5 have 10 each.
+
 const JOURNEY_ONBOARDING_DRAFT_KEY = "journey_onboarding_draft_v1";
+const JOURNEY_RESUME_PATH = "/onboarding/journey";
+
+type SavedNode = {
+  node_type: string;
+  position: number;
+  step_order: number;
+  name: string;
+  zh: string | null;
+  hint: string | null;
+  word_count: number | null;
+};
 
 type JourneyOnboardingDraft = {
   topic: string;
   timeLabel: string;
   daysPerWeek: number;
   whyKey: (typeof WHY_OPTIONS)[number]["key"];
-  cefrLevel: CefrLevel;
+  cefrLevel: CefrLevel | "";
+  /** Pre-generated plan nodes saved so post-login resume skips DeepSeek */
+  savedNodes?: SavedNode[];
 };
 
 type Step =
@@ -145,7 +173,31 @@ type Step =
   | "time"
   | "why"
   | "generating"
-  | "preview";
+  | "preview"
+  | "starting-island";
+
+function timeLabelFromMinutes(
+  mins: number | null | undefined,
+): (typeof TIME_OPTIONS)[number]["value"] | "" {
+  if (typeof mins !== "number" || mins <= 0) return "";
+  if (mins <= 5) return "5min";
+  if (mins <= 15) return "15min";
+  if (mins <= 30) return "30min";
+  return "1h+";
+}
+
+function whyKeyFromProfile(
+  goal: string | null | undefined,
+): (typeof WHY_OPTIONS)[number]["key"] | "" {
+  const g = (goal ?? "").toLowerCase();
+  if (!g) return "";
+  if (g.includes("work")) return "work";
+  if (g.includes("travel") || g.includes("trip")) return "travel";
+  if (g.includes("family") || g.includes("heritage")) return "heritage";
+  if (g.includes("media") || g.includes("show") || g.includes("music"))
+    return "media";
+  return "fluency";
+}
 
 /**
  * Journey setup wizard. When `publicSurface` is true (e.g. `/onboarding/journey`), the flow
@@ -154,9 +206,13 @@ type Step =
 export default function JourneyOnboardingFlow({
   skipWelcome = false,
   publicSurface = false,
+  smartProfileSkip = false,
+  collectProfileQuestions = true,
 }: {
   skipWelcome?: boolean;
   publicSurface?: boolean;
+  smartProfileSkip?: boolean;
+  collectProfileQuestions?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -168,7 +224,7 @@ export default function JourneyOnboardingFlow({
     (typeof TIME_OPTIONS)[number]["value"] | ""
   >("");
   const [daysPerWeek, setDaysPerWeek] = useState<number | null>(null);
-  const [cefrLevel, setCefrLevel] = useState<CefrLevel>("B1");
+  const [cefrLevel, setCefrLevel] = useState<CefrLevel | "">("");
   const [levelSaving, setLevelSaving] = useState(false);
   const [whyKey, setWhyKey] = useState<
     (typeof WHY_OPTIONS)[number]["key"] | ""
@@ -183,15 +239,63 @@ export default function JourneyOnboardingFlow({
     Array<{
       id: string;
       order: number;
+      position?: number;
+      node_type?: "island" | "story";
       name: string;
       zh: string | null;
       story_idea: string | null;
+      hint?: string | null;
+      word_count?: number | null;
     }>
   >([]);
   const generateStartedRef = useRef(false);
   const draftResumeRef = useRef(false);
+  const savedNodesRef = useRef<SavedNode[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [starting, setStarting] = useState(false);
+
+  const [profileLoaded, setProfileLoaded] = useState(!smartProfileSkip);
+  const [needsLevel, setNeedsLevel] = useState(!smartProfileSkip);
+  const [needsTime, setNeedsTime] = useState(!smartProfileSkip);
+  const [needsWhy, setNeedsWhy] = useState(!smartProfileSkip);
+  const [profileLearningGoal, setProfileLearningGoal] = useState("");
+  const [topicPlaceholder, setTopicPlaceholder] = useState(
+    "Teach me words related to movies and…",
+  );
+
+  const persistDraft = () => {
+    try {
+      // Persist the pre-generated plan nodes so that after login the generation
+      // step can reuse them directly instead of calling DeepSeek a second time.
+      const savedNodes: SavedNode[] =
+        journeyIslands.length > 0
+          ? journeyIslands.map((n) => ({
+              node_type: n.node_type ?? "island",
+              // preview nodes expose step_order; DB nodes expose order (mapped from step_order)
+              position: n.position ?? n.order ?? 0,
+              step_order: (n as unknown as { step_order?: number }).step_order ?? n.order ?? 0,
+              name: n.name,
+              zh: n.zh ?? null,
+              hint: n.hint ?? null,
+              word_count: n.word_count ?? null,
+            }))
+          : [];
+
+      const draft: JourneyOnboardingDraft = {
+        topic: topic.trim(),
+        timeLabel: timeLabel || "15min",
+        daysPerWeek: daysPerWeek ?? 4,
+        whyKey: whyKey as JourneyOnboardingDraft["whyKey"],
+        cefrLevel,
+        savedNodes: savedNodes.length > 0 ? savedNodes : undefined,
+      };
+      sessionStorage.setItem(
+        JOURNEY_ONBOARDING_DRAFT_KEY,
+        JSON.stringify(draft),
+      );
+    } catch {
+      // sessionStorage blocked — caller can still continue without persisted draft
+    }
+  };
 
   // After login: restore draft and jump to generation (see publicSurface + sessionStorage).
   useEffect(() => {
@@ -199,7 +303,7 @@ export default function JourneyOnboardingFlow({
     if (searchParams.get("resume") !== "1") return;
     const raw = sessionStorage.getItem(JOURNEY_ONBOARDING_DRAFT_KEY);
     if (!raw) {
-      router.replace("/app/onboarding");
+      router.replace(JOURNEY_RESUME_PATH);
       return;
     }
     try {
@@ -211,14 +315,18 @@ export default function JourneyOnboardingFlow({
       if (d.whyKey && WHY_OPTIONS.some((o) => o.key === d.whyKey))
         setWhyKey(d.whyKey);
       if (d.cefrLevel) setCefrLevel(cefrFromProfile(String(d.cefrLevel)));
+      // Restore pre-generated plan so the second generate call can skip DeepSeek.
+      if (Array.isArray(d.savedNodes) && d.savedNodes.length > 0) {
+        savedNodesRef.current = d.savedNodes;
+      }
       // Keep draft in sessionStorage until /api/journey/generate succeeds so React Strict
       // Mode remounts and navigation do not strand users with an empty draft.
       draftResumeRef.current = true;
       setStep("generating");
-      router.replace("/app/onboarding");
+      router.replace(JOURNEY_RESUME_PATH);
     } catch {
       sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
-      router.replace("/app/onboarding");
+      router.replace(JOURNEY_RESUME_PATH);
     }
   }, [searchParams, router]);
 
@@ -232,6 +340,94 @@ export default function JourneyOnboardingFlow({
       if (!skipWelcome) setStep("topic");
     }
   }, [searchParams, skipWelcome]);
+
+  // Typewriter placeholder for popular topics when topic input is empty.
+  useEffect(() => {
+    if (topic.trim().length > 0) {
+      setTopicPlaceholder("Teach me words related to movies and…");
+      return;
+    }
+    let cancelled = false;
+    let sampleIndex = Math.floor(Math.random() * TOPIC_TYPING_SAMPLES.length);
+    let charIndex = 0;
+    let deleting = false;
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+
+    const nextSampleIndex = (current: number) => {
+      if (TOPIC_TYPING_SAMPLES.length <= 1) return 0;
+      const jump =
+        1 + Math.floor(Math.random() * (TOPIC_TYPING_SAMPLES.length - 1));
+      return (current + jump) % TOPIC_TYPING_SAMPLES.length;
+    };
+
+    const tick = () => {
+      if (cancelled) return;
+      const sample = TOPIC_TYPING_SAMPLES[sampleIndex];
+      const prefix = "Teach me words related to ";
+      if (!deleting) {
+        charIndex = Math.min(sample.length, charIndex + 1);
+        setTopicPlaceholder(`${prefix}${sample.slice(0, charIndex)}…`);
+        if (charIndex >= sample.length) {
+          deleting = true;
+          timeout = setTimeout(tick, 1100);
+          return;
+        }
+        timeout = setTimeout(tick, 55 + Math.floor(Math.random() * 35));
+        return;
+      }
+      charIndex = Math.max(0, charIndex - 1);
+      setTopicPlaceholder(`${prefix}${sample.slice(0, charIndex)}…`);
+      if (charIndex === 0) {
+        deleting = false;
+        sampleIndex = nextSampleIndex(sampleIndex);
+        timeout = setTimeout(tick, 260);
+        return;
+      }
+      timeout = setTimeout(tick, 28 + Math.floor(Math.random() * 24));
+    };
+
+    setTopicPlaceholder("Teach me words related to …");
+    timeout = setTimeout(tick, 260);
+    return () => {
+      cancelled = true;
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [topic]);
+
+  useEffect(() => {
+    if (!smartProfileSkip) return;
+    let cancelled = false;
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const { data: up } = await supabase
+        .from("user_profiles")
+        .select("cefr_level, daily_time_minutes, learning_goal")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      const levelExists = !!up?.cefr_level;
+      const timeExists = typeof up?.daily_time_minutes === "number";
+      const whyExists =
+        typeof up?.learning_goal === "string" && up.learning_goal.length > 0;
+      setNeedsLevel(!levelExists);
+      setNeedsTime(!timeExists);
+      setNeedsWhy(!whyExists);
+      if (levelExists) setCefrLevel(cefrFromProfile(up?.cefr_level));
+      if (timeExists)
+        setTimeLabel(timeLabelFromMinutes(up?.daily_time_minutes));
+      if (whyExists) {
+        setProfileLearningGoal(up?.learning_goal ?? "");
+        setWhyKey(whyKeyFromProfile(up?.learning_goal));
+      }
+      setProfileLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [smartProfileSkip, supabase]);
 
   useEffect(() => {
     let cancelled = false;
@@ -262,8 +458,13 @@ export default function JourneyOnboardingFlow({
 
   const whyText = useMemo(() => {
     const w = WHY_OPTIONS.find((o) => o.key === whyKey);
-    return w?.label ?? "";
-  }, [whyKey]);
+    return w?.label ?? profileLearningGoal;
+  }, [whyKey, profileLearningGoal]);
+
+  const effectiveWhyText =
+    whyText ||
+    WHY_OPTIONS.find((o) => o.key === whyKey)?.label ||
+    "General fluency improvement";
 
   useEffect(() => {
     if (step !== "generating") return;
@@ -284,38 +485,132 @@ export default function JourneyOnboardingFlow({
     const run = async () => {
       setError(null);
       try {
+        if (smartProfileSkip) {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (user) {
+            const updates: Record<string, unknown> = {};
+            if (needsLevel && cefrLevel) updates.cefr_level = cefrLevel;
+            if (needsTime)
+              updates.daily_time_minutes = MINS_MAP[timeLabel || "15min"];
+            if (needsWhy && effectiveWhyText)
+              updates.learning_goal = effectiveWhyText;
+            if (Object.keys(updates).length > 0) {
+              await supabase
+                .from("user_profiles")
+                .update(updates)
+                .eq("user_id", user.id);
+            }
+          }
+        }
+
         const res = await fetch("/api/journey/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             topic: topic.trim(),
-            why: whyText,
-            level: cefrLevel,
+            why: effectiveWhyText,
+            level: cefrLevel || "B1",
+            cefrLevel: cefrLevel || "B1",
+            dailyMinutes: MINS_MAP[timeLabel || "15min"],
+            learningGoal: effectiveWhyText,
             timeLabel: timeLabel || "15min",
             daysPerWeek: daysPerWeek ?? 4,
+            // Pass pre-generated nodes so the API can skip DeepSeek after login.
+            savedNodes: savedNodesRef.current.length > 0 ? savedNodesRef.current : undefined,
           }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
           throw new Error(data.error || "Could not create journey");
         }
+        if (data?.preview?.journey && Array.isArray(data?.preview?.islands)) {
+          setJourneyId(null);
+          setJourneyRow(data.preview.journey);
+          setJourneyIslands(data.preview.nodes ?? data.preview.islands);
+          setStep("preview");
+          return;
+        }
         setJourneyId(data.journeyId);
-        const jr = await fetch(`/api/journey/${data.journeyId}`).then((r) =>
-          r.json(),
-        );
-        setJourneyRow(jr.journey);
-        setJourneyIslands(jr.islands ?? []);
+
+        // Post-login resume: user already saw the preview before signing in.
+        // Skip straight to island 1 — no second preview needed.
+        if (draftResumeRef.current) {
+          setStep("starting-island");
+          sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
+          const isRes = await fetch(
+            `/api/journey/${data.journeyId}/start-island`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ order: 1 }),
+            },
+          );
+          const isData = await isRes.json().catch(() => ({}));
+          if (!isRes.ok)
+            throw new Error(isData.error || "Could not start island");
+          router.push(
+            `/app/topic-islands/${isData.islandId}?journeyFirst=1`,
+          );
+          return;
+        }
+
+        // In-app authenticated creation: skip preview, go straight to the journey page.
+        if (!publicSurface) {
+          sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
+          router.push("/app/journey");
+          return;
+        }
+
+        // Public surface (unauthenticated preview then logged in via email/magic link):
+        // show journey preview so the user can confirm before starting island 1.
+        try {
+          const jr = await fetch(`/api/journey/${data.journeyId}`).then(
+            (r) => r.json(),
+          );
+          if (jr.journey) {
+            setJourneyRow(jr.journey);
+            setJourneyIslands(jr.nodes ?? jr.islands ?? []);
+          } else {
+            setJourneyRow({ topic: topic.trim(), words_per_week: wordsPerWeek });
+          }
+        } catch {
+          setJourneyRow({ topic: topic.trim(), words_per_week: wordsPerWeek });
+        }
         setStep("preview");
         sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
       } catch (e) {
+        const msg = e instanceof Error ? e.message : "Something went wrong";
+        setError(msg);
         sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
-        setError(e instanceof Error ? e.message : "Something went wrong");
-        setStep("why");
+        if (draftResumeRef.current) {
+          // Post-login resume failed — show preview as a fallback for manual retry.
+          setJourneyRow({ topic: topic.trim(), words_per_week: wordsPerWeek });
+          setStep("preview");
+        } else {
+          // Go back to topic for in-app, or why for public surface.
+          setStep(publicSurface && collectProfileQuestions ? "why" : "topic");
+        }
       }
     };
     void run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, generatingStep]);
+  }, [
+    step,
+    generatingStep,
+    smartProfileSkip,
+    supabase,
+    needsLevel,
+    needsTime,
+    needsWhy,
+    cefrLevel,
+    timeLabel,
+    effectiveWhyText,
+    topic,
+    daysPerWeek,
+    collectProfileQuestions,
+  ]);
 
   useEffect(() => {
     if (step !== "preview" || !journeyId) return;
@@ -334,12 +629,18 @@ export default function JourneyOnboardingFlow({
 
   const weeksToComplete =
     journeyRow?.words_per_week && journeyRow.words_per_week > 0
-      ? Math.ceil(50 / journeyRow.words_per_week)
+      ? Math.ceil(JOURNEY_TOTAL_WORDS / journeyRow.words_per_week)
       : 1;
 
   const handleStartIsland1 = async () => {
-    if (!journeyId) return;
-    setStarting(true);
+    if (!journeyId) {
+      persistDraft();
+      router.push(
+        `/login?next=${encodeURIComponent(`${JOURNEY_RESUME_PATH}?resume=1`)}`,
+      );
+      return;
+    }
+    setStep("starting-island");
     setError(null);
     try {
       const res = await fetch(`/api/journey/${journeyId}/start-island`, {
@@ -353,9 +654,8 @@ export default function JourneyOnboardingFlow({
       }
       router.push(`/app/topic-islands/${data.islandId}?journeyFirst=1`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not start");
-    } finally {
-      setStarting(false);
+      setError(e instanceof Error ? e.message : "Could not start island");
+      setStep("preview");
     }
   };
 
@@ -381,6 +681,13 @@ export default function JourneyOnboardingFlow({
       ))}
     </div>
   );
+
+  if (!profileLoaded) {
+    return shell(
+      <p className="text-sm text-gray-500">Loading your learning profile…</p>,
+      "lg",
+    );
+  }
 
   if (step === "welcome") {
     return shell(
@@ -433,7 +740,7 @@ export default function JourneyOnboardingFlow({
           <input
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="Teach me words related to movies and…"
+            placeholder={topicPlaceholder}
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
           />
         </label>
@@ -452,7 +759,23 @@ export default function JourneyOnboardingFlow({
         <button
           type="button"
           disabled={!topic.trim()}
-          onClick={() => setStep("level")}
+          onClick={() => {
+            if (!collectProfileQuestions) {
+              if (!timeLabel) setTimeLabel("15min");
+              if (daysPerWeek == null) setDaysPerWeek(4);
+              if (!whyKey) setWhyKey("fluency");
+              setStep("generating");
+              return;
+            }
+            if (!smartProfileSkip) {
+              setStep("level");
+              return;
+            }
+            if (needsLevel) setStep("level");
+            else if (needsTime) setStep("time");
+            else if (needsWhy) setStep("why");
+            else setStep("generating");
+          }}
           className={`mt-10 ${BTN_PRIMARY}`}
         >
           Continue
@@ -498,11 +821,13 @@ export default function JourneyOnboardingFlow({
         </div>
         <button
           type="button"
-          disabled={levelSaving}
+          disabled={levelSaving || !cefrLevel}
           onClick={async () => {
+            if (!cefrLevel) return;
             setLevelSaving(true);
             setError(null);
             try {
+              const selectedLevel = cefrLevel;
               const {
                 data: { user },
               } = await supabase.auth.getUser();
@@ -515,16 +840,19 @@ export default function JourneyOnboardingFlow({
                 if (existing) {
                   await supabase
                     .from("user_profiles")
-                    .update({ cefr_level: cefrLevel })
+                    .update({ cefr_level: selectedLevel })
                     .eq("user_id", user.id);
                 } else {
                   await supabase.from("user_profiles").insert({
                     user_id: user.id,
-                    cefr_level: cefrLevel,
+                    cefr_level: selectedLevel,
                   });
                 }
               }
-              setStep("time");
+              if (!smartProfileSkip) setStep("time");
+              else if (needsTime) setStep("time");
+              else if (needsWhy) setStep("why");
+              else setStep("generating");
             } catch {
               setError("Could not save your level. Try again.");
             } finally {
@@ -591,7 +919,10 @@ export default function JourneyOnboardingFlow({
         <button
           type="button"
           disabled={!timeLabel || daysPerWeek == null}
-          onClick={() => setStep("why")}
+          onClick={() => {
+            if (!smartProfileSkip || needsWhy) setStep("why");
+            else setStep("generating");
+          }}
           className={`mt-10 ${BTN_PRIMARY}`}
         >
           Continue
@@ -631,32 +962,6 @@ export default function JourneyOnboardingFlow({
           disabled={!whyKey}
           onClick={async () => {
             setError(null);
-            if (publicSurface) {
-              const {
-                data: { user },
-              } = await supabase.auth.getUser();
-              if (!user) {
-                try {
-                  const draft: JourneyOnboardingDraft = {
-                    topic: topic.trim(),
-                    timeLabel: timeLabel || "15min",
-                    daysPerWeek: daysPerWeek ?? 4,
-                    whyKey: whyKey as JourneyOnboardingDraft["whyKey"],
-                    cefrLevel,
-                  };
-                  sessionStorage.setItem(
-                    JOURNEY_ONBOARDING_DRAFT_KEY,
-                    JSON.stringify(draft),
-                  );
-                } catch {
-                  // sessionStorage blocked — still send to login; user re-enters answers
-                }
-                router.push(
-                  `/login?next=${encodeURIComponent("/app/onboarding?resume=1")}`,
-                );
-                return;
-              }
-            }
             setStep("generating");
           }}
           className={`mt-10 ${BTN_PRIMARY}`}
@@ -668,13 +973,34 @@ export default function JourneyOnboardingFlow({
   }
 
   if (step === "generating") {
+    const progressPct = Math.min(
+      100,
+      Math.round((generatingStep / GEN_STEPS.length) * 100),
+    );
     return shell(
       <>
         <div className="flex flex-col items-center text-center">
-          <span className="animate-bounce text-5xl" aria-hidden>
-            🦫
-          </span>
+          <div className="animate-bounce" aria-hidden>
+            <AppLogo
+              size="md"
+              textClassName="text-xl font-black text-gray-900"
+            />
+          </div>
+          {!publicSurface && (
+            <p className="mt-4 text-sm text-gray-500">
+              Building your journey — you&apos;ll be taken there in a moment
+            </p>
+          )}
         </div>
+        <div className="mx-auto mt-6 h-2 w-full max-w-md overflow-hidden rounded-full bg-gray-200">
+          <div
+            className="h-full rounded-full bg-gray-900 transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+        <p className="mt-2 text-center text-xs font-medium text-gray-500">
+          {progressPct}% complete
+        </p>
         <ul className="mt-10 w-full space-y-3 text-left">
           {GEN_STEPS.map((s, i) => (
             <li
@@ -694,6 +1020,31 @@ export default function JourneyOnboardingFlow({
     );
   }
 
+  if (step === "starting-island") {
+    return shell(
+      <div className="flex flex-col items-center text-center">
+        <div className="animate-bounce" aria-hidden>
+          <AppLogo size="md" textClassName="text-xl font-black text-gray-900" />
+        </div>
+        <h2 className="mt-8 text-2xl font-black text-gray-900">
+          Building your first island…
+        </h2>
+        <p className="mt-3 text-gray-600">
+          We&apos;re generating 5 words tailored to your level and topic.
+          <br />
+          This only takes a moment.
+        </p>
+        <div className="mx-auto mt-8 h-2 w-full max-w-xs overflow-hidden rounded-full bg-gray-200">
+          <div className="h-full animate-pulse rounded-full bg-gray-900" style={{ width: "60%" }} />
+        </div>
+        {error && (
+          <p className="mt-6 text-sm text-red-600">{error}</p>
+        )}
+      </div>,
+      "lg",
+    );
+  }
+
   if (step === "preview" && journeyRow) {
     const wpw = journeyRow.words_per_week ?? wordsPerWeek;
     return shell(
@@ -705,7 +1056,8 @@ export default function JourneyOnboardingFlow({
           {journeyRow.topic}
         </h1>
         <p className="mt-2 text-gray-600">
-          5 islands · 50 words · ~{weeksToComplete} week
+          5 islands · 2 stories · {JOURNEY_TOTAL_WORDS} words · ~
+          {weeksToComplete} week
           {weeksToComplete === 1 ? "" : "s"} at your pace
         </p>
 
@@ -719,45 +1071,68 @@ export default function JourneyOnboardingFlow({
           </p>
         </div>
 
-        <ul className="mt-8 space-y-3">
-          {journeyIslands.map((row, idx) => (
-            <li
-              key={row.id}
-              className={`flex flex-col gap-1 rounded-xl border bg-white px-4 py-3 shadow-sm ${
-                idx === 0
-                  ? "border-2 border-gray-900"
-                  : "border-gray-200 opacity-90"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span className="flex items-center gap-2 font-bold text-gray-900">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-900 text-sm text-white">
-                    {row.order}
-                  </span>
-                  <span>
-                    {row.name}
-                    {row.zh ? (
-                      <span className="ml-2 font-normal text-gray-500">
-                        {row.zh}
+        <div className="mt-8 max-h-[380px] overflow-y-auto pr-1">
+          <ul className="space-y-3">
+            {journeyIslands.map((row, idx) => (
+              <li
+                key={row.id}
+                data-node-type={row.node_type ?? "island"}
+                className={`flex flex-col gap-1 rounded-xl border bg-white px-4 py-3 shadow-sm ${
+                  idx === 0 && (row.node_type ?? "island") === "island"
+                    ? "border-2 border-gray-900"
+                    : (row.node_type ?? "island") === "story"
+                      ? "border-amber-200 bg-amber-50/40"
+                      : "border-gray-200 opacity-90"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className="flex items-center gap-2 font-bold text-gray-900">
+                    {(row.node_type ?? "island") === "story" ? (
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-sm text-white">
+                        <BookOpen className="h-4 w-4" />
                       </span>
-                    ) : null}
+                    ) : (
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-900 text-sm text-white">
+                      {row.order}
+                      </span>
+                    )}
+                    <span>
+                      {row.name}
+                      {row.zh ? (
+                        <span className="ml-2 font-normal text-gray-500">
+                          {row.zh}
+                        </span>
+                      ) : null}
+                    </span>
                   </span>
-                </span>
-                {idx === 0 ? (
-                  <span className="shrink-0 rounded-full bg-teal-500 px-2 py-0.5 text-xs font-bold text-white">
-                    FREE
+                  {idx === 0 && (row.node_type ?? "island") === "island" ? (
+                    <span className="shrink-0 rounded-full bg-teal-500 px-2 py-0.5 text-xs font-bold text-white">
+                      FREE
+                    </span>
+                  ) : (
+                    <Lock className="h-4 w-4 shrink-0 text-gray-400" />
+                  )}
+                </div>
+                {row.story_idea ? (
+                  <p className="pl-10 text-sm text-gray-600">
+                    {row.story_idea}
+                  </p>
+                ) : row.hint ? (
+                  <p className="pl-10 text-sm text-amber-700">{row.hint}</p>
+                ) : null}
+                {(row.node_type ?? "island") === "story" ? (
+                  <span className="pl-10 text-sm text-gray-500">
+                    Locked story checkpoint
                   </span>
                 ) : (
-                  <Lock className="h-4 w-4 shrink-0 text-gray-400" />
+                  <span className="pl-10 text-sm text-gray-500">
+                  {row.word_count ?? (row.order === 1 ? 5 : 10)} words
+                  </span>
                 )}
-              </div>
-              {row.story_idea ? (
-                <p className="pl-10 text-sm text-gray-600">{row.story_idea}</p>
-              ) : null}
-              <span className="pl-10 text-sm text-gray-500">10 words</span>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        </div>
         <p className="mt-4 text-sm text-gray-600">
           🔒 Islands 2–5 unlock when you subscribe
         </p>
@@ -766,15 +1141,15 @@ export default function JourneyOnboardingFlow({
 
         <button
           type="button"
-          disabled={starting}
           onClick={handleStartIsland1}
           className={`mt-8 ${BTN_PRIMARY}`}
         >
-          {starting && <Loader2 className="h-5 w-5 animate-spin" />}
-          Start Island 1 — free →
+          {journeyId ? "Start Island 1 — free →" : "Continue with email →"}
         </button>
         <p className="mt-2 text-center text-sm text-gray-500">
-          No credit card needed for island 1
+          {journeyId
+            ? "No credit card needed for island 1"
+            : "Save your plan and unlock island 1 after sign in"}
         </p>
       </>,
       "2xl",

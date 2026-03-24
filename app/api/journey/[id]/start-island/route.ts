@@ -40,6 +40,8 @@ export async function POST(
       return NextResponse.json({ error: 'Journey not found' }, { status: 404 })
     }
 
+    // Query by step_order only. Story nodes always get step_order 102/105 (well above
+    // the 1-5 range validated above), so there is no risk of accidentally picking one.
     const { data: ji, error: jiErr } = await supabase
       .from('journey_islands')
       .select('*')
@@ -48,6 +50,7 @@ export async function POST(
       .maybeSingle()
 
     if (jiErr || !ji) {
+      console.error('[start-island] island lookup', { order, journeyId: journey.id, jiErr })
       return NextResponse.json({ error: 'Journey island not found' }, { status: 404 })
     }
 
@@ -90,13 +93,15 @@ export async function POST(
       await supabase.from('user_profiles').insert({ user_id: user.id, cefr_level: 'B1' })
     }
 
+    const wordTarget = order === 1 ? 5 : 10
+
     const { data: island, error: insErr } = await supabase
       .from('topic_islands')
       .insert({
         user_id: user.id,
         topic,
         level,
-        word_target: 10,
+        word_target: wordTarget,
         grammar_target: 0,
         status: 'draft',
         cover_key: pickRandomCoverKey(),

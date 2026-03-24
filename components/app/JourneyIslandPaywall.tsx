@@ -85,9 +85,9 @@ export default function JourneyIslandPaywall({
           ) : (
             <>
               <p className="text-2xl font-black text-slate-900">
-                $5.75<span className="text-base font-semibold">/month</span>
+                $6.67<span className="text-base font-semibold">/month</span>
               </p>
-              <p className="text-sm text-slate-500">billed as $69 / year</p>
+              <p className="text-sm text-slate-500">billed as $79.99 / year</p>
             </>
           )}
         </div>

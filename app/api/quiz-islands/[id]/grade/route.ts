@@ -77,6 +77,25 @@ export async function POST(
       console.error('Error logging quiz activity:', activityError)
     }
 
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('huahua_total_reviews')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    const newTotal = (profile?.huahua_total_reviews ?? 0) + 1
+    const newStage =
+      newTotal >= 90 ? 5 : newTotal >= 50 ? 4 : newTotal >= 25 ? 3 : newTotal >= 10 ? 2 : 1
+    const { error: huahuaErr } = await supabase
+      .from('user_profiles')
+      .update({
+        huahua_total_reviews: newTotal,
+        huahua_stage: newStage,
+      })
+      .eq('user_id', user.id)
+    if (huahuaErr) {
+      console.error('Error updating huahua progression:', huahuaErr)
+    }
+
     // Return today's review count so client can show Progress Island upgrade popup
     let todayCount = 0
     const tzOffsetMinutes = typeof tzOffset === 'number' ? tzOffset : new Date().getTimezoneOffset()

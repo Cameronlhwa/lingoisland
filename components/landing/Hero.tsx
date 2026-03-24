@@ -784,7 +784,7 @@ export default function Hero() {
             marginBottom: 40,
           }}
         >
-          No account needed. No credit card. Your first island is on us.
+          No credit card needed. Your first island is on us.
         </p>
       </div>
 

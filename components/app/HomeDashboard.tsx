@@ -4,19 +4,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import DailyStoryCard, {
   type DailyStorySummary,
 } from "@/components/stories/DailyStoryCard";
 import CreateIslandCard from "@/components/app/CreateIslandCard";
+import JourneyHero from "@/components/app/JourneyHero";
+import CapybaraStrip from "@/components/app/CapybaraStrip";
 import { getLocalDateKey } from "@/lib/utils/date";
-import { OceanBackground } from "@/components/OceanBackground";
-import {
-  useProgressIslandUpgrade,
-  checkAndShowUpgrade,
-} from "@/contexts/ProgressIslandUpgradeContext";
 import { useSidebar } from "@/components/app/AppLayoutClient";
 import {
   buttonPrimaryClass,
@@ -97,17 +93,22 @@ export default function HomeDashboard({
     words_per_week: number | null;
     completed_at: string | null;
   } | null>(null);
-  const [activeJourneyIslands, setActiveJourneyIslands] = useState<
+  const [activeJourneyNodes, setActiveJourneyNodes] = useState<
     Array<{
       id: string;
       order: number;
+      position: number;
+      node_type: "island" | "story";
       name: string;
+      hint: string | null;
+      word_count: number | null;
       completed_at: string | null;
       island_id: string | null;
     }>
   >([]);
+  const [huahuaStage, setHuahuaStage] = useState(1);
+  const [huahuaTotalReviews, setHuahuaTotalReviews] = useState(0);
   const [capybaraOpen, setCapybaraOpen] = useState(false);
-  const progressUpgrade = useProgressIslandUpgrade();
   const { isAnonymous, openSignupModal } = useSidebar();
   const islandsScrollRef = useRef<HTMLDivElement | null>(null);
   const flashcardsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -140,7 +141,16 @@ export default function HomeDashboard({
       if (jr.ok) {
         const d = await jr.json();
         setActiveJourney(d.journey);
-        setActiveJourneyIslands(d.islands ?? []);
+        setActiveJourneyNodes(d.nodes ?? d.islands ?? []);
+      }
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("huahua_stage, huahua_total_reviews")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profile) {
+        setHuahuaStage(profile.huahua_stage ?? 1);
+        setHuahuaTotalReviews(profile.huahua_total_reviews ?? 0);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -362,59 +372,6 @@ export default function HomeDashboard({
     return s;
   }, [last7DaysActivity]);
 
-  const journeyLearnedWords = useMemo(() => {
-    return (
-      activeJourneyIslands.filter((i) => i.completed_at).length * 10
-    );
-  }, [activeJourneyIslands]);
-
-  const journeyProgressPct = Math.min(
-    100,
-    activeJourney ? (journeyLearnedWords / 50) * 100 : 0,
-  );
-
-  // Progress island calculation - every 10 reviews = next stage (0-5 index for stages 1-6)
-  const progressStage = Math.min(5, Math.floor(todayReviewCount / 10));
-  const progressImageSrc = `/progress-islands/stage-${progressStage + 1}.png`;
-  const stageProgress = todayReviewCount % 10; // 0-9 within current stage
-  const nextMilestone = (progressStage + 1) * 10;
-
-  // When on Home, show upgrade popup if progress stage increased (e.g. after returning from quiz)
-  useEffect(() => {
-    if (islandLoading || !progressUpgrade) return;
-    checkAndShowUpgrade(todayReviewCount, progressUpgrade.showUpgrade);
-  }, [todayReviewCount, islandLoading, progressUpgrade]);
-
-  // Status messages based on stage — each tied to what's visible in the stage image
-  const cardsToNext = 10 - stageProgress;
-  const cardWord = cardsToNext === 1 ? "card" : "cards";
-  const islandStatus =
-    progressStage >= 5
-      ? convertText(
-          t(
-            "华华 made it — mansion, BYD, and a skyline. He'd like to personally thank your flashcard streak.",
-          ),
-        )
-      : progressStage === 4
-        ? convertText(
-            `华华 put on a suit and built himself a city — review ${cardsToNext} more ${cardWord} to see what's next!`,
-          )
-        : progressStage === 3
-          ? convertText(
-              `华华 upgraded to a cozy sweater and his neighbourhood is thriving — ${cardsToNext} more ${cardWord} to level up again!`,
-            )
-          : progressStage === 2
-            ? convertText(
-                `华华 has a proper village with cottages and flowers — review ${cardsToNext} more ${cardWord} to keep him moving up!`,
-              )
-            : progressStage === 1
-              ? convertText(
-                  `华华 put on his overalls and started building — review ${cardsToNext} more ${cardWord} for his next upgrade!`,
-                )
-              : convertText(
-                  `Review ${cardsToNext} more ${cardWord} today to help 华华 build a new house!`,
-                );
-
   const handleCreateIsland = () => {
     if (isAnonymous) {
       openSignupModal("Topic Islands");
@@ -474,20 +431,17 @@ export default function HomeDashboard({
   }
 
   return (
-    <div className="relative min-h-screen px-4 py-6 md:px-6 md:py-8 lg:px-10">
-      <OceanBackground />
-
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-4 md:gap-6">
-        {/* ROW 1: Stats bar + capybara + active journey */}
+    <div className="min-h-screen bg-white px-4 py-6 md:px-6 md:py-8 lg:px-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 md:gap-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-2 md:gap-3">
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-900">
               🔥 {streakDays} day streak
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800">
+            <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-white px-3 py-1.5 text-sm text-teal-700">
               🧠 {totalWordsLearned} words learned
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800">
+            <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700">
               ⏰ {dueCardCount} due for review
             </span>
             {!islandLoading && last7DaysActivity.length > 0 ? (
@@ -505,116 +459,23 @@ export default function HomeDashboard({
             <button
               type="button"
               onClick={() => setCapybaraOpen((o) => !o)}
-              className="ml-auto inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900"
+              className={`ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+                capybaraOpen
+                  ? "border-gray-900 bg-gray-900 text-white"
+                  : "border-gray-200 bg-white text-gray-500 hover:border-gray-400"
+              }`}
             >
-              🦫 华华 {capybaraOpen ? "▲" : "▼"}
+              <span>🦫</span>
+              <span>华华</span>
+              <span className="opacity-40">{capybaraOpen ? "▲" : "▼"}</span>
             </button>
           </div>
 
           {capybaraOpen ? (
-            <div
-              className={`${cardBaseClass} ${cardHoverClass} flex flex-col gap-4 p-4 sm:flex-row sm:items-center`}
-            >
-              <div className="text-5xl" aria-hidden>
-                🦫
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-black text-slate-900">华华&apos;s Island</p>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Stage {progressStage + 1} · Next: 🏠
-                </p>
-                <p className="mt-2 text-sm text-slate-700">{islandStatus}</p>
-                <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-teal-500 transition-all"
-                    style={{ width: `${Math.min(100, (stageProgress / 10) * 100)}%` }}
-                  />
-                </div>
-                <p className="mt-1 text-xs text-slate-500">
-                  {todayReviewCount} / {nextMilestone} reviews toward the next stage
-                </p>
-              </div>
-              {!islandLoading ? (
-                <Image
-                  src={progressImageSrc}
-                  alt="华华 island"
-                  width={200}
-                  height={120}
-                  className="h-24 w-auto shrink-0 object-contain"
-                />
-              ) : null}
-            </div>
+            <CapybaraStrip stage={huahuaStage} totalReviews={huahuaTotalReviews} />
           ) : null}
 
-          {activeJourney ? (
-            <Link
-              href="/app/journey"
-              className={`block rounded-2xl border-2 border-slate-900 bg-white p-5 ${cardHoverClass}`}
-            >
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                ACTIVE JOURNEY
-              </p>
-              <div className="mt-1 flex flex-wrap items-start justify-between gap-2">
-                <h2 className="text-xl font-black text-slate-900 md:text-2xl">
-                  {activeJourney.topic}
-                </h2>
-                <span className="text-sm font-semibold text-slate-600">
-                  {journeyLearnedWords} / 50
-                </span>
-              </div>
-              <div className="mt-4 flex items-center gap-1">
-                {activeJourneyIslands.slice(0, 5).map((node, i) => {
-                  const firstIncomplete = activeJourneyIslands.find(
-                    (n) => !n.completed_at,
-                  );
-                  const done = !!node.completed_at;
-                  const isCurrent = firstIncomplete?.id === node.id;
-                  return (
-                    <div key={node.id} className="flex flex-1 items-center">
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                          done
-                            ? "bg-teal-500 text-white"
-                            : isCurrent
-                              ? "bg-slate-900 text-white ring-2 ring-slate-300"
-                              : "border-2 border-slate-200 bg-slate-100 text-slate-400"
-                        }`}
-                      >
-                        {done ? "✓" : i + 1}
-                      </div>
-                      {i < 4 ? (
-                        <div className="mx-0.5 h-0.5 min-w-[4px] flex-1 bg-slate-200" />
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-teal-500"
-                  style={{ width: `${journeyProgressPct}%` }}
-                />
-              </div>
-              <p className="mt-3 text-right text-sm font-medium text-slate-700">
-                View full journey →
-              </p>
-            </Link>
-          ) : null}
-        </div>
-
-        {/* Today's loop */}
-        <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-3">
-          <span className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white">
-            1 ·{" "}
-            {activeJourneyIslands.find((i) => !i.completed_at)?.name ??
-              "Next journey island"}
-          </span>
-          <span className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-800">
-            2 · Read Daily Story
-          </span>
-          <span className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-800">
-            3 · Review Words ({dueCardCount})
-          </span>
+          <JourneyHero journey={activeJourney} nodes={activeJourneyNodes} />
         </div>
 
         {/* ROW 2: Create Topic Island + Read Daily Story (2 columns on desktop, stack on mobile) */}
@@ -645,8 +506,8 @@ export default function HomeDashboard({
           />
         </div>
 
-        {/* ROW 3: Review Topic Islands + Review Quiz Islands (desktop only) */}
-        <div className="hidden md:grid gap-4 md:gap-6 md:grid-cols-2">
+        {/* ROW 3: Review Topic Islands + Review Quiz Islands */}
+        <div className="grid gap-4 md:gap-6 md:grid-cols-2">
           {/* Review your Topic Islands */}
           <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-6`}>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">

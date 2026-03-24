@@ -1620,21 +1620,6 @@ export default function TopicIslandDetailPage() {
                       </div>
                     );
                   })}
-                  {showJourneyPaywall && journeyContext ? (
-                    <div className="mt-10">
-                      <JourneyIslandPaywall
-                        journeyTitle={journeyContext.journeyTopic}
-                        topic={journeyContext.journeyTopic}
-                        wordsPerWeek={journeyContext.wordsPerWeek}
-                        weeksToComplete={journeyWeeksToComplete}
-                        lockedIslands={journeyContext.lockedIslands.map((i) => ({
-                          name: i.name,
-                          zh: i.zh,
-                        }))}
-                        onSubscribe={handleJourneySubscribe}
-                      />
-                    </div>
-                  ) : null}
                   {false && (
                     <div className="relative mt-8">
                       <div
@@ -1802,6 +1787,21 @@ export default function TopicIslandDetailPage() {
                       ) : null}
                     </div>
                   </div>
+                  {showJourneyPaywall && journeyContext ? (
+                    <div className="mt-6">
+                      <JourneyIslandPaywall
+                        journeyTitle={journeyContext.journeyTopic}
+                        topic={journeyContext.journeyTopic}
+                        wordsPerWeek={journeyContext.wordsPerWeek}
+                        weeksToComplete={journeyWeeksToComplete}
+                        lockedIslands={journeyContext.lockedIslands.map((i) => ({
+                          name: i.name,
+                          zh: i.zh,
+                        }))}
+                        onSubscribe={handleJourneySubscribe}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <div className="mt-10 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
