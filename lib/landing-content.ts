@@ -221,7 +221,7 @@ export const FOUNDER_PAGE = {
     title: "About Cameron Lim",
     intro:
       "I built LingoIsland because I wanted the kind of Mandarin-learning system I couldn’t find elsewhere—topic-first, level-tuned, and designed to recycle vocabulary until it actually sticks.",
-    ctaPrimary: { label: "Try LingoIsland", href: "/onboarding/topic-island" },
+    ctaPrimary: { label: "Try LingoIsland", href: "/onboarding/journey" },
     ctaSecondary: { label: "Watch on YouTube", href: "#" },
   },
   story: {
@@ -279,6 +279,6 @@ export const FOUNDER_PAGE = {
   finalCta: {
     title: "Start your first Topic Island",
     subline: "Pick a topic, get level-tuned words and sentences, then close the loop with stories and review.",
-    ctaPrimary: { label: "Start your first Topic Island", href: "/onboarding/topic-island" },
+    ctaPrimary: { label: "Start your first Topic Island", href: "/onboarding/journey" },
   },
 };

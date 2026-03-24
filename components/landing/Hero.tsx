@@ -741,7 +741,7 @@ export default function Hero() {
           }}
         >
           <Link
-            href="/onboarding/topic-island"
+            href="/onboarding/journey"
             style={{
               background: "#071E2E",
               color: "#fff",
@@ -816,7 +816,7 @@ export default function Hero() {
             return (
               <Link
                 key={island.id}
-                href={`/onboarding/topic-island?example=${island.id}`}
+                href={`/onboarding/journey?example=${island.id}`}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -854,7 +854,7 @@ export default function Hero() {
         style={{ opacity: 0.5, marginTop: 16 }}
       >
         <Link
-          href={`/onboarding/topic-island?example=${LANDING_EXAMPLE_ISLANDS[1].id}`}
+          href={`/onboarding/journey?example=${LANDING_EXAMPLE_ISLANDS[1].id}`}
           style={{
             display: "flex",
             flexDirection: "column",

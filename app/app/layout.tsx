@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GlossaryProvider } from "@/contexts/GlossaryContext";
@@ -29,7 +30,9 @@ export default async function AppLayout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    const h = await headers();
+    const intended = h.get("x-login-next") ?? "/app";
+    redirect(`/login?next=${encodeURIComponent(intended)}`);
   }
 
   return (

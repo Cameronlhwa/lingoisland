@@ -112,7 +112,7 @@ export default function FinalCTA() {
                   at your level. Free to start.
                 </p>
                 <Link
-                  href="/onboarding/topic-island"
+                  href="/onboarding/journey"
                   style={{
                     display: "block",
                     width: "100%",

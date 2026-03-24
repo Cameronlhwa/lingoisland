@@ -379,7 +379,7 @@ export default function StoryWizard() {
                   You don’t have any topic islands yet. Create one first.
                   <div className="mt-4">
                     <Link
-                      href="/onboarding/topic-island"
+                      href="/onboarding/journey"
                       className="inline-flex rounded-lg border border-gray-900 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
                     >
                       Create a Topic Island

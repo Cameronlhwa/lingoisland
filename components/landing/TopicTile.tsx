@@ -24,7 +24,7 @@ export default function TopicTile({ topic }: TopicTileProps) {
       }}
     >
       <Link
-        href={`/onboarding/topic-island?topic=${encodeURIComponent(topic.title)}`}
+        href={`/onboarding/journey?topic=${encodeURIComponent(topic.title)}`}
         style={{ display: "block", textDecoration: "none" }}
       >
         <h3

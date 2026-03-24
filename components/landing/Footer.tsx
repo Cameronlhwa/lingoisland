@@ -62,7 +62,7 @@ export default function Footer() {
             { href: "/#topics", label: "Topics" },
             { href: "/founder", label: "Founder" },
             { href: "/login", label: "Sign in" },
-            { href: "/onboarding/topic-island", label: "Create Topic Island" },
+            { href: "/onboarding/journey", label: "Create Topic Island" },
           ].map((link) => (
             <Link
               key={link.href}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import AppLogo from "@/components/app/AppLogo";
+import JourneyIslandPaywall from "@/components/app/JourneyIslandPaywall";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -21,7 +23,6 @@ import AddAllWordsModal from "@/components/app/AddAllWordsModal";
 import { createClient } from "@/lib/supabase/browser";
 import { useSidebar } from "@/components/app/AppLayoutClient";
 import { BsCardChecklist } from "react-icons/bs";
-import { TbLock, TbMap2 } from "react-icons/tb";
 
 interface Sentence {
   id: string;
@@ -147,6 +148,16 @@ export default function TopicIslandDetailPage() {
   const [wordSelectionOpen, setWordSelectionOpen] = useState(false);
   const [showCapybaraTeaser, setShowCapybaraTeaser] = useState(false);
   const [showNewUserHint, setShowNewUserHint] = useState(false);
+  const [journeyContext, setJourneyContext] = useState<{
+    journeyIslandId: string;
+    order: number;
+    journeyId: string;
+    name: string;
+    zh: string | null;
+    journeyTopic: string;
+    wordsPerWeek: number;
+    lockedIslands: Array<{ order: number; name: string; zh: string | null }>;
+  } | null>(null);
   useEffect(() => {
     setShowNewUserHint(!localStorage.getItem("island_hint_dismissed"));
   }, []);
@@ -193,6 +204,25 @@ export default function TopicIslandDetailPage() {
 
   // Locked word IDs (last N on anonymous 10-word island, control variant only)
   const lockedWordIds = useMemo(() => new Set<string>(), []);
+
+  const expectedSentenceCount =
+    journeyContext?.order === 1 ? 2 : 3;
+
+  const showJourneyPaywall =
+    !!journeyContext &&
+    journeyContext.order === 1 &&
+    userPlan === "free";
+
+  const journeyWeeksToComplete =
+    journeyContext && journeyContext.wordsPerWeek > 0
+      ? Math.ceil(50 / journeyContext.wordsPerWeek)
+      : 5;
+
+  const tierLabel = (tier: Sentence["tier"]) => {
+    if (tier === "same") return "Natural";
+    if (tier === "easy") return "Easy";
+    return "Hard";
+  };
 
   // Initialize selectedWordIds when words load — always select all available words
   useEffect(() => {
@@ -296,6 +326,7 @@ export default function TopicIslandDetailPage() {
           : 0,
       );
       setCanCreateTopicIsland(data.can_create_topic_island !== false);
+      setJourneyContext(data.journeyContext ?? null);
       setLoading(false);
 
       // Set default level for adding words if not already set
@@ -971,6 +1002,20 @@ export default function TopicIslandDetailPage() {
     maybeShowCapybaraTeaser(quizWords.length);
   };
 
+  const handleJourneySubscribe = async (interval: "monthly" | "yearly") => {
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interval }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleResetQuiz = () => {
     setQuizMode(null);
     setQuizWords([]);
@@ -1015,6 +1060,14 @@ export default function TopicIslandDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {journeyContext?.order === 1 ? (
+        <div className="sticky top-16 z-20 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:top-0 md:px-8">
+          <AppLogo size="sm" />
+          <span className="rounded-full bg-teal-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+            Island 1 of 5 · Free
+          </span>
+        </div>
+      ) : null}
       <div className="flex w-full">
         <div className="flex w-full px-8 py-8">
           <div className="flex-1 min-w-0">
@@ -1480,7 +1533,7 @@ export default function TopicIslandDetailPage() {
                                 Example sentences loading...
                               </span>
                             </div>
-                          ) : word.sentences.length < 3 ? (
+                          ) : word.sentences.length < expectedSentenceCount ? (
                             <div className="flex items-center gap-3 py-4 text-amber-600">
                               <svg
                                 className="h-5 w-5 animate-spin text-amber-500"
@@ -1517,7 +1570,7 @@ export default function TopicIslandDetailPage() {
                                   <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                       <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                        {sentence.tier}
+                                        {tierLabel(sentence.tier)}
                                       </div>
                                       <div className="mb-1 flex items-center gap-2">
                                         <ChineseTooltipText
@@ -1567,6 +1620,21 @@ export default function TopicIslandDetailPage() {
                       </div>
                     );
                   })}
+                  {showJourneyPaywall && journeyContext ? (
+                    <div className="mt-10">
+                      <JourneyIslandPaywall
+                        journeyTitle={journeyContext.journeyTopic}
+                        topic={journeyContext.journeyTopic}
+                        wordsPerWeek={journeyContext.wordsPerWeek}
+                        weeksToComplete={journeyWeeksToComplete}
+                        lockedIslands={journeyContext.lockedIslands.map((i) => ({
+                          name: i.name,
+                          zh: i.zh,
+                        }))}
+                        onSubscribe={handleJourneySubscribe}
+                      />
+                    </div>
+                  ) : null}
                   {false && (
                     <div className="relative mt-8">
                       <div
@@ -1732,49 +1800,6 @@ export default function TopicIslandDetailPage() {
                           Add at least two words to start flashcards.
                         </p>
                       ) : null}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-                    <div className="mb-5 flex justify-center" aria-hidden>
-                      <TbMap2 className="h-12 w-12 text-[#121926]" />
-                    </div>
-                    <h3 className="text-center text-xl font-semibold text-gray-900">
-                      Create New Island
-                    </h3>
-                    <p className="mt-2 text-center text-sm leading-relaxed text-gray-600">
-                      Learn vocab on any topic you care about
-                    </p>
-                    <div className="mt-8">
-                      {isAnonymous ? (
-                        <button
-                          type="button"
-                          onClick={() => openSignupModal("Topic Islands")}
-                          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#121926] px-5 py-3 text-sm font-semibold text-white shadow-none transition-shadow duration-200 ease-out hover:shadow-xl"
-                        >
-                          <TbLock className="h-5 w-5 shrink-0" aria-hidden />
-                          Sign up free →
-                        </button>
-                      ) : userPlan === "pro" || canCreateTopicIsland ? (
-                        <Link
-                          href="/app/topic-islands"
-                          className="flex min-h-[48px] w-full items-center justify-center rounded-xl bg-[#121926] px-5 py-3 text-sm font-semibold text-white shadow-none transition-shadow duration-200 ease-out hover:shadow-xl"
-                        >
-                          Create Island →
-                        </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUpgradeFeature("Topic Islands");
-                            setShowUpgradeModal(true);
-                          }}
-                          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#121926] px-5 py-3 text-sm font-semibold text-white shadow-none transition-shadow duration-200 ease-out hover:shadow-xl"
-                        >
-                          <TbLock className="h-5 w-5 shrink-0" aria-hidden />
-                          Upgrade to unlock →
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>

@@ -83,7 +83,7 @@ export default function ProofDemo() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start" }}>
               <Link
-                href="/onboarding/topic-island"
+                href="/onboarding/journey"
                 style={{
                   background: "#071E2E",
                   color: "#fff",

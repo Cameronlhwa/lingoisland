@@ -171,7 +171,7 @@ export default function DemoIslandCard() {
 
       <div className="mt-6">
         <Link
-          href="/onboarding/topic-island"
+          href="/onboarding/journey"
           className="inline-block rounded-lg border border-white bg-white px-4 py-2 text-xs font-semibold text-gray-900 transition-all hover:bg-gray-100"
         >
           Create your own topic island!
