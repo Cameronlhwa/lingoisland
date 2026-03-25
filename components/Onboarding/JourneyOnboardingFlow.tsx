@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import AppLogo from "@/components/app/AppLogo";
-import { BookOpen, Loader2, Lock } from "lucide-react";
+import { ArrowRight, BookOpen, Check, Loader2, Lock, Zap } from "lucide-react";
 
 /** Primary actions — same language as /onboarding/story & StoryWizard */
 const BTN_PRIMARY =
@@ -272,7 +272,10 @@ export default function JourneyOnboardingFlow({
               node_type: n.node_type ?? "island",
               // preview nodes expose step_order; DB nodes expose order (mapped from step_order)
               position: n.position ?? n.order ?? 0,
-              step_order: (n as unknown as { step_order?: number }).step_order ?? n.order ?? 0,
+              step_order:
+                (n as unknown as { step_order?: number }).step_order ??
+                n.order ??
+                0,
               name: n.name,
               zh: n.zh ?? null,
               hint: n.hint ?? null,
@@ -518,7 +521,10 @@ export default function JourneyOnboardingFlow({
             timeLabel: timeLabel || "15min",
             daysPerWeek: daysPerWeek ?? 4,
             // Pass pre-generated nodes so the API can skip DeepSeek after login.
-            savedNodes: savedNodesRef.current.length > 0 ? savedNodesRef.current : undefined,
+            savedNodes:
+              savedNodesRef.current.length > 0
+                ? savedNodesRef.current
+                : undefined,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -550,9 +556,7 @@ export default function JourneyOnboardingFlow({
           const isData = await isRes.json().catch(() => ({}));
           if (!isRes.ok)
             throw new Error(isData.error || "Could not start island");
-          router.push(
-            `/app/topic-islands/${isData.islandId}?journeyFirst=1`,
-          );
+          router.push(`/app/topic-islands/${isData.islandId}?journeyFirst=1`);
           return;
         }
 
@@ -566,14 +570,17 @@ export default function JourneyOnboardingFlow({
         // Public surface (unauthenticated preview then logged in via email/magic link):
         // show journey preview so the user can confirm before starting island 1.
         try {
-          const jr = await fetch(`/api/journey/${data.journeyId}`).then(
-            (r) => r.json(),
+          const jr = await fetch(`/api/journey/${data.journeyId}`).then((r) =>
+            r.json(),
           );
           if (jr.journey) {
             setJourneyRow(jr.journey);
             setJourneyIslands(jr.nodes ?? jr.islands ?? []);
           } else {
-            setJourneyRow({ topic: topic.trim(), words_per_week: wordsPerWeek });
+            setJourneyRow({
+              topic: topic.trim(),
+              words_per_week: wordsPerWeek,
+            });
           }
         } catch {
           setJourneyRow({ topic: topic.trim(), words_per_week: wordsPerWeek });
@@ -1035,11 +1042,12 @@ export default function JourneyOnboardingFlow({
           This only takes a moment.
         </p>
         <div className="mx-auto mt-8 h-2 w-full max-w-xs overflow-hidden rounded-full bg-gray-200">
-          <div className="h-full animate-pulse rounded-full bg-gray-900" style={{ width: "60%" }} />
+          <div
+            className="h-full animate-pulse rounded-full bg-gray-900"
+            style={{ width: "60%" }}
+          />
         </div>
-        {error && (
-          <p className="mt-6 text-sm text-red-600">{error}</p>
-        )}
+        {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
       </div>,
       "lg",
     );
@@ -1047,112 +1055,243 @@ export default function JourneyOnboardingFlow({
 
   if (step === "preview" && journeyRow) {
     const wpw = journeyRow.words_per_week ?? wordsPerWeek;
-    return shell(
-      <>
-        <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
-          YOUR PERSONALISED JOURNEY
-        </p>
-        <h1 className="mt-2 text-3xl font-black text-gray-900">
-          {journeyRow.topic}
-        </h1>
-        <p className="mt-2 text-gray-600">
-          5 islands · 2 stories · {JOURNEY_TOTAL_WORDS} words · ~
-          {weeksToComplete} week
-          {weeksToComplete === 1 ? "" : "s"} at your pace
-        </p>
+    const effectiveDailyMins = MINS_MAP[timeLabel] ?? 15;
+    const effectiveDaysPerWeek = daysPerWeek ?? 4;
 
-        <div className="mt-8 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="font-semibold text-gray-900">
-            🧠 Learn {wpw} words in your first week
+    // Track island number separately (stories don't count)
+    let islandCounter = 0;
+
+    return (
+      <div className="mx-auto w-full max-w-[480px] px-5 py-10 lg:max-w-2xl lg:px-10">
+        {/* ── Header ── */}
+        <div className="mb-5">
+          <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-teal-500">
+            Your Personalised Journey
           </p>
-          <p className="mt-1 text-sm text-gray-600">
-            Based on your {timeLabel || "15min"}/day, {daysPerWeek ?? 4}x/week
-            plan
+          <h1 className="text-3xl font-black tracking-tight text-gray-900">
+            {journeyRow.topic}
+          </h1>
+          <p className="mt-1 text-sm text-gray-400">
+            5 islands · 2 stories · {JOURNEY_TOTAL_WORDS} words · ~
+            {weeksToComplete} week{weeksToComplete === 1 ? "" : "s"} at your
+            pace
           </p>
         </div>
 
-        <div className="mt-8 max-h-[380px] overflow-y-auto pr-1">
-          <ul className="space-y-3">
-            {journeyIslands.map((row, idx) => (
-              <li
-                key={row.id}
-                data-node-type={row.node_type ?? "island"}
-                className={`flex flex-col gap-1 rounded-xl border bg-white px-4 py-3 shadow-sm ${
-                  idx === 0 && (row.node_type ?? "island") === "island"
-                    ? "border-2 border-gray-900"
-                    : (row.node_type ?? "island") === "story"
-                      ? "border-amber-200 bg-amber-50/40"
-                      : "border-gray-200 opacity-90"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="flex items-center gap-2 font-bold text-gray-900">
-                    {(row.node_type ?? "island") === "story" ? (
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-sm text-white">
-                        <BookOpen className="h-4 w-4" />
-                      </span>
-                    ) : (
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-900 text-sm text-white">
-                      {row.order}
-                      </span>
-                    )}
-                    <span>
-                      {row.name}
-                      {row.zh ? (
-                        <span className="ml-2 font-normal text-gray-500">
-                          {row.zh}
+        {/* ── Word projection card ── */}
+        <div className="mb-8 flex items-center gap-3 rounded-2xl bg-gray-900 px-4 py-3.5 text-white">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white/10">
+            <Zap size={16} className="text-teal-400" />
+          </div>
+          <div>
+            <p className="text-sm font-black">
+              Learn {wpw} words in your first week
+            </p>
+            <p className="mt-0.5 text-xs text-gray-400">
+              Based on your {effectiveDailyMins}min/day,{" "}
+              {effectiveDaysPerWeek}x/week plan
+            </p>
+          </div>
+        </div>
+
+        {/* ── Journey path ── */}
+        <div className="max-h-[420px] overflow-y-auto pr-1 lg:max-h-[520px]" style={{ scrollbarWidth: "thin", scrollbarColor: "#e5e7eb transparent" }}>
+          {journeyIslands.map((row, idx) => {
+            const nodeType = row.node_type ?? "island";
+            const isIsland = nodeType === "island";
+            const isFirst = isIsland && islandCounter === 0;
+            if (isIsland) islandCounter++;
+            const thisIslandNum = isIsland ? islandCounter : 0;
+            const wordCount = row.word_count ?? (thisIslandNum === 1 ? 5 : 10);
+            const isLast = idx === journeyIslands.length - 1;
+
+            return (
+              <div key={row.id} className="flex gap-4">
+                {/* Rail */}
+                <div
+                  className="flex flex-shrink-0 flex-col items-center"
+                  style={{ width: 36 }}
+                >
+                  {/* Badge */}
+                  {isIsland ? (
+                    isFirst ? (
+                      <div className="z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 shadow-md shadow-gray-300">
+                        <span className="text-sm font-black text-white">
+                          {thisIslandNum}
                         </span>
-                      ) : null}
-                    </span>
-                  </span>
-                  {idx === 0 && (row.node_type ?? "island") === "island" ? (
-                    <span className="shrink-0 rounded-full bg-teal-500 px-2 py-0.5 text-xs font-bold text-white">
-                      FREE
-                    </span>
+                      </div>
+                    ) : (
+                      <div className="z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border-2 border-gray-200 bg-white">
+                        <span className="text-sm font-black text-gray-300">
+                          {thisIslandNum}
+                        </span>
+                      </div>
+                    )
                   ) : (
-                    <Lock className="h-4 w-4 shrink-0 text-gray-400" />
+                    <div className="z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border-2 border-amber-200 bg-white text-amber-300">
+                      <BookOpen size={14} />
+                    </div>
+                  )}
+
+                  {/* Connector */}
+                  {!isLast && (
+                    <div className="flex-1 py-1" style={{ minHeight: 20 }}>
+                      {isFirst ? (
+                        <div className="mx-auto h-full w-px bg-gray-200" />
+                      ) : (
+                        <div
+                          className="mx-auto h-full w-px"
+                          style={{
+                            backgroundImage:
+                              "repeating-linear-gradient(to bottom, #d1d5db 0px, #d1d5db 4px, transparent 4px, transparent 9px)",
+                          }}
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
-                {row.story_idea ? (
-                  <p className="pl-10 text-sm text-gray-600">
-                    {row.story_idea}
-                  </p>
-                ) : row.hint ? (
-                  <p className="pl-10 text-sm text-amber-700">{row.hint}</p>
-                ) : null}
-                {(row.node_type ?? "island") === "story" ? (
-                  <span className="pl-10 text-sm text-gray-500">
-                    Locked story checkpoint
-                  </span>
-                ) : (
-                  <span className="pl-10 text-sm text-gray-500">
-                  {row.word_count ?? (row.order === 1 ? 5 : 10)} words
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
+
+                {/* Card */}
+                <div className="min-w-0 flex-1">
+                  {isFirst ? (
+                    /* Island 1 hero card */
+                    <div className="mb-3 rounded-2xl border-2 border-gray-900 bg-white p-4">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="mb-0.5 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                            Island 1 · Start here
+                          </p>
+                          <p className="text-base font-black leading-snug text-gray-900">
+                            {row.name}
+                          </p>
+                          {row.zh && (
+                            <p className="mt-0.5 text-xs text-gray-400">
+                              {row.zh}
+                            </p>
+                          )}
+                        </div>
+                        <span className="flex-shrink-0 rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-black text-white">
+                          FREE
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-500">
+                          {wordCount} words
+                        </span>
+                        {cefrLevel && (
+                          <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-500">
+                            {cefrLevel}
+                          </span>
+                        )}
+                        <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-500">
+                          ~5 min
+                        </span>
+                      </div>
+                    </div>
+                  ) : isIsland ? (
+                    /* Locked island card */
+                    <div className="mb-3 select-none rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 opacity-50">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold leading-tight text-gray-500">
+                            {row.name}
+                          </p>
+                          <p className="mt-0.5 text-[10px] text-gray-400">
+                            {wordCount} words
+                            {cefrLevel ? ` · ${cefrLevel}` : ""}
+                          </p>
+                        </div>
+                        <Lock size={12} className="flex-shrink-0 text-gray-300" />
+                      </div>
+                    </div>
+                  ) : (
+                    /* Story checkpoint card */
+                    <div className="mb-3 select-none rounded-xl border border-amber-100 bg-amber-50/50 px-4 py-3 opacity-55">
+                      <p className="mb-0.5 text-[10px] font-black uppercase tracking-widest text-amber-500">
+                        Story Checkpoint
+                      </p>
+                      <p className="text-sm font-bold leading-snug text-gray-700">
+                        {row.name}
+                      </p>
+                      {(row.hint ?? row.story_idea) && (
+                        <p className="mt-0.5 text-[10px] text-amber-500">
+                          {row.hint ?? row.story_idea}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Ghost trailing node */}
+          <div className="flex gap-4 opacity-25 select-none">
+            <div
+              className="flex flex-shrink-0 flex-col items-center"
+              style={{ width: 36 }}
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-gray-200 bg-white">
+                <span className="text-sm font-black text-gray-200">5</span>
+              </div>
+            </div>
+            <div className="flex-1 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4">
+              <p className="text-xs font-bold text-gray-300">
+                + 1 more island &amp; 1 story
+              </p>
+            </div>
+          </div>
+
         </div>
-        <p className="mt-4 text-sm text-gray-600">
-          🔒 Islands 2–5 unlock when you subscribe
-        </p>
 
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {/* Gradient fade — sibling outside the scroll container so it stays pinned */}
+        <div
+          className="pointer-events-none -mt-24 h-24"
+          style={{
+            background: "linear-gradient(to bottom, transparent, white 88%)",
+          }}
+        />
 
-        <button
-          type="button"
-          onClick={handleStartIsland1}
-          className={`mt-8 ${BTN_PRIMARY}`}
-        >
-          {journeyId ? "Start Island 1 — free →" : "Continue with email →"}
-        </button>
-        <p className="mt-2 text-center text-sm text-gray-500">
-          {journeyId
-            ? "No credit card needed for island 1"
-            : "Save your plan and unlock island 1 after sign in"}
-        </p>
-      </>,
-      "2xl",
+        {/* ── Unlock nudge ── */}
+        <div className="mb-6 mt-3 flex justify-center">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400">
+            <Lock size={11} />
+            Islands 2–5 unlock when you subscribe
+          </span>
+        </div>
+
+        {error && <p className="mb-4 text-center text-sm text-red-600">{error}</p>}
+
+        {/* ── CTA block ── */}
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={handleStartIsland1}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 py-4 text-sm font-black text-white transition-colors hover:bg-gray-800"
+          >
+            {journeyId ? "Start Island 1 — it's free" : "Save plan & start free"}
+            <ArrowRight size={16} />
+          </button>
+
+          <p className="text-center text-xs text-gray-400">
+            {journeyId
+              ? "No credit card needed for Island 1"
+              : "Save your plan and unlock Island 1 after sign in"}
+          </p>
+
+          <div className="flex items-center justify-center gap-5 pt-1">
+            {["No credit card", "Cancel anytime", "5 min"].map((label) => (
+              <span
+                key={label}
+                className="flex items-center gap-1 text-[10px] font-medium text-gray-400"
+              >
+                <Check size={10} strokeWidth={3} className="text-teal-500" />
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
     );
   }
 

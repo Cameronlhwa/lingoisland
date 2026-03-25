@@ -263,95 +263,63 @@ export async function POST(
         )
       }
 
-    // Generate Grammar Focus if grammarTarget > 0
-    // This happens BEFORE word sentence generation
-    if (grammarTarget > 0) {
-      try {
-        // Get recently learned grammar patterns to avoid repetition
-        const { data: recentGrammar } = await supabase
-          .from('island_grammar_focus')
-          .select('hanzi')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10)
-        
-        const recentPatterns = Array.from(new Set(recentGrammar?.map(g => g.hanzi) || []))
-        
-        // Generate variety hint (timestamp + user ID hash)
-        const varietyHint = `${Date.now()}-${userId?.slice(0, 8)}`
-        
-        console.log(`Generating ${grammarTarget} grammar points for "${island.topic}" (${baseLevel})...`)
-        if (recentPatterns.length > 0) {
-          console.log(`Avoiding recently learned patterns:`, recentPatterns)
-        }
-        
-        const grammarFocusResult = await generateGrammarFocus({
-          topic: island.topic,
-          level: baseLevel,
-          detailedLevel,
-          grammarCount: grammarTarget,
-          varietyHint,
-          recentPatterns,
-        })
-
-        // Store grammar focus in database
-        if (grammarFocusResult.points.length > 0) {
-          for (let i = 0; i < grammarFocusResult.points.length; i++) {
-            const point = grammarFocusResult.points[i]
-            
-            const { data: grammarFocus, error: grammarError } = await supabase
+    // ── Fire grammar focus in the background — don't block word/sentence generation ──
+    const grammarFocusPromise: Promise<void> = grammarTarget > 0
+      ? (async () => {
+          try {
+            const { data: recentGrammar } = await supabase
               .from('island_grammar_focus')
-              .insert({
-                island_id: islandId,
-                user_id: user.id,
-                hanzi: point.hanzi,
-                pinyin: point.pinyin,
-                english: point.english,
-                pattern: point.pattern,
-                when_to_use: point.whenToUse || null,
-                position: i + 1,
-              })
-              .select()
-              .single()
-
-            if (grammarError) {
-              console.error('Error inserting grammar focus:', grammarError)
-              continue
+              .select('hanzi')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(10)
+            const recentPatterns = Array.from(new Set(recentGrammar?.map(g => g.hanzi) || []))
+            const varietyHint = `${Date.now()}-${userId?.slice(0, 8)}`
+            const grammarFocusResult = await generateGrammarFocus({
+              topic: island.topic,
+              level: baseLevel,
+              detailedLevel,
+              grammarCount: grammarTarget,
+              varietyHint,
+              recentPatterns,
+            })
+            for (let i = 0; i < grammarFocusResult.points.length; i++) {
+              const point = grammarFocusResult.points[i]
+              const { data: gf, error: gfErr } = await supabase
+                .from('island_grammar_focus')
+                .insert({
+                  island_id: islandId,
+                  user_id: user.id,
+                  hanzi: point.hanzi,
+                  pinyin: point.pinyin,
+                  english: point.english,
+                  pattern: point.pattern,
+                  when_to_use: point.whenToUse || null,
+                  position: i + 1,
+                })
+                .select()
+                .single()
+              if (gfErr || !gf) { console.error('grammar_focus insert', gfErr); continue }
+              await Promise.all(point.examples.map(ex =>
+                dbClient.from('island_grammar_examples').insert({
+                  grammar_focus_id: gf.id,
+                  tier: ex.tier,
+                  hanzi: ex.hanzi,
+                  pinyin: ex.pinyin,
+                  english: ex.english,
+                })
+              ))
             }
-
-            if (grammarFocus) {
-              // Insert examples
-              for (const example of point.examples) {
-                const { error: exampleError } = await supabase
-                  .from('island_grammar_examples')
-                  .insert({
-                    grammar_focus_id: grammarFocus.id,
-                    tier: example.tier,
-                    hanzi: example.hanzi,
-                    pinyin: example.pinyin,
-                    english: example.english,
-                  })
-
-                if (exampleError) {
-                  console.error('Error inserting grammar example:', exampleError)
-                }
-              }
-            }
+          } catch (err) {
+            console.error('grammar focus generation failed (non-fatal):', err)
           }
-          
-          console.log(`Successfully stored ${grammarFocusResult.points.length} grammar points`)
-        }
-      } catch (error) {
-        console.error('Error generating/storing grammar focus:', error)
-        // Don't fail the whole generation if grammar fails - just log and continue
-      }
-    }
+        })()
+      : Promise.resolve()
 
-    // Insert words into database first
-    const insertedWords: Array<Word & { id: string; position: number }> = []
-    for (const word of wordList) {
-      currentPosition += 1
-      const { data: wordData, error: wordError } = await supabase
+    // ── Insert all words in parallel ──
+    const wordInsertPromises = wordList.map((word, index) => {
+      const position = currentPosition + index + 1
+      return dbClient
         .from('island_words')
         .insert({
           island_id: islandId,
@@ -360,34 +328,36 @@ export async function POST(
           pinyin: word.pinyin,
           english: word.english,
           difficulty_tag: 'core',
-          position: currentPosition,
+          position,
         })
         .select()
         .single()
+        .then(({ data, error }) => ({ word, position, data, error }))
+    })
 
-      if (wordError) {
-        // If the island was deleted while generating (foreign key error),
-        // stop gracefully instead of spamming errors.
-        if ((wordError as any).code === '23503') {
-          console.error(
-            'Island not found while inserting word (foreign key error). Stopping generation.'
-          )
-          break
-        }
+    const wordResults = await Promise.allSettled(wordInsertPromises)
 
-        console.error('Error inserting word:', wordError)
-        // Skip if duplicate or other non-fatal error
+    const insertedWords: Array<Word & { id: string; position: number }> = []
+    for (const result of wordResults) {
+      if (result.status === 'rejected') {
+        console.error('Word insert promise rejected:', result.reason)
         continue
       }
-
+      const { word, position, data: wordData, error: wordError } = result.value
+      if (wordError) {
+        if ((wordError as any).code === '23503') {
+          console.error('Island deleted during word insert (FK error). Stopping.')
+          break
+        }
+        console.error('Error inserting word:', wordError)
+        continue
+      }
       if (wordData) {
-        insertedWords.push({ ...word, id: wordData.id, position: currentPosition })
-        await updateProgress({
-          wordsSelected: currentWords + insertedWords.length,
-          status: 'selecting',
-        })
+        insertedWords.push({ ...word, id: wordData.id, position })
       }
     }
+    currentPosition += wordList.length
+    await updateProgress({ wordsSelected: currentWords + insertedWords.length, status: 'selecting' })
 
     // All words generate sentences (position-based paywall removed)
     const wordsToGenerate = insertedWords
@@ -738,8 +708,11 @@ export async function POST(
       }
     })
 
-    // Execute sentence generation with concurrency limit of 5
-    const sentenceResults = await limitConcurrency(sentenceGenerationTasks, 5)
+    // Execute sentence generation — 8 concurrent slots (was 5)
+    const sentenceResults = await limitConcurrency(sentenceGenerationTasks, 8)
+
+    // Wait for grammar focus to finish writing (it started in parallel)
+    await grammarFocusPromise
 
     // Count successful generations
     const successfulGenerations = sentenceResults.filter((r) => r.success).length

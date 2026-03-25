@@ -156,7 +156,13 @@ export default function TopicIslandDetailPage() {
     zh: string | null;
     journeyTopic: string;
     wordsPerWeek: number;
-    lockedIslands: Array<{ order: number; name: string; zh: string | null }>;
+    lockedIslands: Array<{
+      order: number;
+      name: string;
+      zh: string | null;
+      node_type: "island" | "story";
+      hint: string | null;
+    }>;
   } | null>(null);
   useEffect(() => {
     setShowNewUserHint(!localStorage.getItem("island_hint_dismissed"));
@@ -1791,13 +1797,10 @@ export default function TopicIslandDetailPage() {
                     <div className="mt-6">
                       <JourneyIslandPaywall
                         journeyTitle={journeyContext.journeyTopic}
-                        topic={journeyContext.journeyTopic}
                         wordsPerWeek={journeyContext.wordsPerWeek}
                         weeksToComplete={journeyWeeksToComplete}
-                        lockedIslands={journeyContext.lockedIslands.map((i) => ({
-                          name: i.name,
-                          zh: i.zh,
-                        }))}
+                        completedWords={island?.word_target ?? 5}
+                        lockedIslands={journeyContext.lockedIslands}
                         onSubscribe={handleJourneySubscribe}
                       />
                     </div>

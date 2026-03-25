@@ -102,7 +102,7 @@ export async function POST(
         topic,
         level,
         word_target: wordTarget,
-        grammar_target: 0,
+        grammar_target: 1,
         status: 'draft',
         cover_key: pickRandomCoverKey(),
       })
