@@ -4,31 +4,149 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAnalytics } from "@/lib/posthog/client";
+import JourneyIslandPaywall from "@/components/app/JourneyIslandPaywall";
 
 interface UpgradeModalProps {
   open: boolean;
   onClose: () => void;
-  feature?: string; // Optional feature that triggered the upgrade prompt
+  feature?: string;
 }
 
 type Entitlements = {
-  plan: "free" | "pro";
   isPro: boolean;
-  current_period_end: string | null;
 };
 
-export default function UpgradeModal({
-  open,
-  onClose,
-  feature,
-}: UpgradeModalProps) {
+type JourneyNode = {
+  id: string;
+  node_type: "island" | "story";
+  order?: number;
+  position?: number;
+  name: string;
+  zh?: string | null;
+  hint?: string | null;
+  word_count?: number | null;
+  completed_at?: string | null;
+};
+
+type JourneyActiveResponse = {
+  journey: {
+    topic?: string | null;
+    words_per_week?: number | null;
+  } | null;
+  nodes?: JourneyNode[];
+  islands?: JourneyNode[];
+};
+
+type LockedJourneyNode = {
+  order: number;
+  name: string;
+  zh: string | null;
+  node_type: "island" | "story";
+  hint: string | null;
+};
+
+type PaywallFacts = {
+  journeyTitle: string;
+  wordsPerWeek: number;
+  weeksToComplete: number;
+  completedWords: number;
+  lockedIslands: LockedJourneyNode[];
+};
+
+function getRawOrder(node: JourneyNode): number {
+  if (typeof node.position === "number" && Number.isFinite(node.position)) {
+    return node.position;
+  }
+  if (typeof node.order === "number" && Number.isFinite(node.order)) {
+    return node.order;
+  }
+  return Number.MAX_SAFE_INTEGER;
+}
+
+function getDisplayOrderMap(nodes: JourneyNode[]): Map<string, number> {
+  const displayOrderById = new Map<string, number>();
+  const islands = nodes
+    .filter((node) => node.node_type === "island")
+    .sort((a, b) => getRawOrder(a) - getRawOrder(b));
+  const stories = nodes
+    .filter((node) => node.node_type === "story")
+    .sort((a, b) => getRawOrder(a) - getRawOrder(b));
+
+  islands.forEach((node, index) => {
+    const islandIndex = index + 1;
+    const displayOrder = islandIndex <= 2 ? islandIndex : islandIndex + 1;
+    displayOrderById.set(node.id, displayOrder);
+  });
+
+  stories.forEach((node, index) => {
+    const displayOrder = index === 0 ? 3 : 7 + (index - 1);
+    displayOrderById.set(node.id, displayOrder);
+  });
+
+  return displayOrderById;
+}
+
+const DEFAULT_LOCKED_ISLANDS: LockedJourneyNode[] = [
+  {
+    order: 2,
+    name: "Island 2",
+    zh: null,
+    node_type: "island" as const,
+    hint: null,
+  },
+  {
+    order: 3,
+    name: "Story Checkpoint",
+    zh: null,
+    node_type: "story" as const,
+    hint: "Reinforce your new words in context",
+  },
+  {
+    order: 4,
+    name: "Island 3",
+    zh: null,
+    node_type: "island" as const,
+    hint: null,
+  },
+  {
+    order: 5,
+    name: "Island 4",
+    zh: null,
+    node_type: "island" as const,
+    hint: null,
+  },
+  {
+    order: 6,
+    name: "Island 5",
+    zh: null,
+    node_type: "island" as const,
+    hint: null,
+  },
+  {
+    order: 7,
+    name: "Final Story Checkpoint",
+    zh: null,
+    node_type: "story" as const,
+    hint: "Lock everything in with a memorable story",
+  },
+];
+
+const DEFAULT_PAYWALL_FACTS: PaywallFacts = {
+  journeyTitle: "Your Mandarin Journey",
+  wordsPerWeek: 10,
+  weeksToComplete: 5,
+  completedWords: 5,
+  lockedIslands: DEFAULT_LOCKED_ISLANDS,
+};
+
+export default function UpgradeModal({ open, onClose, feature }: UpgradeModalProps) {
   const router = useRouter();
   const { captureEvent } = useAnalytics();
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("monthly");
-  const [checkoutLoading, setCheckoutLoading] = useState<"monthly" | "yearly" | null>(null);
   const [mounted, setMounted] = useState(false);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingEntitlements, setLoadingEntitlements] = useState(false);
+  const [paywallFacts, setPaywallFacts] = useState<PaywallFacts>(DEFAULT_PAYWALL_FACTS);
+  const [checkoutLoading, setCheckoutLoading] = useState<"monthly" | "yearly" | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -36,28 +154,82 @@ export default function UpgradeModal({
 
   useEffect(() => {
     if (!open) return;
-    
-    const fetchEntitlements = async () => {
-      try {
-        const response = await fetch("/api/entitlements");
-        if (response.ok) {
-          const data = await response.json();
-          setEntitlements(data);
+    setLoadingEntitlements(true);
+    void Promise.all([
+      fetch("/api/entitlements")
+        .then((response) => (response.ok ? response.json() : null))
+        .catch(() => null),
+      fetch("/api/journey/active", { cache: "no-store" })
+        .then((response) => (response.ok ? (response.json() as Promise<JourneyActiveResponse>) : null))
+        .catch(() => null),
+    ])
+      .then(([entitlementsData, journeyData]) => {
+        setEntitlements(entitlementsData);
+        if (!journeyData?.journey) {
+          setPaywallFacts(DEFAULT_PAYWALL_FACTS);
+          return;
         }
-      } catch (error) {
-        console.error("Error fetching entitlements:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchEntitlements();
+        const nodes = (journeyData.nodes ?? journeyData.islands ?? []).slice();
+        const islandNodes = nodes.filter((node) => node.node_type === "island");
+        const completedIslandWords = islandNodes
+          .filter((node) => !!node.completed_at)
+          .reduce((sum, node) => sum + (node.word_count ?? 10), 0);
+        const wordsPerWeek = Math.max(1, journeyData.journey.words_per_week ?? 10);
+        const weeksToComplete = Math.max(
+          1,
+          Math.ceil(50 / wordsPerWeek),
+        );
+
+        const displayOrderById = getDisplayOrderMap(nodes);
+
+        const lockedNodes = nodes
+          .map((node) => ({
+            ...node,
+            _displayOrder: displayOrderById.get(node.id) ?? getRawOrder(node),
+          }))
+          .filter((node) => {
+          if (node.completed_at) return false;
+          if (node.node_type === "story") return true;
+          return node._displayOrder > 1;
+          })
+          .sort((a, b) => a._displayOrder - b._displayOrder);
+
+        const lockedIslands =
+          lockedNodes.length > 0
+            ? lockedNodes.map((node) => ({
+                order: node._displayOrder,
+                name: node.name,
+                zh: node.zh ?? null,
+                node_type: node.node_type,
+                hint: node.hint ?? null,
+              }))
+            : DEFAULT_LOCKED_ISLANDS;
+
+        setPaywallFacts({
+          journeyTitle: journeyData.journey.topic?.trim() || DEFAULT_PAYWALL_FACTS.journeyTitle,
+          wordsPerWeek,
+          weeksToComplete,
+          completedWords: Math.max(0, completedIslandWords),
+          lockedIslands,
+        });
+      })
+      .catch(() => {
+        setEntitlements(null);
+        setPaywallFacts(DEFAULT_PAYWALL_FACTS);
+      })
+      .finally(() => setLoadingEntitlements(false));
   }, [open]);
 
   const startCheckout = async (interval: "monthly" | "yearly") => {
     if (checkoutLoading) return;
     setCheckoutLoading(interval);
-    captureEvent("checkout_initiated", { interval, location: "upgrade_modal", feature: feature ?? undefined });
+    captureEvent("checkout_initiated", {
+      interval,
+      location: "upgrade_modal",
+      feature: feature ?? undefined,
+    });
+
     try {
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -71,15 +243,12 @@ export default function UpgradeModal({
         return;
       }
 
-      const data = await response.json();
-      if (!response.ok || !data.url) {
-        console.error("Checkout failed:", data.error);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.url) {
         return;
       }
 
-      window.location.href = data.url;
-    } catch (error) {
-      console.error("Error starting checkout:", error);
+      window.location.href = data.url as string;
     } finally {
       setCheckoutLoading(null);
     }
@@ -91,252 +260,60 @@ export default function UpgradeModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-start justify-center bg-black/50 p-4 pt-8 backdrop-blur-sm md:items-center md:pt-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-[1120px]"
+        onClick={(event) => event.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute right-6 top-6 z-10 text-2xl text-white hover:text-gray-300 transition-colors"
+          className="absolute right-3 top-3 z-20 rounded-full bg-black/60 px-2.5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-black/80"
           aria-label="Close modal"
         >
           ✕
         </button>
 
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[400px] p-10">
-            <div className="text-gray-600">Loading...</div>
-          </div>
-        ) : isPro ? (
-          // Pro user view - show they already have access
-          <div className="grid md:grid-cols-[1.2fr_1fr]">
-            {/* Left side - Success message */}
-            <div
-              className="relative min-h-[400px] md:min-h-[600px] overflow-hidden rounded-l-2xl p-10 text-gray-900"
-              style={{
-                background: "linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)",
-              }}
-            >
-              {/* Capybara boat in bottom left */}
-              <div className="absolute bottom-4 left-4 w-24 md:w-32">
-                <img
-                  src="/boats/boat-capybara.png"
-                  alt="Capybara in boat"
-                  className="w-full h-auto"
-                />
-              </div>
-              <div className="relative z-10 flex h-full flex-col">
-                <div className="flex items-center gap-3">
-                  <span className="text-5xl">✓</span>
-                  <h2 className="text-4xl font-bold text-gray-900">
-                    You're Pro!
-                  </h2>
-                </div>
-                <p className="mt-3 text-lg text-gray-700">
-                  You have full access to all LingoIsland features.
-                </p>
-
-                <div className="mt-8 rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-lg backdrop-blur-sm">
-                  <p className="text-lg font-semibold text-gray-900">
-                    Your Pro Benefits
-                  </p>
-                  <ul className="mt-4 space-y-3 text-gray-700">
-                    <li className="flex items-start gap-3">
-                      <span className="text-green-600">✓</span>
-                      <span>Unlimited Topic Islands (vocab + native examples)</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="text-green-600">✓</span>
-                      <span>Story regeneration + longer stories</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="text-green-600">✓</span>
-                      <span>24/7 Mandarin coach (instant corrections + explanations)</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+        <div className="max-h-[88vh] overflow-y-auto rounded-2xl">
+          {loadingEntitlements ? (
+            <div className="rounded-2xl bg-white p-10 text-center text-gray-600">
+              Loading...
             </div>
-
-            {/* Right side - What they should do */}
-            <div className="flex flex-col bg-white p-10 rounded-r-2xl">
-              <div className="flex-1">
-                <h2 className="text-2xl font-semibold text-gray-900">
-                  You're all set!
-                </h2>
-                <p className="mt-2 text-sm text-gray-600">
-                  You have full access to all Pro features. Start creating unlimited islands and stories!
-                </p>
-
-                {feature && (
-                  <div className="mt-6 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-                    <p className="text-sm font-medium text-yellow-900">
-                      Note: "{feature}" is already available to you as a Pro member.
-                    </p>
-                    <p className="mt-1 text-xs text-yellow-700">
-                      Try refreshing the page if you're experiencing issues.
-                    </p>
-                  </div>
-                )}
-
-                <div className="mt-8 space-y-4">
-                  <button
-                    onClick={onClose}
-                    className="w-full rounded-xl border border-gray-900 bg-gray-900 px-6 py-4 text-lg font-semibold text-white transition-all hover:bg-gray-800"
-                  >
-                    Continue Using LingoIsland
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      onClose();
-                      router.push("/app");
-                    }}
-                    className="w-full rounded-xl border border-gray-300 bg-white px-6 py-4 text-base font-medium text-gray-700 transition-all hover:bg-gray-50"
-                  >
-                    Go to Dashboard
-                  </button>
-                </div>
-
-                <div className="mt-8 text-center text-sm text-gray-500">
-                  Need help? Check your account settings to manage your subscription.
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          // Free user view - show upgrade options
-          <div className="grid md:grid-cols-[1.2fr_1fr]">
-          {/* Left side - Hero with features */}
-          <div
-            className="relative min-h-[400px] md:min-h-[600px] overflow-hidden rounded-l-2xl p-10 text-gray-900"
-            style={{
-              background: "linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)",
-            }}
-          >
-            {/* Capybara boat in bottom left */}
-            <div className="absolute bottom-4 left-4 w-24 md:w-32">
-              <img
-                src="/boats/boat-capybara.png"
-                alt="Capybara in boat"
-                className="w-full h-auto"
-              />
-            </div>
-            <div className="relative z-10 flex h-full flex-col">
-              <h2 className="text-4xl font-bold text-gray-900">
-                Upgrade to Pro
-              </h2>
-              <p className="mt-3 text-lg text-gray-700">
-                Unlock unlimited stories, decks, and focused practice.
-              </p>
-              {feature && (
-                <p className="mt-2 text-sm text-blue-700 font-medium">
-                  "{feature}" is a Pro feature
-                </p>
-              )}
-
-              <div className="mt-8 rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-lg backdrop-blur-sm">
-                <p className="text-lg font-semibold text-gray-900">
-                  What you get
-                </p>
-                <ul className="mt-4 space-y-3 text-gray-700">
-                  <li className="flex items-start gap-3">
-                    <span className="text-green-600">✓</span>
-                    <span>Unlimited Topic Islands (vocab + native examples)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-green-600">✓</span>
-                    <span>Story regeneration + longer stories</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-green-600">✓</span>
-                    <span>24/7 Mandarin coach (instant corrections + explanations)</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Right side - Pricing */}
-          <div className="flex flex-col bg-white p-10 rounded-r-2xl">
-            <div className="flex-1">
-              <h2 className="text-2xl font-semibold text-gray-900">
-                Subscription
-              </h2>
+          ) : isPro ? (
+            <div className="rounded-2xl bg-white p-8 text-center">
+              <h2 className="text-2xl font-black text-gray-900">You already have Pro</h2>
               <p className="mt-2 text-sm text-gray-600">
-                Speed up your mandarin journey by learning the words you actually use!
+                All premium features are unlocked for your account.
               </p>
-
-              <div className="mt-8 space-y-3">
-                {[
-                  { id: "monthly", label: "Monthly", price: "$9.99" },
-                  { id: "yearly", label: "Yearly", price: "$79.99", save: "Save $40" },
-                ].map((plan) => (
-                  <button
-                    key={plan.id}
-                    onClick={() => setSelectedPlan(plan.id as "monthly" | "yearly")}
-                    className={`flex w-full items-center justify-between rounded-xl border px-5 py-4 text-left transition ${
-                      selectedPlan === plan.id
-                        ? "border-gray-900 bg-gray-100 shadow-sm"
-                        : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                          selectedPlan === plan.id
-                            ? "border-gray-900 bg-gray-900"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        {selectedPlan === plan.id && (
-                          <div className="h-2 w-2 rounded-full bg-white" />
-                        )}
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-900">{plan.label}</span>
-                        {plan.save && (
-                          <span className="ml-2 text-sm text-green-600 font-medium">
-                            {plan.save}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span className="text-lg font-semibold text-gray-900">{plan.price}</span>
-                  </button>
-                ))}
-              </div>
-
               <button
-                onClick={() => startCheckout(selectedPlan)}
-                disabled={checkoutLoading !== null}
-                className="mt-8 w-full rounded-xl border border-gray-900 bg-gray-900 px-6 py-4 text-lg font-semibold text-white transition-all hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                type="button"
+                onClick={onClose}
+                className="mt-5 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-bold text-white"
               >
-                {checkoutLoading ? "Opening checkout..." : "Upgrade Now"}
+                Continue
               </button>
-
-              <div className="mt-6 flex items-center gap-3 text-sm font-semibold text-gray-600">
-                <div className="flex -space-x-2">
-                  {["🏝️", "⛵️", "🥥"].map((emoji) => (
-                    <span
-                      key={emoji}
-                      className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gray-100 text-base"
-                    >
-                      {emoji}
-                    </span>
-                  ))}
-                </div>
-                <span>Join the LingoIsland Community!</span>
-              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-3">
+              <JourneyIslandPaywall
+                journeyTitle={paywallFacts.journeyTitle}
+                wordsPerWeek={paywallFacts.wordsPerWeek}
+                weeksToComplete={paywallFacts.weeksToComplete}
+                completedWords={paywallFacts.completedWords}
+                lockedIslands={paywallFacts.lockedIslands}
+                onSubscribe={(interval) => void startCheckout(interval)}
+              />
+              {checkoutLoading ? (
+                <p className="text-center text-xs font-semibold text-gray-500">
+                  Redirecting to secure checkout...
+                </p>
+              ) : null}
+            </div>
+          )}
         </div>
-        )}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

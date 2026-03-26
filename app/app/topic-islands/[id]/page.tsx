@@ -156,7 +156,13 @@ export default function TopicIslandDetailPage() {
     zh: string | null;
     journeyTopic: string;
     wordsPerWeek: number;
-    lockedIslands: Array<{ order: number; name: string; zh: string | null }>;
+    lockedIslands: Array<{
+      order: number;
+      name: string;
+      zh: string | null;
+      node_type: "island" | "story";
+      hint: string | null;
+    }>;
   } | null>(null);
   useEffect(() => {
     setShowNewUserHint(!localStorage.getItem("island_hint_dismissed"));
@@ -168,6 +174,12 @@ export default function TopicIslandDetailPage() {
   const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, boolean>>({});
   const [showQuizResults, setShowQuizResults] = useState(false);
+  const [journeyQuizPassed, setJourneyQuizPassed] = useState(false);
+  const [journeyCompletionPending, setJourneyCompletionPending] =
+    useState(false);
+  const [journeyCompletionError, setJourneyCompletionError] = useState<
+    string | null
+  >(null);
   const [showFlashcardAnswer, setShowFlashcardAnswer] = useState(false);
   const [flashcardDirection, setFlashcardDirection] = useState<
     ("zh-en" | "en-zh")[]
@@ -212,6 +224,7 @@ export default function TopicIslandDetailPage() {
     !!journeyContext &&
     journeyContext.order === 1 &&
     userPlan === "free";
+  const isJourneyIsland = !!journeyContext;
 
   const journeyWeeksToComplete =
     journeyContext && journeyContext.wordsPerWeek > 0
@@ -248,6 +261,73 @@ export default function TopicIslandDetailPage() {
     () => isAnonymous || (userPlan === "free" && userTopicIslandCount === 1),
     [isAnonymous, userPlan, userTopicIslandCount],
   );
+
+  const islandHintCard = showNewUserHint ? (
+    <div className="relative overflow-hidden rounded-lg border-2 border-gray-800 bg-gray-900 p-5 shadow-lg">
+      <button
+        type="button"
+        onClick={() => {
+          setShowNewUserHint(false);
+          localStorage.setItem("island_hint_dismissed", "1");
+        }}
+        className="absolute right-3 top-3 rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+        aria-label="Dismiss"
+      >
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+      <div className="flex items-start gap-3 pr-10">
+        <div className="mt-0.5 flex-shrink-0">
+          <svg
+            className="h-6 w-6 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-base font-bold text-white">
+            How to use this island
+          </h3>
+          <p className="mt-1.5 text-sm leading-relaxed text-gray-300">
+            Read through each word and its{" "}
+            <span className="font-semibold text-white">
+              example sentences
+            </span>
+            , all around your level, to get familiar with them.{" "}
+            <span className="font-semibold text-white">
+              Hover over any word
+            </span>{" "}
+            to see its meaning. Then scroll down and hit{" "}
+            <span className="font-semibold text-white">
+              {showOnboardingIslandBottom
+                ? "Start Flashcards"
+                : "Quiz me on this island"}
+            </span>{" "}
+            to test how many you remember!
+          </p>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   useEffect(() => {
     setImageProgress(0);
@@ -721,6 +801,20 @@ export default function TopicIslandDetailPage() {
     );
   }
 
+  const isFreeAllowedJourneyIsland = journeyContext?.order === 1;
+  const shouldGateIsland = userPlan !== "pro" && !isFreeAllowedJourneyIsland;
+  if (shouldGateIsland) {
+    return (
+      <div className="min-h-screen">
+        <UpgradeModal
+          open
+          onClose={() => router.push("/app/journey")}
+          feature={journeyContext ? "Full Journey" : "Topic Islands"}
+        />
+      </div>
+    );
+  }
+
   const totalSentenceTasks =
     island.sentence_tasks || Math.max(island.word_target * 3, 1);
   const wordsSelected = Math.min(
@@ -851,8 +945,10 @@ export default function TopicIslandDetailPage() {
     return shuffled;
   };
 
-  const handleStartQuiz = (mode: "drag-drop" | "flashcard") => {
-    const selectedWords = words.filter((w) => selectedWordIds.has(w.id));
+  const initializeQuiz = (
+    mode: "drag-drop" | "flashcard",
+    selectedWords: Word[],
+  ) => {
     if (selectedWords.length < 2) {
       alert("Please select at least 2 words to start a quiz");
       return;
@@ -923,6 +1019,15 @@ export default function TopicIslandDetailPage() {
     }
   };
 
+  const handleStartQuiz = (mode: "drag-drop" | "flashcard") => {
+    const selectedWords = words.filter((w) => selectedWordIds.has(w.id));
+    initializeQuiz(mode, selectedWords);
+  };
+
+  const handleStartJourneyQuiz = (mode: "drag-drop" | "flashcard") => {
+    initializeQuiz(mode, [...selectableWords]);
+  };
+
   const handleStartFlashcardsAllWords = () => {
     const pool = shuffleArray([...selectableWords]);
     if (pool.length < 2) {
@@ -940,6 +1045,92 @@ export default function TopicIslandDetailPage() {
     );
   };
 
+  const handleJourneyQuizPassed = async () => {
+    if (!journeyContext) return;
+    setJourneyCompletionPending(true);
+    setJourneyCompletionError(null);
+    try {
+      const response = await fetch(
+        `/api/journey/${journeyContext.journeyId}/complete`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            journeyIslandId: journeyContext.journeyIslandId,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to unlock the next island");
+      }
+    } catch (error) {
+      console.error("Error completing journey island:", error);
+      setJourneyCompletionError(
+        error instanceof Error
+          ? error.message
+          : "Failed to unlock the next island",
+      );
+    } finally {
+      setJourneyCompletionPending(false);
+    }
+  };
+
+  const finalizeQuiz = async (answers: Record<string, boolean>) => {
+    setQuizAnswers(answers);
+    const correctCount = Object.values(answers).filter(Boolean).length;
+    const totalCount = Object.keys(answers).length;
+    const percentage =
+      totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+    const passedJourneyQuiz = isJourneyIsland && percentage >= 80;
+
+    setJourneyQuizPassed(passedJourneyQuiz);
+    setJourneyCompletionError(null);
+    setShowQuizResults(true);
+
+    if (quizWords.length > 0 && quizMode === "drag-drop") {
+      void recordQuizActivity(quizWords.length);
+    }
+
+    maybeShowCapybaraTeaser(quizWords.length);
+
+    if (passedJourneyQuiz) {
+      await handleJourneyQuizPassed();
+    }
+  };
+
+  const recordQuizActivity = async (count: number) => {
+    if (count <= 0) return;
+    const tzOffset = new Date().getTimezoneOffset();
+    try {
+      const response = await fetch("/api/quiz-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count, tzOffset }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (
+        typeof data?.huahuaTotalReviews === "number" &&
+        typeof data?.huahuaStage === "number"
+      ) {
+        window.dispatchEvent(
+          new CustomEvent("huahua-progress-updated", {
+            detail: {
+              totalReviews: data.huahuaTotalReviews,
+              stage: data.huahuaStage,
+            },
+          }),
+        );
+      }
+      if (typeof data?.todayCount === "number" && progressUpgrade) {
+        checkAndShowUpgrade(data.todayCount, progressUpgrade.showUpgrade);
+      }
+    } catch {
+      // Ignore quiz-activity telemetry failures to avoid interrupting quiz flow.
+    }
+  };
+
   // Show the capybara teaser popup for anonymous users who finish a 5-word quiz
   const maybeShowCapybaraTeaser = (wordCount: number) => {
     if (!isAnonymous || wordCount < 5) return;
@@ -948,28 +1139,14 @@ export default function TopicIslandDetailPage() {
 
   const handleFlashcardGrade = (correct: boolean) => {
     const currentWord = quizWords[currentQuizIndex];
-    setQuizAnswers((prev) => ({ ...prev, [currentWord.id]: correct }));
+    const nextAnswers = { ...quizAnswers, [currentWord.id]: correct };
+    setQuizAnswers(nextAnswers);
+    void recordQuizActivity(1);
 
     const isLastCard = currentQuizIndex >= quizWords.length - 1;
 
     if (isLastCard) {
-      if (quizWords.length > 0) {
-        const tzOffset = new Date().getTimezoneOffset();
-        fetch("/api/quiz-activity", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ count: quizWords.length, tzOffset }),
-        })
-          .then((r) => r.json())
-          .then((data) => {
-            if (typeof data?.todayCount === "number" && progressUpgrade) {
-              checkAndShowUpgrade(data.todayCount, progressUpgrade.showUpgrade);
-            }
-          })
-          .catch(() => {});
-      }
-      maybeShowCapybaraTeaser(quizWords.length);
-      setShowQuizResults(true);
+      void finalizeQuiz(nextAnswers);
     } else {
       setCurrentQuizIndex(currentQuizIndex + 1);
       setShowFlashcardAnswer(false);
@@ -982,24 +1159,7 @@ export default function TopicIslandDetailPage() {
       const match = dropMatches[word.hanzi];
       answers[word.id] = match === word.english;
     });
-    setQuizAnswers(answers);
-    setShowQuizResults(true);
-    if (quizWords.length > 0) {
-      const tzOffset = new Date().getTimezoneOffset();
-      fetch("/api/quiz-activity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: quizWords.length, tzOffset }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (typeof data?.todayCount === "number" && progressUpgrade) {
-            checkAndShowUpgrade(data.todayCount, progressUpgrade.showUpgrade);
-          }
-        })
-        .catch(() => {});
-    }
-    maybeShowCapybaraTeaser(quizWords.length);
+    void finalizeQuiz(answers);
   };
 
   const handleJourneySubscribe = async (interval: "monthly" | "yearly") => {
@@ -1026,6 +1186,9 @@ export default function TopicIslandDetailPage() {
     setDropMatches({});
     setDraggedItem(null);
     setSelectedEnglishWord(null);
+    setJourneyQuizPassed(false);
+    setJourneyCompletionPending(false);
+    setJourneyCompletionError(null);
     // Re-select all available words so the next quiz visit starts fully selected
     const selectable =
       lockedWordIds.size > 0
@@ -1076,18 +1239,26 @@ export default function TopicIslandDetailPage() {
               <div className="mb-10">
                 <div className="mb-6 flex items-center justify-between">
                   <button
-                    onClick={() => router.push("/app/topic-islands")}
+                    onClick={() =>
+                      router.push(
+                        journeyContext ? "/app/journey" : "/app/topic-islands",
+                      )
+                    }
                     className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
                   >
-                    ← Back to Topic Islands
+                    {journeyContext
+                      ? "← Back to Journey"
+                      : "← Back to Topic Islands"}
                   </button>
-                  <button
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="text-sm font-medium text-red-600 transition-colors hover:text-red-800 disabled:opacity-50"
-                  >
-                    {deleting ? "Deleting..." : "Delete Island"}
-                  </button>
+                  {!isAnonymous && userTopicIslandCount > 1 && (
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="text-sm font-medium text-red-600 transition-colors hover:text-red-800 disabled:opacity-50"
+                    >
+                      {deleting ? "Deleting..." : "Delete Island"}
+                    </button>
+                  )}
                 </div>
                 {isEditingTitle ? (
                   <div className="mb-4 flex items-center gap-2">
@@ -1164,6 +1335,10 @@ export default function TopicIslandDetailPage() {
                   </div>
                 </div>
               </div>
+
+              {words.length > 0 && islandHintCard && (
+                <div className="mb-10">{islandHintCard}</div>
+              )}
 
               {/* Grammar Focus - Sleek Design */}
               {grammarFocus.length > 0 && (
@@ -1348,74 +1523,6 @@ export default function TopicIslandDetailPage() {
               {/* Words List / Loading State */}
               {words.length > 0 ? (
                 <div className="space-y-6">
-                  {/* New-user hint — shown above the first word until dismissed */}
-                  {showNewUserHint && (
-                    <div className="relative overflow-hidden rounded-lg border-2 border-gray-800 bg-gray-900 p-5 shadow-lg">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowNewUserHint(false);
-                          localStorage.setItem("island_hint_dismissed", "1");
-                        }}
-                        className="absolute right-3 top-3 rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
-                        aria-label="Dismiss"
-                      >
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                      <div className="flex items-start gap-3 pr-10">
-                        <div className="mt-0.5 flex-shrink-0">
-                          <svg
-                            className="h-6 w-6 text-white"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-base font-bold text-white">
-                            How to use this island
-                          </h3>
-                          <p className="mt-1.5 text-sm leading-relaxed text-gray-300">
-                            Read through each word and its{" "}
-                            <span className="font-semibold text-white">
-                              example sentences
-                            </span>
-                            , all around your level, to get familiar with them.{" "}
-                            <span className="font-semibold text-white">
-                              Hover over any word
-                            </span>{" "}
-                            to see its meaning. Then scroll down and hit{" "}
-                            <span className="font-semibold text-white">
-                              {showOnboardingIslandBottom
-                                ? "Start Flashcards"
-                                : "Quiz me on this island"}
-                            </span>{" "}
-                            to test how many you remember!
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {(island?.word_target === 10 && isAnonymous
                     ? words.slice(0, 5)
                     : words
@@ -1754,7 +1861,8 @@ export default function TopicIslandDetailPage() {
               )}
 
               {/* Add Words + Quiz (full UI) or onboarding-only flashcards + create island */}
-              {showOnboardingIslandBottom &&
+              {!isJourneyIsland &&
+              showOnboardingIslandBottom &&
               island.status === "ready" &&
               quizMode === null &&
               !showQuizResults ? (
@@ -1787,57 +1895,141 @@ export default function TopicIslandDetailPage() {
                       ) : null}
                     </div>
                   </div>
-                  {showJourneyPaywall && journeyContext ? (
-                    <div className="mt-6">
-                      <JourneyIslandPaywall
-                        journeyTitle={journeyContext.journeyTopic}
-                        topic={journeyContext.journeyTopic}
-                        wordsPerWeek={journeyContext.wordsPerWeek}
-                        weeksToComplete={journeyWeeksToComplete}
-                        lockedIslands={journeyContext.lockedIslands.map((i) => ({
-                          name: i.name,
-                          zh: i.zh,
-                        }))}
-                        onSubscribe={handleJourneySubscribe}
-                      />
-                    </div>
-                  ) : null}
                 </div>
               ) : (
                 <div className="mt-10 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                   {!showOnboardingIslandBottom && (
                     <div className="flex border-b border-gray-200">
-                      <button
-                        onClick={() => setActiveTab("quiz")}
-                        className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                          activeTab === "quiz"
-                            ? "border-gray-900 text-gray-900 bg-white"
-                            : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                        }`}
-                      >
-                        Quiz me on this island
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (isAnonymous) {
-                            openSignupModal("Topic Islands");
-                            return;
-                          }
-                          setActiveTab("add");
-                        }}
-                        className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                          activeTab === "add"
-                            ? "border-gray-900 text-gray-900 bg-white"
-                            : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                        }`}
-                      >
-                        Add more words
-                      </button>
+                      {isJourneyIsland ? (
+                        <div className="flex-1 px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                          Island quiz
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setActiveTab("quiz")}
+                            className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                              activeTab === "quiz"
+                                ? "border-gray-900 text-gray-900 bg-white"
+                                : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                            }`}
+                          >
+                            Quiz me on this island
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (isAnonymous) {
+                                openSignupModal("Topic Islands");
+                                return;
+                              }
+                              setActiveTab("add");
+                            }}
+                            className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                              activeTab === "add"
+                                ? "border-gray-900 text-gray-900 bg-white"
+                                : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                            }`}
+                          >
+                            Add more words
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
 
-                  <div className="p-6">
-                    {activeTab === "add" && !showOnboardingIslandBottom ? (
+                  <div
+                    className={`p-6 ${
+                      quizMode !== null || showQuizResults
+                        ? "min-h-[600px] md:min-h-[680px]"
+                        : ""
+                    }`}
+                  >
+                    {isJourneyIsland && quizMode === null && !showQuizResults ? (
+                      <div>
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Pass this island quiz to continue
+                          </h3>
+                          <p className="mt-2 text-sm text-gray-600">
+                            Score at least 80% to unlock the next island in your
+                            journey.
+                          </p>
+                        </div>
+
+                        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <button
+                            onClick={() => handleStartJourneyQuiz("drag-drop")}
+                            disabled={selectableWords.length < 2}
+                            className="group rounded-xl border-2 border-cyan-300 bg-white p-6 text-left transition-all hover:border-gray-900 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-cyan-300 disabled:hover:shadow-none"
+                          >
+                            <div className="mb-3">
+                              <svg
+                                className="h-10 w-10 text-gray-900"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                                />
+                              </svg>
+                            </div>
+                            <h4 className="mb-2 text-lg font-semibold text-gray-900">
+                              Drag & Drop Matching
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              Match the island words without choosing or adding
+                              extra words.
+                            </p>
+                          </button>
+
+                          <button
+                            onClick={() => handleStartJourneyQuiz("flashcard")}
+                            disabled={selectableWords.length < 2}
+                            className="group rounded-xl border-2 border-cyan-300 bg-white p-6 text-left transition-all hover:border-gray-900 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-cyan-300 disabled:hover:shadow-none"
+                          >
+                            <div className="mb-3">
+                              <svg
+                                className="h-10 w-10 text-gray-900"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                />
+                              </svg>
+                            </div>
+                            <h4 className="mb-2 text-lg font-semibold text-gray-900">
+                              Flashcards
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              Test yourself in both directions and hit 80% to
+                              continue.
+                            </p>
+                          </button>
+                        </div>
+
+                        {showJourneyPaywall && journeyContext ? (
+                          <div className="mt-6">
+                            <JourneyIslandPaywall
+                              journeyTitle={journeyContext.journeyTopic}
+                              wordsPerWeek={journeyContext.wordsPerWeek}
+                              weeksToComplete={journeyWeeksToComplete}
+                              completedWords={island?.word_target ?? 5}
+                              lockedIslands={journeyContext.lockedIslands}
+                              onSubscribe={handleJourneySubscribe}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : activeTab === "add" && !showOnboardingIslandBottom ? (
                       /* Add More Words Tab */
                       <div>
                         <div className="mb-6 flex items-center justify-between">
@@ -1951,7 +2143,7 @@ export default function TopicIslandDetailPage() {
                     ) : quizMode === null && !showOnboardingIslandBottom ? (
                       /* Quiz Tab - Mode Selection */
                       <div>
-                        {!isAnonymous && (
+                        {!isAnonymous && !isJourneyIsland && (
                           <div className="mb-6">
                             <button
                               type="button"
@@ -2160,7 +2352,7 @@ export default function TopicIslandDetailPage() {
                             </button>
                           </div>
 
-                          <div className="mb-8">
+                          <div className="mb-6">
                             <div className="h-2 w-full rounded-full bg-gray-200">
                               <div
                                 className="h-full rounded-full bg-gray-900 transition-all"
@@ -2174,14 +2366,14 @@ export default function TopicIslandDetailPage() {
                           {quizWords[currentQuizIndex] && (
                             <div className="flex flex-col items-center">
                               <div className="w-full max-w-md">
-                                <div className="mb-8 rounded-2xl border-2 border-gray-200 bg-gray-50 p-12 text-center">
+                                <div className="mb-6 min-h-[360px] rounded-2xl border-2 border-gray-200 bg-gray-50 p-8 text-center">
                                   <div className="mb-4 text-sm font-medium uppercase tracking-wide text-gray-500">
                                     {flashcardDirection[currentQuizIndex] ===
                                     "zh-en"
                                       ? "Chinese"
                                       : "English"}
                                   </div>
-                                  <div className="flex items-center justify-center gap-3 mb-8">
+                                  <div className="mb-6 flex items-center justify-center gap-3">
                                     <div className="text-4xl font-bold text-gray-900">
                                       {flashcardDirection[currentQuizIndex] ===
                                       "zh-en"
@@ -2202,13 +2394,13 @@ export default function TopicIslandDetailPage() {
 
                                   {flashcardDirection[currentQuizIndex] ===
                                     "zh-en" && (
-                                    <div className="text-lg text-gray-600 mb-8">
+                                    <div className="mb-6 text-lg text-gray-600">
                                       {quizWords[currentQuizIndex].pinyin}
                                     </div>
                                   )}
 
                                   {showFlashcardAnswer && (
-                                    <div className="border-t-2 border-gray-300 pt-8 mt-8">
+                                    <div className="mt-6 border-t-2 border-gray-300 pt-6">
                                       <div className="mb-2 text-sm font-medium uppercase tracking-wide text-gray-500">
                                         Answer
                                       </div>
@@ -2497,10 +2689,29 @@ export default function TopicIslandDetailPage() {
                                   You got {correctCount} out of {totalCount}{" "}
                                   correct
                                 </p>
+                                {isJourneyIsland && (
+                                  <p
+                                    className={`mt-4 text-sm font-semibold ${
+                                      percentage >= 80
+                                        ? "text-teal-600"
+                                        : "text-amber-600"
+                                    }`}
+                                  >
+                                    {percentage >= 80
+                                      ? "Pass! The next island is unlocked."
+                                      : "Score 80% or more to unlock the next island."}
+                                  </p>
+                                )}
                               </>
                             );
                           })()}
                         </div>
+
+                        {isJourneyIsland && journeyCompletionError && (
+                          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                            {journeyCompletionError}
+                          </div>
+                        )}
 
                         <div className="mb-8 space-y-3">
                           <h4 className="text-sm font-semibold text-gray-700 mb-4">
@@ -2540,20 +2751,42 @@ export default function TopicIslandDetailPage() {
 
                         <div className="flex gap-3 justify-center">
                           <button
-                            onClick={handleResetQuiz}
+                            onClick={() =>
+                              router.push(
+                                journeyContext
+                                  ? "/app/journey"
+                                  : "/app/topic-islands",
+                              )
+                            }
                             className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 transition-colors hover:bg-gray-50"
                           >
-                            Back to Island
+                            {journeyContext
+                              ? "Back to Journey"
+                              : "Back to Island"}
                           </button>
-                          <button
-                            onClick={() => {
-                              setShowQuizResults(false);
-                              setQuizMode(null);
-                            }}
-                            className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
-                          >
-                            Try Again
-                          </button>
+                          {(!isJourneyIsland || !journeyQuizPassed) && (
+                            <button
+                              onClick={() => {
+                                setShowQuizResults(false);
+                                setQuizMode(null);
+                                setJourneyQuizPassed(false);
+                              }}
+                              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+                            >
+                              Try Again
+                            </button>
+                          )}
+                          {isJourneyIsland && journeyQuizPassed && (
+                            <button
+                              onClick={() => router.push("/app/journey")}
+                              disabled={journeyCompletionPending}
+                              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {journeyCompletionPending
+                                ? "Unlocking next island..."
+                                : "Continue Journey"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     ) : null}
@@ -2592,7 +2825,11 @@ export default function TopicIslandDetailPage() {
                       华华, your capybara pet, needs your help!
                     </h2>
 
-                    <p className="mb-2 text-gray-600 leading-relaxed">
+                    <p className="mt-2 mb-1 text-sm text-gray-600 text-center">
+                      Create a free account so 华华 can keep building.
+                    </p>
+
+                    <p className="mb-4 text-gray-600 leading-relaxed">
                       You just quizzed {quizWords.length} words — that's enough
                       to start improving 华华 the capybara&apos;s life.
                     </p>
@@ -2600,11 +2837,21 @@ export default function TopicIslandDetailPage() {
                     <button
                       onClick={() => {
                         setShowCapybaraTeaser(false);
-                        window.location.href = "/app";
+                        router.push(`/signup?redirect=/app/topic-islands/${island?.id}`);
                       }}
                       className="w-full rounded-xl bg-gray-900 px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-gray-800"
                     >
-                      See 华华&apos;s progress →
+                      Help 华华 build his home →
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowCapybaraTeaser(false);
+                        router.push("/app");
+                      }}
+                      className="mt-3 text-sm text-gray-400 underline underline-offset-2 hover:text-gray-600"
+                    >
+                      Maybe later
                     </button>
                   </div>
                 </div>

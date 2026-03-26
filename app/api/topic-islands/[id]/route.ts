@@ -95,7 +95,13 @@ export async function GET(
       zh: string | null
       journeyTopic: string
       wordsPerWeek: number
-      lockedIslands: Array<{ order: number; name: string; zh: string | null }>
+      lockedIslands: Array<{
+        order: number
+        name: string
+        zh: string | null
+        node_type: 'island' | 'story'
+        hint: string | null
+      }>
     } | null = null
 
     if (jiRow) {
@@ -104,12 +110,26 @@ export async function GET(
         .select('topic, words_per_week')
         .eq('id', jiRow.journey_id)
         .maybeSingle()
+      // Select only stable columns; infer node_type from step_order so the
+      // query works even before the 20260326 migration adds the node_type column.
       const { data: siblings } = await supabase
         .from('journey_islands')
         .select('step_order, name, zh')
         .eq('journey_id', jiRow.journey_id)
         .gt('step_order', 1)
         .order('step_order', { ascending: true })
+
+      // Opportunistically fetch hint/node_type if the newer columns exist.
+      const { data: siblingsExtended } = await supabase
+        .from('journey_islands')
+        .select('step_order, node_type, hint')
+        .eq('journey_id', jiRow.journey_id)
+        .gt('step_order', 1)
+        .order('step_order', { ascending: true })
+      const extendedMap = new Map(
+        (siblingsExtended ?? []).map((r) => [r.step_order, r])
+      )
+
       journeyContext = {
         journeyIslandId: jiRow.id,
         order: jiRow.step_order,
@@ -118,11 +138,18 @@ export async function GET(
         zh: jiRow.zh,
         journeyTopic: jr?.topic ?? '',
         wordsPerWeek: jr?.words_per_week ?? 0,
-        lockedIslands: (siblings ?? []).map((s) => ({
-          order: s.step_order,
-          name: s.name,
-          zh: s.zh,
-        })),
+        lockedIslands: (siblings ?? []).map((s) => {
+          const ext = extendedMap.get(s.step_order)
+          // Stories are always placed at step_order > 100 in the generator
+          const inferredType: 'island' | 'story' = s.step_order > 100 ? 'story' : 'island'
+          return {
+            order: s.step_order,
+            name: s.name,
+            zh: s.zh ?? null,
+            node_type: ((ext?.node_type ?? inferredType) as 'island' | 'story'),
+            hint: ext?.hint ?? null,
+          }
+        }),
       }
     }
 

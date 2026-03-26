@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import UpgradeModal from "@/components/app/UpgradeModal";
+import { useSubscription } from "@/hooks/useSubscription";
 
 type ChatRole = "user" | "assistant";
 
@@ -41,6 +42,7 @@ export default function IslandSideChat({
   const [error, setError] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { isPro, isLoading: subscriptionLoading } = useSubscription();
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -207,6 +209,11 @@ export default function IslandSideChat({
 
   useEffect(() => {
     if (!askAIWord || !askAIWord.hanzi || !askAiPrompt) return;
+    if (!subscriptionLoading && !isPro) {
+      setShowUpgradeModal(true);
+      onAskAIHandled?.();
+      return;
+    }
     const key = `${islandId}:${askAIWord.hanzi}:${askAIWord.pinyin || ""}:${
       askAIWord.english || ""
     }`;
@@ -405,8 +412,8 @@ export default function IslandSideChat({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          // Check if free user has already sent 1 message
-          if (userPlan === "free" && userMessageCount >= 1) {
+          if (subscriptionLoading) return;
+          if (!isPro) {
             setShowUpgradeModal(true);
             return;
           }
@@ -445,7 +452,14 @@ export default function IslandSideChat({
 
       {/* Floating button */}
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (subscriptionLoading) return;
+          if (!isPro) {
+            setShowUpgradeModal(true);
+            return;
+          }
+          setOpen((v) => !v);
+        }}
         className={`fixed z-40 flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full border-2 border-gray-900 bg-white px-4 py-3 text-gray-900 shadow-lg transition-all hover:shadow-xl hover:scale-105 max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] max-md:right-4 md:bottom-6 md:right-6 md:px-5 ${
           open ? "pointer-events-none opacity-0" : ""
         }`}

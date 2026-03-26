@@ -1,16 +1,24 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getLocalDateKey } from "@/lib/utils/date";
 import DailyStoryCard from "@/components/stories/DailyStoryCard";
 import StoriesList from "@/components/stories/StoriesList";
 import type { StorySummary } from "@/components/stories/StoryCard";
 import { OceanBackground } from "@/components/OceanBackground";
+import { getEntitlements } from "@/lib/entitlements";
 
 export default async function StoriesPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (user) {
+    const entitlements = await getEntitlements(user.id);
+    if (!entitlements.isPro) {
+      redirect("/app?upgrade=1&feature=Daily%20Stories");
+    }
+  }
 
   let dailyStory = null;
   if (user) {
@@ -64,4 +72,3 @@ export default async function StoriesPage() {
     </div>
   );
 }
-

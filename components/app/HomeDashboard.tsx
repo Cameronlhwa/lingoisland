@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
@@ -21,6 +21,9 @@ import {
   cardBaseClass,
   cardHoverClass,
 } from "@/components/app/ui/styles";
+import PaywallGuard from "@/components/PaywallGuard";
+import UpgradeModal from "@/components/app/UpgradeModal";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface TopicIsland {
   id: string;
@@ -66,6 +69,8 @@ export default function HomeDashboard({
   dailyStory: DailyStorySummary | null;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const { t } = useLanguage();
   const { convertText } = useCharacterSet();
@@ -110,6 +115,9 @@ export default function HomeDashboard({
   const [huahuaTotalReviews, setHuahuaTotalReviews] = useState(0);
   const [capybaraOpen, setCapybaraOpen] = useState(false);
   const { isAnonymous, openSignupModal } = useSidebar();
+  const { isPro } = useSubscription();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeFeatureHint, setUpgradeFeatureHint] = useState<string | undefined>(undefined);
   const islandsScrollRef = useRef<HTMLDivElement | null>(null);
   const flashcardsScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -118,7 +126,16 @@ export default function HomeDashboard({
   }, [dailyStory]);
 
   useEffect(() => {
-    // If there's a pending island request, defer to the dedicated loading page
+    const shouldOpenUpgrade = searchParams.get("upgrade") === "1";
+    if (!shouldOpenUpgrade) return;
+    const featureHint = searchParams.get("feature");
+    setUpgradeFeatureHint(featureHint ?? undefined);
+    setShowUpgradeModal(true);
+    if (pathname !== "/app") return;
+    router.replace("/app", { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  useEffect(() => {
     const pendingRequestStr = localStorage.getItem(STORAGE_KEY);
     if (pendingRequestStr) {
       router.replace("/app/topic-islands/loading");
@@ -143,29 +160,36 @@ export default function HomeDashboard({
         setActiveJourney(d.journey);
         setActiveJourneyNodes(d.nodes ?? d.islands ?? []);
       }
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("huahua_stage, huahua_total_reviews")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (profile) {
-        setHuahuaStage(profile.huahua_stage ?? 1);
-        setHuahuaTotalReviews(profile.huahua_total_reviews ?? 0);
-      }
+      await loadHuahuaProgress();
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router, supabase]);
 
-  // Refetch today's review count when tab becomes visible so Progress Island updates after quiz sessions
   useEffect(() => {
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        loadTodayReviewCount();
+    const onRefreshSignals = () => {
+      if (document.visibilityState !== "hidden") {
+        void loadTodayReviewCount();
+        void loadHuahuaProgress();
       }
     };
-    document.addEventListener("visibilitychange", onVisibilityChange);
+    const onHuahuaProgressUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ totalReviews?: number; stage?: number }>).detail;
+      if (typeof detail?.totalReviews === "number") {
+        setHuahuaTotalReviews(detail.totalReviews);
+      }
+      if (typeof detail?.stage === "number") {
+        setHuahuaStage(detail.stage);
+      }
+      void loadHuahuaProgress();
+    };
+    document.addEventListener("visibilitychange", onRefreshSignals);
+    window.addEventListener("focus", onRefreshSignals);
+    window.addEventListener("huahua-progress-updated", onHuahuaProgressUpdated as EventListener);
     return () =>
-      document.removeEventListener("visibilitychange", onVisibilityChange);
+      {
+        document.removeEventListener("visibilitychange", onRefreshSignals);
+        window.removeEventListener("focus", onRefreshSignals);
+        window.removeEventListener("huahua-progress-updated", onHuahuaProgressUpdated as EventListener);
+      };
   }, []);
 
   useEffect(() => {
@@ -206,6 +230,25 @@ export default function HomeDashboard({
       setTopicIslands(data || []);
     }
     setLoading(false);
+  };
+
+  const loadHuahuaProgress = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("huahua_stage, huahua_total_reviews")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!profile) return;
+      setHuahuaStage(profile.huahua_stage ?? 1);
+      setHuahuaTotalReviews(profile.huahua_total_reviews ?? 0);
+    } catch (error) {
+      console.error("Error loading huahua progress:", error);
+    }
   };
 
   const loadFlashcardsSummary = async () => {
@@ -299,7 +342,6 @@ export default function HomeDashboard({
       );
       setTodayReviewCount(todayEntry?.count ?? 0);
 
-      // Get last 7 days of activity
       const activityMap = new Map<string, number>();
       (data.activity || []).forEach(
         (entry: { date: string; count: number }) => {
@@ -380,6 +422,8 @@ export default function HomeDashboard({
     router.push("/app/topic-islands");
   };
 
+  const paywallEnabled = !isAnonymous && !isPro;
+
   const handleScrollIslands = (direction: "left" | "right") => {
     const container = islandsScrollRef.current;
     if (!container) return;
@@ -432,7 +476,7 @@ export default function HomeDashboard({
 
   return (
     <div className="min-h-screen bg-white px-4 py-6 md:px-6 md:py-8 lg:px-10">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 md:gap-6">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 pb-8 md:gap-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-2 md:gap-3">
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-900">
@@ -472,44 +516,48 @@ export default function HomeDashboard({
           </div>
 
           {capybaraOpen ? (
-            <CapybaraStrip stage={huahuaStage} totalReviews={huahuaTotalReviews} />
+            <CapybaraStrip
+              stage={huahuaStage}
+              totalReviews={huahuaTotalReviews}
+            />
           ) : null}
 
           <JourneyHero journey={activeJourney} nodes={activeJourneyNodes} />
         </div>
 
-        {/* ROW 2: Create Topic Island + Read Daily Story (2 columns on desktop, stack on mobile) */}
-        <div className="grid gap-4 md:gap-6 md:grid-cols-2">
-          <CreateIslandCard
-            onCreate={handleCreateIsland}
-            onBrowse={
-              isAnonymous
-                ? (e) => {
-                    e.preventDefault();
-                    openSignupModal("Browse Topics");
-                  }
-                : undefined
-            }
-          />
-          <DailyStoryCard
-            variant="home"
-            story={dailyStoryLocal}
-            loading={dailyLoading}
-            onRead={
-              isAnonymous
-                ? (e) => {
-                    e.preventDefault();
-                    openSignupModal("Stories");
-                  }
-                : undefined
-            }
-          />
+        <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+          <PaywallGuard enabled={paywallEnabled} featureHint="Topic Islands">
+            <CreateIslandCard
+              onCreate={handleCreateIsland}
+              onBrowse={
+                isAnonymous
+                  ? (e) => {
+                      e.preventDefault();
+                      openSignupModal("Browse Topics");
+                    }
+                  : undefined
+              }
+            />
+          </PaywallGuard>
+          <PaywallGuard enabled={paywallEnabled} featureHint="Daily Stories">
+            <DailyStoryCard
+              variant="home"
+              story={dailyStoryLocal}
+              loading={dailyLoading}
+              onRead={
+                isAnonymous
+                  ? (e) => {
+                      e.preventDefault();
+                      openSignupModal("Stories");
+                    }
+                  : undefined
+              }
+            />
+          </PaywallGuard>
         </div>
 
-        {/* ROW 3: Review Topic Islands + Review Quiz Islands */}
-        <div className="grid gap-4 md:gap-6 md:grid-cols-2">
-          {/* Review your Topic Islands */}
-          <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-6`}>
+        <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+          <div className={`${cardBaseClass} ${cardHoverClass} flex h-full flex-col p-4 md:p-6`}>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-base md:text-lg font-semibold text-gray-900">
@@ -520,34 +568,40 @@ export default function HomeDashboard({
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleScrollIslands("left")}
-                  className={buttonIconClass}
-                  aria-label={convertText(t("Scroll islands left"))}
-                >
-                  ←
-                </button>
-                <button
-                  onClick={() => handleScrollIslands("right")}
-                  className={buttonIconClass}
-                  aria-label={convertText(t("Scroll islands right"))}
-                >
-                  →
-                </button>
-                <Link
-                  href="/app/topic-islands"
-                  className={buttonSecondaryClass}
-                  onClick={
-                    isAnonymous
-                      ? (e) => {
-                          e.preventDefault();
-                          openSignupModal("Topic Islands");
-                        }
-                      : undefined
-                  }
-                >
-                  {convertText(t("View All"))}
-                </Link>
+                <PaywallGuard enabled={paywallEnabled} featureHint="Topic Islands">
+                  <button
+                    onClick={() => handleScrollIslands("left")}
+                    className={buttonIconClass}
+                    aria-label={convertText(t("Scroll islands left"))}
+                  >
+                    ←
+                  </button>
+                </PaywallGuard>
+                <PaywallGuard enabled={paywallEnabled} featureHint="Topic Islands">
+                  <button
+                    onClick={() => handleScrollIslands("right")}
+                    className={buttonIconClass}
+                    aria-label={convertText(t("Scroll islands right"))}
+                  >
+                    →
+                  </button>
+                </PaywallGuard>
+                <PaywallGuard enabled={paywallEnabled} featureHint="Topic Islands">
+                  <Link
+                    href="/app/topic-islands"
+                    className={buttonSecondaryClass}
+                    onClick={
+                      isAnonymous
+                        ? (e) => {
+                            e.preventDefault();
+                            openSignupModal("Topic Islands");
+                          }
+                        : undefined
+                    }
+                  >
+                    {convertText(t("View All"))}
+                  </Link>
+                </PaywallGuard>
               </div>
             </div>
 
@@ -597,20 +651,22 @@ export default function HomeDashboard({
                         {convertText(t("Last reviewed"))}: {lastReviewed}
                         {convertText(t("day short"))}
                       </p>
-                      <Link
-                        href={`/app/topic-islands/${island.id}`}
-                        className={`${buttonPrimaryClass} mt-auto`}
-                        onClick={
-                          isAnonymous
-                            ? (e) => {
-                                e.preventDefault();
-                                openSignupModal("Topic Islands");
-                              }
-                            : undefined
-                        }
-                      >
-                        {convertText(t("Review"))}
-                      </Link>
+                      <PaywallGuard enabled={paywallEnabled} featureHint="Topic Island Review">
+                        <Link
+                          href={`/app/topic-islands/${island.id}`}
+                          className={`${buttonPrimaryClass} mt-auto`}
+                          onClick={
+                            isAnonymous
+                              ? (e) => {
+                                  e.preventDefault();
+                                  openSignupModal("Topic Islands");
+                                }
+                              : undefined
+                          }
+                        >
+                          {convertText(t("Review"))}
+                        </Link>
+                      </PaywallGuard>
                     </div>
                   );
                 })}
@@ -622,24 +678,25 @@ export default function HomeDashboard({
                     t("Create your first island to start reviewing words."),
                   )}
                 </p>
-                <button
-                  onClick={handleCreateIsland}
-                  className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-                >
-                  {convertText(
-                    t(
-                      isAnonymous
-                        ? "Create Account to Start"
-                        : "Create your first island",
-                    ),
-                  )}
-                </button>
+                <PaywallGuard enabled={paywallEnabled} featureHint="Topic Islands">
+                  <button
+                    onClick={handleCreateIsland}
+                    className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+                  >
+                    {convertText(
+                      t(
+                        isAnonymous
+                          ? "Create Account to Start"
+                          : "Create your first island",
+                      ),
+                    )}
+                  </button>
+                </PaywallGuard>
               </div>
             )}
           </div>
 
-          {/* Review your Quiz Islands */}
-          <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-5`}>
+          <div className={`${cardBaseClass} ${cardHoverClass} flex h-full flex-col p-4 md:p-5`}>
             <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-base md:text-lg font-semibold text-gray-900">
@@ -650,34 +707,40 @@ export default function HomeDashboard({
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleScrollDecks("left")}
-                  className={buttonIconClass}
-                  aria-label={convertText(t("Scroll decks left"))}
-                >
-                  ←
-                </button>
-                <button
-                  onClick={() => handleScrollDecks("right")}
-                  className={buttonIconClass}
-                  aria-label={convertText(t("Scroll decks right"))}
-                >
-                  →
-                </button>
-                <Link
-                  href="/app/quiz"
-                  className={buttonSecondaryClass}
-                  onClick={
-                    isAnonymous
-                      ? (e) => {
-                          e.preventDefault();
-                          openSignupModal("Quizzes");
-                        }
-                      : undefined
-                  }
-                >
-                  {convertText(t("View Decks"))}
-                </Link>
+                <PaywallGuard enabled={paywallEnabled} featureHint="Quiz Islands">
+                  <button
+                    onClick={() => handleScrollDecks("left")}
+                    className={buttonIconClass}
+                    aria-label={convertText(t("Scroll decks left"))}
+                  >
+                    ←
+                  </button>
+                </PaywallGuard>
+                <PaywallGuard enabled={paywallEnabled} featureHint="Quiz Islands">
+                  <button
+                    onClick={() => handleScrollDecks("right")}
+                    className={buttonIconClass}
+                    aria-label={convertText(t("Scroll decks right"))}
+                  >
+                    →
+                  </button>
+                </PaywallGuard>
+                <PaywallGuard enabled={paywallEnabled} featureHint="Quiz Islands">
+                  <Link
+                    href="/app/quiz"
+                    className={buttonSecondaryClass}
+                    onClick={
+                      isAnonymous
+                        ? (e) => {
+                            e.preventDefault();
+                            openSignupModal("Quizzes");
+                          }
+                        : undefined
+                    }
+                  >
+                    {convertText(t("View Decks"))}
+                  </Link>
+                </PaywallGuard>
               </div>
             </div>
 
@@ -722,20 +785,22 @@ export default function HomeDashboard({
                             />
                           </div>
                         </div>
-                        <Link
-                          href={`/app/quiz/${deck.id}`}
-                          className={`${buttonPrimaryClass} mt-auto`}
-                          onClick={
-                            isAnonymous
-                              ? (e) => {
-                                  e.preventDefault();
-                                  openSignupModal("Quizzes");
-                                }
-                              : undefined
-                          }
-                        >
-                          {convertText(t("Review"))}
-                        </Link>
+                        <PaywallGuard enabled={paywallEnabled} featureHint="Quiz Islands">
+                          <Link
+                            href={`/app/quiz/${deck.id}`}
+                            className={`${buttonPrimaryClass} mt-auto`}
+                            onClick={
+                              isAnonymous
+                                ? (e) => {
+                                    e.preventDefault();
+                                    openSignupModal("Quizzes");
+                                  }
+                                : undefined
+                            }
+                          >
+                            {convertText(t("Review"))}
+                          </Link>
+                        </PaywallGuard>
                       </div>
                     ))}
                   </div>
@@ -748,26 +813,28 @@ export default function HomeDashboard({
                         ),
                       )}
                     </p>
-                    <Link
-                      href="/app/quiz"
-                      className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-                      onClick={
-                        isAnonymous
-                          ? (e) => {
-                              e.preventDefault();
-                              openSignupModal("Quizzes");
-                            }
-                          : undefined
-                      }
-                    >
-                      {convertText(
-                        t(
+                    <PaywallGuard enabled={paywallEnabled} featureHint="Quiz Islands">
+                      <Link
+                        href="/app/quiz"
+                        className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+                        onClick={
                           isAnonymous
-                            ? "Create Account to Start"
-                            : "Create your first deck",
-                        ),
-                      )}
-                    </Link>
+                            ? (e) => {
+                                e.preventDefault();
+                                openSignupModal("Quizzes");
+                              }
+                            : undefined
+                        }
+                      >
+                        {convertText(
+                          t(
+                            isAnonymous
+                              ? "Create Account to Start"
+                              : "Create your first deck",
+                          ),
+                        )}
+                      </Link>
+                    </PaywallGuard>
                   </div>
                 )
               ) : (
@@ -779,6 +846,11 @@ export default function HomeDashboard({
           </div>
         </div>
       </div>
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature={upgradeFeatureHint}
+      />
     </div>
   );
 }

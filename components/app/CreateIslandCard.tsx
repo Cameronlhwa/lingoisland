@@ -15,9 +15,9 @@ export default function CreateIslandCard({
 
   return (
     <div
-      className={`${cardBaseClass} ${cardHoverClass} w-full p-5 md:p-6 text-left`}
+      className={`${cardBaseClass} ${cardHoverClass} w-full h-full p-5 md:p-6 text-left flex flex-col`}
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex h-full flex-col gap-4">
         {/* Title + pill */}
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-lg md:text-xl font-semibold text-gray-900">
@@ -39,7 +39,7 @@ export default function CreateIslandCard({
         </div>
 
         {/* CTAs: single primary + link row + helper */}
-        <div className="flex flex-col gap-2 pt-1">
+        <div className="mt-auto flex flex-col gap-2 pt-1">
           <button
             type="button"
             onClick={onCreate}

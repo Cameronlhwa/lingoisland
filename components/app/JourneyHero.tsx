@@ -21,12 +21,19 @@ export default function JourneyHero({
     sortedNodes.find((n) => !n.completed_at && !!n.island_id) ??
     sortedNodes.find((n) => !n.completed_at);
   const islands = sortedNodes.filter((n) => n.node_type === "island");
+  const getIslandWordCount = (node: JourneyNode) => {
+    if (typeof node.word_count === "number" && node.word_count > 0) {
+      return node.word_count;
+    }
+    const order = node.order ?? node.position ?? 0;
+    return order === 1 ? 5 : 10;
+  };
   const islandsDone = islands.filter((n) => n.completed_at).length;
   const wordsLearned = islands.reduce(
-    (sum, n) => sum + (n.completed_at ? n.word_count ?? 10 : 0),
+    (sum, n) => sum + (n.completed_at ? getIslandWordCount(n) : 0),
     0,
   );
-  const totalWords = islands.reduce((sum, n) => sum + (n.word_count ?? 10), 0);
+  const totalWords = islands.reduce((sum, n) => sum + getIslandWordCount(n), 0);
 
   if (!journey) {
     return (
@@ -72,7 +79,7 @@ export default function JourneyHero({
         </div>
       </div>
 
-      <div className="mb-4 flex items-center">
+      <div className="mb-4 flex w-full items-center">
         {sortedNodes.map((node, i) => (
           <div key={node.id} className="flex min-w-0 flex-1 items-center">
             <div className="flex flex-1 justify-center">
@@ -83,7 +90,7 @@ export default function JourneyHero({
             </div>
             {i < sortedNodes.length - 1 ? (
               <div
-                className={`h-px w-2 flex-shrink-0 ${node.completed_at ? "bg-teal-300" : "bg-gray-200"}`}
+                className={`mx-1 h-px max-w-10 flex-1 ${node.completed_at ? "bg-teal-300" : "bg-gray-200"}`}
               />
             ) : null}
           </div>

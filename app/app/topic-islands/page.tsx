@@ -10,6 +10,7 @@ import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import UpgradeModal from "@/components/app/UpgradeModal";
 import { OceanBackground } from "@/components/OceanBackground";
 import { coverUrlFromKey } from "@/lib/islandLibrary";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface TopicIsland {
   id: string;
@@ -30,6 +31,7 @@ export default function TopicIslandsPage() {
   const supabase = createClient();
   const { t } = useLanguage();
   const { convertText } = useCharacterSet();
+  const { isPro, isLoading: subscriptionLoading } = useSubscription();
   const [islands, setIslands] = useState<TopicIsland[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -94,9 +96,19 @@ export default function TopicIslandsPage() {
   }, [searchParams, userDefaultLevel, showCreateModal]);
 
   useEffect(() => {
+    if (subscriptionLoading) return;
+    if (isPro) return;
+    router.replace("/app?upgrade=1&feature=Topic%20Islands");
+  }, [subscriptionLoading, isPro, router]);
+
+  useEffect(() => {
     loadIslands();
     loadUserProfile();
   }, []);
+
+  if (!subscriptionLoading && !isPro) {
+    return null;
+  }
 
   const loadUserProfile = async () => {
     try {

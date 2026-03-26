@@ -35,10 +35,8 @@ export default function ProgressIslandUpgradePopup({
   useEffect(() => {
     if (!show) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-      }
+      // Keep this modal persistent during learning flow; close only via CTA.
+      if (e.key === "Escape") return;
       // Focus trap: keep Tab/Shift+Tab inside modal
       if (e.key !== "Tab") return;
       const el = overlayRef.current;
@@ -74,9 +72,6 @@ export default function ProgressIslandUpgradePopup({
       aria-modal="true"
       aria-labelledby="progress-island-upgrade-title"
       aria-describedby="progress-island-upgrade-desc"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
     >
       <div
         className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl"

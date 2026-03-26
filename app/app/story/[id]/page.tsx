@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import StoryReader, {
   type StoryDetail,
@@ -11,13 +11,33 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 
 export default function StoryDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const storyId = params.id as string;
+  const journeyId = searchParams.get("journeyId");
+  const journeyNodeId = searchParams.get("journeyNodeId");
   const supabase = createClient();
   const { completeNudge } = useOnboarding();
+  const checkpointCompleteRef = useRef<string | null>(null);
   const [story, setStory] = useState<StoryDetail | null>(null);
   const [targetWords, setTargetWords] = useState<StoryTargetWord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!journeyId || !journeyNodeId) return;
+    const key = `${journeyId}:${journeyNodeId}`;
+    if (checkpointCompleteRef.current === key) return;
+    checkpointCompleteRef.current = key;
+
+    void fetch(`/api/journey/${journeyId}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ journeyIslandId: journeyNodeId }),
+      keepalive: true,
+    }).catch(() => {
+      // If this background call fails, story reading should still proceed.
+    });
+  }, [journeyId, journeyNodeId]);
 
   useEffect(() => {
     const loadStory = async () => {
@@ -84,4 +104,3 @@ export default function StoryDetailPage() {
 
   return <StoryReader story={story} targetWords={targetWords} />;
 }
-
