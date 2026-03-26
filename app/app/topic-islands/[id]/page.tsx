@@ -801,6 +801,20 @@ export default function TopicIslandDetailPage() {
     );
   }
 
+  const isFreeAllowedJourneyIsland = journeyContext?.order === 1;
+  const shouldGateIsland = userPlan !== "pro" && !isFreeAllowedJourneyIsland;
+  if (shouldGateIsland) {
+    return (
+      <div className="min-h-screen">
+        <UpgradeModal
+          open
+          onClose={() => router.push("/app/journey")}
+          feature={journeyContext ? "Full Journey" : "Topic Islands"}
+        />
+      </div>
+    );
+  }
+
   const totalSentenceTasks =
     island.sentence_tasks || Math.max(island.word_target * 3, 1);
   const wordsSelected = Math.min(
@@ -1075,26 +1089,45 @@ export default function TopicIslandDetailPage() {
     setJourneyCompletionError(null);
     setShowQuizResults(true);
 
-    if (quizWords.length > 0) {
-      const tzOffset = new Date().getTimezoneOffset();
-      fetch("/api/quiz-activity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: quizWords.length, tzOffset }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (typeof data?.todayCount === "number" && progressUpgrade) {
-            checkAndShowUpgrade(data.todayCount, progressUpgrade.showUpgrade);
-          }
-        })
-        .catch(() => {});
+    if (quizWords.length > 0 && quizMode === "drag-drop") {
+      void recordQuizActivity(quizWords.length);
     }
 
     maybeShowCapybaraTeaser(quizWords.length);
 
     if (passedJourneyQuiz) {
       await handleJourneyQuizPassed();
+    }
+  };
+
+  const recordQuizActivity = async (count: number) => {
+    if (count <= 0) return;
+    const tzOffset = new Date().getTimezoneOffset();
+    try {
+      const response = await fetch("/api/quiz-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count, tzOffset }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (
+        typeof data?.huahuaTotalReviews === "number" &&
+        typeof data?.huahuaStage === "number"
+      ) {
+        window.dispatchEvent(
+          new CustomEvent("huahua-progress-updated", {
+            detail: {
+              totalReviews: data.huahuaTotalReviews,
+              stage: data.huahuaStage,
+            },
+          }),
+        );
+      }
+      if (typeof data?.todayCount === "number" && progressUpgrade) {
+        checkAndShowUpgrade(data.todayCount, progressUpgrade.showUpgrade);
+      }
+    } catch {
+      // Ignore quiz-activity telemetry failures to avoid interrupting quiz flow.
     }
   };
 
@@ -1108,6 +1141,7 @@ export default function TopicIslandDetailPage() {
     const currentWord = quizWords[currentQuizIndex];
     const nextAnswers = { ...quizAnswers, [currentWord.id]: correct };
     setQuizAnswers(nextAnswers);
+    void recordQuizActivity(1);
 
     const isLastCard = currentQuizIndex >= quizWords.length - 1;
 
@@ -1903,7 +1937,13 @@ export default function TopicIslandDetailPage() {
                     </div>
                   )}
 
-                  <div className="p-6">
+                  <div
+                    className={`p-6 ${
+                      quizMode !== null || showQuizResults
+                        ? "min-h-[600px] md:min-h-[680px]"
+                        : ""
+                    }`}
+                  >
                     {isJourneyIsland && quizMode === null && !showQuizResults ? (
                       <div>
                         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
@@ -2312,7 +2352,7 @@ export default function TopicIslandDetailPage() {
                             </button>
                           </div>
 
-                          <div className="mb-8">
+                          <div className="mb-6">
                             <div className="h-2 w-full rounded-full bg-gray-200">
                               <div
                                 className="h-full rounded-full bg-gray-900 transition-all"
@@ -2326,14 +2366,14 @@ export default function TopicIslandDetailPage() {
                           {quizWords[currentQuizIndex] && (
                             <div className="flex flex-col items-center">
                               <div className="w-full max-w-md">
-                                <div className="mb-8 rounded-2xl border-2 border-gray-200 bg-gray-50 p-12 text-center">
+                                <div className="mb-6 min-h-[360px] rounded-2xl border-2 border-gray-200 bg-gray-50 p-8 text-center">
                                   <div className="mb-4 text-sm font-medium uppercase tracking-wide text-gray-500">
                                     {flashcardDirection[currentQuizIndex] ===
                                     "zh-en"
                                       ? "Chinese"
                                       : "English"}
                                   </div>
-                                  <div className="flex items-center justify-center gap-3 mb-8">
+                                  <div className="mb-6 flex items-center justify-center gap-3">
                                     <div className="text-4xl font-bold text-gray-900">
                                       {flashcardDirection[currentQuizIndex] ===
                                       "zh-en"
@@ -2354,13 +2394,13 @@ export default function TopicIslandDetailPage() {
 
                                   {flashcardDirection[currentQuizIndex] ===
                                     "zh-en" && (
-                                    <div className="text-lg text-gray-600 mb-8">
+                                    <div className="mb-6 text-lg text-gray-600">
                                       {quizWords[currentQuizIndex].pinyin}
                                     </div>
                                   )}
 
                                   {showFlashcardAnswer && (
-                                    <div className="border-t-2 border-gray-300 pt-8 mt-8">
+                                    <div className="mt-6 border-t-2 border-gray-300 pt-6">
                                       <div className="mb-2 text-sm font-medium uppercase tracking-wide text-gray-500">
                                         Answer
                                       </div>

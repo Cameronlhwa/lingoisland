@@ -12,6 +12,7 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { sidebarItems } from "@/components/app/sidebar-items";
 import AccountModal from "@/components/app/AccountModal";
 import { useSidebar } from "@/components/app/AppLayoutClient";
+import PaywallGuard from "@/components/PaywallGuard";
 
 export default function Sidebar({
   isAccountModalOpen,
@@ -61,6 +62,11 @@ export default function Sidebar({
   };
 
   const navItems = sidebarItems;
+  const sidebarFeatureHints: Record<string, string> = {
+    "/app/topic-islands": "Topic Islands",
+    "/app/stories": "Daily Stories",
+    "/app/quiz": "Quiz Islands",
+  };
 
   // Close mobile sidebar when navigating
   useEffect(() => {
@@ -121,14 +127,16 @@ export default function Sidebar({
             }
 
             return (
-              <Link
+              <PaywallGuard
                 key={item.href}
-                href={item.href}
-                className={btnClass}
+                enabled={Boolean(sidebarFeatureHints[item.href])}
+                featureHint={sidebarFeatureHints[item.href]}
               >
-                {item.icon()}
-                {convertText(t(item.label))}
-              </Link>
+                <Link href={item.href} className={btnClass}>
+                  {item.icon()}
+                  {convertText(t(item.label))}
+                </Link>
+              </PaywallGuard>
             );
           })}
         </nav>

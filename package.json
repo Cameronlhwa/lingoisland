@@ -2,6 +2,9 @@
   "name": "island-mandarin",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20 <21"
+  },
   "scripts": {
     "dev": "next dev -p 3002",
     "build": "next build",

@@ -59,8 +59,8 @@ export default function DailyStoryCard({
   const timeLabel = getTimeLabel(story?.story_zh, convertText(t("min")));
   const containerClass =
     variant === "home"
-      ? `${cardBaseClass} ${cardHoverClass} p-5 md:p-6`
-      : "rounded-2xl border border-gray-200 bg-gray-50 p-5 md:p-6";
+      ? `${cardBaseClass} ${cardHoverClass} h-full p-5 md:p-6 flex flex-col`
+      : "rounded-2xl border border-gray-200 bg-gray-50 p-5 md:p-6 flex flex-col";
 
   return (
     <div className={containerClass}>
@@ -70,7 +70,7 @@ export default function DailyStoryCard({
         </h2>
       </div>
       {story ? (
-        <div className="space-y-2 md:space-y-3">
+        <div className="flex flex-1 flex-col gap-2 md:gap-3">
           {variant === "home" && (
             <span className="text-xs md:text-sm text-gray-500">
               {convertText(t("Review words you've recently learned in a short story."))}
@@ -101,19 +101,27 @@ export default function DailyStoryCard({
               {convertText(story.story_zh)}
             </p>
           )}
-          <Link href={`/app/story/${story.id}`} className={buttonPrimaryClass} onClick={onRead}>
+          <Link
+            href={`/app/story/${story.id}`}
+            className={`${buttonPrimaryClass} mt-auto w-fit`}
+            onClick={onRead}
+          >
             {convertText(t("Read"))}
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col items-start gap-3 text-sm text-gray-600">
+        <div className="flex flex-1 flex-col items-start gap-3 text-sm text-gray-600">
           {variant === "home" && (
             <span>{convertText(t("Review your vocab in a short story."))}</span>
           )}
           <span>
             {loading ? convertText(t("Generating...")) : convertText(t("Today's story is on the way."))}
           </span>
-          <Link href={previewHref} className={buttonPrimaryClass} onClick={onRead}>
+          <Link
+            href={previewHref}
+            className={`${buttonPrimaryClass} mt-auto w-fit`}
+            onClick={onRead}
+          >
             {convertText(t("Read"))}
           </Link>
         </div>

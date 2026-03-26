@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import { OceanBackground } from "@/components/OceanBackground";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface QuizIsland {
   id: string;
@@ -16,6 +17,7 @@ interface QuizIsland {
 export default function QuizIslandsPage() {
   const router = useRouter();
   const { convertText } = useCharacterSet();
+  const { isPro, isLoading: subscriptionLoading } = useSubscription();
   const [quizIslands, setQuizIslands] = useState<QuizIsland[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -24,8 +26,18 @@ export default function QuizIslandsPage() {
   const [deletingIslandId, setDeletingIslandId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (subscriptionLoading) return;
+    if (isPro) return;
+    router.replace("/app?upgrade=1&feature=Quiz%20Islands");
+  }, [subscriptionLoading, isPro, router]);
+
+  useEffect(() => {
     loadQuizIslands();
   }, []);
+
+  if (!subscriptionLoading && !isPro) {
+    return null;
+  }
 
   const loadQuizIslands = async () => {
     try {

@@ -101,6 +101,19 @@ export default function QuizSessionPage() {
       if (!response.ok) throw new Error("Failed to grade");
 
       const result = await response.json();
+      if (
+        typeof result?.huahuaTotalReviews === "number" &&
+        typeof result?.huahuaStage === "number"
+      ) {
+        window.dispatchEvent(
+          new CustomEvent("huahua-progress-updated", {
+            detail: {
+              totalReviews: result.huahuaTotalReviews,
+              stage: result.huahuaStage,
+            },
+          }),
+        );
+      }
 
       let didShowUpgrade = false;
       if (typeof result?.todayCount === "number" && progressUpgrade) {
@@ -307,4 +320,3 @@ export default function QuizSessionPage() {
     </div>
   );
 }
-

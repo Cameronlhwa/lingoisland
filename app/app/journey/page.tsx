@@ -436,8 +436,12 @@ function JourneyMapNode({
   onContinue: (node: PathNode) => void;
   scale?: number;
 }) {
+  const [isHovered, setIsHovered] = useState(false);
   const isStory = node.type === "story";
   const storyClickable = isStory && (node.current || node.completed);
+  const islandClickable = node.completed || node.current || node.paywalled;
+  const hoverEligible = node.completed || node.current;
+  const hoverScale = hoverEligible && isHovered ? 1.08 : 1;
   const onLeft = baseNode.bx < BASE_W / 2;
   const storySize = Math.round(40 * scale);
   const islandSize = Math.round((node.current ? 52 : 44) * scale);
@@ -454,7 +458,7 @@ function JourneyMapNode({
       }
       return;
     }
-    if (node.completed || node.current || node.paywalled) {
+    if (islandClickable) {
       void onContinue(node);
     }
   };
@@ -479,6 +483,8 @@ function JourneyMapNode({
                 void onContinue(node);
               }
             }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             onKeyDown={(event) => {
               if (!storyClickable) return;
               if (event.key === "Enter" || event.key === " ") {
@@ -495,6 +501,9 @@ function JourneyMapNode({
               pointerEvents: storyClickable ? "auto" : "none",
               position: "relative",
               zIndex: 1,
+              transform: `scale(${hoverScale})`,
+              transition: "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
+              willChange: "transform",
             }}
             disabled={!storyClickable}
           >
@@ -505,10 +514,12 @@ function JourneyMapNode({
               <button
                 type="button"
                 onClick={() => void onContinue(node)}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 style={{
                   position: "absolute",
                   top: "50%",
-                  transform: "translateY(-50%)",
+                  transform: `translateY(-50%) scale(${hoverScale})`,
                   ...(onLeft
                     ? { left: labelOffset }
                     : { right: labelOffset }),
@@ -520,6 +531,8 @@ function JourneyMapNode({
                   cursor: "pointer",
                   pointerEvents: "auto",
                   zIndex: node.current ? 90 : 40,
+                  transition: "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  willChange: "transform",
                 }}
               >
                 <LabelCard
@@ -560,6 +573,8 @@ function JourneyMapNode({
           <button
             type="button"
             onClick={handleClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             style={{
               width: islandSize,
               height: islandSize,
@@ -569,8 +584,11 @@ function JourneyMapNode({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              cursor: node.completed || node.current || node.paywalled ? "pointer" : "default",
+              cursor: islandClickable ? "pointer" : "default",
               padding: 0,
+              transform: `scale(${hoverScale})`,
+              transition: "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
+              willChange: "transform",
             }}
           >
             {node.completed ? (
@@ -591,26 +609,59 @@ function JourneyMapNode({
           </button>
 
           {showLabel && (
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                transform: "translateY(-50%)",
-                ...(onLeft
-                  ? { left: iconHalf + 10 }
-                  : { right: iconHalf + 10 }),
-                width: labelWidth,
-                pointerEvents: node.current ? "auto" : "none",
-              }}
-            >
-              <LabelCard
-                node={node}
-                isStory={false}
-                isDesktop={showDesktopDetails}
-                onContinue={onContinue}
-                scale={scale}
-              />
-            </div>
+            islandClickable ? (
+              <button
+                type="button"
+                onClick={handleClick}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  transform: `translateY(-50%) scale(${hoverScale})`,
+                  ...(onLeft
+                    ? { left: iconHalf + 10 }
+                    : { right: iconHalf + 10 }),
+                  width: labelWidth,
+                  border: "none",
+                  background: "transparent",
+                  padding: 0,
+                  textAlign: "left",
+                  cursor: "pointer",
+                  transition: "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  willChange: "transform",
+                }}
+              >
+                <LabelCard
+                  node={node}
+                  isStory={false}
+                  isDesktop={showDesktopDetails}
+                  onContinue={onContinue}
+                  scale={scale}
+                />
+              </button>
+            ) : (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  ...(onLeft
+                    ? { left: iconHalf + 10 }
+                    : { right: iconHalf + 10 }),
+                  width: labelWidth,
+                  pointerEvents: "none",
+                }}
+              >
+                <LabelCard
+                  node={node}
+                  isStory={false}
+                  isDesktop={showDesktopDetails}
+                  onContinue={onContinue}
+                  scale={scale}
+                />
+              </div>
+            )
           )}
         </>
       )}

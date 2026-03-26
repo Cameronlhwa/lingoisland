@@ -1,6 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+function stageForTotalReviews(totalReviews: number) {
+  if (totalReviews >= 90) return 5
+  if (totalReviews >= 50) return 4
+  if (totalReviews >= 25) return 3
+  if (totalReviews >= 10) return 2
+  return 1
+}
+
 /**
  * POST /api/quiz-islands/[id]/grade
  * Grade a card (forgot/hard/good/easy)
@@ -83,15 +91,17 @@ export async function POST(
       .eq('user_id', user.id)
       .maybeSingle()
     const newTotal = (profile?.huahua_total_reviews ?? 0) + 1
-    const newStage =
-      newTotal >= 90 ? 5 : newTotal >= 50 ? 4 : newTotal >= 25 ? 3 : newTotal >= 10 ? 2 : 1
+    const newStage = stageForTotalReviews(newTotal)
     const { error: huahuaErr } = await supabase
       .from('user_profiles')
-      .update({
-        huahua_total_reviews: newTotal,
-        huahua_stage: newStage,
-      })
-      .eq('user_id', user.id)
+      .upsert(
+        {
+          user_id: user.id,
+          huahua_total_reviews: newTotal,
+          huahua_stage: newStage,
+        },
+        { onConflict: 'user_id' }
+      )
     if (huahuaErr) {
       console.error('Error updating huahua progression:', huahuaErr)
     }
@@ -110,7 +120,13 @@ export async function POST(
     ])
     todayCount = (qRes.count ?? 0) + (tRes.count ?? 0)
 
-    return NextResponse.json({ success: true, reviewState: data, todayCount })
+    return NextResponse.json({
+      success: true,
+      reviewState: data,
+      todayCount,
+      huahuaTotalReviews: newTotal,
+      huahuaStage: newStage,
+    })
   } catch (error) {
     console.error('Error in POST /api/quiz-islands/[id]/grade:', error)
     return NextResponse.json(
@@ -119,4 +135,3 @@ export async function POST(
     )
   }
 }
-
