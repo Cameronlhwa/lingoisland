@@ -35,6 +35,7 @@ export async function generateStory({
   lengthChars,
   targetWords,
   requestedWords,
+  extraInstructions,
   maxAttempts = 4,
 }: {
   topic: string;
@@ -42,6 +43,7 @@ export async function generateStory({
   lengthChars: number;
   targetWords: StoryWord[];
   requestedWords: string[];
+  extraInstructions?: string;
   maxAttempts?: number;
 }): Promise<StoryResponse> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -127,6 +129,7 @@ Story requirements:
 - Use Simplified Chinese (简体中文)
 - Include all target words naturally in the story
 - Count your characters before finalizing!
+${extraInstructions ? `- Additional guidance: ${extraInstructions}\n` : ""}
 
 Output STRICT JSON only:
 {
@@ -234,4 +237,3 @@ REMEMBER: Count story_zh characters (excluding spaces/punctuation) = ${minLength
 
   throw lastError || new Error("Failed to generate story");
 }
-

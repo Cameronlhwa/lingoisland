@@ -118,7 +118,6 @@ export default function HomeDashboard({
   }, [dailyStory]);
 
   useEffect(() => {
-    // If there's a pending island request, defer to the dedicated loading page
     const pendingRequestStr = localStorage.getItem(STORAGE_KEY);
     if (pendingRequestStr) {
       router.replace("/app/topic-islands/loading");
@@ -153,10 +152,8 @@ export default function HomeDashboard({
         setHuahuaTotalReviews(profile.huahua_total_reviews ?? 0);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router, supabase]);
 
-  // Refetch today's review count when tab becomes visible so Progress Island updates after quiz sessions
   useEffect(() => {
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -299,7 +296,6 @@ export default function HomeDashboard({
       );
       setTodayReviewCount(todayEntry?.count ?? 0);
 
-      // Get last 7 days of activity
       const activityMap = new Map<string, number>();
       (data.activity || []).forEach(
         (entry: { date: string; count: number }) => {
@@ -472,13 +468,15 @@ export default function HomeDashboard({
           </div>
 
           {capybaraOpen ? (
-            <CapybaraStrip stage={huahuaStage} totalReviews={huahuaTotalReviews} />
+            <CapybaraStrip
+              stage={huahuaStage}
+              totalReviews={huahuaTotalReviews}
+            />
           ) : null}
 
           <JourneyHero journey={activeJourney} nodes={activeJourneyNodes} />
         </div>
 
-        {/* ROW 2: Create Topic Island + Read Daily Story (2 columns on desktop, stack on mobile) */}
         <div className="grid gap-4 md:gap-6 md:grid-cols-2">
           <CreateIslandCard
             onCreate={handleCreateIsland}
@@ -506,9 +504,7 @@ export default function HomeDashboard({
           />
         </div>
 
-        {/* ROW 3: Review Topic Islands + Review Quiz Islands */}
         <div className="grid gap-4 md:gap-6 md:grid-cols-2">
-          {/* Review your Topic Islands */}
           <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-6`}>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div>
@@ -638,7 +634,6 @@ export default function HomeDashboard({
             )}
           </div>
 
-          {/* Review your Quiz Islands */}
           <div className={`${cardBaseClass} ${cardHoverClass} p-4 md:p-5`}>
             <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div>

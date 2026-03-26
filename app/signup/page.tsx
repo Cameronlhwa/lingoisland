@@ -27,10 +27,10 @@ function SignupPageContent() {
   const [linking, setLinking] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState<boolean | null>(null);
 
-  const nextPath =
-    searchParams.get("next")?.startsWith("/") === true
-      ? searchParams.get("next")!
-      : "/app";
+  const nextPath = (() => {
+    const candidate = searchParams.get("next") ?? searchParams.get("redirect");
+    return candidate?.startsWith("/") === true ? candidate : "/app";
+  })();
   const fromSidebar = searchParams.get("from") === "sidebar";
   const featureName = searchParams.get("feature") ?? "";
 
@@ -181,9 +181,9 @@ function SignupPageContent() {
           type="button"
           onClick={handleGoogleSignup}
           disabled={linking}
-          className="w-full rounded-lg border border-gray-900 bg-white px-6 py-4 text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50 disabled:opacity-70"
+          className="w-full rounded-lg border-2 border-gray-900 bg-gray-900 px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-gray-800 disabled:opacity-70"
         >
-          {linking ? "Redirecting…" : "Sign up with Google"}
+          {linking ? "Redirecting…" : "Continue with Google"}
         </button>
 
         <div className="my-8 flex items-center gap-4">

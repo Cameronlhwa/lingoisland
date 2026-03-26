@@ -38,7 +38,7 @@ export default function Sidebar({
   const isTopicIslandDetail = pathname.startsWith("/app/topic-islands/");
   const [localIsAccountOpen, setLocalIsAccountOpen] = useState(false);
   const { isOpen: sidebarOpen, setIsOpen: setSidebarOpen, isAnonymous, openSignupModal } = useSidebar();
-  
+
   // Use parent-controlled state if provided, otherwise use local state
   const isAccountOpen = isAccountModalOpen ?? localIsAccountOpen;
   const setIsAccountOpen = setIsAccountModalOpen ?? setLocalIsAccountOpen;
@@ -102,11 +102,9 @@ export default function Sidebar({
                 pathname === item.href || pathname.startsWith(item.href + "/");
             }
 
-            const btnClass = `flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-base font-medium text-gray-900 transition-colors ${
-              isActive
-                ? "border-gray-900 bg-white"
-                : "border-gray-300 bg-white hover:bg-gray-50"
-            }`;
+            const btnClass = isActive
+              ? "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold bg-gray-900 text-white transition-colors"
+              : "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900";
 
             if (isAnonymous) {
               return (
@@ -165,7 +163,7 @@ export default function Sidebar({
                         entry.blur
                           ? "pointer-events-none cursor-default border-gray-200 bg-gray-50 py-2 text-sm"
                           : isActive
-                            ? "border-gray-900 bg-gray-50 py-2 text-sm font-semibold text-gray-900"
+                            ? "border-gray-200 bg-gray-50 py-2 text-sm font-semibold text-gray-900"
                             : "border-gray-200 bg-white py-1.5 text-xs text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                     >
