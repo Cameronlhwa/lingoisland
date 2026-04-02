@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { incrementHuahua } from '@/lib/huahua'
 
 /**
  * POST /api/quiz/answer
@@ -108,7 +109,21 @@ export async function POST(request: Request) {
       )
     }
 
-    return NextResponse.json({ reviewState: updatedState })
+    // Log to quiz_activity_events so activity calendar + huahua count this review.
+    const { error: eventErr } = await supabase
+      .from('quiz_activity_events')
+      .insert({ user_id: user.id, card_id: cardId, reviewed_at: now.toISOString() })
+    if (eventErr) {
+      console.error('Error logging quiz_activity_events:', eventErr)
+    }
+
+    const { huahuaReviewsToday, huahuaStage } = await incrementHuahua(supabase, user.id, 1)
+
+    return NextResponse.json({
+      reviewState: updatedState,
+      huahuaTotalReviews: huahuaReviewsToday,
+      huahuaStage,
+    })
   } catch (error) {
     console.error('Error in POST /api/quiz/answer:', error)
     return NextResponse.json(

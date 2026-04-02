@@ -4,26 +4,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
-import DailyStoryCard, {
-  type DailyStorySummary,
-} from "@/components/stories/DailyStoryCard";
-import CreateIslandCard from "@/components/app/CreateIslandCard";
+import type { DailyStorySummary } from "@/components/stories/DailyStoryCard";
 import JourneyHero from "@/components/app/JourneyHero";
-import CapybaraStrip from "@/components/app/CapybaraStrip";
 import { getLocalDateKey } from "@/lib/utils/date";
 import { useSidebar } from "@/components/app/AppLayoutClient";
-import {
-  buttonPrimaryClass,
-  buttonSecondaryClass,
-  buttonIconClass,
-  cardBaseClass,
-  cardHoverClass,
-} from "@/components/app/ui/styles";
-import PaywallGuard from "@/components/PaywallGuard";
 import UpgradeModal from "@/components/app/UpgradeModal";
 import { useSubscription } from "@/hooks/useSubscription";
+import { STAGE_THRESHOLDS } from "@/lib/huahua";
+
+// ─── Types (unchanged) ────────────────────────────────────────────────────────
 
 interface TopicIsland {
   id: string;
@@ -52,6 +44,7 @@ interface FlashcardDeckCard extends QuizIslandSummary {
   statusLabel: string;
   progressPercent: number;
 }
+
 interface QuizStatsRow {
   forgot_count: number;
   hard_count: number;
@@ -62,6 +55,258 @@ interface QuizStatsRow {
 }
 
 const STORAGE_KEY = "pending_topic_island_request";
+
+// ─── Capybara constants ────────────────────────────────────────────────────────
+
+const STAGE_NAMES = ["Bare Island", "Foundation", "Village", "Town", "Thriving City"];
+const STAGE_EMOJIS = ["🏜️", "🏗️", "🏘️", "🏙️", "🌆"];
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function TopBar({
+  streakDays,
+  wordsLearned,
+  dueCount,
+  stage,
+}: {
+  streakDays: number;
+  wordsLearned: number;
+  dueCount: number;
+  stage: number;
+}) {
+  const safeStage = Math.min(5, Math.max(1, stage || 1));
+  const stageName = STAGE_NAMES[safeStage - 1];
+
+  return (
+    <div className="sticky top-0 z-30 flex h-[52px] items-center justify-between border-b border-slate-100 bg-white px-6">
+      <div className="flex items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600">
+          🔥 {streakDays} day streak
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+          {wordsLearned} words learned
+        </span>
+        {dueCount > 0 && (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+            {dueCount} due
+          </span>
+        )}
+      </div>
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
+        🦫 华华 · Stage {safeStage} · {stageName}
+      </span>
+    </div>
+  );
+}
+
+function CapybaraCard({
+  stage,
+  totalReviews,
+}: {
+  stage: number;
+  totalReviews: number;
+}) {
+  const safeStage = Math.min(5, Math.max(1, stage || 1));
+  const prevThreshold = STAGE_THRESHOLDS[safeStage - 1] ?? 0;
+  const nextThreshold = safeStage < 5 ? STAGE_THRESHOLDS[safeStage] : null;
+  const stageRange = nextThreshold ? nextThreshold - prevThreshold : 10;
+  const stageProgress = nextThreshold
+    ? Math.min(100, ((totalReviews - prevThreshold) / stageRange) * 100)
+    : 100;
+  const reviewsUntilNext = nextThreshold
+    ? Math.max(0, nextThreshold - totalReviews)
+    : 0;
+  const isComplete = safeStage === 5;
+  const stageName = STAGE_NAMES[safeStage - 1];
+  const stageEmoji = STAGE_EMOJIS[safeStage - 1];
+
+  return (
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
+      {/* Art area */}
+      <div className="flex h-[148px] items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
+        <div className="relative h-36 w-36">
+          <Image
+            src={`/progress-islands/stage-${safeStage}.png`}
+            alt={`华华's island — Stage ${safeStage}`}
+            fill
+            className="object-contain"
+            sizes="144px"
+          />
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex flex-1 flex-col p-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+          华华's Island
+        </p>
+        <p className="mt-1 text-sm font-black text-slate-900">
+          Stage {safeStage} · {stageName}
+        </p>
+        <p className="mt-0.5 text-xs text-slate-400">
+          {isComplete ? "Island complete 🎉" : `Currently: ${stageEmoji} ${stageName}`}
+        </p>
+
+        {/* Progress bar */}
+        <div className="mt-3">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-slate-900 transition-all duration-500"
+              style={{ width: `${stageProgress}%` }}
+            />
+          </div>
+          {!isComplete && (
+            <p className="mt-1.5 text-[10px] text-slate-400">
+              {reviewsUntilNext} more card{reviewsUntilNext !== 1 ? "s" : ""} to Stage {safeStage + 1}
+            </p>
+          )}
+        </div>
+
+        <Link
+          href="/app/quiz"
+          className="mt-auto rounded-xl bg-slate-900 px-4 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-slate-800"
+        >
+          Review cards →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function HomeDailyStoryCard({
+  story,
+  loading,
+}: {
+  story: DailyStorySummary | null;
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
+        <div className="flex h-[148px] items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-slate-500" />
+        </div>
+        <div className="flex flex-1 flex-col p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Daily Story</p>
+          <p className="mt-2 text-xs text-slate-400">Generating today's story…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!story) {
+    return (
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
+        <div className="flex h-[148px] items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
+          <span className="text-4xl">📖</span>
+        </div>
+        <div className="flex flex-1 flex-col p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Daily Story</p>
+          <p className="mt-2 text-xs text-slate-400">No story today yet.</p>
+          <Link
+            href="/app/story/daily"
+            className="mt-auto rounded-xl bg-slate-900 px-4 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-slate-800"
+          >
+            Generate story →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const level = (story as any).level as string | undefined;
+  const lengthChars = (story as any).length_chars as number | undefined;
+  const storyZh = (story as any).story_zh as string | undefined;
+  const storyId = (story as any).id as string | undefined;
+  const title = (story as any).title as string | undefined;
+  const titleEn = (story as any).title_en as string | null | undefined;
+
+  const readMins = lengthChars ? Math.max(1, Math.ceil(lengthChars / 200)) : 2;
+  const excerpt = storyZh ? storyZh.slice(0, 80) + (storyZh.length > 80 ? "…" : "") : "";
+
+  return (
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
+      {/* Header area */}
+      <div className="flex h-[148px] flex-col justify-end border-b border-[#c8dce6] p-4" style={{ background: "#d5ebf6" }}>
+        <div className="mb-2 flex items-center gap-2">
+          {level && (
+            <span className="rounded-full border border-[#b5d4e8] bg-white/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+              {level}
+            </span>
+          )}
+          <span className="rounded-full border border-[#b5d4e8] bg-white/70 px-2 py-0.5 text-[10px] font-semibold text-slate-400">
+            ~{readMins} min
+          </span>
+        </div>
+        <p className="line-clamp-1 text-base font-black leading-tight text-slate-900">
+          {title ?? "今日故事"}
+        </p>
+        {titleEn && (
+          <p className="mt-0.5 line-clamp-1 text-[11px] font-medium leading-tight text-slate-500">
+            {titleEn}
+          </p>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="flex flex-1 flex-col p-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+          Daily Story · Today
+        </p>
+        {excerpt && (
+          <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-slate-500">
+            {excerpt}
+          </p>
+        )}
+        <Link
+          href={storyId ? `/app/story/${storyId}` : "/app/story/daily"}
+          className="mt-auto rounded-xl bg-slate-900 px-4 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-slate-800"
+        >
+          Read story →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function CreateIslandDashCard() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
+      {/* Art area */}
+      <div className="flex h-[148px] flex-col items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "rgba(74,159,196,0.15)" }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4a9fc4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="16" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+        </div>
+        <p className="mt-2.5 text-xs font-semibold text-slate-500">New island</p>
+      </div>
+
+      {/* Body */}
+      <div className="flex flex-1 flex-col p-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+          Topic Islands
+        </p>
+        <p className="mt-1 text-sm font-black text-slate-900">
+          Create a specialized island
+        </p>
+        <p className="mt-0.5 text-xs text-slate-400">
+          Pick any topic and get vocab + examples tailored to your level.
+        </p>
+        <Link
+          href="/app/topic-islands?create=1"
+          className="mt-auto rounded-xl bg-slate-900 px-4 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-slate-800"
+        >
+          Create island →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main dashboard ───────────────────────────────────────────────────────────
 
 export default function HomeDashboard({
   dailyStory,
@@ -113,7 +358,7 @@ export default function HomeDashboard({
   >([]);
   const [huahuaStage, setHuahuaStage] = useState(1);
   const [huahuaTotalReviews, setHuahuaTotalReviews] = useState(0);
-  const [capybaraOpen, setCapybaraOpen] = useState(false);
+  const [firstName, setFirstName] = useState("there");
   const { isAnonymous, openSignupModal } = useSidebar();
   const { isPro } = useSubscription();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -149,10 +394,18 @@ export default function HomeDashboard({
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
+      // Extract first name from user metadata
+      const name =
+        (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ||
+        (user.user_metadata?.name as string | undefined)?.split(" ")[0] ||
+        user.email?.split("@")[0] ||
+        "there";
+      setFirstName(name);
       const { count } = await supabase
         .from("island_words")
         .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .not("learned_at", "is", null);
       setTotalWordsLearned(count ?? 0);
       const jr = await fetch("/api/journey/active", { cache: "no-store" });
       if (jr.ok) {
@@ -184,12 +437,11 @@ export default function HomeDashboard({
     document.addEventListener("visibilitychange", onRefreshSignals);
     window.addEventListener("focus", onRefreshSignals);
     window.addEventListener("huahua-progress-updated", onHuahuaProgressUpdated as EventListener);
-    return () =>
-      {
-        document.removeEventListener("visibilitychange", onRefreshSignals);
-        window.removeEventListener("focus", onRefreshSignals);
-        window.removeEventListener("huahua-progress-updated", onHuahuaProgressUpdated as EventListener);
-      };
+    return () => {
+      document.removeEventListener("visibilitychange", onRefreshSignals);
+      window.removeEventListener("focus", onRefreshSignals);
+      window.removeEventListener("huahua-progress-updated", onHuahuaProgressUpdated as EventListener);
+    };
   }, []);
 
   useEffect(() => {
@@ -238,14 +490,40 @@ export default function HomeDashboard({
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: profile } = await supabase
+
+      const { data: profile, error: profileError } = await supabase
         .from("user_profiles")
-        .select("huahua_stage, huahua_total_reviews")
+        .select("huahua_stage, huahua_reviews_today, huahua_last_review_date, huahua_total_reviews")
         .eq("user_id", user.id)
         .maybeSingle();
+
+      if (profileError) {
+        // huahua_reviews_today column may not exist yet — fall back to total reviews.
+        const { data: fb } = await supabase
+          .from("user_profiles")
+          .select("huahua_stage, huahua_total_reviews")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (fb) {
+          setHuahuaTotalReviews(fb.huahua_total_reviews ?? 0);
+          setHuahuaStage(fb.huahua_stage ?? 1);
+        }
+        return;
+      }
       if (!profile) return;
-      setHuahuaStage(profile.huahua_stage ?? 1);
-      setHuahuaTotalReviews(profile.huahua_total_reviews ?? 0);
+
+      const today = new Date().toISOString().split("T")[0];
+      if (profile.huahua_reviews_today != null) {
+        // Daily-reset columns exist — use them.
+        const isToday = profile.huahua_last_review_date === today;
+        const reviews = isToday ? (profile.huahua_reviews_today ?? 0) : 0;
+        setHuahuaTotalReviews(reviews);
+        setHuahuaStage(isToday ? (profile.huahua_stage ?? 1) : 1);
+      } else {
+        // Columns not yet in schema — use total reviews.
+        setHuahuaTotalReviews(profile.huahua_total_reviews ?? 0);
+        setHuahuaStage(profile.huahua_stage ?? 1);
+      }
     } catch (error) {
       console.error("Error loading huahua progress:", error);
     }
@@ -369,22 +647,16 @@ export default function HomeDashboard({
     }
   };
 
-  const showFlashcardsPanel = !flashcardsLoading;
+  // Keep existing memos (data still available even if not rendered)
   const deckCards = useMemo<FlashcardDeckCard[]>(() => {
     if (flashcardsLoading) return [];
-
-    const buildCard = (
-      deck: QuizIslandSummary,
-      index: number,
-    ): FlashcardDeckCard => {
+    const buildCard = (deck: QuizIslandSummary, index: number): FlashcardDeckCard => {
       const stats = quizStatsByIsland[deck.id];
       const dueCount = (stats?.forgot_count ?? 0) + (stats?.hard_count ?? 0);
       const totalCount = stats?.total_count ?? deck.card_count ?? 0;
       const progressPercent = Math.min(
         100,
-        totalCount > 0
-          ? Math.round(((totalCount - dueCount) / totalCount) * 100)
-          : 0,
+        totalCount > 0 ? Math.round(((totalCount - dueCount) / totalCount) * 100) : 0,
       );
       const statusLabel =
         dueCount > 8
@@ -392,16 +664,8 @@ export default function HomeDashboard({
           : dueCount > 4
             ? convertText(t("Practice"))
             : convertText(t("New"));
-
-      return {
-        ...deck,
-        dueCount,
-        totalCount,
-        statusLabel,
-        progressPercent,
-      };
+      return { ...deck, dueCount, totalCount, statusLabel, progressPercent };
     };
-
     return flashcardDecks.map(buildCard);
   }, [flashcardsLoading, flashcardDecks, quizStatsByIsland, t, convertText]);
 
@@ -414,438 +678,77 @@ export default function HomeDashboard({
     return s;
   }, [last7DaysActivity]);
 
-  const handleCreateIsland = () => {
-    if (isAnonymous) {
-      openSignupModal("Topic Islands");
-      return;
-    }
-    router.push("/app/topic-islands");
-  };
+  // Capybara progress for greeting
+  const safeStage = Math.min(5, Math.max(1, huahuaStage || 1));
+  const nextThreshold = safeStage < 5 ? STAGE_THRESHOLDS[safeStage] : null;
+  const reviewsUntilNext = nextThreshold
+    ? Math.max(0, nextThreshold - huahuaTotalReviews)
+    : 0;
 
-  const paywallEnabled = !isAnonymous && !isPro;
-
-  const handleScrollIslands = (direction: "left" | "right") => {
-    const container = islandsScrollRef.current;
-    if (!container) return;
-    const scrollAmount = Math.max(container.clientWidth * 0.75, 240);
-    container.scrollBy({
-      left: direction === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    });
-  };
-
-  const handleScrollDecks = (direction: "left" | "right") => {
-    const container = flashcardsScrollRef.current;
-    if (!container) return;
-    const scrollAmount = Math.max(container.clientWidth * 0.75, 240);
-    container.scrollBy({
-      left: direction === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    });
-  };
+  // Time-based greeting
+  const timeGreeting = useMemo(() => {
+    const h = new Date().getHours();
+    return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  }, []);
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex items-center gap-3 text-gray-600">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="flex items-center gap-3 text-gray-400">
           <svg
-            className="h-5 w-5 animate-spin text-gray-400"
+            className="h-5 w-5 animate-spin"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
           >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            />
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
           </svg>
-          <span>{convertText(t("Loading..."))}</span>
+          <span className="text-sm">{convertText(t("Loading..."))}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white px-4 py-6 md:px-6 md:py-8 lg:px-10">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 pb-8 md:gap-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-2 md:gap-3">
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-900">
-              🔥 {streakDays} day streak
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-white px-3 py-1.5 text-sm text-teal-700">
-              🧠 {totalWordsLearned} words learned
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700">
-              ⏰ {dueCardCount} due for review
-            </span>
-            {!islandLoading && last7DaysActivity.length > 0 ? (
-              <div className="hidden items-center gap-1 sm:flex" title="Last 7 days">
-                {last7DaysActivity.map((day) => (
-                  <div
-                    key={day.date}
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      day.count > 0 ? "bg-teal-500" : "bg-slate-200"
-                    }`}
-                  />
-                ))}
-              </div>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => setCapybaraOpen((o) => !o)}
-              className={`ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
-                capybaraOpen
-                  ? "border-gray-900 bg-gray-900 text-white"
-                  : "border-gray-200 bg-white text-gray-500 hover:border-gray-400"
-              }`}
-            >
-              <span>🦫</span>
-              <span>华华</span>
-              <span className="opacity-40">{capybaraOpen ? "▲" : "▼"}</span>
-            </button>
-          </div>
+    <div className="min-h-screen bg-slate-50">
+      {/* Sticky top bar */}
+      <TopBar
+        streakDays={streakDays}
+        wordsLearned={totalWordsLearned}
+        dueCount={dueCardCount}
+        stage={huahuaStage}
+      />
 
-          {capybaraOpen ? (
-            <CapybaraStrip
-              stage={huahuaStage}
-              totalReviews={huahuaTotalReviews}
-            />
-          ) : null}
+      {/* Page content */}
+      <div className="mx-auto max-w-[1060px] px-9 py-8">
 
-          <JourneyHero journey={activeJourney} nodes={activeJourneyNodes} />
+        {/* Greeting */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900">
+            {timeGreeting}, {firstName} 👋
+          </h1>
+          {!islandLoading && (
+            <p className="mt-1 text-sm font-medium text-slate-400">
+              {reviewsUntilNext > 0
+                ? `${reviewsUntilNext} more card${reviewsUntilNext !== 1 ? "s" : ""} and 华华 hits Stage ${safeStage + 1}.`
+                : "华华's island is thriving! Keep it up."}
+            </p>
+          )}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 md:gap-6">
-          <PaywallGuard enabled={paywallEnabled} featureHint="Topic Islands">
-            <CreateIslandCard
-              onCreate={handleCreateIsland}
-              onBrowse={
-                isAnonymous
-                  ? (e) => {
-                      e.preventDefault();
-                      openSignupModal("Browse Topics");
-                    }
-                  : undefined
-              }
-            />
-          </PaywallGuard>
-          <PaywallGuard enabled={paywallEnabled} featureHint="Daily Stories">
-            <DailyStoryCard
-              variant="home"
-              story={dailyStoryLocal}
-              loading={dailyLoading}
-              onRead={
-                isAnonymous
-                  ? (e) => {
-                      e.preventDefault();
-                      openSignupModal("Stories");
-                    }
-                  : undefined
-              }
-            />
-          </PaywallGuard>
+        {/* Active Journey — full width */}
+        <JourneyHero journey={activeJourney} nodes={activeJourneyNodes} />
+
+        {/* 3-col grid */}
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <CapybaraCard stage={huahuaStage} totalReviews={huahuaTotalReviews} />
+          <HomeDailyStoryCard story={dailyStoryLocal} loading={dailyLoading} />
+          <CreateIslandDashCard />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 md:gap-6">
-          <div className={`${cardBaseClass} ${cardHoverClass} flex h-full flex-col p-4 md:p-6`}>
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-base md:text-lg font-semibold text-gray-900">
-                  {convertText(t("Review your Topic Islands"))}
-                </h2>
-                <p className="mt-1 text-xs md:text-sm text-gray-600">
-                  {convertText(t("Quick refreshes."))}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <PaywallGuard enabled={paywallEnabled} featureHint="Topic Islands">
-                  <button
-                    onClick={() => handleScrollIslands("left")}
-                    className={buttonIconClass}
-                    aria-label={convertText(t("Scroll islands left"))}
-                  >
-                    ←
-                  </button>
-                </PaywallGuard>
-                <PaywallGuard enabled={paywallEnabled} featureHint="Topic Islands">
-                  <button
-                    onClick={() => handleScrollIslands("right")}
-                    className={buttonIconClass}
-                    aria-label={convertText(t("Scroll islands right"))}
-                  >
-                    →
-                  </button>
-                </PaywallGuard>
-                <PaywallGuard enabled={paywallEnabled} featureHint="Topic Islands">
-                  <Link
-                    href="/app/topic-islands"
-                    className={buttonSecondaryClass}
-                    onClick={
-                      isAnonymous
-                        ? (e) => {
-                            e.preventDefault();
-                            openSignupModal("Topic Islands");
-                          }
-                        : undefined
-                    }
-                  >
-                    {convertText(t("View All"))}
-                  </Link>
-                </PaywallGuard>
-              </div>
-            </div>
-
-            {topicIslands.length > 0 ? (
-              <div
-                ref={islandsScrollRef}
-                className="-mx-2 flex gap-4 overflow-x-auto px-2 pb-2"
-              >
-                {topicIslands.map((island, index) => {
-                  const daysSince = Math.max(
-                    1,
-                    Math.round(
-                      (Date.now() - new Date(island.created_at).getTime()) /
-                        (1000 * 60 * 60 * 24),
-                    ),
-                  );
-                  const dueCount = (daysSince * 3 + index * 2) % 12;
-                  const statusLabel =
-                    dueCount > 6
-                      ? convertText(t("Due soon"))
-                      : convertText(t("On track"));
-                  const lastReviewed = Math.min(9, daysSince);
-
-                  return (
-                    <div
-                      key={island.id}
-                      className={`${cardBaseClass} ${cardHoverClass} min-h-[180px] min-w-[180px] sm:min-w-[220px] md:min-w-[240px] max-w-[280px] p-4 flex h-full flex-col`}
-                    >
-                      <h3
-                        className="text-base font-semibold text-gray-900 truncate"
-                        title={island.topic}
-                      >
-                        {convertText(
-                          island.topic.length > 48
-                            ? `${island.topic.slice(0, 45)}...`
-                            : island.topic,
-                        )}
-                      </h3>
-                      <p className="mt-1.5 text-sm text-gray-600">
-                        {island.word_target} {convertText(t("words"))} /{" "}
-                        {island.level}
-                      </p>
-                      <p className="mt-1.5 text-xs text-gray-500">
-                        {statusLabel} · {Math.max(1, dueCount)}{" "}
-                        {convertText(t("due"))}
-                        {" · "}
-                        {convertText(t("Last reviewed"))}: {lastReviewed}
-                        {convertText(t("day short"))}
-                      </p>
-                      <PaywallGuard enabled={paywallEnabled} featureHint="Topic Island Review">
-                        <Link
-                          href={`/app/topic-islands/${island.id}`}
-                          className={`${buttonPrimaryClass} mt-auto`}
-                          onClick={
-                            isAnonymous
-                              ? (e) => {
-                                  e.preventDefault();
-                                  openSignupModal("Topic Islands");
-                                }
-                              : undefined
-                          }
-                        >
-                          {convertText(t("Review"))}
-                        </Link>
-                      </PaywallGuard>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-                <p className="mb-4 text-sm text-gray-600">
-                  {convertText(
-                    t("Create your first island to start reviewing words."),
-                  )}
-                </p>
-                <PaywallGuard enabled={paywallEnabled} featureHint="Topic Islands">
-                  <button
-                    onClick={handleCreateIsland}
-                    className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-                  >
-                    {convertText(
-                      t(
-                        isAnonymous
-                          ? "Create Account to Start"
-                          : "Create your first island",
-                      ),
-                    )}
-                  </button>
-                </PaywallGuard>
-              </div>
-            )}
-          </div>
-
-          <div className={`${cardBaseClass} ${cardHoverClass} flex h-full flex-col p-4 md:p-5`}>
-            <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-base md:text-lg font-semibold text-gray-900">
-                  {convertText(t("Review your Quiz Islands"))}
-                </h2>
-                <p className="mt-1 text-xs md:text-sm text-gray-600">
-                  {convertText(t("Decks ready."))}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <PaywallGuard enabled={paywallEnabled} featureHint="Quiz Islands">
-                  <button
-                    onClick={() => handleScrollDecks("left")}
-                    className={buttonIconClass}
-                    aria-label={convertText(t("Scroll decks left"))}
-                  >
-                    ←
-                  </button>
-                </PaywallGuard>
-                <PaywallGuard enabled={paywallEnabled} featureHint="Quiz Islands">
-                  <button
-                    onClick={() => handleScrollDecks("right")}
-                    className={buttonIconClass}
-                    aria-label={convertText(t("Scroll decks right"))}
-                  >
-                    →
-                  </button>
-                </PaywallGuard>
-                <PaywallGuard enabled={paywallEnabled} featureHint="Quiz Islands">
-                  <Link
-                    href="/app/quiz"
-                    className={buttonSecondaryClass}
-                    onClick={
-                      isAnonymous
-                        ? (e) => {
-                            e.preventDefault();
-                            openSignupModal("Quizzes");
-                          }
-                        : undefined
-                    }
-                  >
-                    {convertText(t("View Decks"))}
-                  </Link>
-                </PaywallGuard>
-              </div>
-            </div>
-
-            <div className="relative">
-              {showFlashcardsPanel ? (
-                deckCards.length > 0 ? (
-                  <div
-                    ref={flashcardsScrollRef}
-                    className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-1"
-                  >
-                    {deckCards.map((deck) => (
-                      <div
-                        key={deck.id}
-                        className={`${cardBaseClass} ${cardHoverClass} min-h-[180px] min-w-[180px] sm:min-w-[220px] md:min-w-[240px] max-w-[280px] p-4 flex h-full flex-col snap-start`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div
-                            className="min-w-0 flex-1 text-sm font-semibold text-gray-900 truncate"
-                            title={deck.name}
-                          >
-                            {convertText(deck.name)}
-                          </div>
-                          <span className="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
-                            {deck.dueCount} {convertText(t("due"))}
-                          </span>
-                        </div>
-                        <p className="mt-2 text-xs text-gray-600">
-                          {deck.statusLabel} · {deck.totalCount}{" "}
-                          {convertText(t("cards"))}
-                        </p>
-                        <div className="mt-2">
-                          <div className="flex items-center justify-between text-[11px] text-gray-500">
-                            <span>
-                              {deck.totalCount} {convertText(t("cards"))}
-                            </span>
-                            <span>{deck.progressPercent}%</span>
-                          </div>
-                          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                            <div
-                              className="h-full rounded-full bg-gray-900"
-                              style={{ width: `${deck.progressPercent}%` }}
-                            />
-                          </div>
-                        </div>
-                        <PaywallGuard enabled={paywallEnabled} featureHint="Quiz Islands">
-                          <Link
-                            href={`/app/quiz/${deck.id}`}
-                            className={`${buttonPrimaryClass} mt-auto`}
-                            onClick={
-                              isAnonymous
-                                ? (e) => {
-                                    e.preventDefault();
-                                    openSignupModal("Quizzes");
-                                  }
-                                : undefined
-                            }
-                          >
-                            {convertText(t("Review"))}
-                          </Link>
-                        </PaywallGuard>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-                    <p className="mb-4 text-sm text-gray-600">
-                      {convertText(
-                        t(
-                          "No flashcard decks yet. Create your first one to start practicing.",
-                        ),
-                      )}
-                    </p>
-                    <PaywallGuard enabled={paywallEnabled} featureHint="Quiz Islands">
-                      <Link
-                        href="/app/quiz"
-                        className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-                        onClick={
-                          isAnonymous
-                            ? (e) => {
-                                e.preventDefault();
-                                openSignupModal("Quizzes");
-                              }
-                            : undefined
-                        }
-                      >
-                        {convertText(
-                          t(
-                            isAnonymous
-                              ? "Create Account to Start"
-                              : "Create your first deck",
-                          ),
-                        )}
-                      </Link>
-                    </PaywallGuard>
-                  </div>
-                )
-              ) : (
-                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
-                  {convertText(t("Add a deck to start reviewing flashcards."))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
+
       <UpgradeModal
         open={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}

@@ -60,15 +60,15 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
     }
 
+    // node_type column may not exist yet in DB; use step_order < 100 to identify islands.
+    // Stories use step_order 102 and 105 in the legacy schema.
     const { data: all } = await supabase
       .from('journey_islands')
-      .select('completed_at')
+      .select('completed_at, step_order')
       .eq('journey_id', params.id)
 
-    const done =
-      all &&
-      all.length === 5 &&
-      all.every((r) => r.completed_at)
+    const islandRows = (all ?? []).filter((r) => Number(r.step_order ?? 0) < 100)
+    const done = islandRows.length > 0 && islandRows.every((r) => r.completed_at)
 
     if (done) {
       await supabase

@@ -23,6 +23,7 @@ import AddAllWordsModal from "@/components/app/AddAllWordsModal";
 import { createClient } from "@/lib/supabase/browser";
 import { useSidebar } from "@/components/app/AppLayoutClient";
 import { BsCardChecklist } from "react-icons/bs";
+import CapybaraStrip from "@/components/app/CapybaraStrip";
 
 interface Sentence {
   id: string;
@@ -38,6 +39,7 @@ interface Word {
   pinyin: string;
   english: string;
   position?: number;
+  learned_at?: string | null;
   sentences: Sentence[];
 }
 
@@ -195,6 +197,37 @@ export default function TopicIslandDetailPage() {
     null,
   );
   const [useTapMode, setUseTapMode] = useState(false);
+  const [huahuaIslandStage, setHuahuaIslandStage] = useState(1);
+  const [huahuaIslandReviews, setHuahuaIslandReviews] = useState(0);
+
+  // Load the user's current huahua progress so CapybaraStrip shows accurate state.
+  useEffect(() => {
+    async function loadHuahuaState() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const today = new Date().toISOString().split("T")[0];
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select(
+          "huahua_reviews_today, huahua_last_review_date, huahua_stage, huahua_total_reviews",
+        )
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!profile) return;
+      if (profile.huahua_reviews_today != null) {
+        const isToday = profile.huahua_last_review_date === today;
+        setHuahuaIslandReviews(isToday ? (profile.huahua_reviews_today ?? 0) : 0);
+        setHuahuaIslandStage(isToday ? (profile.huahua_stage ?? 1) : 1);
+      } else {
+        setHuahuaIslandReviews(profile.huahua_total_reviews ?? 0);
+        setHuahuaIslandStage(profile.huahua_stage ?? 1);
+      }
+    }
+    void loadHuahuaState();
+  }, []);
 
   useEffect(() => {
     loadIsland();
@@ -217,8 +250,7 @@ export default function TopicIslandDetailPage() {
   // Locked word IDs (last N on anonymous 10-word island, control variant only)
   const lockedWordIds = useMemo(() => new Set<string>(), []);
 
-  const expectedSentenceCount =
-    journeyContext?.order === 1 ? 2 : 3;
+  const expectedSentenceCount = 3;
 
   const showJourneyPaywall =
     !!journeyContext &&
@@ -1114,6 +1146,8 @@ export default function TopicIslandDetailPage() {
         typeof data?.huahuaTotalReviews === "number" &&
         typeof data?.huahuaStage === "number"
       ) {
+        setHuahuaIslandReviews(data.huahuaTotalReviews);
+        setHuahuaIslandStage(data.huahuaStage);
         window.dispatchEvent(
           new CustomEvent("huahua-progress-updated", {
             detail: {
@@ -1150,6 +1184,23 @@ export default function TopicIslandDetailPage() {
     } else {
       setCurrentQuizIndex(currentQuizIndex + 1);
       setShowFlashcardAnswer(false);
+    }
+  };
+
+  // Non-journey flashcard: grade doesn't gate anything — just count cards for huahua.
+  const handleFlashcardNext = () => {
+    const currentWord = quizWords[currentQuizIndex];
+    const nextAnswers = { ...quizAnswers, [currentWord.id]: true };
+    setQuizAnswers(nextAnswers);
+    void recordQuizActivity(1);
+    setShowFlashcardAnswer(false);
+
+    const isLastCard = currentQuizIndex >= quizWords.length - 1;
+
+    if (isLastCard) {
+      void finalizeQuiz(nextAnswers);
+    } else {
+      setCurrentQuizIndex(currentQuizIndex + 1);
     }
   };
 
@@ -1224,7 +1275,7 @@ export default function TopicIslandDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {journeyContext?.order === 1 ? (
-        <div className="sticky top-16 z-20 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:top-0 md:px-8">
+        <div className="sticky top-16 z-20 hidden items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:top-0 md:flex md:px-8">
           <AppLogo size="sm" />
           <span className="rounded-full bg-teal-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
             Island 1 of 5 · Free
@@ -1597,6 +1648,11 @@ export default function TopicIslandDetailPage() {
                                   type="word"
                                   size="lg"
                                 />
+                                {word.learned_at ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 ring-1 ring-inset ring-teal-200">
+                                    ✓ Learned
+                                  </span>
+                                ) : null}
                               </div>
                               <div className="mb-2 text-lg text-gray-700">
                                 {word.pinyin}
@@ -2340,6 +2396,10 @@ export default function TopicIslandDetailPage() {
                       quizMode === "flashcard" ? (
                         /* Flashcard Quiz */
                         <div>
+                          <CapybaraStrip
+                            stage={huahuaIslandStage}
+                            totalReviews={huahuaIslandReviews}
+                          />
                           <div className="mb-6 flex items-center justify-between">
                             <span className="text-sm font-medium text-gray-600">
                               Card {currentQuizIndex + 1} of {quizWords.length}
@@ -2442,7 +2502,8 @@ export default function TopicIslandDetailPage() {
                                   >
                                     Show Answer
                                   </button>
-                                ) : (
+                                ) : isJourneyIsland ? (
+                                  /* Journey islands: grade matters for 80% pass threshold */
                                   <div className="flex gap-3">
                                     <button
                                       onClick={() =>
@@ -2459,6 +2520,14 @@ export default function TopicIslandDetailPage() {
                                       I knew it
                                     </button>
                                   </div>
+                                ) : (
+                                  /* Non-journey: just advance — huahua counts every card */
+                                  <button
+                                    onClick={handleFlashcardNext}
+                                    className="w-full rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+                                  >
+                                    Next →
+                                  </button>
                                 )}
                               </div>
                             </div>
@@ -2673,23 +2742,24 @@ export default function TopicIslandDetailPage() {
                           <h3 className="text-3xl font-bold text-gray-900 mb-2">
                             Quiz Complete!
                           </h3>
-                          {(() => {
-                            const correctCount =
-                              Object.values(quizAnswers).filter(Boolean).length;
-                            const totalCount = Object.keys(quizAnswers).length;
-                            const percentage = Math.round(
-                              (correctCount / totalCount) * 100,
-                            );
-                            return (
-                              <>
-                                <p className="text-5xl font-bold text-gray-900 my-6">
-                                  {percentage}%
-                                </p>
-                                <p className="text-lg text-gray-600">
-                                  You got {correctCount} out of {totalCount}{" "}
-                                  correct
-                                </p>
-                                {isJourneyIsland && (
+                          {isJourneyIsland ? (
+                            /* Journey: grade determines whether user advances */
+                            (() => {
+                              const correctCount =
+                                Object.values(quizAnswers).filter(Boolean).length;
+                              const totalCount = Object.keys(quizAnswers).length;
+                              const percentage = Math.round(
+                                (correctCount / totalCount) * 100,
+                              );
+                              return (
+                                <>
+                                  <p className="text-5xl font-bold text-gray-900 my-6">
+                                    {percentage}%
+                                  </p>
+                                  <p className="text-lg text-gray-600">
+                                    You got {correctCount} out of {totalCount}{" "}
+                                    correct
+                                  </p>
                                   <p
                                     className={`mt-4 text-sm font-semibold ${
                                       percentage >= 80
@@ -2701,10 +2771,22 @@ export default function TopicIslandDetailPage() {
                                       ? "Pass! The next island is unlocked."
                                       : "Score 80% or more to unlock the next island."}
                                   </p>
-                                )}
-                              </>
-                            );
-                          })()}
+                                </>
+                              );
+                            })()
+                          ) : (
+                            /* Non-journey: huahua just counts cards, no pass/fail */
+                            <>
+                              <p className="text-5xl font-bold text-gray-900 my-6">
+                                🦫
+                              </p>
+                              <p className="text-lg text-gray-600">
+                                You reviewed {quizWords.length} word
+                                {quizWords.length === 1 ? "" : "s"} — 华华 is
+                                building!
+                              </p>
+                            </>
+                          )}
                         </div>
 
                         {isJourneyIsland && journeyCompletionError && (
@@ -2715,7 +2797,7 @@ export default function TopicIslandDetailPage() {
 
                         <div className="mb-8 space-y-3">
                           <h4 className="text-sm font-semibold text-gray-700 mb-4">
-                            Breakdown:
+                            {isJourneyIsland ? "Breakdown:" : "Words reviewed:"}
                           </h4>
                           {quizWords.map((word) => {
                             const isCorrect = quizAnswers[word.id];
@@ -2723,16 +2805,20 @@ export default function TopicIslandDetailPage() {
                               <div
                                 key={word.id}
                                 className={`p-4 rounded-lg border-2 ${
-                                  isCorrect
-                                    ? "border-green-200 bg-green-50"
-                                    : "border-red-200 bg-red-50"
+                                  isJourneyIsland
+                                    ? isCorrect
+                                      ? "border-green-200 bg-green-50"
+                                      : "border-red-200 bg-red-50"
+                                    : "border-gray-200 bg-gray-50"
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-3">
-                                    <span className="text-xl">
-                                      {isCorrect ? "✓" : "✗"}
-                                    </span>
+                                    {isJourneyIsland && (
+                                      <span className="text-xl">
+                                        {isCorrect ? "✓" : "✗"}
+                                      </span>
+                                    )}
                                     <div>
                                       <div className="font-medium text-gray-900">
                                         {convertText(word.hanzi)} ({word.pinyin}

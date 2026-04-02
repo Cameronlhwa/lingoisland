@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Check, Lock, Map, Plus } from "lucide-react";
+import { BookOpen, Check, Clock, Lock, Map, Plus } from "lucide-react";
 import { useElementWidth } from "@/hooks/useElementWidth";
+import { BrowsePreviousJourneys } from "@/components/app/BrowsePreviousJourneys";
+import type { CompletedJourney } from "@/types/journey";
 
 const BASE_W = 380;
 const MAP_TOP_PADDING = 64;
@@ -724,37 +726,6 @@ function JourneySidebarPanel({
           </div>
         </div>
 
-        {currentNode && (
-          <div className="rounded-2xl bg-gray-900 p-5 shadow-sm">
-            <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
-              Up Next
-            </p>
-            <p className="text-sm font-black text-white">{currentNode.name}</p>
-            <p className="mt-1 text-[11px] text-gray-400">
-              {currentNode.type === "story"
-                ? currentNode.hint ?? "Story checkpoint"
-                : `${currentNode.nameZh ?? "Mandarin vocab"} · ${currentNode.wordCount} words`}
-            </p>
-            {currentNode.type === "island" ? (
-              <button
-                type="button"
-                onClick={() => void onContinue(currentNode)}
-                className="mt-4 w-full rounded-xl bg-white py-2.5 text-xs font-black text-gray-900 transition-colors hover:bg-gray-100"
-              >
-                Continue →
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => void onContinue(currentNode)}
-                className="mt-4 flex w-full items-center justify-center gap-1 rounded-xl bg-white py-2.5 text-xs font-black text-gray-900 transition-colors hover:bg-gray-100"
-              >
-                <BookOpen className="h-3 w-3" />
-                Story checkpoint
-              </button>
-            )}
-          </div>
-        )}
 
         {comingUp.length > 0 && (
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
@@ -864,6 +835,7 @@ export default function JourneyPage() {
   } | null>(null);
   const [apiNodes, setApiNodes] = useState<ApiNode[]>([]);
   const [isPro, setIsPro] = useState(false);
+  const [pastJourneys, setPastJourneys] = useState<CompletedJourney[]>([]);
   const pageWidth = useElementWidth(pageRef, 920);
   const wide = isDesktopViewport && pageWidth > 560;
   const mapUiScale =
@@ -871,9 +843,10 @@ export default function JourneyPage() {
 
   useEffect(() => {
     const load = async () => {
-      const [journeyRes, entRes] = await Promise.all([
+      const [journeyRes, entRes, pastRes] = await Promise.all([
         fetch("/api/journey/active", { cache: "no-store" }),
         fetch("/api/entitlements"),
+        fetch("/api/journey/past", { cache: "no-store" }),
       ]);
       if (journeyRes.ok) {
         const data = await journeyRes.json();
@@ -882,6 +855,10 @@ export default function JourneyPage() {
       }
       const ent = await entRes.json().catch(() => ({}));
       setIsPro(!!ent?.isPro);
+      if (pastRes.ok) {
+        const pastData = await pastRes.json();
+        setPastJourneys(pastData.journeys ?? []);
+      }
       setLoading(false);
     };
     void load();
@@ -1127,14 +1104,24 @@ export default function JourneyPage() {
               {learnedWords} / {totalWords} words learned
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => router.push("/app/journey/create")}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-xs font-semibold text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
-          >
-            <Plus className="h-3 w-3" />
-            New Journey
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push("/app/journey/past")}
+              className="flex items-center justify-center gap-2 rounded-xl bg-[#1a2332] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#2d3a4d]"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              My Journeys
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/app/journey/create")}
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New Journey
+            </button>
+          </div>
         </div>
 
         <div
@@ -1236,37 +1223,6 @@ export default function JourneyPage() {
               </p>
             )}
 
-            {!wide && currentNode && (
-              <div className="mt-4 rounded-2xl bg-gray-900 p-4">
-                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
-                  Up Next
-                </p>
-                <p className="text-sm font-black text-white">{currentNode.name}</p>
-                <p className="mb-3 mt-1 text-[11px] text-gray-400">
-                  {currentNode.type === "story"
-                    ? currentNode.hint ?? "Story checkpoint"
-                    : `${currentNode.nameZh ?? "Mandarin vocab"} · ${currentNode.wordCount} words`}
-                </p>
-                {currentNode.type === "island" ? (
-                  <button
-                    type="button"
-                    onClick={() => void handleContinue(currentNode)}
-                    className="w-full rounded-xl bg-white py-2 text-xs font-black text-gray-900"
-                  >
-                    Continue →
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleStoryOpen(currentNode)}
-                    className="flex w-full items-center justify-center gap-1 rounded-xl bg-white py-2 text-xs font-black text-gray-900"
-                  >
-                    <BookOpen className="h-3 w-3" />
-                    Story checkpoint
-                  </button>
-                )}
-              </div>
-            )}
           </div>
 
           {wide && (
@@ -1286,6 +1242,8 @@ export default function JourneyPage() {
             />
           )}
         </div>
+
+        <BrowsePreviousJourneys pastJourneys={pastJourneys} />
       </div>
     </div>
   );

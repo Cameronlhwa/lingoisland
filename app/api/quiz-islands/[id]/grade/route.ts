@@ -1,13 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-
-function stageForTotalReviews(totalReviews: number) {
-  if (totalReviews >= 90) return 5
-  if (totalReviews >= 50) return 4
-  if (totalReviews >= 25) return 3
-  if (totalReviews >= 10) return 2
-  return 1
-}
+import { incrementHuahua } from '@/lib/huahua'
 
 /**
  * POST /api/quiz-islands/[id]/grade
@@ -43,7 +36,7 @@ export async function POST(
     }
 
     const body = await request.json().catch(() => ({}))
-    const { cardId, rating, tzOffset } = body
+    const { cardId, rating } = body
 
     if (!cardId || typeof cardId !== 'string') {
       return NextResponse.json(
@@ -59,6 +52,13 @@ export async function POST(
       )
     }
 
+    // Fetch card source before grading so we can mark the island word as learned
+    const { data: cardRow } = await supabase
+      .from('cards')
+      .select('source_type, source_ref_id')
+      .eq('id', cardId)
+      .maybeSingle()
+
     // Call the RPC function
     const { data, error } = await supabase.rpc('grade_card', {
       p_card_id: cardId,
@@ -73,6 +73,22 @@ export async function POST(
       )
     }
 
+    // Mark the source island word as learned on the first good/easy grade
+    if (
+      (rating === 'good' || rating === 'easy') &&
+      cardRow?.source_type === 'topic_word' &&
+      cardRow?.source_ref_id
+    ) {
+      const { error: learnedErr } = await supabase
+        .from('island_words')
+        .update({ learned_at: new Date().toISOString() })
+        .eq('id', cardRow.source_ref_id)
+        .is('learned_at', null)
+      if (learnedErr) {
+        console.error('Error setting learned_at on island word:', learnedErr)
+      }
+    }
+
     const { error: activityError } = await supabase
       .from('quiz_activity_events')
       .insert({
@@ -85,47 +101,14 @@ export async function POST(
       console.error('Error logging quiz activity:', activityError)
     }
 
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('huahua_total_reviews')
-      .eq('user_id', user.id)
-      .maybeSingle()
-    const newTotal = (profile?.huahua_total_reviews ?? 0) + 1
-    const newStage = stageForTotalReviews(newTotal)
-    const { error: huahuaErr } = await supabase
-      .from('user_profiles')
-      .upsert(
-        {
-          user_id: user.id,
-          huahua_total_reviews: newTotal,
-          huahua_stage: newStage,
-        },
-        { onConflict: 'user_id' }
-      )
-    if (huahuaErr) {
-      console.error('Error updating huahua progression:', huahuaErr)
-    }
-
-    // Return today's review count so client can show Progress Island upgrade popup
-    let todayCount = 0
-    const tzOffsetMinutes = typeof tzOffset === 'number' ? tzOffset : new Date().getTimezoneOffset()
-    const now = new Date()
-    const startUtcMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - tzOffsetMinutes * 60 * 1000
-    const endUtcMs = startUtcMs + 24 * 60 * 60 * 1000
-    const start = new Date(startUtcMs)
-    const end = new Date(endUtcMs)
-    const [qRes, tRes] = await Promise.all([
-      supabase.from('quiz_activity_events').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('reviewed_at', start.toISOString()).lt('reviewed_at', end.toISOString()),
-      supabase.from('topic_island_review_events').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('reviewed_at', start.toISOString()).lt('reviewed_at', end.toISOString()),
-    ])
-    todayCount = (qRes.count ?? 0) + (tRes.count ?? 0)
+    const { huahuaReviewsToday, huahuaStage } = await incrementHuahua(supabase, user.id, 1)
 
     return NextResponse.json({
       success: true,
       reviewState: data,
-      todayCount,
-      huahuaTotalReviews: newTotal,
-      huahuaStage: newStage,
+      todayCount: huahuaReviewsToday,
+      huahuaTotalReviews: huahuaReviewsToday,
+      huahuaStage,
     })
   } catch (error) {
     console.error('Error in POST /api/quiz-islands/[id]/grade:', error)

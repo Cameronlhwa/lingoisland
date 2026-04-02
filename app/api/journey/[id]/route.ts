@@ -40,23 +40,24 @@ export async function GET(
     const nodesOut = (islands ?? []).map((row: any) => {
       const stepOrder = Number(row.step_order ?? 0)
 
-      // When new columns exist, use them directly.
-      if (row.node_type != null && row.position != null) {
-        return { ...row, order: stepOrder }
-      }
-
-      // Legacy schema: node_type and position columns not yet migrated.
-      // Stories are stored at step_order 102 (Story A) and 105 (Story B).
-      // Re-map to the correct 7-node path positions so they sort in between islands.
-      //   7-node path: I1(1) · I2(2) · SA(3) · I3(4) · I4(5) · I5(6) · SB(7)
+      // Always derive node_type from step_order — the DB default is 'island' so
+      // old story rows (step_order 102/105) may have node_type = 'island' in the column.
       const nodeType: 'island' | 'story' = stepOrder > 100 ? 'story' : 'island'
+
+      // Use the stored position only when it's a valid path position (< 100).
+      // Old rows were backfilled with position = step_order, giving 102/105 for stories.
+      // 7-node path: I1(1) · I2(2) · SA(3) · I3(4) · I4(5) · I5(6) · SB(7)
+      const storedPosition = row.position != null ? Number(row.position) : null
       let position: number
-      if (nodeType === 'story') {
+      if (storedPosition != null && storedPosition < 100) {
+        position = storedPosition
+      } else if (nodeType === 'story') {
         position = stepOrder === 102 ? 3 : 7
       } else {
         const map: Record<number, number> = { 1: 1, 2: 2, 3: 4, 4: 5, 5: 6 }
         position = map[stepOrder] ?? stepOrder
       }
+
       return { ...row, order: stepOrder, node_type: nodeType, position }
     })
     const islandsOut = nodesOut.filter((row) => row.node_type !== 'story')
