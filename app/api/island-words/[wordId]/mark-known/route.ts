@@ -117,6 +117,13 @@ export async function POST(
       )
     }
 
+    // Mark the word as learned before removing it (permanent record — never overwritten)
+    await supabase
+      .from('island_words')
+      .update({ learned_at: new Date().toISOString() })
+      .eq('id', wordId)
+      .is('learned_at', null)
+
     // Delete old word and its sentences
     await supabase.from('island_sentences').delete().eq('word_id', wordId)
     await supabase.from('island_words').delete().eq('id', wordId)

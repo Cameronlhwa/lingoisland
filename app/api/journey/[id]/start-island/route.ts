@@ -124,7 +124,7 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to link island' }, { status: 500 })
     }
 
-    const sentenceTierMode = order === 1 ? 'easy_same' : 'full'
+    const sentenceTierMode = 'full'
     const origin = new URL(request.url).origin
     const cookieHeader = request.headers.get('cookie') ?? ''
     void fetch(`${origin}/api/topic-islands/${island.id}/generate-batch`, {

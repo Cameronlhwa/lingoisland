@@ -1,15 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { incrementHuahua } from '@/lib/huahua'
 
 export const dynamic = 'force-dynamic'
-
-function stageForTotalReviews(totalReviews: number) {
-  if (totalReviews >= 90) return 5
-  if (totalReviews >= 50) return 4
-  if (totalReviews >= 25) return 3
-  if (totalReviews >= 10) return 2
-  return 1
-}
 
 /**
  * GET /api/quiz-activity?year=YYYY&month=MM
@@ -176,63 +169,19 @@ export async function POST(request: Request) {
       .insert(rows)
 
     if (error) {
+      // Log but don't abort — 华华 progress must advance regardless of event-log failures.
       console.error('Error recording topic island review:', error)
-      return NextResponse.json(
-        { error: 'Failed to record review' },
-        { status: 500 }
-      )
     }
 
-    // Also advance 华华 progression for journey-island quiz reviews.
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('huahua_total_reviews')
-      .eq('user_id', user.id)
-      .maybeSingle()
+    // Advance 华华 progression (daily-resetting counter).
+    const { huahuaReviewsToday, huahuaStage } = await incrementHuahua(supabase, user.id, count)
 
-    let huahuaTotalReviews: number | null = null
-    let huahuaStage: number | null = null
-
-    if (profileError) {
-      console.error('Error loading huahua progression:', profileError)
-    } else {
-      const nextTotal = (profile?.huahua_total_reviews ?? 0) + count
-      const nextStage = stageForTotalReviews(nextTotal)
-      const { error: huahuaError } = await supabase
-        .from('user_profiles')
-        .upsert(
-          {
-            user_id: user.id,
-            huahua_total_reviews: nextTotal,
-            huahua_stage: nextStage,
-          },
-          { onConflict: 'user_id' }
-        )
-
-      if (huahuaError) {
-        console.error('Error updating huahua progression:', huahuaError)
-      } else {
-        huahuaTotalReviews = nextTotal
-        huahuaStage = nextStage
-      }
-    }
-
-    // Return today's total count so client can show upgrade popup (optional tzOffset for correct day)
-    let todayCount = 0
-    const tzOffsetMinutes = typeof body?.tzOffset === 'number' ? body.tzOffset : new Date().getTimezoneOffset()
-    const nowDate = new Date()
-    const startUtcMs = Date.UTC(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate()) - tzOffsetMinutes * 60 * 1000
-    const endUtcMs = startUtcMs + 24 * 60 * 60 * 1000
-    const start = new Date(startUtcMs)
-    const end = new Date(endUtcMs)
-
-    const [qRes, tRes] = await Promise.all([
-      supabase.from('quiz_activity_events').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('reviewed_at', start.toISOString()).lt('reviewed_at', end.toISOString()),
-      supabase.from('topic_island_review_events').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('reviewed_at', start.toISOString()).lt('reviewed_at', end.toISOString()),
-    ])
-    todayCount = (qRes.count ?? 0) + (tRes.count ?? 0)
-
-    return NextResponse.json({ ok: true, todayCount, huahuaTotalReviews, huahuaStage })
+    return NextResponse.json({
+      ok: true,
+      todayCount: huahuaReviewsToday,
+      huahuaTotalReviews: huahuaReviewsToday,
+      huahuaStage,
+    })
   } catch (error) {
     console.error('Error in POST /api/quiz-activity:', error)
     return NextResponse.json(

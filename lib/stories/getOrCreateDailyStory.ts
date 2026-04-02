@@ -7,6 +7,7 @@ type StoryRow = {
   kind: "daily" | "custom";
   date: string | null;
   title: string;
+  title_en: string | null;
   level: string;
   length_chars: number;
   topic: string | null;
@@ -135,6 +136,7 @@ Story requirements:
 Output STRICT JSON only with this shape:
 {
   "title": "...",
+  "title_en": "...",
   "level": "${level}",
   "length_chars": ${lengthChars},
   "story_zh": "...",
@@ -142,7 +144,11 @@ Output STRICT JSON only with this shape:
   "story_pinyin": null,
   "source_island_ids": ${JSON.stringify(sourceIslandIds)},
   "target_word_ids": ${JSON.stringify(targetWords.map((w) => w.id))}
-}`;
+}
+
+Rules for title and title_en:
+- "title" must be in Simplified Chinese (e.g. "人工智能备案记")
+- "title_en" must be the English translation of the title (e.g. "AI Registration Record")`;
 
   let lastError: Error | null = null;
 
@@ -194,6 +200,7 @@ Output STRICT JSON only with this shape:
 
     let parsed: {
       title?: string;
+      title_en?: string | null;
       story_zh?: string;
       story_en?: string | null;
       story_pinyin?: string | null;
@@ -232,6 +239,7 @@ Output STRICT JSON only with this shape:
 
     return {
       title: parsed.title.trim(),
+      title_en: parsed.title_en?.trim() || null,
       story_zh: parsed.story_zh.trim(),
       story_en: parsed.story_en?.trim() || null,
       story_pinyin: parsed.story_pinyin?.trim() || null,
@@ -383,6 +391,7 @@ export async function getOrCreateDailyStory({
         kind: "daily",
         date: targetDate,
         title: generated.title,
+        title_en: generated.title_en,
         level: context.level,
         length_chars: context.lengthChars,
         topic: context.storyTopic,

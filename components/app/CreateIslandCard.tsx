@@ -67,7 +67,6 @@ export default function CreateIslandCard({
               />
             </svg>
             {t("Browse for inspiration →")}
-            <span aria-hidden>→</span>
           </Link>
           <p className="text-xs text-gray-500">
             {t("No topic in mind? Explore popular topics and get inspired.")}

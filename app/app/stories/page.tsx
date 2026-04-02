@@ -25,7 +25,7 @@ export default async function StoriesPage() {
     const today = getLocalDateKey();
     const { data } = await supabase
       .from("stories")
-      .select("id, title, level, date, created_at, story_zh")
+      .select("id, title, title_en, level, date, created_at, story_zh")
       .eq("user_id", user.id)
       .eq("kind", "daily")
       .eq("date", today)

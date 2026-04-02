@@ -13,6 +13,7 @@ import { getLocalDateKey } from "@/lib/utils/date";
 export type DailyStorySummary = {
   id: string;
   title: string;
+  title_en: string | null;
   level: string;
   date: string | null;
   created_at: string;
