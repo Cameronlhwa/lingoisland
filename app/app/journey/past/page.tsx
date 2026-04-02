@@ -37,7 +37,7 @@ const ACCENT_PALETTE = [
 ];
 
 function accentFor(topic: string): string {
-  const hash = [...topic].reduce((n, c) => n + c.charCodeAt(0), 0);
+  const hash = Array.from(topic).reduce((n, c) => n + c.charCodeAt(0), 0);
   return ACCENT_PALETTE[hash % ACCENT_PALETTE.length];
 }
 
