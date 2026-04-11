@@ -6,7 +6,7 @@ import { TTSProvider } from "@/contexts/TTSContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { PostHogPageView } from "@/components/PostHogPageView";
 
-const GOOGLE_ADS_ID = "AW-17988323365";
+const GOOGLE_ADS_ID = "AW-18080739460";
 
 const siteUrl = getSiteUrl();
 
