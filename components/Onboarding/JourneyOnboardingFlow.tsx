@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import AppLogo from "@/components/app/AppLogo";
@@ -167,7 +174,6 @@ type JourneyOnboardingDraft = {
 };
 
 type Step =
-  | "welcome"
   | "topic"
   | "level"
   | "time"
@@ -204,12 +210,10 @@ function whyKeyFromProfile(
  * runs outside `/app` auth; the user signs in at the "Build my journey" step.
  */
 export default function JourneyOnboardingFlow({
-  skipWelcome = false,
   publicSurface = false,
   smartProfileSkip = false,
   collectProfileQuestions = true,
 }: {
-  skipWelcome?: boolean;
   publicSurface?: boolean;
   smartProfileSkip?: boolean;
   collectProfileQuestions?: boolean;
@@ -218,7 +222,7 @@ export default function JourneyOnboardingFlow({
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
   const urlTopicSynced = useRef(false);
-  const [step, setStep] = useState<Step>(skipWelcome ? "topic" : "welcome");
+  const [step, setStep] = useState<Step>("topic");
   const [topic, setTopic] = useState("");
   const [timeLabel, setTimeLabel] = useState<
     (typeof TIME_OPTIONS)[number]["value"] | ""
@@ -333,16 +337,15 @@ export default function JourneyOnboardingFlow({
     }
   }, [searchParams, router]);
 
-  // Deep link: ?topic=… skips welcome and prefills topic (e.g. from marketing / topics)
+  // Deep link: ?topic=… prefills topic (e.g. from marketing / topics)
   useEffect(() => {
     if (urlTopicSynced.current) return;
     const t = searchParams.get("topic")?.trim();
     if (t) {
       urlTopicSynced.current = true;
       setTopic(t);
-      if (!skipWelcome) setStep("topic");
     }
-  }, [searchParams, skipWelcome]);
+  }, [searchParams]);
 
   // Typewriter placeholder for popular topics when topic input is empty.
   useEffect(() => {
@@ -469,10 +472,16 @@ export default function JourneyOnboardingFlow({
     WHY_OPTIONS.find((o) => o.key === whyKey)?.label ||
     "General fluency improvement";
 
-  useEffect(() => {
+  // Reset progress synchronously when entering "generating" so the generate effect below
+  // does not see a stale generatingStep from a previous attempt (would fire the API early).
+  useLayoutEffect(() => {
     if (step !== "generating") return;
     setGeneratingStep(0);
     generateStartedRef.current = false;
+  }, [step]);
+
+  useEffect(() => {
+    if (step !== "generating") return;
     const timers: ReturnType<typeof setTimeout>[] = [];
     for (let i = 0; i < GEN_STEPS.length; i++) {
       timers.push(setTimeout(() => setGeneratingStep(i + 1), 550 * (i + 1)));
@@ -693,41 +702,6 @@ export default function JourneyOnboardingFlow({
     return shell(
       <p className="text-sm text-gray-500">Loading your learning profile…</p>,
       "lg",
-    );
-  }
-
-  if (step === "welcome") {
-    return shell(
-      <>
-        <div className="mb-8 flex items-center gap-2">
-          <AppLogo textClassName="text-xl font-black text-gray-900" />
-          <span className="text-2xl" aria-hidden>
-            🦫
-          </span>
-        </div>
-        <h1 className="text-3xl font-black text-gray-900">
-          Welcome to LingoIsland
-        </h1>
-        <p className="mt-3 text-lg text-gray-600">
-          Mandarin vocabulary built around topics you actually care about — not
-          textbook lists.
-        </p>
-        <ul className="mt-8 space-y-3 text-gray-800">
-          <li>→ Tell us your goal</li>
-          <li>→ Build a personalised journey</li>
-          <li>→ Get your first island free</li>
-        </ul>
-        <button
-          type="button"
-          onClick={() => setStep("topic")}
-          className={`mt-10 ${BTN_PRIMARY}`}
-        >
-          Let&apos;s go →
-        </button>
-        <p className="mt-4 text-center text-sm text-gray-500">
-          Takes 2 minutes · No credit card needed
-        </p>
-      </>,
     );
   }
 
@@ -1088,14 +1062,20 @@ export default function JourneyOnboardingFlow({
               Learn {wpw} words in your first week
             </p>
             <p className="mt-0.5 text-xs text-gray-400">
-              Based on your {effectiveDailyMins}min/day,{" "}
-              {effectiveDaysPerWeek}x/week plan
+              Based on your {effectiveDailyMins}min/day, {effectiveDaysPerWeek}
+              x/week plan
             </p>
           </div>
         </div>
 
         {/* ── Journey path ── */}
-        <div className="max-h-[420px] overflow-y-auto pr-1 lg:max-h-[520px]" style={{ scrollbarWidth: "thin", scrollbarColor: "#e5e7eb transparent" }}>
+        <div
+          className="max-h-[420px] overflow-y-auto pr-1 lg:max-h-[520px]"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "#e5e7eb transparent",
+          }}
+        >
           {journeyIslands.map((row, idx) => {
             const nodeType = row.node_type ?? "island";
             const isIsland = nodeType === "island";
@@ -1106,7 +1086,10 @@ export default function JourneyOnboardingFlow({
             const isLast = idx === journeyIslands.length - 1;
 
             return (
-              <div key={row.id} className="flex gap-4">
+              <div
+                key={row.id != null ? String(row.id) : `journey-node-${idx}`}
+                className="flex gap-4"
+              >
                 {/* Rail */}
                 <div
                   className="flex flex-shrink-0 flex-col items-center"
@@ -1201,7 +1184,10 @@ export default function JourneyOnboardingFlow({
                             {cefrLevel ? ` · ${cefrLevel}` : ""}
                           </p>
                         </div>
-                        <Lock size={12} className="flex-shrink-0 text-gray-300" />
+                        <Lock
+                          size={12}
+                          className="flex-shrink-0 text-gray-300"
+                        />
                       </div>
                     </div>
                   ) : (
@@ -1241,7 +1227,6 @@ export default function JourneyOnboardingFlow({
               </p>
             </div>
           </div>
-
         </div>
 
         {/* Gradient fade — sibling outside the scroll container so it stays pinned */}
@@ -1260,7 +1245,9 @@ export default function JourneyOnboardingFlow({
           </span>
         </div>
 
-        {error && <p className="mb-4 text-center text-sm text-red-600">{error}</p>}
+        {error && (
+          <p className="mb-4 text-center text-sm text-red-600">{error}</p>
+        )}
 
         {/* ── CTA block ── */}
         <div className="space-y-2">
@@ -1269,7 +1256,9 @@ export default function JourneyOnboardingFlow({
             onClick={handleStartIsland1}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 py-4 text-sm font-black text-white transition-colors hover:bg-gray-800"
           >
-            {journeyId ? "Start Island 1 — it's free" : "Save plan & start free"}
+            {journeyId
+              ? `Start Island 1 — it's free`
+              : "Save plan & start free"}
             <ArrowRight size={16} />
           </button>
 
@@ -1292,6 +1281,21 @@ export default function JourneyOnboardingFlow({
           </div>
         </div>
       </div>
+    );
+  }
+
+  if (step === "preview") {
+    return shell(
+      <div className="flex flex-col items-center text-center">
+        <Loader2
+          className="h-8 w-8 animate-spin text-gray-400"
+          aria-hidden={true}
+        />
+        <p className="mt-4 text-sm text-gray-600">
+          Loading your journey preview…
+        </p>
+      </div>,
+      "lg",
     );
   }
 
