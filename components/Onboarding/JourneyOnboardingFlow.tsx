@@ -265,6 +265,13 @@ export default function JourneyOnboardingFlow({
   const [topicPlaceholder, setTopicPlaceholder] = useState(
     "Teach me words related to movies and…",
   );
+  const [transformationCard, setTransformationCard] = useState<{
+    today: string;
+    future: string;
+    daysAhead: number;
+  } | null>(null);
+  const [transformationLoading, setTransformationLoading] = useState(false);
+  const transformationFetchedForTopic = useRef<string | null>(null);
 
   const persistDraft = () => {
     try {
@@ -648,6 +655,46 @@ export default function JourneyOnboardingFlow({
       ? Math.ceil(JOURNEY_TOTAL_WORDS / journeyRow.words_per_week)
       : 1;
 
+  // Fetch the AI-generated "Where this plan takes you" card.
+  // Start during "generating" so the data is ready before preview appears.
+  useEffect(() => {
+    if (step !== "generating" && step !== "preview") return;
+    if (!topic) return;
+    const trimmedTopic = topic.trim();
+    if (transformationFetchedForTopic.current === trimmedTopic) return;
+    transformationFetchedForTopic.current = trimmedTopic;
+    // Estimate daysAhead from locally-known state (wordsPerWeek is available
+    // before journeyRow exists, so we don't have to wait for the server).
+    const wpwEst = wordsPerWeek > 0 ? wordsPerWeek : Math.round((15 / 15) * 4 * 10);
+    const daysAhead = Math.ceil(JOURNEY_TOTAL_WORDS / wpwEst) * 7;
+    setTransformationLoading(true);
+    setTransformationCard(null);
+    fetch("/api/journey/transformation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        topic: trimmedTopic,
+        level: cefrLevel || "B1",
+        why: whyKey,
+        daysAhead,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.today && data.future) {
+          setTransformationCard({
+            today: data.today,
+            future: data.future,
+            daysAhead: data.daysAhead ?? daysAhead,
+          });
+        }
+      })
+      .catch(() => {
+        // Non-critical — card stays hidden if it fails
+      })
+      .finally(() => setTransformationLoading(false));
+  }, [step, topic, cefrLevel, whyKey, wordsPerWeek]);
+
   const handleStartIsland1 = async () => {
     if (!journeyId) {
       persistDraft();
@@ -713,8 +760,8 @@ export default function JourneyOnboardingFlow({
           What topic do you want to learn?
         </h2>
         <p className="mt-2 text-gray-600">
-          Choose something you&apos;re interested in, like work, travel, food,
-          anything~
+          Type in any topic you&apos;re interested in, like work, travel,
+          C-dramas, C-pop, anything~
         </p>
         <label className="mt-6 block text-sm font-medium text-gray-700">
           <span className="sr-only">Topic</span>
@@ -725,6 +772,7 @@ export default function JourneyOnboardingFlow({
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
           />
         </label>
+        <p className="mt-2 text-gray-600">Or choose from our popular topics:</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {POPULAR_CHIPS.map((c) => (
             <button
@@ -1053,7 +1101,7 @@ export default function JourneyOnboardingFlow({
         </div>
 
         {/* ── Word projection card ── */}
-        <div className="mb-8 flex items-center gap-3 rounded-2xl bg-gray-900 px-4 py-3.5 text-white">
+        <div className="mb-4 flex items-center gap-3 rounded-2xl bg-gray-900 px-4 py-3.5 text-white">
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white/10">
             <Zap size={16} className="text-teal-400" />
           </div>
@@ -1068,9 +1116,69 @@ export default function JourneyOnboardingFlow({
           </div>
         </div>
 
+        {/* ── Where this plan takes you card ── */}
+        {(transformationLoading || transformationCard) && (
+          <div className="mb-4 rounded-2xl bg-stone-100 px-5 py-4">
+            <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-stone-400">
+              Where this plan takes you
+            </p>
+            {transformationLoading && !transformationCard ? (
+              <div className="flex items-center gap-2 py-2">
+                <Loader2 size={13} className="animate-spin text-stone-400" />
+                <span className="text-xs text-stone-400">Personalising…</span>
+              </div>
+            ) : transformationCard ? (
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-xs font-medium text-stone-400">
+                    Today
+                  </p>
+                  <p className="text-sm leading-snug text-stone-500">
+                    {transformationCard.today}
+                  </p>
+                </div>
+                <div className="flex flex-shrink-0 items-center self-center px-1 text-stone-300">
+                  <svg
+                    width="40"
+                    height="10"
+                    viewBox="0 0 40 10"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <line
+                      x1="0"
+                      y1="5"
+                      x2="32"
+                      y2="5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeDasharray="3 3"
+                    />
+                    <path
+                      d="M32 1.5L38.5 5L32 8.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-xs font-black text-gray-900">
+                    Day {transformationCard.daysAhead}
+                  </p>
+                  <p className="text-sm font-semibold leading-snug text-gray-900">
+                    {transformationCard.future}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+
         {/* ── Journey path ── */}
         <div
-          className="max-h-[420px] overflow-y-auto pr-1 lg:max-h-[520px]"
+          className="max-h-[300px] overflow-y-auto pr-1 lg:max-h-[380px]"
           style={{
             scrollbarWidth: "thin",
             scrollbarColor: "#e5e7eb transparent",
@@ -1258,7 +1366,7 @@ export default function JourneyOnboardingFlow({
           >
             {journeyId
               ? `Start Island 1 — it's free`
-              : "Save plan & start free"}
+              : "Start your journey for free"}
             <ArrowRight size={16} />
           </button>
 
