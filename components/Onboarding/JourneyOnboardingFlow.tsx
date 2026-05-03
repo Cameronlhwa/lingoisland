@@ -665,7 +665,8 @@ export default function JourneyOnboardingFlow({
     transformationFetchedForTopic.current = trimmedTopic;
     // Estimate daysAhead from locally-known state (wordsPerWeek is available
     // before journeyRow exists, so we don't have to wait for the server).
-    const wpwEst = wordsPerWeek > 0 ? wordsPerWeek : Math.round((15 / 15) * 4 * 10);
+    const wpwEst =
+      wordsPerWeek > 0 ? wordsPerWeek : Math.round((15 / 15) * 4 * 10);
     const daysAhead = Math.ceil(JOURNEY_TOTAL_WORDS / wpwEst) * 7;
     setTransformationLoading(true);
     setTransformationCard(null);
@@ -787,8 +788,12 @@ export default function JourneyOnboardingFlow({
         </div>
         <button
           type="button"
-          disabled={!topic.trim()}
           onClick={() => {
+            if (!topic.trim()) {
+              setTopic(
+                "Essential Mandarin for Daily Life in China: Banking, Housing, and More",
+              );
+            }
             if (!collectProfileQuestions) {
               if (!timeLabel) setTimeLabel("15min");
               if (daysPerWeek == null) setDaysPerWeek(4);
