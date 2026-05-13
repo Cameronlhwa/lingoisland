@@ -110,7 +110,7 @@ export default function TopicIslandsPage() {
     return null;
   }
 
-  const loadUserProfile = async () => {
+  async function loadUserProfile() {
     try {
       const response = await fetch("/api/profile");
       if (response.ok) {
@@ -127,7 +127,7 @@ export default function TopicIslandsPage() {
     } catch (error) {
       console.error("Error loading user profile:", error);
     }
-  };
+  }
 
   // Handle modal open/close and form reset
   useEffect(() => {
@@ -181,7 +181,7 @@ export default function TopicIslandsPage() {
     };
   }, [visibleCount, islands.length, loading]);
 
-  const loadIslands = async () => {
+  async function loadIslands() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -197,7 +197,7 @@ export default function TopicIslandsPage() {
       setIslands(data);
     }
     setLoading(false);
-  };
+  }
 
   const handleDelete = async (islandId: string, e: React.MouseEvent) => {
     e.preventDefault();
