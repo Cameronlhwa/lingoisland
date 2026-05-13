@@ -39,7 +39,7 @@ export default function QuizIslandsPage() {
     return null;
   }
 
-  const loadQuizIslands = async () => {
+  async function loadQuizIslands() {
     try {
       const response = await fetch("/api/quiz-islands");
       if (!response.ok) throw new Error("Failed to load quiz islands");
@@ -50,7 +50,7 @@ export default function QuizIslandsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -8,6 +8,11 @@ import { getSiteUrl } from "@/lib/utils/site-url";
  *   - /         Home, indexable
  *   - /pricing  Indexable
  *   - /founder  Indexable
+ *   - /blog     Blog hub, indexable
+ *   - /blog/[slug]  Article pages, indexable
+ *   - /contact  Indexable
+ *   - /privacy  Indexable
+ *   - /terms    Indexable
  *   - /topics   Indexable hub
  *   - /topics/[slug]  Indexable when page has full content; noindex set in metadata otherwise
  *   - /login    Crawlable but noindex (thin)

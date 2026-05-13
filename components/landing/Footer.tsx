@@ -59,8 +59,12 @@ export default function Footer() {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "center" }}>
           {[
             { href: "/", label: "Home" },
+            { href: "/blog", label: "Blog" },
             { href: "/#topics", label: "Topics" },
             { href: "/founder", label: "Founder" },
+            { href: "/contact", label: "Contact" },
+            { href: "/privacy", label: "Privacy Policy" },
+            { href: "/terms", label: "Terms of Service" },
             { href: "/login", label: "Sign in" },
             { href: "/onboarding/journey", label: "Create Topic Island" },
           ].map((link) => (

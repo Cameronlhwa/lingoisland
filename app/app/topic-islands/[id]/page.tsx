@@ -1278,7 +1278,7 @@ export default function TopicIslandDetailPage() {
         <div className="sticky top-16 z-20 hidden items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:top-0 md:flex md:px-8">
           <AppLogo size="sm" />
           <span className="rounded-full bg-teal-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-            Island 1 of 5 · Free
+            Get 80% on a quiz to achieve the next island in the journey!
           </span>
         </div>
       ) : null}

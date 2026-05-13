@@ -48,8 +48,10 @@ export default function Nav() {
             { href: "/#demo", label: "Demo" },
             { href: "/#how-it-works", label: "How it works" },
             { href: "/#topics", label: "Topics" },
+            { href: "/blog", label: "Blog" },
             { href: "/founder", label: "Founder" },
             { href: "/#faq", label: "FAQ" },
+            { href: "/privacy", label: "Privacy" },
           ].map((link) => (
             <Link
               key={link.href}
@@ -141,8 +143,10 @@ export default function Nav() {
               { href: "/#demo", label: "Demo" },
               { href: "/#how-it-works", label: "How it works" },
               { href: "/#topics", label: "Topics" },
+              { href: "/blog", label: "Blog" },
               { href: "/founder", label: "Founder" },
               { href: "/#faq", label: "FAQ" },
+              { href: "/privacy", label: "Privacy" },
             ].map((link) => (
               <Link
                 key={link.href}
