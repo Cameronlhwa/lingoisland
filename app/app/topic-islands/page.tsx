@@ -17,11 +17,20 @@ interface TopicIsland {
   topic: string;
   level: string;
   word_target: number;
+  words_selected?: number;
   grammar_target?: number;
   status: string;
   created_at: string;
   image_url?: string | null;
   cover_key?: string | null;
+}
+
+function islandDetailHref(island: TopicIsland): string {
+  const wordCount = island.words_selected ?? island.word_target;
+  if (island.status === "ready" && wordCount >= 5) {
+    return `/app/topic-islands/${island.id}?learn=true`;
+  }
+  return `/app/topic-islands/${island.id}`;
 }
 
 export default function TopicIslandsPage() {
@@ -403,7 +412,7 @@ export default function TopicIslandsPage() {
                   return (
                     <Link
                       key={island.id}
-                      href={`/app/topic-islands/${island.id}`}
+                      href={islandDetailHref(island)}
                       className={`group relative block mx-10 md:mx-16 ${mobileHide}`}
                       style={{
                         transform: `translate(${offsetX}px, ${offsetY}px)`,

@@ -7,17 +7,17 @@ The piece most learners miss isn't the numbers themselves (those are logical and
 ### Numbers 1–10: The Core
 
 | Number | Hanzi | Pinyin |
-| --- | --- | --- |
-| 1 | 一 | yī |
-| 2 | 二 | èr |
-| 3 | 三 | sān |
-| 4 | 四 | sì |
-| 5 | 五 | wǔ |
-| 6 | 六 | liù |
-| 7 | 七 | qī |
-| 8 | 八 | bā |
-| 9 | 九 | jiǔ |
-| 10 | 十 | shí |
+| ------ | ----- | ------ |
+| 1      | 一    | yī     |
+| 2      | 二    | èr     |
+| 3      | 三    | sān    |
+| 4      | 四    | sì     |
+| 5      | 五    | wǔ     |
+| 6      | 六    | liù    |
+| 7      | 七    | qī     |
+| 8      | 八    | bā     |
+| 9      | 九    | jiǔ    |
+| 10     | 十    | shí    |
 
 Beyond 10, the system is fully logical: 11 is 十一 (ten-one), 20 is 二十 (two-ten), 35 is 三十五 (three-ten-five). No exceptions.
 

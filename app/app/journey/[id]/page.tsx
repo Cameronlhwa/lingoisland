@@ -520,7 +520,9 @@ export default function JourneyDetailPage() {
       return;
     }
     if (node.islandId) {
-      router.push(`/app/topic-islands/${node.islandId}?journeyFirst=1`);
+      const params = new URLSearchParams({ journeyFirst: "1" });
+      if (node.current) params.set("learn", "true");
+      router.push(`/app/topic-islands/${node.islandId}?${params.toString()}`);
       return;
     }
     // Island not yet started — create it via start-island
@@ -531,7 +533,9 @@ export default function JourneyDetailPage() {
     });
     const data = await res.json();
     if (data.islandId) {
-      router.push(`/app/topic-islands/${data.islandId}?journeyFirst=1`);
+      const params = new URLSearchParams({ journeyFirst: "1" });
+      if (node.current) params.set("learn", "true");
+      router.push(`/app/topic-islands/${data.islandId}?${params.toString()}`);
     }
   }, [journey, handleStoryOpen, router]);
 

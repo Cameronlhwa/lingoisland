@@ -4,34 +4,34 @@ But if you've been learning for a while and want your gratitude to sound genuine
 
 ### The Basics
 
-| Expression | Pinyin | Meaning / When to use |
-| --- | --- | --- |
-| 谢谢 | xièxiè | Thank you — universal, always appropriate |
-| 谢谢你 | xièxiè nǐ | Thank you (to one person, slightly warmer) |
-| 谢谢您 | xièxiè nín | Thank you (formal/respectful — to elders, bosses) |
-| 多谢 | duō xiè | Many thanks — slightly more emphatic, common in Cantonese-influenced areas |
-| 非常感谢 | fēicháng gǎnxiè | Thank you very much — formal situations |
+| Expression | Pinyin          | Meaning / When to use                                                      |
+| ---------- | --------------- | -------------------------------------------------------------------------- |
+| 谢谢       | xièxiè          | Thank you — universal, always appropriate                                  |
+| 谢谢你     | xièxiè nǐ       | Thank you (to one person, slightly warmer)                                 |
+| 谢谢您     | xièxiè nín      | Thank you (formal/respectful — to elders, bosses)                          |
+| 多谢       | duō xiè         | Many thanks — slightly more emphatic, common in Cantonese-influenced areas |
+| 非常感谢   | fēicháng gǎnxiè | Thank you very much — formal situations                                    |
 
 ### When Someone Does Something Significant
 
-| Expression | Pinyin | Meaning |
-| --- | --- | --- |
-| 感谢你 | gǎnxiè nǐ | I'm grateful to you — more heartfelt than 谢谢 |
-| 太感谢了 | tài gǎnxiè le | I'm so grateful — genuine emotional weight |
-| 真的很感谢 | zhēn de hěn gǎnxiè | Truly very grateful — use for meaningful help |
-| 感激不尽 | gǎnjī bù jìn | Endlessly grateful — written/formal contexts |
+| Expression | Pinyin             | Meaning                                        |
+| ---------- | ------------------ | ---------------------------------------------- |
+| 感谢你     | gǎnxiè nǐ          | I'm grateful to you — more heartfelt than 谢谢 |
+| 太感谢了   | tài gǎnxiè le      | I'm so grateful — genuine emotional weight     |
+| 真的很感谢 | zhēn de hěn gǎnxiè | Truly very grateful — use for meaningful help  |
+| 感激不尽   | gǎnjī bù jìn       | Endlessly grateful — written/formal contexts   |
 
 ### Responding to Thanks
 
-Knowing how to respond when someone thanks *you* is just as important.
+Knowing how to respond when someone thanks _you_ is just as important.
 
-| Response | Pinyin | Meaning |
-| --- | --- | --- |
-| 不客气 | bù kèqi | You're welcome — the classic response |
-| 没事 | méi shì | No problem / it's nothing |
-| 没关系 | méi guānxi | Don't worry about it |
-| 哪里哪里 | nǎlǐ nǎlǐ | Not at all — modest, slightly old-fashioned |
-| 应该的 | yīnggāi de | It's what I should do — warm and generous feeling |
+| Response | Pinyin     | Meaning                                           |
+| -------- | ---------- | ------------------------------------------------- |
+| 不客气   | bù kèqi    | You're welcome — the classic response             |
+| 没事     | méi shì    | No problem / it's nothing                         |
+| 没关系   | méi guānxi | Don't worry about it                              |
+| 哪里哪里 | nǎlǐ nǎlǐ  | Not at all — modest, slightly old-fashioned       |
+| 应该的   | yīnggāi de | It's what I should do — warm and generous feeling |
 
 ### In Specific Situations
 
