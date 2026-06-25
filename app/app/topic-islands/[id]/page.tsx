@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import AppLogo from "@/components/app/AppLogo";
 import JourneyIslandPaywall from "@/components/app/JourneyIslandPaywall";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useGlossary } from "@/contexts/GlossaryContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
@@ -24,6 +24,12 @@ import { createClient } from "@/lib/supabase/browser";
 import { useSidebar } from "@/components/app/AppLayoutClient";
 import { BsCardChecklist } from "react-icons/bs";
 import CapybaraStrip from "@/components/app/CapybaraStrip";
+import LearnSequence, {
+  learnSequenceKey,
+} from "@/components/app/LearnSequence";
+import LearnChat from "@/components/app/LearnSequence/LearnChat";
+import { pickLearnWords } from "@/components/app/LearnSequence/types";
+import HuahuaChatCard from "@/components/app/HuahuaChatCard";
 
 interface Sentence {
   id: string;
@@ -81,6 +87,7 @@ interface Island {
 export default function TopicIslandDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const islandId = params.id as string;
   const { t } = useLanguage();
   const { convertText } = useCharacterSet();
@@ -150,6 +157,8 @@ export default function TopicIslandDetailPage() {
   const [wordSelectionOpen, setWordSelectionOpen] = useState(false);
   const [showCapybaraTeaser, setShowCapybaraTeaser] = useState(false);
   const [showNewUserHint, setShowNewUserHint] = useState(false);
+  const [showLearnSequence, setShowLearnSequence] = useState(false);
+  const [showHuahuaChat, setShowHuahuaChat] = useState(false);
   const [journeyContext, setJourneyContext] = useState<{
     journeyIslandId: string;
     order: number;
@@ -169,6 +178,21 @@ export default function TopicIslandDetailPage() {
   useEffect(() => {
     setShowNewUserHint(!localStorage.getItem("island_hint_dismissed"));
   }, []);
+
+  useEffect(() => {
+    if (
+      !island ||
+      island.status !== "ready" ||
+      isAnonymous ||
+      words.length < 5
+    ) {
+      return;
+    }
+
+    if (searchParams.get("learn") === "true") {
+      setShowLearnSequence(true);
+    }
+  }, [island?.status, island?.id, isAnonymous, words.length, searchParams]);
   const [quizMode, setQuizMode] = useState<"drag-drop" | "flashcard" | null>(
     null,
   );
@@ -1953,7 +1977,28 @@ export default function TopicIslandDetailPage() {
                   </div>
                 </div>
               ) : (
-                <div className="mt-10 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <>
+                  {island.status === "ready" &&
+                    !isAnonymous &&
+                    words.length >= 5 && (
+                      <div className="mt-10">
+                        <HuahuaChatCard
+                          topic={island.topic}
+                          island={island}
+                          words={words}
+                          onOpenDesktop={() => setShowHuahuaChat(true)}
+                        />
+                      </div>
+                    )}
+                <div
+                  className={`${
+                    island.status === "ready" &&
+                    !isAnonymous &&
+                    words.length >= 5
+                      ? "mt-6"
+                      : "mt-10"
+                  } rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden`}
+                >
                   {!showOnboardingIslandBottom && (
                     <div className="flex border-b border-gray-200">
                       {isJourneyIsland ? (
@@ -2878,6 +2923,7 @@ export default function TopicIslandDetailPage() {
                     ) : null}
                   </div>
                 </div>
+                </>
               )}
 
               {/* Capybara teaser popup — shown once per session to anonymous users after a 5-word quiz */}
@@ -3101,6 +3147,53 @@ export default function TopicIslandDetailPage() {
           words={words}
           islandId={islandId}
         />
+
+        {showHuahuaChat && island && words.length >= 5 && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="relative flex h-[600px] w-full max-w-lg flex-col rounded-2xl bg-white shadow-xl">
+              <button
+                type="button"
+                onClick={() => setShowHuahuaChat(false)}
+                className="absolute right-4 top-4 z-10 text-gray-400 hover:text-gray-600"
+                aria-label="Close chat"
+              >
+                ✕
+              </button>
+              <div className="border-b p-4 pr-12">
+                <h2
+                  className="text-lg font-semibold text-[#071E2E]"
+                  style={{ fontFamily: "'Lora', Georgia, serif" }}
+                >
+                  Chat with <span className="text-[#2176AE]">华华</span>
+                </h2>
+                <p className="text-sm text-gray-500">{island.topic}</p>
+              </div>
+              <div className="min-h-0 flex-1 overflow-hidden">
+                <LearnChat
+                  words={pickLearnWords(words, 5)}
+                  allIslandWords={words}
+                  island={island}
+                  fillContainer
+                  onComplete={() => setShowHuahuaChat(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showLearnSequence && island && words.length >= 5 && (
+          <LearnSequence
+            island={island}
+            words={words}
+            onComplete={() => {
+              localStorage.setItem(learnSequenceKey(island.id), "done");
+              setShowLearnSequence(false);
+              const url = new URL(window.location.href);
+              url.searchParams.delete("learn");
+              window.history.replaceState({}, "", url.toString());
+            }}
+          />
+        )}
       </div>
     </div>
   );

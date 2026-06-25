@@ -1,8 +1,12 @@
-import fs from "node:fs";
-import path from "node:path";
-
 import type { MetadataRoute } from "next";
 import { blogPosts } from "@/lib/blog/posts";
+import {
+  blogHubMtime,
+  blogMarkdownMtime,
+  maxMtime,
+  topicDetailTemplateMtime,
+  topicListingMtime,
+} from "@/lib/sitemap/lastModified";
 import { PRIORITY_TOPIC_SLUGS } from "@/data/topics";
 import {
   getTopicPageContent,
@@ -10,35 +14,13 @@ import {
 } from "@/data/topic-page-content";
 import { getCanonicalUrl } from "@/lib/utils/site-url";
 
-function safeMtime(absPath: string): Date | undefined {
-  try {
-    return fs.statSync(absPath).mtime;
-  } catch {
-    return undefined;
-  }
-}
-
-function blogMarkdownPath(slug: string): string {
-  return path.join(process.cwd(), "content/blog", `${slug}.md`);
-}
-
-function blogPostLastModified(slug: string): Date {
-  return safeMtime(blogMarkdownPath(slug)) ?? new Date();
-}
-
-function blogHubLastModified(): Date {
-  let newest = 0;
-  for (const post of blogPosts) {
-    const t = safeMtime(blogMarkdownPath(post.slug))?.getTime() ?? 0;
-    if (t > newest) newest = t;
-  }
-  return newest > 0 ? new Date(newest) : new Date();
-}
-
 /**
  * Sitemap includes only indexable pages (no thin or private URLs).
  * Matches robots.ts (allow /) and page-level meta robots (noindex pages excluded).
  * All URLs use canonical origin. No trailing slashes.
+ *
+ * lastModified uses source file mtimes where possible (not build time) so
+ * Google gets meaningful change signals.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const indexableTopicSlugs = Array.from(PRIORITY_TOPIC_SLUGS).filter(
@@ -48,10 +30,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }
   );
 
+  const topicContentMtime = topicDetailTemplateMtime();
+
   const topicPages: MetadataRoute.Sitemap = indexableTopicSlugs.map(
     (slug) => ({
       url: getCanonicalUrl(`topics/${slug}`),
-      lastModified: new Date(),
+      lastModified: topicContentMtime,
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })
@@ -60,59 +44,58 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
       url: getCanonicalUrl(""),
-      lastModified: new Date(),
+      lastModified: maxMtime(["app/page.tsx", "lib/landing-content.ts"]),
       changeFrequency: "weekly",
       priority: 1,
     },
     {
       url: getCanonicalUrl("pricing"),
-      lastModified: new Date(),
+      lastModified: maxMtime(["app/pricing/page.tsx", "app/pricing/layout.tsx"]),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
       url: getCanonicalUrl("founder"),
-      lastModified: new Date(),
+      lastModified: maxMtime(["app/founder/page.tsx", "app/founder/layout.tsx"]),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
       url: getCanonicalUrl("blog"),
-      lastModified: blogHubLastModified(),
+      lastModified: blogHubMtime(blogPosts.map((p) => p.slug)),
       changeFrequency: "weekly",
       priority: 0.75,
     },
     ...blogPosts.map((post) => ({
       url: getCanonicalUrl(`blog/${post.slug}`),
-      lastModified: blogPostLastModified(post.slug),
+      lastModified: blogMarkdownMtime(post.slug),
       changeFrequency: "monthly" as const,
       priority: 0.65,
     })),
     {
       url: getCanonicalUrl("contact"),
-      lastModified: new Date(),
+      lastModified: maxMtime(["app/contact/page.tsx", "app/contact/layout.tsx"]),
       changeFrequency: "monthly",
       priority: 0.55,
     },
     {
       url: getCanonicalUrl("privacy"),
-      lastModified: new Date(),
+      lastModified: maxMtime(["app/privacy/page.tsx", "app/privacy/layout.tsx"]),
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: getCanonicalUrl("terms"),
-      lastModified: new Date(),
+      lastModified: maxMtime(["app/terms/page.tsx", "app/terms/layout.tsx"]),
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: getCanonicalUrl("topics"),
-      lastModified: new Date(),
+      lastModified: topicListingMtime(),
       changeFrequency: "weekly",
       priority: 0.9,
     },
     ...topicPages,
   ];
 }
-

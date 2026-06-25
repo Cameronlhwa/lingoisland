@@ -25,20 +25,18 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { CompletedJourney } from "@/types/journey";
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
-
-const ACCENT_PALETTE = [
-  "#4a9fc4",
-  "#5abeaa",
-  "#e8a83a",
-  "#9b7ee8",
-  "#e87e7e",
-  "#5aaa72",
+const ACCENT_COLORS = [
+  "#14b8a6",
+  "#0ea5e9",
+  "#1a2332",
+  "#0f766e",
+  "#0284c7",
+  "#6366f1",
 ];
 
 function accentFor(topic: string): string {
   const hash = Array.from(topic).reduce((n, c) => n + c.charCodeAt(0), 0);
-  return ACCENT_PALETTE[hash % ACCENT_PALETTE.length];
+  return ACCENT_COLORS[hash % ACCENT_COLORS.length];
 }
 
 function iconFor(topic: string): LucideIcon {
@@ -60,12 +58,8 @@ function fmtDate(d: string) {
   });
 }
 
-// ─── Ferry Ticket Card ────────────────────────────────────────────────────────
-
 function JourneyTicket({ journey }: { journey: CompletedJourney }) {
   const router = useRouter();
-  const [hovered, setHovered] = useState(false);
-
   const accent = accentFor(journey.topic);
   const TopicIcon = iconFor(journey.topic);
   const isCompleted = !!journey.completed_at;
@@ -73,8 +67,6 @@ function JourneyTicket({ journey }: { journey: CompletedJourney }) {
   const islands = journey.journey_islands.filter((n) => n.node_type === "island");
   const stories = journey.journey_islands.filter((n) => n.node_type === "story");
   const doneIslands = islands.filter((n) => !!n.completed_at);
-  // word_count is now set by the API from the actual topic_island word_target,
-  // falling back to the design rule (island 1 = 5 words, others = 10).
   const totalWords = islands.reduce(
     (s, n) => s + (n.word_count ?? ((n.step_order ?? 0) === 1 ? 5 : 10)),
     0,
@@ -96,7 +88,12 @@ function JourneyTicket({ journey }: { journey: CompletedJourney }) {
     { Icon: Layers, label: `${islands.length} islands` },
     { Icon: Type, label: `${totalWords} words` },
     ...(stories.length > 0
-      ? [{ Icon: BookOpen, label: `${stories.length} ${stories.length === 1 ? "story" : "stories"}` }]
+      ? [
+          {
+            Icon: BookOpen,
+            label: `${stories.length} ${stories.length === 1 ? "story" : "stories"}`,
+          },
+        ]
       : []),
   ];
 
@@ -106,202 +103,72 @@ function JourneyTicket({ journey }: { journey: CompletedJourney }) {
       tabIndex={0}
       onClick={() => router.push(`/app/journey/${journey.id}`)}
       onKeyDown={(e) => e.key === "Enter" && router.push(`/app/journey/${journey.id}`)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: "flex",
-        borderRadius: 14,
-        background: "white",
-        border: "1px solid #e8f0f5",
-        overflow: "visible",
-        cursor: "pointer",
-        transform: hovered ? "translateY(-3px)" : "translateY(0)",
-        boxShadow: hovered
-          ? "0 8px 24px rgba(26,35,50,0.12)"
-          : "0 1px 4px rgba(26,35,50,0.06)",
-        transition: "transform 0.18s ease, box-shadow 0.18s ease",
-        position: "relative",
-      }}
+      className="group relative flex cursor-pointer overflow-visible rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
     >
-      {/* Accent strip */}
       <div
-        style={{
-          width: 7,
-          background: accent,
-          flexShrink: 0,
-          borderRadius: "14px 0 0 14px",
-        }}
+        className="w-1.5 shrink-0 rounded-l-2xl"
+        style={{ background: accent }}
       />
 
-      {/* Left half */}
-      <div
-        style={{
-          flex: 1,
-          padding: "16px 20px 15px 17px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 7,
-          position: "relative",
-          minWidth: 0,
-          borderRight: "2px dashed #ddeaf0",
-          overflow: "hidden",
-        }}
-      >
-        {/* Notch cutouts */}
-        <div
-          style={{
-            position: "absolute",
-            right: -9,
-            top: -9,
-            width: 17,
-            height: 17,
-            borderRadius: "50%",
-            background: "#f0f7fa",
-            zIndex: 2,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            right: -9,
-            bottom: -9,
-            width: 17,
-            height: 17,
-            borderRadius: "50%",
-            background: "#f0f7fa",
-            zIndex: 2,
-          }}
-        />
+      <div className="relative flex min-w-0 flex-1 flex-col gap-1.5 overflow-hidden border-r-2 border-dashed border-gray-200 px-4 py-4 pl-[17px]">
+        <div className="absolute -right-[9px] -top-[9px] z-[2] h-[17px] w-[17px] rounded-full bg-white" />
+        <div className="absolute -bottom-[9px] -right-[9px] z-[2] h-[17px] w-[17px] rounded-full bg-white" />
 
-        {/* Badge row */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <MapPin size={11} color={accent} />
+        <div className="flex items-center gap-1">
+          <MapPin size={11} style={{ color: accent }} />
           <span
-            style={{
-              fontSize: 10.5,
-              fontWeight: 700,
-              color: accent,
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-            }}
+            className="text-[10.5px] font-bold uppercase tracking-wide"
+            style={{ color: accent }}
           >
             {badge}
           </span>
         </div>
 
-        {/* Journey name */}
-        <p
-          style={{
-            fontSize: 15.5,
-            fontWeight: 800,
-            color: "#1a2332",
-            letterSpacing: "-0.3px",
-            lineHeight: 1.25,
-            margin: 0,
-            overflow: "hidden",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-          }}
-        >
+        <p className="m-0 line-clamp-2 text-[15.5px] font-black leading-tight tracking-tight text-gray-900">
           {journey.topic}
         </p>
 
-        {/* Meta row */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="flex flex-wrap items-center gap-2.5">
           {meta.map(({ Icon, label }) => (
             <span
               key={label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 3,
-                fontSize: 12,
-                color: "#8aa8b5",
-              }}
+              className="flex items-center gap-1 text-xs text-gray-500"
             >
-              <Icon size={12} color="#8aa8b5" />
+              <Icon size={12} className="text-gray-400" />
               {label}
             </span>
           ))}
         </div>
 
-        {/* Date row */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <Calendar size={11} color="#b5cdd8" />
-          <span style={{ fontSize: 11.5, color: "#b5cdd8" }}>{dateLabel}</span>
+        <div className="flex items-center gap-1">
+          <Calendar size={11} className="text-gray-400" />
+          <span className="text-[11.5px] text-gray-400">{dateLabel}</span>
         </div>
       </div>
 
-      {/* Right stub */}
-      <div
-        style={{
-          width: 108,
-          padding: "16px 12px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexShrink: 0,
-          gap: 10,
-        }}
-      >
-        {/* Topic icon */}
+      <div className="flex w-[108px] shrink-0 flex-col items-center justify-between gap-2.5 px-3 py-4">
         <div
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            background: accent + "26",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+          style={{ background: `${accent}26` }}
         >
-          <TopicIcon size={20} color={accent} />
+          <TopicIcon size={20} style={{ color: accent }} />
         </div>
 
-        {/* Word count */}
-        <div style={{ textAlign: "center" }}>
-          <p
-            style={{
-              fontSize: 22,
-              fontWeight: 800,
-              color: "#1a2332",
-              lineHeight: 1,
-              margin: 0,
-            }}
-          >
+        <div className="text-center">
+          <p className="m-0 text-[22px] font-black leading-none text-gray-900">
             {isCompleted ? totalWords : wordsLearned}
           </p>
-          <p style={{ fontSize: 10, color: "#aabfc9", marginTop: 3 }}>
+          <p className="mt-0.5 text-[10px] text-gray-400">
             {isCompleted ? "words learned" : "words done"}
           </p>
         </div>
 
-        {/* Status badge */}
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            ...(isCompleted
-              ? { background: "#e6f4eb", color: "#2a8a4a" }
-              : { background: "#fef3e2", color: "#c47a1a" }),
-            fontSize: 10,
-            fontWeight: 700,
-            borderRadius: 20,
-            padding: "4px 9px",
-            whiteSpace: "nowrap",
-          }}
+          className={`flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-bold ${
+            isCompleted
+              ? "bg-teal-50 text-teal-600"
+              : "bg-amber-50 text-amber-600"
+          }`}
         >
           {isCompleted ? <Check size={10} /> : <Clock size={10} />}
           {isCompleted ? "Completed" : "In Progress"}
@@ -310,8 +177,6 @@ function JourneyTicket({ journey }: { journey: CompletedJourney }) {
     </div>
   );
 }
-
-// ─── Section ──────────────────────────────────────────────────────────────────
 
 function Section({
   label,
@@ -322,26 +187,11 @@ function Section({
 }) {
   if (journeys.length === 0) return null;
   return (
-    <div style={{ marginBottom: 32 }}>
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: "0.8px",
-          color: "#9ab8c5",
-          textTransform: "uppercase",
-          marginBottom: 12,
-        }}
-      >
+    <div className="mb-8">
+      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
         {label}
       </p>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-          gap: 16,
-        }}
-      >
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {journeys.map((j) => (
           <JourneyTicket key={j.id} journey={j} />
         ))}
@@ -349,8 +199,6 @@ function Section({
     </div>
   );
 }
-
-// ─── Filter chip ─────────────────────────────────────────────────────────────
 
 type Filter = "all" | "in-progress" | "completed";
 
@@ -367,32 +215,16 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
-      style={{
-        padding: "7px 14px",
-        borderRadius: 20,
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-        transition: "background 0.15s, color 0.15s, border-color 0.15s",
-        ...(active
-          ? {
-              background: "#1a2332",
-              color: "white",
-              border: "1.5px solid #1a2332",
-            }
-          : {
-              background: "white",
-              color: "#556070",
-              border: "1.5px solid #d0e4ed",
-            }),
-      }}
+      className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+        active
+          ? "bg-[#1a2332] text-white"
+          : "border border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+      }`}
     >
       {label}
     </button>
   );
 }
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MyJourneysPage() {
   const router = useRouter();
@@ -436,140 +268,56 @@ export default function MyJourneysPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f0f7fa",
-        padding: "32px 24px 64px",
-      }}
-    >
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        {/* ── Header ── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            marginBottom: 28,
-            gap: 16,
-            flexWrap: "wrap",
-          }}
-        >
+    <div className="min-h-screen bg-white px-4 py-6 md:px-6 md:py-8 lg:px-10">
+      <div className="mx-auto w-full max-w-[1380px]">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1
-              style={{
-                fontSize: 28,
-                fontWeight: 800,
-                color: "#1a2332",
-                margin: 0,
-                letterSpacing: "-0.5px",
-                lineHeight: 1.2,
-              }}
-            >
-              My{" "}
-              <em style={{ fontStyle: "italic", color: "#4a9fc4" }}>
-                Journeys
-              </em>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
+              Learning Path
+            </p>
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-gray-900">
+              My Journeys
             </h1>
-            <p
-              style={{
-                fontSize: 13.5,
-                color: "#7a9aaa",
-                marginTop: 6,
-                marginBottom: 0,
-              }}
-            >
+            <p className="mt-1 text-sm text-gray-500">
               All your journeys — active, in progress, and completed.
             </p>
           </div>
-          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={() => router.push("/app/journey")}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "8px 14px",
-                borderRadius: 8,
-                border: "1.5px solid #c8dce6",
-                background: "transparent",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#1a2332",
-                cursor: "pointer",
-              }}
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
             >
-              <ArrowLeft size={14} />
+              <ArrowLeft className="h-3.5 w-3.5" />
               Back to Journey
             </button>
             <button
               type="button"
               onClick={() => router.push("/app/journey/create")}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "8px 14px",
-                borderRadius: 8,
-                border: "none",
-                background: "#1a2332",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "white",
-                cursor: "pointer",
-              }}
+              className="flex items-center justify-center gap-1.5 rounded-xl bg-[#1a2332] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#2d3a4d]"
             >
-              <Plus size={14} />
+              <Plus className="h-3.5 w-3.5" />
               New Journey
             </button>
           </div>
         </div>
 
-        {/* ── Filter bar ── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 24,
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ position: "relative" }}>
+        <div className="mb-6 flex flex-wrap items-center gap-2.5">
+          <div className="relative">
             <Search
               size={14}
-              color="#8aa8b5"
-              style={{
-                position: "absolute",
-                left: 10,
-                top: "50%",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-              }}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <input
               type="text"
               placeholder="Search journeys…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="focus:border-[#4a9fc4] focus:outline-none"
-              style={{
-                width: 240,
-                paddingLeft: 32,
-                paddingRight: 12,
-                paddingTop: 8,
-                paddingBottom: 8,
-                border: "1.5px solid #d0e4ed",
-                borderRadius: 8,
-                fontSize: 13,
-                color: "#1a2332",
-                background: "white",
-              }}
+              className="w-60 rounded-xl border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-teal-400 focus:outline-none"
             />
           </div>
 
-          <div style={{ display: "flex", gap: 6 }}>
+          <div className="flex gap-1.5">
             <Chip
               label="All"
               active={filter === "all"}
@@ -587,66 +335,30 @@ export default function MyJourneysPage() {
             />
           </div>
 
-          <span style={{ marginLeft: "auto", fontSize: 13, color: "#8aa8b5" }}>
+          <span className="ml-auto text-sm text-gray-500">
             {filtered.length} journey{filtered.length !== 1 ? "s" : ""}
           </span>
         </div>
 
-        {/* ── Empty state ── */}
         {filtered.length === 0 && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              paddingTop: 80,
-              gap: 14,
-            }}
-          >
-            <Map size={40} color="#c8dce6" />
-            <p
-              style={{
-                fontSize: 17,
-                fontWeight: 800,
-                color: "#1a2332",
-                margin: 0,
-              }}
-            >
+          <div className="flex flex-col items-center gap-3.5 pt-20">
+            <Map size={40} className="text-gray-300" />
+            <p className="m-0 text-lg font-black text-gray-900">
               No journeys yet
             </p>
-            <p
-              style={{
-                fontSize: 13,
-                color: "#8aa8b5",
-                textAlign: "center",
-                maxWidth: 280,
-                margin: 0,
-                lineHeight: 1.6,
-              }}
-            >
+            <p className="m-0 max-w-[280px] text-center text-sm leading-relaxed text-gray-500">
               Your completed and in-progress journeys will appear here.
             </p>
             <button
               type="button"
               onClick={() => router.push("/app/journey/create")}
-              style={{
-                marginTop: 6,
-                padding: "10px 20px",
-                borderRadius: 8,
-                background: "#1a2332",
-                color: "white",
-                border: "none",
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
+              className="mt-1.5 rounded-xl bg-[#1a2332] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#2d3a4d]"
             >
               Start your first journey →
             </button>
           </div>
         )}
 
-        {/* ── Sections ── */}
         {(filter === "all" || filter === "in-progress") && (
           <Section label="In Progress" journeys={inProgress} />
         )}

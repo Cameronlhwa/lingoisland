@@ -1026,7 +1026,9 @@ export default function JourneyPage() {
       return;
     }
     if (node.islandId) {
-      router.push(`/app/topic-islands/${node.islandId}?journeyFirst=1`);
+      const params = new URLSearchParams({ journeyFirst: "1" });
+      if (node.current) params.set("learn", "true");
+      router.push(`/app/topic-islands/${node.islandId}?${params.toString()}`);
       return;
     }
     const response = await fetch(`/api/journey/${journey.id}/start-island`, {
@@ -1036,7 +1038,9 @@ export default function JourneyPage() {
     });
     const data = await response.json();
     if (data.islandId) {
-      router.push(`/app/topic-islands/${data.islandId}?journeyFirst=1`);
+      const params = new URLSearchParams({ journeyFirst: "1" });
+      if (node.current) params.set("learn", "true");
+      router.push(`/app/topic-islands/${data.islandId}?${params.toString()}`);
     }
   };
 

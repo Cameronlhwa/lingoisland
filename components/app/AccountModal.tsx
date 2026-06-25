@@ -39,6 +39,11 @@ export default function AccountModal({
   const supabase = createClient();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [nameInput, setNameInput] = useState("");
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameSaveStatus, setNameSaveStatus] = useState<
+    "idle" | "saved" | "error"
+  >("idle");
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
   const [cefrLevel, setCefrLevel] = useState<string>("B1");
   const [levelLoading, setLevelLoading] = useState(false);
@@ -79,6 +84,7 @@ export default function AccountModal({
   >("idle");
   const [syncingFromStripe, setSyncingFromStripe] = useState(false);
   const ttsDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const nameDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { settings: ttsSettings, updateSettings: updateTtsSettings } = useTTS();
   const { captureEvent, identify } = useAnalytics();
 
@@ -98,15 +104,18 @@ export default function AccountModal({
         return;
       }
       setUserEmail(user.email ?? null);
-      setUserName(
-        (user.user_metadata?.full_name as string | undefined) ?? null,
-      );
-      
+      const name =
+        (user.user_metadata?.full_name as string | undefined) ??
+        (user.user_metadata?.name as string | undefined) ??
+        null;
+      setUserName(name);
+      setNameInput(name ?? "");
+
       // Identify user in PostHog
       if (user.id) {
         identify(user.id, {
           email: user.email,
-          name: user.user_metadata?.full_name,
+          name,
         });
       }
     };
@@ -352,6 +361,53 @@ export default function AccountModal({
     }
   };
 
+  const saveName = useCallback(
+    async (name: string) => {
+      const trimmed = name.trim();
+      if (trimmed === (userName ?? "")) return;
+
+      setNameSaving(true);
+      setNameSaveStatus("idle");
+      try {
+        const { data, error } = await supabase.auth.updateUser({
+          data: { full_name: trimmed, name: trimmed },
+        });
+        if (error) throw error;
+
+        setUserName(trimmed || null);
+        setNameInput(trimmed);
+        if (data.user?.id) {
+          identify(data.user.id, {
+            email: data.user.email,
+            name: trimmed,
+          });
+        }
+        setNameSaveStatus("saved");
+        setTimeout(() => setNameSaveStatus("idle"), 2000);
+      } catch (error) {
+        console.error("Error saving name:", error);
+        setNameSaveStatus("error");
+        setTimeout(() => setNameSaveStatus("idle"), 3000);
+      } finally {
+        setNameSaving(false);
+      }
+    },
+    [supabase, identify, userName],
+  );
+
+  const handleNameInputChange = useCallback(
+    (value: string) => {
+      setNameInput(value);
+      if (nameDebounceTimeoutRef.current) {
+        clearTimeout(nameDebounceTimeoutRef.current);
+      }
+      nameDebounceTimeoutRef.current = setTimeout(() => {
+        void saveName(value);
+      }, 500);
+    },
+    [saveName],
+  );
+
   const handleLevelChange = async (newLevel: string) => {
     setLevelLoading(true);
     try {
@@ -565,15 +621,42 @@ export default function AccountModal({
         {activeTab === "profile" ? (
           <div className={`${cardBaseClass} mt-6 p-6`}>
             <div className="space-y-6">
-              <div className="flex flex-col gap-2">
-                <h2 className="text-base font-semibold text-gray-900">
-                  Profile
-                </h2>
-                <div className="text-sm text-gray-600">
-                  {userName ? (
-                    <div className="font-medium text-gray-900">{userName}</div>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-gray-900">
+                    Profile
+                  </h2>
+                  {nameSaveStatus === "saved" ? (
+                    <span className="text-xs font-medium text-green-600">
+                      Saved
+                    </span>
+                  ) : nameSaveStatus === "error" ? (
+                    <span className="text-xs font-medium text-red-600">
+                      Error saving
+                    </span>
                   ) : null}
-                  <div>{userEmail ?? "Loading..."}</div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="name-input"
+                    className="text-sm font-medium text-gray-900"
+                  >
+                    Name
+                  </label>
+                  <input
+                    id="name-input"
+                    type="text"
+                    value={nameInput}
+                    onChange={(e) => handleNameInputChange(e.target.value)}
+                    onBlur={() => void saveName(nameInput)}
+                    disabled={nameSaving}
+                    placeholder="Your name"
+                    autoComplete="name"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
+                  />
+                </div>
+                <div className="text-sm text-gray-600">
+                  {userEmail ?? "Loading..."}
                 </div>
               </div>
 

@@ -35,7 +35,10 @@ export default function BlogIndexPage() {
       <header className="max-w-[820px]">
         <p
           className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: "#2176AE", fontFamily: "'DM Sans', system-ui, sans-serif" }}
+          style={{
+            color: "#2176AE",
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+          }}
         >
           LingoIsland
         </p>
@@ -47,9 +50,14 @@ export default function BlogIndexPage() {
         </h1>
         <p
           className="mt-4 text-lg leading-relaxed md:text-[1.125rem]"
-          style={{ color: "#071E2E", fontFamily: "'DM Sans', system-ui, sans-serif", opacity: 0.92 }}
+          style={{
+            color: "#071E2E",
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+            opacity: 0.92,
+          }}
         >
-          The LingoIsland Blog — Mandarin tips, vocab deep-dives, and honest takes on learning.
+          The LingoIsland Blog — Mandarin tips, vocab deep-dives, and honest
+          takes on learning.
         </p>
       </header>
 
@@ -79,16 +87,24 @@ export default function BlogIndexPage() {
             </h2>
             <p
               className="mt-3 line-clamp-2 text-[15px] leading-relaxed"
-              style={{ fontFamily: "'DM Sans', system-ui, sans-serif", opacity: 0.85 }}
+              style={{
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+                opacity: 0.85,
+              }}
             >
               {post.excerpt}
             </p>
             <div
               className="mt-auto flex items-center justify-between pt-5 text-xs font-semibold"
-              style={{ color: "#2176AE", fontFamily: "'DM Sans', system-ui, sans-serif" }}
+              style={{
+                color: "#2176AE",
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+              }}
             >
               <span>{post.readTimeMinutes} min read</span>
-              <span className="transition group-hover:translate-x-0.5">Read →</span>
+              <span className="transition group-hover:translate-x-0.5">
+                Read →
+              </span>
             </div>
           </Link>
         ))}
