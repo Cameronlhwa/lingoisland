@@ -48,14 +48,25 @@ export async function GET(request: NextRequest) {
   // Try to get 'next' from cookie first (stored before OAuth), then from URL, then default
   const nextFromCookie = request.cookies.get('oauth_next')?.value
   const nextFromUrl = requestUrl.searchParams.get('next')
-  let next = nextFromCookie || nextFromUrl || '/app'
+  const rawNext = nextFromCookie || nextFromUrl || '/app'
+  let next = rawNext
+  try {
+    next = decodeURIComponent(rawNext)
+  } catch {
+    next = rawNext
+  }
+
+  const isSafeInternalPath =
+    next.startsWith('/') && !next.startsWith('//') && !next.includes('\\')
   
   // Safety: never send users back to /login or thin onboarding after auth.
   // Allow public journey entry URLs under /onboarding/…
   const allowedOnboarding =
     next.startsWith('/onboarding/topic-island') ||
-    next.startsWith('/onboarding/journey')
+    next.startsWith('/onboarding/journey') ||
+    next.startsWith('/onboarding/upgrade')
   const onboardingIsUnsafe =
+    !isSafeInternalPath ||
     next === '/login' ||
     (next.startsWith('/onboarding') && !allowedOnboarding)
   if (onboardingIsUnsafe) {

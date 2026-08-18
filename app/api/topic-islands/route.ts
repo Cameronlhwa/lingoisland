@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { canCreateTopicIsland, incrementTopicIslandCount } from '@/lib/entitlements'
 import { pickRandomCoverKey } from '@/lib/islandLibrary'
+import { normalizeSentenceStyle } from '@/lib/sentenceStyle'
+import { topicIslandsHasSentenceStyleColumn } from '@/lib/supabase/schemaFeatures'
 
 /**
  * POST /api/topic-islands
@@ -43,7 +45,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { topic, level, wordTarget, grammarTarget } = body
+    const { topic, level, wordTarget, grammarTarget, sentenceStyle } = body
 
     // Validate input
     if (!topic || typeof topic !== 'string' || topic.trim().length === 0) {
@@ -63,6 +65,7 @@ export async function POST(request: Request) {
     }
 
     const baseLevel =
+      level.startsWith('A0') ? 'A0' :
       level.startsWith('A1') ? 'A1' :
       level.startsWith('A2') ? 'A2' : 
       level.startsWith('B1') ? 'B1' : 
@@ -71,7 +74,7 @@ export async function POST(request: Request) {
 
     if (!baseLevel) {
       return NextResponse.json(
-        { error: 'Level must be in the A1, A2, B1, B2, or C1 bands' },
+        { error: 'Level must be in the A0, A1, A2, B1, B2, or C1 bands' },
         { status: 400 }
       )
     }
@@ -98,6 +101,7 @@ export async function POST(request: Request) {
     }
 
     const trimmedTopic = topic.trim()
+    const normalizedSentenceStyle = normalizeSentenceStyle(sentenceStyle)
 
     // Idempotency: if an island with the same topic already exists for this user,
     // reuse it instead of creating a duplicate.
@@ -118,22 +122,33 @@ export async function POST(request: Request) {
     if (existing) {
       // Return existing island id to keep behaviour consistent
       // Don't increment usage count since island already exists
-      return NextResponse.json({ islandId: existing.id })
+      return NextResponse.json({
+        islandId: existing.id,
+        sentenceStyle: normalizeSentenceStyle(
+          existing.sentence_style ?? normalizedSentenceStyle,
+        ),
+      })
     }
 
     // Create topic island with pre-generated cover image
+    const insertRow: Record<string, unknown> = {
+      user_id: user.id,
+      topic: trimmedTopic,
+      // Store the full level string (e.g. "A2-" or "B1+")
+      level,
+      word_target: wordTarget,
+      grammar_target: grammar,
+      status: 'draft',
+      cover_key: pickRandomCoverKey(), // Assign random pre-generated island image
+    }
+
+    if (await topicIslandsHasSentenceStyleColumn(supabase)) {
+      insertRow.sentence_style = normalizedSentenceStyle
+    }
+
     const { data: island, error } = await supabase
       .from('topic_islands')
-      .insert({
-        user_id: user.id,
-        topic: trimmedTopic,
-        // Store the full level string (e.g. "A2-" or "B1+")
-        level,
-        word_target: wordTarget,
-        grammar_target: grammar,
-        status: 'draft',
-        cover_key: pickRandomCoverKey(), // Assign random pre-generated island image
-      })
+      .insert(insertRow)
       .select()
       .single()
 
@@ -151,7 +166,10 @@ export async function POST(request: Request) {
     // Increment usage count for this month
     await incrementTopicIslandCount(user.id)
 
-    return NextResponse.json({ islandId: island.id })
+    return NextResponse.json({
+      islandId: island.id,
+      sentenceStyle: normalizedSentenceStyle,
+    })
   } catch (error) {
     console.error('Error in POST /api/topic-islands:', error)
     return NextResponse.json(

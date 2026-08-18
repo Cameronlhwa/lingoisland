@@ -6,12 +6,14 @@ import LearnDragDrop from "./LearnDragDrop";
 import LearnChat from "./LearnChat";
 import type { LearnIsland, LearnStep, LearnWord } from "./types";
 import { pickLearnWords } from "./types";
+import { useLearnLevel } from "./useLearnLevel";
 
 export { learnSequenceKey } from "./types";
 
 interface LearnSequenceProps {
   island: LearnIsland;
   words: LearnWord[];
+  userCefrLevel?: string | null;
   onComplete: () => void;
 }
 
@@ -26,9 +28,11 @@ const STEP_LABELS: Record<LearnStep, string> = {
 export default function LearnSequence({
   island,
   words,
+  userCefrLevel,
   onComplete,
 }: LearnSequenceProps) {
   const [step, setStep] = useState<LearnStep>("slideshow");
+  const learnLevel = useLearnLevel(island, userCefrLevel);
 
   const learnWords = useMemo(() => pickLearnWords(words, 5), [words]);
   const stepIndex = STEP_ORDER.indexOf(step);
@@ -77,22 +81,28 @@ export default function LearnSequence({
 
       {step === "slideshow" && (
         <LearnSlideshow
+          key={learnLevel}
           words={learnWords}
           island={island}
+          learnLevel={learnLevel}
           onComplete={() => setStep("dragdrop")}
+          onSkip={onComplete}
         />
       )}
       {step === "dragdrop" && (
         <LearnDragDrop
           words={learnWords}
+          level={island.level}
           onComplete={() => setStep("chat")}
         />
       )}
-      {step === "chat" && (
+      {step === "chat" && userCefrLevel !== undefined && (
         <LearnChat
+          key={`chat-${learnLevel}`}
           words={learnWords}
           allIslandWords={words}
           island={island}
+          learnLevel={learnLevel}
           onComplete={onComplete}
         />
       )}

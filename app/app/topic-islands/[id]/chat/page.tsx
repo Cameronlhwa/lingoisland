@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import LearnChat from "@/components/app/LearnSequence/LearnChat";
+import { useLearnLevel } from "@/components/app/LearnSequence/useLearnLevel";
 import {
   pickLearnWords,
   type LearnIsland,
@@ -15,6 +16,9 @@ export default function IslandChatPage() {
   const router = useRouter();
   const [island, setIsland] = useState<LearnIsland | null>(null);
   const [words, setWords] = useState<LearnWord[]>([]);
+  const [userCefrLevel, setUserCefrLevel] = useState<string | null | undefined>(
+    undefined,
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,6 +29,9 @@ export default function IslandChatPage() {
         const data = await res.json();
         setIsland(data.island);
         setWords(data.words ?? []);
+        setUserCefrLevel(
+          typeof data.user_cefr_level === "string" ? data.user_cefr_level : null,
+        );
       } catch (error) {
         console.error("Error loading island chat:", error);
       } finally {
@@ -35,6 +42,7 @@ export default function IslandChatPage() {
   }, [islandId]);
 
   const learnWords = useMemo(() => pickLearnWords(words, 5), [words]);
+  const learnLevel = useLearnLevel(island, userCefrLevel);
 
   if (loading) {
     return (
@@ -85,6 +93,7 @@ export default function IslandChatPage() {
           words={learnWords}
           allIslandWords={words}
           island={island}
+          learnLevel={learnLevel}
           fillContainer
           onComplete={() => router.back()}
         />

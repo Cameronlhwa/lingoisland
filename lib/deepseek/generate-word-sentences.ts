@@ -3,6 +3,14 @@
  * Used in parallel generation flow
  */
 
+import {
+  getSentenceStyleDiversityNote,
+  getSentenceStyleRequirements,
+  getSentenceStyleToneBlock,
+  normalizeSentenceStyle,
+  type SentenceStyle,
+} from '@/lib/sentenceStyle'
+
 export interface Sentence {
   tier: 'easy' | 'same' | 'hard'
   hanzi: string
@@ -39,6 +47,7 @@ export async function generateWordSentences({
   avoidPatterns,
   retryHint,
   sentenceTierMode = 'full',
+  sentenceStyle = 'casual',
   generationConfig,
 }: {
   word: Word
@@ -57,6 +66,7 @@ export async function generateWordSentences({
   retryHint?: string
   /** Default: all three (easy / same / hard). easy_same: onboarding free island — approachable. */
   sentenceTierMode?: 'full' | 'easy_same'
+  sentenceStyle?: SentenceStyle
   generationConfig?: {
     temperature?: number
     topP?: number
@@ -80,6 +90,8 @@ export async function generateWordSentences({
   }
 
   const actualDetailedLevel = detailedLevel || level
+  const style = normalizeSentenceStyle(sentenceStyle)
+  const diversityNote = getSentenceStyleDiversityNote(style)
 
   // Define easy/same/hard tiers relative to the detailed level
   const easyTierMap: Record<string, string> = {
@@ -127,8 +139,8 @@ export async function generateWordSentences({
 
   const diversityPlanSection = styles && styles.length > 0
     ? sentenceTierMode === 'easy_same'
-      ? `\n\nDIVERSITY PLAN:\n- Use these sentence styles: ${styles.join(', ')}\n- Use these contexts: ${contexts?.join(', ') || 'any'}\n- Ensure the two sentences do NOT share the same template or opener.\n- Mix structure: statement / question / short chat reply.\n- Keep it casual and native for 20s speakers.`
-      : `\n\nDIVERSITY PLAN:\n- Use these sentence styles: ${styles.join(', ')}\n- Use these contexts: ${contexts?.join(', ') || 'any'}\n- Ensure the three sentences do NOT share the same template or opener.\n- Mix structure: statement / question / short chat reply / complaint / suggestion / joking tone.\n- Vary length: some 6–10 chars, some 12–20+, some mini exchanges (1–2 sentences).\n- Keep it casual and native for 20s speakers.`
+      ? `\n\nDIVERSITY PLAN:\n- Use these sentence styles: ${styles.join(', ')}\n- Use these contexts: ${contexts?.join(', ') || 'any'}\n- Ensure the two sentences do NOT share the same template or opener.\n- Mix structure: statement / question / short chat reply.\n- ${diversityNote}`
+      : `\n\nDIVERSITY PLAN:\n- Use these sentence styles: ${styles.join(', ')}\n- Use these contexts: ${contexts?.join(', ') || 'any'}\n- Ensure the three sentences do NOT share the same template or opener.\n- Mix structure: statement / question / short chat reply / complaint / suggestion / joking tone.\n- Vary length: some 6–10 chars, some 12–20+, some mini exchanges (1–2 sentences).\n- ${diversityNote}`
     : ''
 
   const avoidSection =
@@ -177,6 +189,9 @@ export async function generateWordSentences({
     C1: `\n\nSTYLE FOR C1: Sophisticated yet natural, idioms and subtle meanings are OK, complex structures (that are still natural and conversational), native Chinese expressiveness.`,
   }
 
+  const toneBlock = getSentenceStyleToneBlock(style, sentenceTierMode)
+  const styleRequirements = getSentenceStyleRequirements(style)
+
   const prompt = sentenceTierMode === 'easy_same'
     ? `You are a Mandarin Chinese learning assistant. Generate example sentences for a single vocabulary word.
 
@@ -188,13 +203,7 @@ Generate TWO example sentences showing this word in context (no "hard" tier — 
 1. "easy": Approximately ONE FULL LEVEL easier than ${actualDetailedLevel} (${easyDescription}). Shorter sentences, simpler grammar and vocabulary.
 2. "same": EXACTLY at ${actualDetailedLevel} difficulty. This must be a perfect match for the learner's current level.
 
-CRITICAL: All example sentences must be CONVERSATIONAL and CASUAL - exactly what a 20-30 year old person would say to their friend in everyday situations. Think:
-- Natural, relaxed speech patterns
-- Friendly, informal tone
-- How people actually talk, not textbook examples
-- Avoid formal or academic language
-- Use contractions, casual expressions, and natural flow
-- Sound like chatting with a close friend, not giving a presentation
+${toneBlock}
 
 Requirements:
 - Use Simplified Chinese (not Traditional)
@@ -204,9 +213,8 @@ Requirements:
 - Each sentence should be practical and useful
 - Ensure all fields are non-empty strings
 - The sentences should naturally demonstrate the word's usage
-- Write sentences as if texting or talking to a friend - casual, conversational, authentic
+${styleRequirements}
 - Include the target word in each sentence (hanzi must contain "${word.hanzi}")
-- Use casual connectors where natural: 其实、感觉、有点、挺、就、真的、太…了、别…了
 - Avoid textbooky patterns like “为了…所以…” and repetitive templates
 - Vary sentence structures across the two outputs
 - Do NOT prefix sentences with bullets, numbers, or list markers (e.g., '-', '•', '1.')
@@ -230,13 +238,7 @@ Generate THREE example sentences showing this word in context:
 2. "same": EXACTLY at ${actualDetailedLevel} difficulty. This must be a perfect match for the learner's current level.
 3. "hard": Only A TINY BIT harder than ${actualDetailedLevel} (${hardDescription}). May add one new grammar point or 1-2 harder words, but mostly understandable.
 
-CRITICAL: All example sentences must be CONVERSATIONAL and CASUAL - exactly what a 20-30 year old person would say to their friend in everyday situations. Think:
-- Natural, relaxed speech patterns
-- Friendly, informal tone
-- How people actually talk, not textbook examples
-- Avoid formal or academic language
-- Use contractions, casual expressions, and natural flow
-- Sound like chatting with a close friend, not giving a presentation
+${toneBlock}
 
 Requirements:
 - Use Simplified Chinese (not Traditional)
@@ -246,10 +248,8 @@ Requirements:
 - Each sentence should be practical and useful
 - Ensure all fields are non-empty strings
 - The sentences should naturally demonstrate the word's usage
-- Write sentences as if texting or talking to a friend - casual, conversational, authentic
+${styleRequirements}
 - Include the target word in each sentence (hanzi must contain "${word.hanzi}")
-- Use casual connectors: 其实、感觉、有点、挺、蛮、就、真的、太…了、别…了 (some, not all)
-- Recommended slang examples — you can also use similar expressions not in the list (e.g., 离谱、摆烂、上头、真香). Use only when they fit naturally; do not use them all the time. At most 1 slang word total per word; most sentences should be natural without slang.
 - Avoid textbooky patterns like “为了…所以…” and repetitive templates
 - Vary sentence structures across the three outputs
 - Do NOT prefix sentences with bullets, numbers, or list markers (e.g., '-', '•', '1.')
@@ -271,7 +271,7 @@ Output ONLY valid JSON (no markdown, no code blocks, no explanation). Format:
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'deepseek-chat',
+      model: 'deepseek-v4-flash',
       messages: [
         {
           role: 'system',

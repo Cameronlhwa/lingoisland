@@ -10,6 +10,8 @@ interface SpeakerButtonProps {
   type?: "word" | "sentence";
   size?: "sm" | "md" | "lg";
   className?: string;
+  /** When set, overrides profile TTS speed for this playback. */
+  rate?: number;
 }
 
 /**
@@ -20,6 +22,7 @@ export default function SpeakerButton({
   type = "sentence",
   size = "md",
   className = "",
+  rate: rateOverride,
 }: SpeakerButtonProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +39,8 @@ export default function SpeakerButton({
 
     try {
       const rate =
-        type === "word" ? settings.ttsRateWords : settings.ttsRateSentences;
+        rateOverride ??
+        (type === "word" ? settings.ttsRateWords : settings.ttsRateSentences);
       await playTextToSpeech(text, rate);
     } catch (err) {
       console.error("Failed to play audio:", err);

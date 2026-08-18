@@ -1,13 +1,22 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { isA0Level, seedA0IslandFromCourse } from '@/lib/a0Course'
 import { getEntitlements } from '@/lib/entitlements'
 import { pickRandomCoverKey } from '@/lib/islandLibrary'
+import { normalizeSentenceStyle } from '@/lib/sentenceStyle'
+import {
+  journeysHasSentenceStyleColumn,
+  topicIslandsHasSentenceStyleColumn,
+} from '@/lib/supabase/schemaFeatures'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 type Body = {
   order?: number
+  sentenceStyle?: string
+  level?: string
+  cefrLevel?: string
 }
 
 export async function POST(
@@ -72,7 +81,14 @@ export async function POST(
       .eq('user_id', user.id)
       .maybeSingle()
 
-    const level = up?.cefr_level || 'B1'
+    const profileLevel = up?.cefr_level || 'B1'
+    const requestedLevel =
+      typeof body.cefrLevel === 'string'
+        ? body.cefrLevel.trim()
+        : typeof body.level === 'string'
+          ? body.level.trim()
+          : ''
+    const level = requestedLevel || profileLevel
 
     const topic = `${ji.name} — ${journey.topic}`
 
@@ -93,19 +109,32 @@ export async function POST(
       await supabase.from('user_profiles').insert({ user_id: user.id, cefr_level: 'B1' })
     }
 
-    const wordTarget = order === 1 ? 5 : 10
+    const isA0 = isA0Level(level)
+    // A0 island 1 uses the fixed 5-word mini-course; A1+ island 1 stays at 3.
+    const wordTarget = order === 1 ? (isA0 ? 5 : 3) : 10
+    const journeyHasStyleColumn = await journeysHasSentenceStyleColumn(supabase)
+    const sentenceStyle = normalizeSentenceStyle(
+      body.sentenceStyle ??
+        (journeyHasStyleColumn ? journey.sentence_style : undefined),
+    )
+
+    const islandInsert: Record<string, unknown> = {
+      user_id: user.id,
+      topic,
+      level,
+      word_target: wordTarget,
+      // A0 island 1 fixed course has no grammar-focus generation step.
+      grammar_target: isA0 && order === 1 ? 0 : 1,
+      status: 'draft',
+      cover_key: pickRandomCoverKey(),
+    }
+    if (await topicIslandsHasSentenceStyleColumn(supabase)) {
+      islandInsert.sentence_style = sentenceStyle
+    }
 
     const { data: island, error: insErr } = await supabase
       .from('topic_islands')
-      .insert({
-        user_id: user.id,
-        topic,
-        level,
-        word_target: wordTarget,
-        grammar_target: 1,
-        status: 'draft',
-        cover_key: pickRandomCoverKey(),
-      })
+      .insert(islandInsert)
       .select()
       .single()
 
@@ -124,6 +153,25 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to link island' }, { status: 500 })
     }
 
+    // A0 island 1 only: seed fixed course content — do not call generate-batch.
+    // A0 islands 2–5 (post-paywall) still use the normal AI pipeline.
+    if (isA0 && order === 1) {
+      const seeded = await seedA0IslandFromCourse(supabase, {
+        islandId: island.id,
+        userId: user.id,
+      })
+      if (!seeded.ok) {
+        console.error('[start-island] A0 seed failed', seeded.error)
+        await supabase.from('journey_islands').update({ island_id: null }).eq('id', ji.id)
+        await supabase.from('topic_islands').delete().eq('id', island.id)
+        return NextResponse.json(
+          { error: seeded.error || 'Failed to seed A0 course' },
+          { status: 500 },
+        )
+      }
+      return NextResponse.json({ islandId: island.id })
+    }
+
     const sentenceTierMode = 'full'
     const origin = new URL(request.url).origin
     const cookieHeader = request.headers.get('cookie') ?? ''
@@ -133,7 +181,7 @@ export async function POST(
         'Content-Type': 'application/json',
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
-      body: JSON.stringify({ sentenceTierMode }),
+      body: JSON.stringify({ sentenceTierMode, sentenceStyle }),
     }).catch((err) => console.error('[start-island] generate-batch', err))
 
     return NextResponse.json({ islandId: island.id })

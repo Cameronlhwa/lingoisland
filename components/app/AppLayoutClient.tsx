@@ -25,6 +25,16 @@ import {
   markJourneyOnboardingComplete,
 } from "@/lib/onboarding/journeyOnboardingGate";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
+import {
+  buildUpgradePageUrl,
+  clearUpgradePending,
+  isUpgradePending,
+  readUpgradeSnapshot,
+} from "@/lib/onboarding/onboardingCheckoutStorage";
+import {
+  invalidateSubscriptionCache,
+  useSubscription,
+} from "@/hooks/useSubscription";
 
 const SIGNUP_FEATURES = [
   {
@@ -112,6 +122,41 @@ function OnboardingRedirect() {
       cancelled = true;
     };
   }, [pathname, router, supabase]);
+
+  return null;
+}
+
+function OnboardingUpgradeGate() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { isPro, isLoading } = useSubscription();
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (isPro) {
+      clearUpgradePending();
+      return;
+    }
+    if (!pathname?.startsWith("/app")) return;
+    if (!isUpgradePending()) return;
+
+    const snap = readUpgradeSnapshot();
+    router.replace(buildUpgradePageUrl(snap?.islandId ?? ""));
+  }, [isLoading, isPro, pathname, router]);
+
+  return null;
+}
+
+function CheckoutSuccessHandler() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname !== "/app" || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") !== "success") return;
+    clearUpgradePending();
+    invalidateSubscriptionCache();
+  }, [pathname]);
 
   return null;
 }
@@ -278,6 +323,8 @@ export default function AppLayoutClient({
       <OnboardingProvider>
         <SidebarContext.Provider value={sidebarContextValue}>
           <OnboardingRedirect />
+          <OnboardingUpgradeGate />
+          <CheckoutSuccessHandler />
           <OnboardingBootstrap />
           {isFullscreenOnboarding ? (
             <div className="min-h-screen bg-white">

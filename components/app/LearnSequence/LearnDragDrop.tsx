@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
+import { recordTopicIslandQuizActivity } from "@/lib/recordTopicIslandQuizActivity";
 import type { LearnWord } from "./types";
 
 interface LearnDragDropProps {
   words: LearnWord[];
   onComplete: () => void;
+  /** Island CEFR level — A0 shows Pinyin targets instead of Hanzi */
+  level?: string;
 }
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -18,8 +21,13 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export default function LearnDragDrop({ words, onComplete }: LearnDragDropProps) {
+export default function LearnDragDrop({
+  words,
+  onComplete,
+  level,
+}: LearnDragDropProps) {
   const { convertText } = useCharacterSet();
+  const isA0 = (level ?? "").trim().toUpperCase().startsWith("A0");
   const [shuffledEnglish, setShuffledEnglish] = useState<LearnWord[]>([]);
   const [dropMatches, setDropMatches] = useState<Record<string, string>>({});
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -30,6 +38,7 @@ export default function LearnDragDrop({ words, onComplete }: LearnDragDropProps)
   const [checked, setChecked] = useState(false);
   const [results, setResults] = useState<Record<string, boolean>>({});
   const [showSuccess, setShowSuccess] = useState(false);
+  const recordedProgressRef = useRef(false);
 
   useEffect(() => {
     setShuffledEnglish(shuffleArray([...words]));
@@ -85,6 +94,10 @@ export default function LearnDragDrop({ words, onComplete }: LearnDragDropProps)
     setChecked(true);
 
     if (allCorrect) {
+      if (!recordedProgressRef.current) {
+        recordedProgressRef.current = true;
+        void recordTopicIslandQuizActivity(words.length);
+      }
       setShowSuccess(true);
       setTimeout(() => onComplete(), 1500);
     } else {
@@ -138,8 +151,12 @@ export default function LearnDragDrop({ words, onComplete }: LearnDragDropProps)
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         {useTapMode
-          ? "Tap an English word, then tap a Chinese slot. Tap a matched word to undo."
-          : "Drag English words to match their Chinese translations. Drag back to change your guess."}
+          ? isA0
+            ? "Tap an English word, then tap a Pinyin slot. Tap a matched word to undo."
+            : "Tap an English word, then tap a Chinese slot. Tap a matched word to undo."
+          : isA0
+            ? "Drag English words to match their Pinyin. Drag back to change your guess."
+            : "Drag English words to match their Chinese translations. Drag back to change your guess."}
       </p>
 
       <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -205,7 +222,7 @@ export default function LearnDragDrop({ words, onComplete }: LearnDragDropProps)
             className="mb-3 text-sm font-semibold text-[#071E2E]/70"
             style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
           >
-            Chinese
+            {isA0 ? "Pinyin" : "Chinese"}
           </h3>
           {words.map((word) => {
             const hasMatch = !!dropMatches[word.hanzi];
@@ -239,18 +256,31 @@ export default function LearnDragDrop({ words, onComplete }: LearnDragDropProps)
                 } ${useTapMode && !hasMatch ? "cursor-pointer" : ""}`}
               >
                 <div className="flex min-w-0 flex-1 items-baseline gap-2">
-                  <span
-                    className="text-lg font-medium text-[#071E2E]"
-                    style={{ fontFamily: "'Lora', Georgia, serif" }}
-                  >
-                    {convertText(word.hanzi)}
-                  </span>
-                  <span
-                    className="truncate text-sm text-[#071E2E]/50"
-                    style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
-                  >
-                    {word.pinyin}
-                  </span>
+                  {isA0 ? (
+                    <span
+                      className="text-2xl font-semibold text-[#2176AE] md:text-[28px]"
+                      style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+                    >
+                      {word.pinyin}
+                    </span>
+                  ) : (
+                    <>
+                      <span
+                        className="text-lg font-medium text-[#071E2E]"
+                        style={{ fontFamily: "'Lora', Georgia, serif" }}
+                      >
+                        {convertText(word.hanzi)}
+                      </span>
+                      <span
+                        className="truncate text-sm text-[#071E2E]/50"
+                        style={{
+                          fontFamily: "'DM Sans', system-ui, sans-serif",
+                        }}
+                      >
+                        {word.pinyin}
+                      </span>
+                    </>
+                  )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {hasMatch && (

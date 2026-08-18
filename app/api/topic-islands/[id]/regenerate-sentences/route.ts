@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateWordSentences } from '@/lib/deepseek/generate-word-sentences'
+import { normalizeSentenceStyle } from '@/lib/sentenceStyle'
 
 interface Word {
   id: string
@@ -87,6 +88,7 @@ export async function POST(
     // Get base level from island
     const baseLevel = (island.level as 'A1' | 'A2' | 'B1' | 'B2' | 'C1') || 'B1'
     const grammarTarget = island.grammar_target || 0
+    const sentenceStyle = normalizeSentenceStyle(island.sentence_style)
 
     let regeneratedCount = 0
     const errors: string[] = []
@@ -112,6 +114,7 @@ export async function POST(
           topic: island.topic,
           level: baseLevel,
           grammarTarget,
+          sentenceStyle,
           wordIndex: 0, // Not used for retry
           totalWords: 1,
         })

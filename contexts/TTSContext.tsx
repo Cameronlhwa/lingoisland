@@ -44,6 +44,13 @@ export function TTSProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateSettings = async (newSettings: Partial<TTSSettings>) => {
+    const previous = settings;
+    setSettings((current) => ({
+      ttsRateSentences:
+        newSettings.ttsRateSentences ?? current.ttsRateSentences,
+      ttsRateWords: newSettings.ttsRateWords ?? current.ttsRateWords,
+    }));
+
     try {
       const response = await fetch("/api/profile", {
         method: "PATCH",
@@ -57,10 +64,11 @@ export function TTSProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
       setSettings({
-        ttsRateSentences: data.ttsRateSentences || settings.ttsRateSentences,
-        ttsRateWords: data.ttsRateWords || settings.ttsRateWords,
+        ttsRateSentences: data.ttsRateSentences || previous.ttsRateSentences,
+        ttsRateWords: data.ttsRateWords || previous.ttsRateWords,
       });
     } catch (error) {
+      setSettings(previous);
       console.error("Error updating TTS settings:", error);
       throw error;
     }

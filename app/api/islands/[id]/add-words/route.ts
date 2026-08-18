@@ -7,6 +7,7 @@ import {
 } from '@/lib/deepseek/generate-word-sentences'
 import { limitConcurrency } from '@/lib/utils/concurrency'
 import { getEntitlements } from '@/lib/entitlements'
+import { normalizeSentenceStyle } from '@/lib/sentenceStyle'
 
 const clampCount = (value: number) => Math.min(10, Math.max(5, value))
 
@@ -125,6 +126,7 @@ export async function POST(
     const levelToUse = customLevel || (island.level as string)
     const baseLevel = mapToBaseLevel(levelToUse)
     const detailedLevel = levelToUse
+    const sentenceStyle = normalizeSentenceStyle(island.sentence_style)
 
     const wordList = await generateWordList({
       topic: island.topic,
@@ -243,6 +245,7 @@ export async function POST(
             knownWords,
             wordIndex: index,
             totalWords: wordsToGenerate.length,
+            sentenceStyle,
             retryHint,
             generationConfig: retryConfigs[attempt],
           })

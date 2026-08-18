@@ -29,7 +29,19 @@ function SignupPageContent() {
 
   const nextPath = (() => {
     const candidate = searchParams.get("next") ?? searchParams.get("redirect");
-    return candidate?.startsWith("/") === true ? candidate : "/app";
+    const isSafeInternal =
+      typeof candidate === "string" &&
+      candidate.startsWith("/") &&
+      !candidate.startsWith("//") &&
+      !candidate.includes("\\");
+    const base = isSafeInternal ? candidate : "/app";
+    if (searchParams.get("checkout") !== "1") return base;
+    const plan = searchParams.get("plan");
+    if (plan !== "monthly" && plan !== "yearly") return base;
+    const url = new URL(base, "http://local");
+    url.searchParams.set("autoCheckout", "1");
+    url.searchParams.set("plan", plan);
+    return `${url.pathname}${url.search}`;
   })();
   const fromSidebar = searchParams.get("from") === "sidebar";
   const featureName = searchParams.get("feature") ?? "";
