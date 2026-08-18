@@ -3,6 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AppLogo from "@/components/app/AppLogo";
 import JourneyIslandPaywall from "@/components/app/JourneyIslandPaywall";
+import LearnSummary from "@/components/Onboarding/LearnSummary";
+import {
+  buildUpgradePageUrl,
+  markUpgradePending,
+  writeUpgradeSnapshot,
+} from "@/lib/onboarding/onboardingCheckoutStorage";
 import Link from "next/link";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -27,7 +33,9 @@ import CapybaraStrip from "@/components/app/CapybaraStrip";
 import LearnSequence, {
   learnSequenceKey,
 } from "@/components/app/LearnSequence";
+import PreCourseLoading from "@/components/app/LearnSequence/PreCourseLoading";
 import LearnChat from "@/components/app/LearnSequence/LearnChat";
+import { useLearnLevel } from "@/components/app/LearnSequence/useLearnLevel";
 import { pickLearnWords } from "@/components/app/LearnSequence/types";
 import HuahuaChatCard from "@/components/app/HuahuaChatCard";
 
@@ -102,6 +110,9 @@ export default function TopicIslandDetailPage() {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [userTopicIslandCount, setUserTopicIslandCount] = useState(0);
   const [canCreateTopicIsland, setCanCreateTopicIsland] = useState(true);
+  const [userCefrLevel, setUserCefrLevel] = useState<string | null | undefined>(
+    undefined,
+  );
 
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -157,8 +168,15 @@ export default function TopicIslandDetailPage() {
   const [wordSelectionOpen, setWordSelectionOpen] = useState(false);
   const [showCapybaraTeaser, setShowCapybaraTeaser] = useState(false);
   const [showNewUserHint, setShowNewUserHint] = useState(false);
-  const [showLearnSequence, setShowLearnSequence] = useState(false);
+  const [learnSequenceDismissed, setLearnSequenceDismissed] = useState(false);
+  const [showLearnSummary, setShowLearnSummary] = useState(false);
+  const wantsLearnSequence = searchParams.get("learn") === "true";
+  const isJourneyFirstIsland = searchParams.get("journeyFirst") === "1";
   const [showHuahuaChat, setShowHuahuaChat] = useState(false);
+  const learnLevel = useLearnLevel(
+    island ? { id: island.id, topic: island.topic, level: island.level } : null,
+    userCefrLevel,
+  );
   const [journeyContext, setJourneyContext] = useState<{
     journeyIslandId: string;
     order: number;
@@ -179,20 +197,6 @@ export default function TopicIslandDetailPage() {
     setShowNewUserHint(!localStorage.getItem("island_hint_dismissed"));
   }, []);
 
-  useEffect(() => {
-    if (
-      !island ||
-      island.status !== "ready" ||
-      isAnonymous ||
-      words.length < 5
-    ) {
-      return;
-    }
-
-    if (searchParams.get("learn") === "true") {
-      setShowLearnSequence(true);
-    }
-  }, [island?.status, island?.id, isAnonymous, words.length, searchParams]);
   const [quizMode, setQuizMode] = useState<"drag-drop" | "flashcard" | null>(
     null,
   );
@@ -462,6 +466,9 @@ export default function TopicIslandDetailPage() {
           : 0,
       );
       setCanCreateTopicIsland(data.can_create_topic_island !== false);
+      setUserCefrLevel(
+        typeof data.user_cefr_level === "string" ? data.user_cefr_level : null,
+      );
       setJourneyContext(data.journeyContext ?? null);
       setLoading(false);
 
@@ -1295,6 +1302,37 @@ export default function TopicIslandDetailPage() {
       setSelectedWordIds(new Set(selectableWords.map((w) => w.id)));
     }
   };
+
+  // Journey-first onboarding uses silent anonymous auth — allow learn sequence for those users.
+  const allowLearnSequenceForUser = !isAnonymous || isJourneyFirstIsland;
+
+  const isLearnSequenceReady =
+    island.status === "ready" &&
+    words.length >= 3 &&
+    userCefrLevel !== undefined &&
+    allowLearnSequenceForUser;
+
+  const showPreCourseLoading =
+    wantsLearnSequence &&
+    allowLearnSequenceForUser &&
+    !isLearnSequenceReady;
+
+  const showLearnOverlay =
+    wantsLearnSequence &&
+    isLearnSequenceReady &&
+    !learnSequenceDismissed &&
+    !showLearnSummary;
+
+  if (showPreCourseLoading) {
+    return (
+      <PreCourseLoading
+        topic={island.topic}
+        level={island.level}
+        progressLabel={progressLabel}
+        progressPercentage={progressPercentage}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -3173,6 +3211,7 @@ export default function TopicIslandDetailPage() {
                   words={pickLearnWords(words, 5)}
                   allIslandWords={words}
                   island={island}
+                  learnLevel={learnLevel}
                   fillContainer
                   onComplete={() => setShowHuahuaChat(false)}
                 />
@@ -3181,16 +3220,53 @@ export default function TopicIslandDetailPage() {
           </div>
         )}
 
-        {showLearnSequence && island && words.length >= 5 && (
+        {showLearnOverlay &&
+          island &&
+          words.length >= 3 &&
+          userCefrLevel !== undefined && (
           <LearnSequence
             island={island}
             words={words}
+            userCefrLevel={userCefrLevel}
             onComplete={() => {
               localStorage.setItem(learnSequenceKey(island.id), "done");
-              setShowLearnSequence(false);
+              setLearnSequenceDismissed(true);
               const url = new URL(window.location.href);
               url.searchParams.delete("learn");
               window.history.replaceState({}, "", url.toString());
+              if (isJourneyFirstIsland) {
+                setShowLearnSummary(true);
+              }
+            }}
+          />
+        )}
+
+        {showLearnSummary && island && (
+          <LearnSummary
+            words={words.slice(
+              0,
+              (island.level ?? "").trim().toUpperCase().startsWith("A0")
+                ? 5
+                : 3,
+            )}
+            islandLevel={island.level}
+            topic={island.topic}
+            onContinue={() => {
+              if (!island) return;
+              writeUpgradeSnapshot({
+                v: 1,
+                islandId: island.id,
+                topic: island.topic,
+                journeyTopic: journeyContext?.journeyTopic,
+                islandLevel: island.level,
+                islandName: journeyContext?.name,
+                wordsLearned: island.word_target ?? 3,
+                wordsPerWeek: journeyContext?.wordsPerWeek ?? 40,
+                lockedIslands: journeyContext?.lockedIslands,
+                plan: "yearly",
+              });
+              markUpgradePending();
+              router.push(buildUpgradePageUrl(island.id));
             }}
           />
         )}

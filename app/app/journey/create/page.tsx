@@ -1,8 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import {
+  SENTENCE_STYLE_OPTIONS,
+  type SentenceStyle,
+} from "@/lib/sentenceStyle";
 
 const LEVELS = [
   { code: "A1", label: "A1", desc: "Absolute beginner" },
@@ -14,8 +18,11 @@ const LEVELS = [
 
 export default function JourneyCreatePage() {
   const router = useRouter();
-  const [topic, setTopic] = useState("");
+  const searchParams = useSearchParams();
+  const topicFromQuery = searchParams.get("topic")?.trim() ?? "";
+  const [topic, setTopic] = useState(topicFromQuery);
   const [level, setLevel] = useState("B1");
+  const [sentenceStyle, setSentenceStyle] = useState<SentenceStyle>("casual");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +43,7 @@ export default function JourneyCreatePage() {
           cefrLevel: level,
           // Use the topic itself as the learning goal so the plan is contextually relevant.
           learningGoal: trimmed,
+          sentenceStyle,
           timeLabel: "15min",
           daysPerWeek: 4,
         }),
@@ -143,6 +151,50 @@ export default function JourneyCreatePage() {
                       style={{ color: active ? "rgba(255,255,255,0.65)" : "#8aa8b5" }}
                     >
                       {l.desc}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sentence style */}
+          <div>
+            <label className="mb-3 block text-xs font-black uppercase tracking-widest text-[#1a2332]">
+              Example Sentences
+            </label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {SENTENCE_STYLE_OPTIONS.map((option) => {
+                const active = sentenceStyle === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => setSentenceStyle(option.value)}
+                    className="flex flex-col items-start rounded-xl border px-4 py-3 text-left transition-all disabled:opacity-60"
+                    style={
+                      active
+                        ? {
+                            background: "#1a2332",
+                            borderColor: "#1a2332",
+                            color: "#ffffff",
+                          }
+                        : {
+                            background: "#ffffff",
+                            borderColor: "#c8dce6",
+                            color: "#1a2332",
+                          }
+                    }
+                  >
+                    <span className="text-sm font-black">{option.label}</span>
+                    <span
+                      className="mt-1 text-[10px] font-medium leading-snug"
+                      style={{
+                        color: active ? "rgba(255,255,255,0.65)" : "#8aa8b5",
+                      }}
+                    >
+                      {option.description}
                     </span>
                   </button>
                 );

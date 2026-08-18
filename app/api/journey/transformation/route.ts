@@ -48,7 +48,7 @@ Respond with ONLY valid JSON in this exact shape, no markdown:
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: 'deepseek-v4-flash',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
         max_tokens: 200,

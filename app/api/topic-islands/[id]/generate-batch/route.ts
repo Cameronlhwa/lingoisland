@@ -5,6 +5,7 @@ import { generateWordSentences, type Word } from '@/lib/deepseek/generate-word-s
 import { limitConcurrency } from '@/lib/utils/concurrency'
 import { getEntitlements } from '@/lib/entitlements'
 import { generateGrammarFocus } from '@/lib/deepseek/generate-grammar-focus'
+import { normalizeSentenceStyle } from '@/lib/sentenceStyle'
 
 /**
  * POST /api/topic-islands/[id]/generate-batch
@@ -125,7 +126,8 @@ export async function POST(
     // Map stored level to base band for validation
     const mapToBaseLevel = (level: string | null): 'A1' | 'A2' | 'B1' | 'B2' | 'C1' => {
       if (!level) return 'B1'
-      if (level.startsWith('A1')) return 'A1'
+      // A0 (true beginner) uses A1 generation prompts
+      if (level.startsWith('A0') || level.startsWith('A1')) return 'A1'
       if (level.startsWith('A2')) return 'A2'
       if (level.startsWith('B1')) return 'B1'
       if (level.startsWith('B2')) return 'B2'
@@ -136,6 +138,9 @@ export async function POST(
     const baseLevel = mapToBaseLevel(island.level as string)
     const detailedLevel = island.level as string
     const grammarTarget = island.grammar_target || 0
+    const sentenceStyle = normalizeSentenceStyle(
+      body.sentenceStyle ?? island.sentence_style,
+    )
 
     const tiersPerWord = sentenceTierMode === 'easy_same' ? 2 : 3
     const sentenceTasksTotal = island.word_target * tiersPerWord
@@ -556,6 +561,7 @@ export async function POST(
             avoidPatterns: avoidPatterns.length > 0 ? avoidPatterns : undefined,
               retryHint,
               sentenceTierMode,
+              sentenceStyle,
               generationConfig,
           })
           } catch (error) {

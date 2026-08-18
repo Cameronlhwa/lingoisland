@@ -6,6 +6,7 @@ import {
   Layers,
   BookOpen,
   ClipboardList,
+  Compass,
 } from "lucide-react";
 
 export type SidebarItem = {
@@ -36,6 +37,13 @@ export const sidebarItems: SidebarItem[] = [
     label: "My Islands",
     icon: (className = iconClass) => (
       <Layers className={className} aria-hidden strokeWidth={2} />
+    ),
+  },
+  {
+    href: "/app/browse-topics",
+    label: "Browse Topics",
+    icon: (className = iconClass) => (
+      <Compass className={className} aria-hidden strokeWidth={2} />
     ),
   },
   {

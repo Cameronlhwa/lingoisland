@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getFixedA0JourneyPlan, isA0Level } from '@/lib/a0Course'
 import { generateJourneyPlan } from '@/lib/deepseek/generate-journey'
+import { normalizeSentenceStyle } from '@/lib/sentenceStyle'
+import { journeysHasSentenceStyleColumn } from '@/lib/supabase/schemaFeatures'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -24,6 +27,7 @@ type Body = {
   daysPerWeek?: number
   dailyMinutes?: number
   learningGoal?: string
+  sentenceStyle?: string
   /** Pre-generated plan nodes from the unauthenticated preview — skips DeepSeek */
   savedNodes?: SavedNode[]
 }
@@ -58,6 +62,7 @@ export async function POST(request: Request) {
       typeof body.daysPerWeek === 'number' && body.daysPerWeek > 0
         ? body.daysPerWeek
         : 4
+    const sentenceStyle = normalizeSentenceStyle(body.sentenceStyle)
 
     if (!topic || !why) {
       return NextResponse.json(
@@ -109,6 +114,28 @@ export async function POST(request: Request) {
           name: String(n.name ?? 'Story checkpoint'),
           hint: String(n.hint ?? ''),
         }))
+    } else if (isA0Level(level)) {
+      // A0: fully fixed journey plan — no DeepSeek call, no generation latency.
+      const plan = getFixedA0JourneyPlan(topic)
+      planTitle = plan.journeyTitle || topic
+      islandRows = plan.islands
+        .sort((a, b) => a.position - b.position)
+        .map((island) => ({
+          type: 'island' as const,
+          // 7-node order: I1, I2, S1, I3, I4, I5, S2
+          position: island.position <= 2 ? island.position : island.position + 1,
+          stepOrder: island.position,
+          name: island.topic,
+          zh: island.zh,
+          wordCount: island.position === 1 ? 5 : 10,
+        }))
+      storyRows = plan.stories.map((story) => ({
+        type: 'story' as const,
+        position: story.afterIsland === 2 ? 3 : 7,
+        stepOrder: story.afterIsland === 2 ? 102 : 105,
+        name: story.title,
+        hint: story.hint,
+      }))
     } else {
       const plan = await generateJourneyPlan({ topic, why, level })
       planTitle = plan.journeyTitle || topic
@@ -121,7 +148,7 @@ export async function POST(request: Request) {
           stepOrder: island.position,
           name: island.topic,
           zh: island.zh,
-          wordCount: island.position === 1 ? 5 : 10,
+          wordCount: island.position === 1 ? 3 : 10,
         }))
       storyRows = plan.stories.map((story) => ({
         type: 'story' as const,
@@ -168,16 +195,21 @@ export async function POST(request: Request) {
       })
     }
 
+    const journeyInsert: Record<string, unknown> = {
+      user_id: user.id,
+      topic: planTitle,
+      why,
+      time_label: timeLabel,
+      days_per_week: daysPerWeek,
+      words_per_week: wordsPerWeek,
+    }
+    if (await journeysHasSentenceStyleColumn(supabase)) {
+      journeyInsert.sentence_style = sentenceStyle
+    }
+
     const { data: journey, error: jErr } = await supabase
       .from('journeys')
-      .insert({
-        user_id: user.id,
-        topic: planTitle,
-        why,
-        time_label: timeLabel,
-        days_per_week: daysPerWeek,
-        words_per_week: wordsPerWeek,
-      })
+      .insert(journeyInsert)
       .select()
       .single()
 

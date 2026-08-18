@@ -7,6 +7,8 @@ export const runtime = "nodejs";
 
 type CheckoutRequest = {
   interval: "monthly" | "yearly";
+  cancelContext?: "onboarding" | "pricing";
+  islandId?: string;
 };
 
 export async function POST(request: Request) {
@@ -22,10 +24,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (user.is_anonymous) {
+      return NextResponse.json(
+        { error: "Account required before checkout" },
+        { status: 401 },
+      );
+    }
+
     const body = (await request.json().catch(() => null)) as
       | CheckoutRequest
       | null;
     const interval = body?.interval;
+    const cancelContext = body?.cancelContext ?? "pricing";
+    const rawIslandId = typeof body?.islandId === "string" ? body.islandId : "";
+    const islandId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      rawIslandId,
+    )
+      ? rawIslandId
+      : undefined;
 
     if (interval !== "monthly" && interval !== "yearly") {
       console.warn("[STRIPE CHECKOUT] Invalid interval", interval);
@@ -88,6 +104,12 @@ export async function POST(request: Request) {
       }
     }
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const cancelUrl =
+      cancelContext === "onboarding" && islandId
+        ? `${siteUrl}/onboarding/upgrade?canceled=1&islandId=${encodeURIComponent(islandId)}&plan=${interval}`
+        : `${siteUrl}/pricing`;
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: stripeCustomerId,
@@ -96,10 +118,17 @@ export async function POST(request: Request) {
       subscription_data: {
         metadata: {
           user_id: user.id,
+          plan: interval,
         },
       },
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/app?checkout=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing`,
+      metadata: {
+        user_id: user.id,
+        plan: interval,
+        cancel_context: cancelContext,
+        ...(islandId ? { island_id: islandId } : {}),
+      },
+      success_url: `${siteUrl}/app?checkout=success`,
+      cancel_url: cancelUrl,
     });
 
     return NextResponse.json({ url: session.url });

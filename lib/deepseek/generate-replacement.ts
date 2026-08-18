@@ -75,7 +75,7 @@ Output ONLY valid JSON (no markdown, no code blocks):
             Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: 'deepseek-chat', // Using same model but with lower temperature for speed
+            model: 'deepseek-v4-flash', // Using same model but with lower temperature for speed
             messages: [
               {
                 role: 'system',
@@ -172,7 +172,7 @@ Output ONLY valid JSON:
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'deepseek-chat',
+          model: 'deepseek-v4-flash',
           messages: [
             {
               role: 'system',

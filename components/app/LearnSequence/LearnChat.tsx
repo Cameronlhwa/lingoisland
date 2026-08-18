@@ -1,13 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { pinyin } from "pinyin-pro";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
+import ExerciseChat from "./ExerciseChat";
+import {
+  resolveLearnLevel,
+  useExerciseChatForIsland,
+} from "./levels";
 import type { LearnIsland, LearnWord } from "./types";
 
 interface LearnChatProps {
   words: LearnWord[];
   island: LearnIsland;
+  learnLevel?: string;
   onComplete: () => void;
   fillContainer?: boolean;
   allIslandWords?: LearnWord[];
@@ -31,6 +43,40 @@ function toPinyinLine(text: string): string {
     separator: " ",
     nonZh: "removed",
   }).trim();
+}
+
+function PracticeWordStrip({ words }: { words: LearnWord[] }) {
+  const { convertText } = useCharacterSet();
+
+  return (
+    <div className="mb-4">
+      <p
+        className="mb-2.5 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-[#8AABBF]"
+        style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+      >
+        Words to practice
+      </p>
+      <div className="flex flex-wrap justify-center gap-2">
+        {words.map((w) => (
+          <div key={w.id} className="group relative">
+            <div
+              className="cursor-default rounded-full border border-[#C2DCF0] bg-white px-3.5 py-1.5 text-sm font-medium text-[#071E2E] shadow-sm transition-colors group-hover:border-[#2176AE] group-hover:bg-[#EAF4FB]"
+              style={{ fontFamily: "'Lora', Georgia, serif" }}
+            >
+              {convertText(w.hanzi)}
+            </div>
+            <div
+              className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-lg border border-[#C2DCF0] bg-white px-3 py-2 text-center opacity-0 shadow-md transition-opacity group-hover:opacity-100"
+              style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+            >
+              <p className="text-xs font-medium text-[#5A7A90]">{w.pinyin}</p>
+              <p className="mt-0.5 text-xs italic text-[#8AABBF]">{w.english}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function ChatBubble({
@@ -82,7 +128,7 @@ function ChatBubble({
   );
 }
 
-export default function LearnChat({
+function LearnChatB1Plus({
   words,
   island,
   onComplete,
@@ -269,6 +315,8 @@ export default function LearnChat({
         )}
       </div>
 
+      <PracticeWordStrip words={words} />
+
       <div className="mb-3 flex justify-center gap-2">
         <button
           type="button"
@@ -362,5 +410,43 @@ export default function LearnChat({
         Finish practice →
       </button>
     </div>
+  );
+}
+
+export default function LearnChat({
+  words,
+  island,
+  learnLevel,
+  onComplete,
+  fillContainer = false,
+  allIslandWords,
+}: LearnChatProps) {
+  const effectiveLevel = resolveLearnLevel(island.level, learnLevel);
+  const useExerciseChat = useExerciseChatForIsland(island.level);
+
+  const exerciseIsland = useMemo(
+    () => ({ ...island, level: effectiveLevel }),
+    [island.id, island.topic, island.level, effectiveLevel],
+  );
+
+  if (useExerciseChat) {
+    return (
+      <ExerciseChat
+        words={words}
+        island={exerciseIsland}
+        onComplete={onComplete}
+        fillContainer={fillContainer}
+      />
+    );
+  }
+
+  return (
+    <LearnChatB1Plus
+      words={words}
+      island={island}
+      onComplete={onComplete}
+      fillContainer={fillContainer}
+      allIslandWords={allIslandWords}
+    />
   );
 }

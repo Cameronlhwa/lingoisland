@@ -11,7 +11,8 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import AppLogo from "@/components/app/AppLogo";
-import { ArrowRight, BookOpen, Check, Loader2, Lock, Zap } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { getTopicSuggestions } from "@/lib/onboarding/topicSuggestions";
 
 /** Primary actions — same language as /onboarding/story & StoryWizard */
 const BTN_PRIMARY =
@@ -32,113 +33,170 @@ const OPTION_ROW =
 const OPTION_ROW_ON =
   "border-2 border-gray-900 bg-gray-50 shadow-sm ring-1 ring-gray-900/10";
 
-const POPULAR_CHIPS = [
-  "Travel in China",
-  "Chinese cuisine",
-  "Business Mandarin",
-  "Dating & relationships",
-  "Technology & AI",
-  "Going to the gym",
-];
-
-const TOPIC_TYPING_SAMPLES = [
-  "Travel in China",
-  "Chinese street food",
-  "Business Mandarin",
-  "Dating & relationships",
-  "Technology & AI",
-  "conversations with my boss",
-  "Coffee shop chats",
-  "Startup meetings",
-  "Weekend plans",
-  "Living in Shanghai",
-] as const;
-
-const TIME_OPTIONS = [
-  { label: "5min", value: "5min", mins: 5 },
-  { label: "15min", value: "15min", mins: 15 },
-  { label: "30min", value: "30min", mins: 30 },
-  { label: "1h+", value: "1h+", mins: 60 },
-] as const;
-
-/** Minutes per time-label option — module scope so hooks deps stay stable */
-const MINS_MAP: Record<string, number> = {
-  "5min": 5,
-  "15min": 15,
-  "30min": 30,
-  "1h+": 60,
-};
-
-const DAY_OPTIONS = [
-  { label: "2x / week", value: 2 },
-  { label: "3x / week", value: 3 },
-  { label: "4x / week", value: 4 },
-  { label: "5x / week", value: 5 },
-  { label: "6x / week", value: 6 },
-  { label: "Every day", value: 7 },
+const LEVEL_OPTIONS = [
+  {
+    value: "A0",
+    label: "Just starting out",
+    sublabel: "I don't know any Mandarin yet",
+    note: "Everyone starts here. LingoIsland is built for this.",
+  },
+  {
+    value: "A1",
+    label: "I know a little",
+    sublabel: "Greetings, numbers, basic phrases",
+  },
+  {
+    value: "A2",
+    label: "Getting the basics",
+    sublabel: "Simple exchanges, some characters",
+  },
+  {
+    value: "B1",
+    label: "Simple conversations",
+    sublabel: "I get by but have big gaps",
+  },
+  {
+    value: "B2",
+    label: "Conversational",
+    sublabel: "I speak but vocabulary holds me back",
+  },
+  {
+    value: "C1",
+    label: "Pretty fluent",
+    sublabel: "Filling specific areas",
+  },
 ] as const;
 
 const WHY_OPTIONS = [
-  { key: "travel", emoji: "✈️", label: "Planning a trip to China / Taiwan" },
   {
     key: "work",
-    emoji: "💼",
-    label: "Work with Chinese colleagues or clients",
+    label: "Work",
+    sublabel: "Chinese colleagues, clients, or a Chinese market",
   },
-  { key: "media", emoji: "🎬", label: "Enjoy Chinese media, music, or shows" },
-  { key: "heritage", emoji: "🏠", label: "Connect with family or heritage" },
-  { key: "fluency", emoji: "📈", label: "General fluency improvement" },
+  {
+    key: "travel",
+    label: "Travel",
+    sublabel: "I'm going somewhere Mandarin is spoken",
+  },
+  {
+    key: "heritage",
+    label: "Heritage",
+    sublabel: "Connect with family or my roots",
+  },
+  {
+    key: "media",
+    label: "Culture",
+    sublabel: "Food, film, music, or history",
+  },
+  {
+    key: "fluency",
+    label: "Just curious",
+    sublabel: "I want to see if I like it",
+  },
 ] as const;
 
-const BASE_CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1"] as const;
+const BRANCH_OPTIONS: Record<
+  string,
+  { question: string; options: { key: string; label: string }[] }
+> = {
+  work: {
+    question: "What would feel like a real win for you at work?",
+    options: [
+      {
+        key: "meeting",
+        label: "Hold my own in a meeting with Chinese colleagues",
+      },
+      {
+        key: "clients",
+        label: "Build better relationships with Chinese clients",
+      },
+      {
+        key: "documents",
+        label: "Read emails or documents without Google Translate",
+      },
+      {
+        key: "impress",
+        label: "Impress someone — a boss, a partner, a client",
+      },
+    ],
+  },
+  travel: {
+    question: "What do you want to feel confident doing when you're there?",
+    options: [
+      {
+        key: "getaround",
+        label:
+          "Order food and get around without relying on translation apps",
+      },
+      {
+        key: "converse",
+        label: "Have real conversations with locals, not just transactions",
+      },
+      {
+        key: "navigate",
+        label:
+          "Navigate cities, transport, and accommodation independently",
+      },
+      {
+        key: "connect",
+        label:
+          "Actually connect with people and understand what's happening around me",
+      },
+    ],
+  },
+  heritage: {
+    question: "Who are you hoping to connect with more?",
+    options: [
+      { key: "grandparents", label: "My parents or grandparents" },
+      { key: "family", label: "Extended family at gatherings" },
+      { key: "community", label: "A wider community or neighbourhood" },
+      {
+        key: "roots",
+        label: "I want to understand my roots, not just communicate",
+      },
+    ],
+  },
+  media: {
+    question: "What draws you most?",
+    options: [
+      { key: "food", label: "Food — menus, recipes, food culture" },
+      {
+        key: "tv",
+        label:
+          "Film and TV — I watch Chinese content and want to follow along",
+      },
+      { key: "music", label: "Music — Mandopop or C-pop" },
+      {
+        key: "history",
+        label: "History and culture — I want to go deeper",
+      },
+    ],
+  },
+  fluency: {
+    question: "What sparked your curiosity?",
+    options: [
+      { key: "visiting", label: "I'm visiting China or Taiwan soon" },
+      {
+        key: "friends",
+        label:
+          "I have Chinese friends or colleagues I want to connect with",
+      },
+      {
+        key: "curious",
+        label: "I've always been curious about the language",
+      },
+      { key: "someone", label: "Someone close to me speaks it" },
+    ],
+  },
+};
+
+const BASE_CEFR_LEVELS = ["A0", "A1", "A2", "B1", "B2", "C1"] as const;
 type CefrLevel = (typeof BASE_CEFR_LEVELS)[number];
+type WhyKey = (typeof WHY_OPTIONS)[number]["key"];
 
-const LEVEL_GROUPS: {
-  base: CefrLevel;
-  label: string;
-  description: string;
-}[] = [
-  {
-    base: "A1",
-    label: "Beginner",
-    description:
-      "Just starting out with basic phrases and survival vocabulary (HSK 1–2).",
-  },
-  {
-    base: "A2",
-    label: "Upper beginner",
-    description:
-      "You can handle basics but still need support in conversations (HSK 3).",
-  },
-  {
-    base: "B1",
-    label: "Intermediate",
-    description:
-      "You can talk about everyday topics but struggle with nuance (HSK 4–5).",
-  },
-  {
-    base: "B2",
-    label: "Upper intermediate",
-    description:
-      "You follow most native content but miss some details (HSK 5–6).",
-  },
-  {
-    base: "C1",
-    label: "Advanced",
-    description:
-      "You're fluent but still learning sophisticated vocabulary and idioms.",
-  },
-];
+const A0_TOPIC = "Introducing Yourself";
 
-/** Maps stored profile values (including legacy A1-/A1+ style) to a base band. */
-function cefrFromProfile(raw: string | null | undefined): CefrLevel {
-  if (!raw) return "B1";
-  const t = raw.trim();
-  if (BASE_CEFR_LEVELS.includes(t as CefrLevel)) return t as CefrLevel;
-  const m = t.toUpperCase().match(/^(A1|A2|B1|B2|C1)/);
-  if (m) return m[1] as CefrLevel;
-  return "B1";
-}
+const TOPIC_PLACEHOLDER_TEXT = "Type any topic you want here!";
 
 const GEN_STEPS = [
   "Analyzing your topic…",
@@ -148,10 +206,12 @@ const GEN_STEPS = [
   "Finalizing your plan…",
 ];
 
-const JOURNEY_TOTAL_WORDS = 45; // Island 1 has 5 words, islands 2-5 have 10 each.
-
 const JOURNEY_ONBOARDING_DRAFT_KEY = "journey_onboarding_draft_v1";
 const JOURNEY_RESUME_PATH = "/onboarding/journey";
+
+const HARDCODED_TIME_LABEL = "15min";
+const HARDCODED_DAILY_MINUTES = 15;
+const HARDCODED_DAYS_PER_WEEK = 4;
 
 type SavedNode = {
   node_type: string;
@@ -165,49 +225,50 @@ type SavedNode = {
 
 type JourneyOnboardingDraft = {
   topic: string;
-  timeLabel: string;
-  daysPerWeek: number;
-  whyKey: (typeof WHY_OPTIONS)[number]["key"];
+  whyKey: WhyKey | "";
+  branchAnswer: string;
   cefrLevel: CefrLevel | "";
-  /** Pre-generated plan nodes saved so post-login resume skips DeepSeek */
   savedNodes?: SavedNode[];
 };
 
 type Step =
-  | "topic"
   | "level"
-  | "time"
   | "why"
+  | "branch"
+  | "topic"
   | "generating"
-  | "preview"
   | "starting-island";
 
-function timeLabelFromMinutes(
-  mins: number | null | undefined,
-): (typeof TIME_OPTIONS)[number]["value"] | "" {
-  if (typeof mins !== "number" || mins <= 0) return "";
-  if (mins <= 5) return "5min";
-  if (mins <= 15) return "15min";
-  if (mins <= 30) return "30min";
-  return "1h+";
+/** Maps stored profile values (including legacy A1-/A1+ style) to a base band. */
+function cefrFromProfile(raw: string | null | undefined): CefrLevel {
+  if (!raw) return "B1";
+  const t = raw.trim();
+  if (BASE_CEFR_LEVELS.includes(t as CefrLevel)) return t as CefrLevel;
+  const m = t.toUpperCase().match(/^(A0|A1|A2|B1|B2|C1)/);
+  if (m) return m[1] as CefrLevel;
+  return "B1";
 }
 
 function whyKeyFromProfile(
   goal: string | null | undefined,
-): (typeof WHY_OPTIONS)[number]["key"] | "" {
+): WhyKey | "" {
   const g = (goal ?? "").toLowerCase();
   if (!g) return "";
   if (g.includes("work")) return "work";
   if (g.includes("travel") || g.includes("trip")) return "travel";
   if (g.includes("family") || g.includes("heritage")) return "heritage";
-  if (g.includes("media") || g.includes("show") || g.includes("music"))
+  if (g.includes("media") || g.includes("show") || g.includes("music") || g.includes("culture"))
     return "media";
   return "fluency";
 }
 
+function whyLabel(whyKey: WhyKey | ""): string {
+  return WHY_OPTIONS.find((o) => o.key === whyKey)?.label ?? "General fluency improvement";
+}
+
 /**
  * Journey setup wizard. When `publicSurface` is true (e.g. `/onboarding/journey`), the flow
- * runs outside `/app` auth; the user signs in at the "Build my journey" step.
+ * runs outside `/app` auth; anonymous sign-in happens silently before generation.
  */
 export default function JourneyOnboardingFlow({
   publicSurface = false,
@@ -222,36 +283,14 @@ export default function JourneyOnboardingFlow({
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
   const urlTopicSynced = useRef(false);
-  const [step, setStep] = useState<Step>("topic");
+  const [step, setStep] = useState<Step>("level");
   const [topic, setTopic] = useState("");
-  const [timeLabel, setTimeLabel] = useState<
-    (typeof TIME_OPTIONS)[number]["value"] | ""
-  >("");
-  const [daysPerWeek, setDaysPerWeek] = useState<number | null>(null);
   const [cefrLevel, setCefrLevel] = useState<CefrLevel | "">("");
   const [levelSaving, setLevelSaving] = useState(false);
-  const [whyKey, setWhyKey] = useState<
-    (typeof WHY_OPTIONS)[number]["key"] | ""
-  >("");
+  const [whyKey, setWhyKey] = useState<WhyKey | "">("");
+  const [branchAnswer, setBranchAnswer] = useState("");
   const [generatingStep, setGeneratingStep] = useState(0);
   const [journeyId, setJourneyId] = useState<string | null>(null);
-  const [journeyRow, setJourneyRow] = useState<{
-    topic: string;
-    words_per_week: number | null;
-  } | null>(null);
-  const [journeyIslands, setJourneyIslands] = useState<
-    Array<{
-      id: string;
-      order: number;
-      position?: number;
-      node_type?: "island" | "story";
-      name: string;
-      zh: string | null;
-      story_idea: string | null;
-      hint?: string | null;
-      word_count?: number | null;
-    }>
-  >([]);
   const generateStartedRef = useRef(false);
   const draftResumeRef = useRef(false);
   const savedNodesRef = useRef<SavedNode[]>([]);
@@ -259,59 +298,44 @@ export default function JourneyOnboardingFlow({
 
   const [profileLoaded, setProfileLoaded] = useState(!smartProfileSkip);
   const [needsLevel, setNeedsLevel] = useState(!smartProfileSkip);
-  const [needsTime, setNeedsTime] = useState(!smartProfileSkip);
   const [needsWhy, setNeedsWhy] = useState(!smartProfileSkip);
   const [profileLearningGoal, setProfileLearningGoal] = useState("");
-  const [topicPlaceholder, setTopicPlaceholder] = useState(
-    "Teach me words related to movies and…",
+
+  const topicSuggestions = useMemo(
+    () => getTopicSuggestions(whyKey || "fluency", branchAnswer || "curious"),
+    [whyKey, branchAnswer],
   );
-  const [transformationCard, setTransformationCard] = useState<{
-    today: string;
-    future: string;
-    daysAhead: number;
-  } | null>(null);
-  const [transformationLoading, setTransformationLoading] = useState(false);
-  const transformationFetchedForTopic = useRef<string | null>(null);
+
+  const isA0 = cefrLevel === "A0";
+  const [topicPlaceholder, setTopicPlaceholder] = useState(TOPIC_PLACEHOLDER_TEXT);
+
+  const effectiveWhyText =
+    whyLabel(whyKey) ||
+    profileLearningGoal ||
+    "General fluency improvement";
 
   const persistDraft = () => {
     try {
-      // Persist the pre-generated plan nodes so that after login the generation
-      // step can reuse them directly instead of calling DeepSeek a second time.
-      const savedNodes: SavedNode[] =
-        journeyIslands.length > 0
-          ? journeyIslands.map((n) => ({
-              node_type: n.node_type ?? "island",
-              // preview nodes expose step_order; DB nodes expose order (mapped from step_order)
-              position: n.position ?? n.order ?? 0,
-              step_order:
-                (n as unknown as { step_order?: number }).step_order ??
-                n.order ??
-                0,
-              name: n.name,
-              zh: n.zh ?? null,
-              hint: n.hint ?? null,
-              word_count: n.word_count ?? null,
-            }))
-          : [];
-
       const draft: JourneyOnboardingDraft = {
         topic: topic.trim(),
-        timeLabel: timeLabel || "15min",
-        daysPerWeek: daysPerWeek ?? 4,
-        whyKey: whyKey as JourneyOnboardingDraft["whyKey"],
+        whyKey,
+        branchAnswer,
         cefrLevel,
-        savedNodes: savedNodes.length > 0 ? savedNodes : undefined,
+        savedNodes:
+          savedNodesRef.current.length > 0
+            ? savedNodesRef.current
+            : undefined,
       };
       sessionStorage.setItem(
         JOURNEY_ONBOARDING_DRAFT_KEY,
         JSON.stringify(draft),
       );
     } catch {
-      // sessionStorage blocked — caller can still continue without persisted draft
+      // sessionStorage blocked
     }
   };
 
-  // After login: restore draft and jump to generation (see publicSurface + sessionStorage).
+  // After login: restore draft and jump to generation.
   useEffect(() => {
     if (typeof window === "undefined" || draftResumeRef.current) return;
     if (searchParams.get("resume") !== "1") return;
@@ -323,18 +347,13 @@ export default function JourneyOnboardingFlow({
     try {
       const d = JSON.parse(raw) as JourneyOnboardingDraft;
       if (d.topic) setTopic(d.topic);
-      if (d.timeLabel)
-        setTimeLabel(d.timeLabel as (typeof TIME_OPTIONS)[number]["value"]);
-      if (typeof d.daysPerWeek === "number") setDaysPerWeek(d.daysPerWeek);
       if (d.whyKey && WHY_OPTIONS.some((o) => o.key === d.whyKey))
         setWhyKey(d.whyKey);
+      if (d.branchAnswer) setBranchAnswer(d.branchAnswer);
       if (d.cefrLevel) setCefrLevel(cefrFromProfile(String(d.cefrLevel)));
-      // Restore pre-generated plan so the second generate call can skip DeepSeek.
       if (Array.isArray(d.savedNodes) && d.savedNodes.length > 0) {
         savedNodesRef.current = d.savedNodes;
       }
-      // Keep draft in sessionStorage until /api/journey/generate succeeds so React Strict
-      // Mode remounts and navigation do not strand users with an empty draft.
       draftResumeRef.current = true;
       setStep("generating");
       router.replace(JOURNEY_RESUME_PATH);
@@ -344,68 +363,60 @@ export default function JourneyOnboardingFlow({
     }
   }, [searchParams, router]);
 
-  // Deep link: ?topic=… prefills topic (e.g. from marketing / topics)
+  // Deep link: ?topic=… prefills topic and starts at why (skip level only if we already have level from profile later)
   useEffect(() => {
     if (urlTopicSynced.current) return;
     const t = searchParams.get("topic")?.trim();
     if (t) {
       urlTopicSynced.current = true;
       setTopic(t);
+      // Entry from landing topic chips: still start at level, topic is pre-filled for later.
+      // Spec: "If ?topic= is in the URL, pre-fill topic and skip to why step."
+      setStep("why");
     }
   }, [searchParams]);
 
-  // Typewriter placeholder for popular topics when topic input is empty.
+  // Typewriter placeholder when topic input is empty.
   useEffect(() => {
-    if (topic.trim().length > 0) {
-      setTopicPlaceholder("Teach me words related to movies and…");
+    if (step !== "topic" || isA0 || topic.trim().length > 0) {
+      setTopicPlaceholder(TOPIC_PLACEHOLDER_TEXT);
       return;
     }
     let cancelled = false;
-    let sampleIndex = Math.floor(Math.random() * TOPIC_TYPING_SAMPLES.length);
     let charIndex = 0;
     let deleting = false;
     let timeout: ReturnType<typeof setTimeout> | null = null;
 
-    const nextSampleIndex = (current: number) => {
-      if (TOPIC_TYPING_SAMPLES.length <= 1) return 0;
-      const jump =
-        1 + Math.floor(Math.random() * (TOPIC_TYPING_SAMPLES.length - 1));
-      return (current + jump) % TOPIC_TYPING_SAMPLES.length;
-    };
-
     const tick = () => {
       if (cancelled) return;
-      const sample = TOPIC_TYPING_SAMPLES[sampleIndex];
-      const prefix = "Teach me words related to ";
       if (!deleting) {
-        charIndex = Math.min(sample.length, charIndex + 1);
-        setTopicPlaceholder(`${prefix}${sample.slice(0, charIndex)}…`);
-        if (charIndex >= sample.length) {
+        charIndex = Math.min(TOPIC_PLACEHOLDER_TEXT.length, charIndex + 1);
+        setTopicPlaceholder(TOPIC_PLACEHOLDER_TEXT.slice(0, charIndex));
+        if (charIndex >= TOPIC_PLACEHOLDER_TEXT.length) {
           deleting = true;
-          timeout = setTimeout(tick, 1100);
+          timeout = setTimeout(tick, 1400);
           return;
         }
-        timeout = setTimeout(tick, 55 + Math.floor(Math.random() * 35));
+        timeout = setTimeout(tick, 45 + Math.floor(Math.random() * 25));
         return;
       }
       charIndex = Math.max(0, charIndex - 1);
-      setTopicPlaceholder(`${prefix}${sample.slice(0, charIndex)}…`);
+      setTopicPlaceholder(TOPIC_PLACEHOLDER_TEXT.slice(0, charIndex));
       if (charIndex === 0) {
         deleting = false;
-        sampleIndex = nextSampleIndex(sampleIndex);
-        timeout = setTimeout(tick, 260);
+        timeout = setTimeout(tick, 400);
         return;
       }
-      timeout = setTimeout(tick, 28 + Math.floor(Math.random() * 24));
+      timeout = setTimeout(tick, 22);
     };
 
-    setTopicPlaceholder("Teach me words related to …");
-    timeout = setTimeout(tick, 260);
+    setTopicPlaceholder("");
+    timeout = setTimeout(tick, 300);
     return () => {
       cancelled = true;
       if (timeout) clearTimeout(timeout);
     };
-  }, [topic]);
+  }, [step, isA0, topic]);
 
   useEffect(() => {
     if (!smartProfileSkip) return;
@@ -417,20 +428,16 @@ export default function JourneyOnboardingFlow({
       if (!user || cancelled) return;
       const { data: up } = await supabase
         .from("user_profiles")
-        .select("cefr_level, daily_time_minutes, learning_goal")
+        .select("cefr_level, learning_goal")
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled) return;
       const levelExists = !!up?.cefr_level;
-      const timeExists = typeof up?.daily_time_minutes === "number";
       const whyExists =
         typeof up?.learning_goal === "string" && up.learning_goal.length > 0;
       setNeedsLevel(!levelExists);
-      setNeedsTime(!timeExists);
       setNeedsWhy(!whyExists);
       if (levelExists) setCefrLevel(cefrFromProfile(up?.cefr_level));
-      if (timeExists)
-        setTimeLabel(timeLabelFromMinutes(up?.daily_time_minutes));
       if (whyExists) {
         setProfileLearningGoal(up?.learning_goal ?? "");
         setWhyKey(whyKeyFromProfile(up?.learning_goal));
@@ -463,24 +470,6 @@ export default function JourneyOnboardingFlow({
     };
   }, [supabase]);
 
-  const wordsPerWeek = useMemo(() => {
-    if (!timeLabel || daysPerWeek == null) return 0;
-    const m = MINS_MAP[timeLabel] ?? 15;
-    return Math.round((m / 15) * daysPerWeek * 10);
-  }, [timeLabel, daysPerWeek]);
-
-  const whyText = useMemo(() => {
-    const w = WHY_OPTIONS.find((o) => o.key === whyKey);
-    return w?.label ?? profileLearningGoal;
-  }, [whyKey, profileLearningGoal]);
-
-  const effectiveWhyText =
-    whyText ||
-    WHY_OPTIONS.find((o) => o.key === whyKey)?.label ||
-    "General fluency improvement";
-
-  // Reset progress synchronously when entering "generating" so the generate effect below
-  // does not see a stale generatingStep from a previous attempt (would fire the API early).
   useLayoutEffect(() => {
     if (step !== "generating") return;
     setGeneratingStep(0);
@@ -488,55 +477,107 @@ export default function JourneyOnboardingFlow({
   }, [step]);
 
   useEffect(() => {
-    if (step !== "generating") return;
+    // A0 uses fixed backend content, so it does not need simulated
+    // generation progress. A1–C1 retain the existing journey animation.
+    if (step !== "generating" || isA0) return;
+    const steps = GEN_STEPS;
     const timers: ReturnType<typeof setTimeout>[] = [];
-    for (let i = 0; i < GEN_STEPS.length; i++) {
+    for (let i = 0; i < steps.length; i++) {
       timers.push(setTimeout(() => setGeneratingStep(i + 1), 550 * (i + 1)));
     }
     return () => timers.forEach(clearTimeout);
-  }, [step]);
+  }, [step, isA0]);
+
+  const startIslandAndRedirect = async (
+    id: string,
+    level: string,
+  ): Promise<void> => {
+    setStep("starting-island");
+    const isRes = await fetch(`/api/journey/${id}/start-island`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order: 1, cefrLevel: level }),
+    });
+    const isData = await isRes.json().catch(() => ({}));
+    if (!isRes.ok) {
+      throw new Error(isData.error || "Could not start island");
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ onboarding_complete: true })
+        .eq("id", user.id);
+    }
+
+    sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
+    router.push(
+      `/app/topic-islands/${isData.islandId}?journeyFirst=1&learn=true`,
+    );
+  };
 
   useEffect(() => {
-    if (step !== "generating" || generatingStep < GEN_STEPS.length) return;
+    // The A0 course is fixed and seeded directly into the user's island, so
+    // start immediately. Other levels wait for their existing progress UI.
+    if (
+      step !== "generating" ||
+      (!isA0 && generatingStep < GEN_STEPS.length)
+    )
+      return;
     if (generateStartedRef.current) return;
     generateStartedRef.current = true;
 
     const run = async () => {
       setError(null);
       try {
+        // Silent anonymous auth so island generation works without email/password.
+        let {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          const { data: anonData, error: anonErr } =
+            await supabase.auth.signInAnonymously();
+          if (anonErr) {
+            throw new Error(
+              anonErr.message || "Could not start a guest session",
+            );
+          }
+          user = anonData.user;
+        }
+        if (!user) {
+          throw new Error("Could not start a guest session");
+        }
+
         if (smartProfileSkip) {
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-          if (user) {
-            const updates: Record<string, unknown> = {};
-            if (needsLevel && cefrLevel) updates.cefr_level = cefrLevel;
-            if (needsTime)
-              updates.daily_time_minutes = MINS_MAP[timeLabel || "15min"];
-            if (needsWhy && effectiveWhyText)
-              updates.learning_goal = effectiveWhyText;
-            if (Object.keys(updates).length > 0) {
-              await supabase
-                .from("user_profiles")
-                .update(updates)
-                .eq("user_id", user.id);
-            }
+          const updates: Record<string, unknown> = {};
+          if (needsLevel && cefrLevel) updates.cefr_level = cefrLevel;
+          if (needsWhy && effectiveWhyText)
+            updates.learning_goal = effectiveWhyText;
+          if (Object.keys(updates).length > 0) {
+            await supabase
+              .from("user_profiles")
+              .update(updates)
+              .eq("user_id", user.id);
           }
         }
+
+        persistDraft();
 
         const res = await fetch("/api/journey/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            topic: topic.trim(),
+            topic: topic.trim() || A0_TOPIC,
             why: effectiveWhyText,
             level: cefrLevel || "B1",
             cefrLevel: cefrLevel || "B1",
-            dailyMinutes: MINS_MAP[timeLabel || "15min"],
+            dailyMinutes: HARDCODED_DAILY_MINUTES,
             learningGoal: effectiveWhyText,
-            timeLabel: timeLabel || "15min",
-            daysPerWeek: daysPerWeek ?? 4,
-            // Pass pre-generated nodes so the API can skip DeepSeek after login.
+            timeLabel: HARDCODED_TIME_LABEL,
+            daysPerWeek: HARDCODED_DAYS_PER_WEEK,
             savedNodes:
               savedNodesRef.current.length > 0
                 ? savedNodesRef.current
@@ -547,73 +588,41 @@ export default function JourneyOnboardingFlow({
         if (!res.ok) {
           throw new Error(data.error || "Could not create journey");
         }
-        if (data?.preview?.journey && Array.isArray(data?.preview?.islands)) {
-          setJourneyId(null);
-          setJourneyRow(data.preview.journey);
-          setJourneyIslands(data.preview.nodes ?? data.preview.islands);
-          setStep("preview");
-          return;
-        }
-        setJourneyId(data.journeyId);
 
-        // Post-login resume: user already saw the preview before signing in.
-        // Skip straight to island 1 — no second preview needed.
-        if (draftResumeRef.current) {
-          setStep("starting-island");
-          sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
-          const isRes = await fetch(
-            `/api/journey/${data.journeyId}/start-island`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ order: 1 }),
-            },
-          );
-          const isData = await isRes.json().catch(() => ({}));
-          if (!isRes.ok)
-            throw new Error(isData.error || "Could not start island");
-          router.push(`/app/topic-islands/${isData.islandId}?journeyFirst=1`);
-          return;
+        // Unauthenticated preview path should not happen after anonymous auth,
+        // but if it does, treat as error and retry.
+        if (data?.preview?.journey && !data.journeyId) {
+          throw new Error("Please try again — session not ready");
         }
 
-        // In-app authenticated creation: skip preview, go straight to the journey page.
-        if (!publicSurface) {
+        const id = data.journeyId as string;
+        if (!id) {
+          throw new Error("Could not create journey");
+        }
+        setJourneyId(id);
+
+        // In-app authenticated creation (non-public): go to journey page.
+        if (!publicSurface && !draftResumeRef.current) {
           sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
+          await supabase
+            .from("profiles")
+            .update({ onboarding_complete: true })
+            .eq("id", user.id);
           router.push("/app/journey");
           return;
         }
 
-        // Public surface (unauthenticated preview then logged in via email/magic link):
-        // show journey preview so the user can confirm before starting island 1.
-        try {
-          const jr = await fetch(`/api/journey/${data.journeyId}`).then((r) =>
-            r.json(),
-          );
-          if (jr.journey) {
-            setJourneyRow(jr.journey);
-            setJourneyIslands(jr.nodes ?? jr.islands ?? []);
-          } else {
-            setJourneyRow({
-              topic: topic.trim(),
-              words_per_week: wordsPerWeek,
-            });
-          }
-        } catch {
-          setJourneyRow({ topic: topic.trim(), words_per_week: wordsPerWeek });
-        }
-        setStep("preview");
-        sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
+        await startIslandAndRedirect(id, cefrLevel || "B1");
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Something went wrong";
         setError(msg);
         sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
-        if (draftResumeRef.current) {
-          // Post-login resume failed — show preview as a fallback for manual retry.
-          setJourneyRow({ topic: topic.trim(), words_per_week: wordsPerWeek });
-          setStep("preview");
+        if (isA0) {
+          setStep("topic");
+        } else if (whyKey) {
+          setStep("topic");
         } else {
-          // Go back to topic for in-app, or why for public surface.
-          setStep(publicSurface && collectProfileQuestions ? "why" : "topic");
+          setStep("level");
         }
       }
     };
@@ -625,103 +634,15 @@ export default function JourneyOnboardingFlow({
     smartProfileSkip,
     supabase,
     needsLevel,
-    needsTime,
     needsWhy,
     cefrLevel,
-    timeLabel,
     effectiveWhyText,
     topic,
-    daysPerWeek,
     collectProfileQuestions,
+    publicSurface,
+    isA0,
+    whyKey,
   ]);
-
-  useEffect(() => {
-    if (step !== "preview" || !journeyId) return;
-    const mark = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      await supabase
-        .from("profiles")
-        .update({ onboarding_complete: true })
-        .eq("id", user.id);
-    };
-    void mark();
-  }, [step, journeyId, supabase]);
-
-  const weeksToComplete =
-    journeyRow?.words_per_week && journeyRow.words_per_week > 0
-      ? Math.ceil(JOURNEY_TOTAL_WORDS / journeyRow.words_per_week)
-      : 1;
-
-  // Fetch the AI-generated "Where this plan takes you" card.
-  // Start during "generating" so the data is ready before preview appears.
-  useEffect(() => {
-    if (step !== "generating" && step !== "preview") return;
-    if (!topic) return;
-    const trimmedTopic = topic.trim();
-    if (transformationFetchedForTopic.current === trimmedTopic) return;
-    transformationFetchedForTopic.current = trimmedTopic;
-    // Estimate daysAhead from locally-known state (wordsPerWeek is available
-    // before journeyRow exists, so we don't have to wait for the server).
-    const wpwEst =
-      wordsPerWeek > 0 ? wordsPerWeek : Math.round((15 / 15) * 4 * 10);
-    const daysAhead = Math.ceil(JOURNEY_TOTAL_WORDS / wpwEst) * 7;
-    setTransformationLoading(true);
-    setTransformationCard(null);
-    fetch("/api/journey/transformation", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        topic: trimmedTopic,
-        level: cefrLevel || "B1",
-        why: whyKey,
-        daysAhead,
-      }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.today && data.future) {
-          setTransformationCard({
-            today: data.today,
-            future: data.future,
-            daysAhead: data.daysAhead ?? daysAhead,
-          });
-        }
-      })
-      .catch(() => {
-        // Non-critical — card stays hidden if it fails
-      })
-      .finally(() => setTransformationLoading(false));
-  }, [step, topic, cefrLevel, whyKey, wordsPerWeek]);
-
-  const handleStartIsland1 = async () => {
-    if (!journeyId) {
-      persistDraft();
-      router.push(
-        `/login?next=${encodeURIComponent(`${JOURNEY_RESUME_PATH}?resume=1`)}`,
-      );
-      return;
-    }
-    setStep("starting-island");
-    setError(null);
-    try {
-      const res = await fetch(`/api/journey/${journeyId}/start-island`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order: 1 }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.error || "Could not start island");
-      }
-      router.push(`/app/topic-islands/${data.islandId}?journeyFirst=1`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not start island");
-      setStep("preview");
-    }
-  };
 
   const shell = (inner: ReactNode, maxWidth: "lg" | "2xl" = "lg") => (
     <div className="flex min-h-screen w-full flex-col items-center justify-center px-6 py-10 sm:py-14">
@@ -753,75 +674,10 @@ export default function JourneyOnboardingFlow({
     );
   }
 
-  if (step === "topic") {
-    return shell(
-      <>
-        {progressDash(0)}
-        <h2 className="mt-8 text-2xl font-black text-gray-900">
-          What topic do you want to learn?
-        </h2>
-        <p className="mt-2 text-gray-600">
-          Type in any topic you&apos;re interested in, like work, travel,
-          C-dramas, C-pop, anything~
-        </p>
-        <label className="mt-6 block text-sm font-medium text-gray-700">
-          <span className="sr-only">Topic</span>
-          <input
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder={topicPlaceholder}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
-          />
-        </label>
-        <p className="mt-2 text-gray-600">Or choose from our popular topics:</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {POPULAR_CHIPS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setTopic(c)}
-              className={CHIP_OFF}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (!topic.trim()) {
-              setTopic(
-                "Essential Mandarin for Daily Life in China: Banking, Housing, and More",
-              );
-            }
-            if (!collectProfileQuestions) {
-              if (!timeLabel) setTimeLabel("15min");
-              if (daysPerWeek == null) setDaysPerWeek(4);
-              if (!whyKey) setWhyKey("fluency");
-              setStep("generating");
-              return;
-            }
-            if (!smartProfileSkip) {
-              setStep("level");
-              return;
-            }
-            if (needsLevel) setStep("level");
-            else if (needsTime) setStep("time");
-            else if (needsWhy) setStep("why");
-            else setStep("generating");
-          }}
-          className={`mt-10 ${BTN_PRIMARY}`}
-        >
-          Continue
-        </button>
-      </>,
-    );
-  }
-
   if (step === "level") {
     return shell(
       <>
-        {progressDash(1)}
+        {progressDash(0)}
         <h2 className="mt-8 text-2xl font-black text-gray-900">
           What best describes your level?
         </h2>
@@ -830,25 +686,28 @@ export default function JourneyOnboardingFlow({
           anytime in settings.
         </p>
         <div className="mt-6 space-y-2">
-          {LEVEL_GROUPS.map((group) => (
+          {LEVEL_OPTIONS.map((group) => (
             <button
-              key={group.base}
+              key={group.value}
               type="button"
-              onClick={() => setCefrLevel(group.base)}
+              onClick={() => setCefrLevel(group.value)}
               className={`${OPTION_ROW} flex-col items-stretch gap-1 sm:flex-row sm:items-start ${
-                cefrLevel === group.base ? OPTION_ROW_ON : ""
+                cefrLevel === group.value ? OPTION_ROW_ON : ""
               }`}
             >
               <div className="text-left">
                 <h3 className="text-sm font-bold text-gray-900">
                   {group.label}{" "}
                   <span className="font-normal text-gray-500">
-                    ({group.base})
+                    ({group.value})
                   </span>
                 </h3>
-                <p className="mt-1 text-sm text-gray-600">
-                  {group.description}
-                </p>
+                <p className="mt-1 text-sm text-gray-600">{group.sublabel}</p>
+                {"note" in group && group.note ? (
+                  <p className="mt-1 text-xs font-medium text-teal-600">
+                    {group.note}
+                  </p>
+                ) : null}
               </div>
             </button>
           ))}
@@ -883,9 +742,23 @@ export default function JourneyOnboardingFlow({
                   });
                 }
               }
-              if (!smartProfileSkip) setStep("time");
-              else if (needsTime) setStep("time");
-              else if (needsWhy) setStep("why");
+
+              if (selectedLevel === "A0") {
+                setTopic(A0_TOPIC);
+                setWhyKey("fluency");
+                setBranchAnswer("curious");
+                setStep("topic");
+                return;
+              }
+
+              if (!collectProfileQuestions) {
+                if (!whyKey) setWhyKey("fluency");
+                if (!branchAnswer) setBranchAnswer("curious");
+                setStep("generating");
+                return;
+              }
+
+              if (!smartProfileSkip || needsWhy) setStep("why");
               else setStep("generating");
             } catch {
               setError("Could not save your level. Try again.");
@@ -904,71 +777,10 @@ export default function JourneyOnboardingFlow({
     );
   }
 
-  if (step === "time") {
-    return shell(
-      <>
-        {progressDash(2)}
-        <h2 className="mt-8 text-2xl font-black text-gray-900">
-          How much time can you put in?
-        </h2>
-        <p className="mt-2 text-gray-600">
-          Be realistic — 10 minutes consistently beats 60 minutes once a week.
-        </p>
-        <p className="mt-6 text-sm font-medium text-gray-700">Time per day</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {TIME_OPTIONS.map((t) => (
-            <button
-              key={t.value}
-              type="button"
-              onClick={() => setTimeLabel(t.value)}
-              className={timeLabel === t.value ? CHIP_ON : CHIP_OFF}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        <p className="mt-6 text-sm font-medium text-gray-700">Days per week</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {DAY_OPTIONS.map((d) => (
-            <button
-              key={d.label}
-              type="button"
-              onClick={() => setDaysPerWeek(d.value)}
-              className={daysPerWeek === d.value ? CHIP_ON : CHIP_OFF}
-            >
-              {d.label}
-            </button>
-          ))}
-        </div>
-        {timeLabel && daysPerWeek != null && wordsPerWeek > 0 && (
-          <div className="mt-8 rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-gray-900 shadow-sm">
-            <p className="text-lg font-bold">
-              🧠 {wordsPerWeek} new words this week
-            </p>
-            <p className="mt-1 text-sm text-gray-700">
-              ~{wordsPerWeek * 4} words in your first month at your pace
-            </p>
-          </div>
-        )}
-        <button
-          type="button"
-          disabled={!timeLabel || daysPerWeek == null}
-          onClick={() => {
-            if (!smartProfileSkip || needsWhy) setStep("why");
-            else setStep("generating");
-          }}
-          className={`mt-10 ${BTN_PRIMARY}`}
-        >
-          Continue
-        </button>
-      </>,
-    );
-  }
-
   if (step === "why") {
     return shell(
       <>
-        {progressDash(3)}
+        {progressDash(1)}
         <h2 className="mt-8 text-2xl font-black text-gray-900">
           Why are you learning Mandarin?
         </h2>
@@ -981,12 +793,12 @@ export default function JourneyOnboardingFlow({
               key={o.key}
               type="button"
               onClick={() => setWhyKey(o.key)}
-              className={`${OPTION_ROW} ${
+              className={`${OPTION_ROW} flex-col items-stretch gap-1 ${
                 whyKey === o.key ? OPTION_ROW_ON : ""
               }`}
             >
-              <span>{o.emoji}</span>
-              <span className="font-medium">{o.label}</span>
+              <span className="font-medium text-gray-900">{o.label}</span>
+              <span className="text-sm text-gray-600">{o.sublabel}</span>
             </button>
           ))}
         </div>
@@ -994,7 +806,130 @@ export default function JourneyOnboardingFlow({
         <button
           type="button"
           disabled={!whyKey}
-          onClick={async () => {
+          onClick={() => {
+            setError(null);
+            setBranchAnswer("");
+            setStep("branch");
+          }}
+          className={`mt-10 ${BTN_PRIMARY}`}
+        >
+          Continue
+        </button>
+      </>,
+    );
+  }
+
+  if (step === "branch") {
+    const branch = BRANCH_OPTIONS[whyKey || "fluency"] ?? BRANCH_OPTIONS.fluency;
+    return shell(
+      <>
+        {progressDash(2)}
+        <h2 className="mt-8 text-2xl font-black text-gray-900">
+          {branch.question}
+        </h2>
+        <div className="mt-6 space-y-2">
+          {branch.options.map((o) => (
+            <button
+              key={o.key}
+              type="button"
+              onClick={() => setBranchAnswer(o.key)}
+              className={`${OPTION_ROW} ${
+                branchAnswer === o.key ? OPTION_ROW_ON : ""
+              }`}
+            >
+              <span className="font-medium text-gray-900">{o.label}</span>
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          disabled={!branchAnswer}
+          onClick={() => {
+            setError(null);
+            // Reset topic so first chip pre-selects for this branch.
+            setTopic("");
+            setStep("topic");
+          }}
+          className={`mt-10 ${BTN_PRIMARY}`}
+        >
+          Continue
+        </button>
+      </>,
+      "2xl",
+    );
+  }
+
+  if (step === "topic") {
+    if (isA0) {
+      return shell(
+        <>
+          {progressDash(3)}
+          <div className="mt-8 rounded-2xl border-2 border-gray-900 bg-white p-8 text-center shadow-sm">
+            <img
+              src="/capybara-waving.png"
+              alt=""
+              className="mx-auto h-20 w-20 rounded-full object-cover"
+              aria-hidden
+            />
+            <h2 className="mt-4 text-2xl font-black text-gray-900">
+              {A0_TOPIC}
+            </h2>
+            <p className="mt-3 text-gray-600">
+              Your first five Mandarin words — greetings and introducing
+              yourself. No prior knowledge needed.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setTopic(A0_TOPIC);
+                setError(null);
+                setStep("generating");
+              }}
+              className={`mt-8 ${BTN_PRIMARY}`}
+            >
+              Let&apos;s start →
+            </button>
+          </div>
+          {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
+        </>,
+      );
+    }
+
+    return shell(
+      <>
+        {progressDash(3)}
+        <h2 className="mt-8 text-2xl font-black text-gray-900">
+          What topic do you want to learn?
+        </h2>
+        <p className="mt-2 text-gray-600">
+          Pick a suggestion or type your own topic.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {topicSuggestions.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setTopic(c)}
+              className={topic === c ? CHIP_ON : CHIP_OFF}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+        <label className="mt-6 block text-sm font-medium text-gray-700">
+          <span className="sr-only">Topic</span>
+          <input
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder={topicPlaceholder}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+          />
+        </label>
+        {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
+        <button
+          type="button"
+          disabled={!topic.trim()}
+          onClick={() => {
             setError(null);
             setStep("generating");
           }}
@@ -1007,9 +942,26 @@ export default function JourneyOnboardingFlow({
   }
 
   if (step === "generating") {
+    if (isA0) {
+      return shell(
+        <div className="flex flex-col items-center text-center">
+          <div className="animate-bounce" aria-hidden>
+            <AppLogo size="md" textClassName="text-xl font-black text-gray-900" />
+          </div>
+          <p className="mt-6 text-sm text-gray-500">
+            Starting your first lesson…
+          </p>
+          {error ? (
+            <p className="mt-6 text-center text-sm text-red-600">{error}</p>
+          ) : null}
+        </div>,
+      );
+    }
+
+    const genSteps = GEN_STEPS;
     const progressPct = Math.min(
       100,
-      Math.round((generatingStep / GEN_STEPS.length) * 100),
+      Math.round((generatingStep / genSteps.length) * 100),
     );
     return shell(
       <>
@@ -1022,7 +974,7 @@ export default function JourneyOnboardingFlow({
           </div>
           {!publicSurface && (
             <p className="mt-4 text-sm text-gray-500">
-              Building your journey — you&apos;ll be taken there in a moment
+              Building your journey — you'll be taken there in a moment
             </p>
           )}
         </div>
@@ -1036,7 +988,7 @@ export default function JourneyOnboardingFlow({
           {progressPct}% complete
         </p>
         <ul className="mt-10 w-full space-y-3 text-left">
-          {GEN_STEPS.map((s, i) => (
+          {genSteps.map((s, i) => (
             <li
               key={s}
               className={`text-gray-800 transition-opacity ${
@@ -1061,12 +1013,22 @@ export default function JourneyOnboardingFlow({
           <AppLogo size="md" textClassName="text-xl font-black text-gray-900" />
         </div>
         <h2 className="mt-8 text-2xl font-black text-gray-900">
-          Building your first island…
+          {isA0 ? "Getting your first words ready…" : "Building your first island…"}
         </h2>
         <p className="mt-3 text-gray-600">
-          We&apos;re generating 5 words tailored to your level and topic.
-          <br />
-          This only takes a moment.
+          {isA0 ? (
+            <>
+              Loading greetings and introductions for absolute beginners.
+              <br />
+              This only takes a moment.
+            </>
+          ) : (
+            <>
+              We&apos;re generating 3 words tailored to your level and topic.
+              <br />
+              This only takes a moment.
+            </>
+          )}
         </p>
         <div className="mx-auto mt-8 h-2 w-full max-w-xs overflow-hidden rounded-full bg-gray-200">
           <div
@@ -1075,338 +1037,23 @@ export default function JourneyOnboardingFlow({
           />
         </div>
         {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
-      </div>,
-      "lg",
-    );
-  }
-
-  if (step === "preview" && journeyRow) {
-    const wpw = journeyRow.words_per_week ?? wordsPerWeek;
-    const effectiveDailyMins = MINS_MAP[timeLabel] ?? 15;
-    const effectiveDaysPerWeek = daysPerWeek ?? 4;
-
-    // Track island number separately (stories don't count)
-    let islandCounter = 0;
-
-    return (
-      <div className="mx-auto w-full max-w-[480px] px-5 py-10 lg:max-w-2xl lg:px-10">
-        {/* ── Header ── */}
-        <div className="mb-5">
-          <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-teal-500">
-            Your Personalised Journey
-          </p>
-          <h1 className="text-3xl font-black tracking-tight text-gray-900">
-            {journeyRow.topic}
-          </h1>
-          <p className="mt-1 text-sm text-gray-400">
-            5 islands · 2 stories · {JOURNEY_TOTAL_WORDS} words · ~
-            {weeksToComplete} week{weeksToComplete === 1 ? "" : "s"} at your
-            pace
-          </p>
-        </div>
-
-        {/* ── Word projection card ── */}
-        <div className="mb-4 flex items-center gap-3 rounded-2xl bg-gray-900 px-4 py-3.5 text-white">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white/10">
-            <Zap size={16} className="text-teal-400" />
-          </div>
-          <div>
-            <p className="text-sm font-black">
-              Learn {wpw} words in your first week
-            </p>
-            <p className="mt-0.5 text-xs text-gray-400">
-              Based on your {effectiveDailyMins}min/day, {effectiveDaysPerWeek}
-              x/week plan
-            </p>
-          </div>
-        </div>
-
-        {/* ── Where this plan takes you card ── */}
-        {(transformationLoading || transformationCard) && (
-          <div className="mb-4 rounded-2xl bg-stone-100 px-5 py-4">
-            <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-stone-400">
-              Where this plan takes you
-            </p>
-            {transformationLoading && !transformationCard ? (
-              <div className="flex items-center gap-2 py-2">
-                <Loader2 size={13} className="animate-spin text-stone-400" />
-                <span className="text-xs text-stone-400">Personalising…</span>
-              </div>
-            ) : transformationCard ? (
-              <div className="flex items-start gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-xs font-medium text-stone-400">
-                    Today
-                  </p>
-                  <p className="text-sm leading-snug text-stone-500">
-                    {transformationCard.today}
-                  </p>
-                </div>
-                <div className="flex flex-shrink-0 items-center self-center px-1 text-stone-300">
-                  <svg
-                    width="40"
-                    height="10"
-                    viewBox="0 0 40 10"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <line
-                      x1="0"
-                      y1="5"
-                      x2="32"
-                      y2="5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeDasharray="3 3"
-                    />
-                    <path
-                      d="M32 1.5L38.5 5L32 8.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-xs font-black text-gray-900">
-                    Day {transformationCard.daysAhead}
-                  </p>
-                  <p className="text-sm font-semibold leading-snug text-gray-900">
-                    {transformationCard.future}
-                  </p>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        {/* ── Journey path ── */}
-        <div
-          className="max-h-[300px] overflow-y-auto pr-1 lg:max-h-[380px]"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#e5e7eb transparent",
-          }}
-        >
-          {journeyIslands.map((row, idx) => {
-            const nodeType = row.node_type ?? "island";
-            const isIsland = nodeType === "island";
-            const isFirst = isIsland && islandCounter === 0;
-            if (isIsland) islandCounter++;
-            const thisIslandNum = isIsland ? islandCounter : 0;
-            const wordCount = row.word_count ?? (thisIslandNum === 1 ? 5 : 10);
-            const isLast = idx === journeyIslands.length - 1;
-
-            return (
-              <div
-                key={row.id != null ? String(row.id) : `journey-node-${idx}`}
-                className="flex gap-4"
-              >
-                {/* Rail */}
-                <div
-                  className="flex flex-shrink-0 flex-col items-center"
-                  style={{ width: 36 }}
-                >
-                  {/* Badge */}
-                  {isIsland ? (
-                    isFirst ? (
-                      <div className="z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 shadow-md shadow-gray-300">
-                        <span className="text-sm font-black text-white">
-                          {thisIslandNum}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border-2 border-gray-200 bg-white">
-                        <span className="text-sm font-black text-gray-300">
-                          {thisIslandNum}
-                        </span>
-                      </div>
-                    )
-                  ) : (
-                    <div className="z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border-2 border-amber-200 bg-white text-amber-300">
-                      <BookOpen size={14} />
-                    </div>
-                  )}
-
-                  {/* Connector */}
-                  {!isLast && (
-                    <div className="flex-1 py-1" style={{ minHeight: 20 }}>
-                      {isFirst ? (
-                        <div className="mx-auto h-full w-px bg-gray-200" />
-                      ) : (
-                        <div
-                          className="mx-auto h-full w-px"
-                          style={{
-                            backgroundImage:
-                              "repeating-linear-gradient(to bottom, #d1d5db 0px, #d1d5db 4px, transparent 4px, transparent 9px)",
-                          }}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Card */}
-                <div className="min-w-0 flex-1">
-                  {isFirst ? (
-                    /* Island 1 hero card */
-                    <div className="mb-3 rounded-2xl border-2 border-gray-900 bg-white p-4">
-                      <div className="mb-3 flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="mb-0.5 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                            Island 1 · Start here
-                          </p>
-                          <p className="text-base font-black leading-snug text-gray-900">
-                            {row.name}
-                          </p>
-                          {row.zh && (
-                            <p className="mt-0.5 text-xs text-gray-400">
-                              {row.zh}
-                            </p>
-                          )}
-                        </div>
-                        <span className="flex-shrink-0 rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-black text-white">
-                          FREE
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-500">
-                          {wordCount} words
-                        </span>
-                        {cefrLevel && (
-                          <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-500">
-                            {cefrLevel}
-                          </span>
-                        )}
-                        <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-500">
-                          ~5 min
-                        </span>
-                      </div>
-                    </div>
-                  ) : isIsland ? (
-                    /* Locked island card */
-                    <div className="mb-3 select-none rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 opacity-50">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold leading-tight text-gray-500">
-                            {row.name}
-                          </p>
-                          <p className="mt-0.5 text-[10px] text-gray-400">
-                            {wordCount} words
-                            {cefrLevel ? ` · ${cefrLevel}` : ""}
-                          </p>
-                        </div>
-                        <Lock
-                          size={12}
-                          className="flex-shrink-0 text-gray-300"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    /* Story checkpoint card */
-                    <div className="mb-3 select-none rounded-xl border border-amber-100 bg-amber-50/50 px-4 py-3 opacity-55">
-                      <p className="mb-0.5 text-[10px] font-black uppercase tracking-widest text-amber-500">
-                        Story Checkpoint
-                      </p>
-                      <p className="text-sm font-bold leading-snug text-gray-700">
-                        {row.name}
-                      </p>
-                      {(row.hint ?? row.story_idea) && (
-                        <p className="mt-0.5 text-[10px] text-amber-500">
-                          {row.hint ?? row.story_idea}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Ghost trailing node */}
-          <div className="flex gap-4 opacity-25 select-none">
-            <div
-              className="flex flex-shrink-0 flex-col items-center"
-              style={{ width: 36 }}
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-gray-200 bg-white">
-                <span className="text-sm font-black text-gray-200">5</span>
-              </div>
-            </div>
-            <div className="flex-1 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4">
-              <p className="text-xs font-bold text-gray-300">
-                + 1 more island &amp; 1 story
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Gradient fade — sibling outside the scroll container so it stays pinned */}
-        <div
-          className="pointer-events-none -mt-24 h-24"
-          style={{
-            background: "linear-gradient(to bottom, transparent, white 88%)",
-          }}
-        />
-
-        {/* ── Unlock nudge ── */}
-        <div className="mb-6 mt-3 flex justify-center">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400">
-            <Lock size={11} />
-            Islands 2–5 unlock when you subscribe
-          </span>
-        </div>
-
-        {error && (
-          <p className="mb-4 text-center text-sm text-red-600">{error}</p>
-        )}
-
-        {/* ── CTA block ── */}
-        <div className="space-y-2">
+        {journeyId && error ? (
           <button
             type="button"
-            onClick={handleStartIsland1}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 py-4 text-sm font-black text-white transition-colors hover:bg-gray-800"
+            className={`mt-6 ${BTN_PRIMARY}`}
+            onClick={() => {
+              void startIslandAndRedirect(journeyId, cefrLevel || "B1").catch(
+                (e) => {
+                  setError(
+                    e instanceof Error ? e.message : "Could not start island",
+                  );
+                },
+              );
+            }}
           >
-            {journeyId
-              ? `Start Island 1 — it's free`
-              : "Start your journey for free"}
-            <ArrowRight size={16} />
+            Try again
           </button>
-
-          <p className="text-center text-xs text-gray-400">
-            {journeyId
-              ? "No credit card needed for Island 1"
-              : "Save your plan and unlock Island 1 after sign in"}
-          </p>
-
-          <div className="flex items-center justify-center gap-5 pt-1">
-            {["No credit card", "Cancel anytime", "5 min"].map((label) => (
-              <span
-                key={label}
-                className="flex items-center gap-1 text-[10px] font-medium text-gray-400"
-              >
-                <Check size={10} strokeWidth={3} className="text-teal-500" />
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === "preview") {
-    return shell(
-      <div className="flex flex-col items-center text-center">
-        <Loader2
-          className="h-8 w-8 animate-spin text-gray-400"
-          aria-hidden={true}
-        />
-        <p className="mt-4 text-sm text-gray-600">
-          Loading your journey preview…
-        </p>
+        ) : null}
       </div>,
       "lg",
     );

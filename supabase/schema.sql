@@ -16,6 +16,8 @@ create table if not exists public.topic_islands (
   level text not null default 'B1',
   word_target int not null default 12,
   grammar_target int not null default 0,
+  sentence_style text not null default 'casual'
+    check (sentence_style in ('casual', 'professional')),
   status text not null default 'draft',
   words_selected int not null default 0,
   sentences_generated int not null default 0,

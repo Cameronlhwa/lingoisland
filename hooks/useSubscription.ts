@@ -11,6 +11,11 @@ type SubscriptionState = {
 let cachedIsPro: boolean | null = null;
 let inflight: Promise<boolean> | null = null;
 
+export function invalidateSubscriptionCache(): void {
+  cachedIsPro = null;
+  inflight = null;
+}
+
 async function fetchIsPro(): Promise<boolean> {
   const supabase = createClient();
   const {

@@ -156,7 +156,7 @@ REMEMBER: Count story_zh characters (excluding spaces/punctuation) = ${minLength
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "deepseek-chat",
+          model: "deepseek-v4-flash",
           messages: [
             {
               role: "system",

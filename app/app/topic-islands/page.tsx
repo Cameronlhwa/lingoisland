@@ -11,6 +11,10 @@ import UpgradeModal from "@/components/app/UpgradeModal";
 import { OceanBackground } from "@/components/OceanBackground";
 import { coverUrlFromKey } from "@/lib/islandLibrary";
 import { useSubscription } from "@/hooks/useSubscription";
+import {
+  SENTENCE_STYLE_OPTIONS,
+  type SentenceStyle,
+} from "@/lib/sentenceStyle";
 
 interface TopicIsland {
   id: string;
@@ -54,6 +58,7 @@ export default function TopicIslandsPage() {
     wordTarget: 12,
     grammarTarget: 0,
     wantsGrammar: false,
+    sentenceStyle: "casual" as SentenceStyle,
     includeReviewVocab: false,
     reviewVocabMode: "random" as "random" | "select",
     selectedReviewIslands: [] as string[],
@@ -87,6 +92,7 @@ export default function TopicIslandsPage() {
           wordTarget: 12,
           grammarTarget: 0,
           wantsGrammar: false,
+          sentenceStyle: "casual",
           includeReviewVocab: false,
           reviewVocabMode: "random",
           selectedReviewIslands: [],
@@ -149,6 +155,7 @@ export default function TopicIslandsPage() {
         wordTarget: 12,
         grammarTarget: 0,
         wantsGrammar: false,
+        sentenceStyle: "casual",
         includeReviewVocab: false,
         reviewVocabMode: "random",
         selectedReviewIslands: [],
@@ -255,6 +262,7 @@ export default function TopicIslandsPage() {
           level: formData.level,
           wordTarget: formData.wordTarget,
           grammarTarget,
+          sentenceStyle: formData.sentenceStyle,
         }),
       });
 
@@ -276,7 +284,7 @@ export default function TopicIslandsPage() {
         );
       }
 
-      const { islandId } = await response.json();
+      const { islandId, sentenceStyle } = await response.json();
 
       // Prepare review vocab configuration
       const reviewVocabConfig = formData.includeReviewVocab
@@ -296,6 +304,7 @@ export default function TopicIslandsPage() {
         body: JSON.stringify({
           batchSize: 5,
           reviewVocab: reviewVocabConfig,
+          sentenceStyle: sentenceStyle ?? formData.sentenceStyle,
         }),
       }).catch((err) =>
         console.error("Error starting topic island generation:", err),
@@ -303,7 +312,7 @@ export default function TopicIslandsPage() {
       // Image generation disabled - using pre-generated library images for cost savings
 
       // Immediately navigate to island page; it will show loading/progress
-      router.push(`/app/topic-islands/${islandId}`);
+      router.push(`/app/topic-islands/${islandId}?learn=true`);
     } catch (error) {
       console.error("Error creating island:", error);
       const errorMessage =
@@ -526,6 +535,48 @@ export default function TopicIslandsPage() {
                   <div className="mt-1 flex justify-between text-xs text-gray-500">
                     <span>10</span>
                     <span>20</span>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="mb-2 block text-sm font-medium text-gray-900">
+                    Example sentences
+                  </label>
+                  <p className="mb-3 text-xs text-gray-600">
+                    Choose the tone for the example sentences on this island.
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {SENTENCE_STYLE_OPTIONS.map((option) => {
+                      const active = formData.sentenceStyle === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              sentenceStyle: option.value,
+                            }))
+                          }
+                          className={`rounded-lg border px-3 py-3 text-left transition-colors ${
+                            active
+                              ? "border-gray-900 bg-gray-900 text-white"
+                              : "border-gray-300 bg-white text-gray-900 hover:border-gray-400"
+                          }`}
+                        >
+                          <span className="block text-sm font-semibold">
+                            {option.label}
+                          </span>
+                          <span
+                            className={`mt-1 block text-xs ${
+                              active ? "text-white/70" : "text-gray-500"
+                            }`}
+                          >
+                            {option.description}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

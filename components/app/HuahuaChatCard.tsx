@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import type { LearnIsland, LearnWord } from "@/components/app/LearnSequence/types";
+import HuahuaAvatar from "@/components/app/HuahuaAvatar";
 
 interface HuahuaChatCardProps {
   topic: string;
@@ -17,7 +17,6 @@ export default function HuahuaChatCard({
   onOpenDesktop,
 }: HuahuaChatCardProps) {
   const router = useRouter();
-  const [imgError, setImgError] = useState(false);
 
   const handleClick = () => {
     const isMobile =
@@ -37,20 +36,7 @@ export default function HuahuaChatCard({
       className="w-full rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
     >
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100">
-          {!imgError ? (
-            <img
-              src="/capybara-face.png"
-              alt="华华"
-              className="h-12 w-12 object-cover"
-              onError={() => setImgError(true)}
-            />
-          ) : (
-            <span className="text-3xl" aria-hidden>
-              🦫
-            </span>
-          )}
-        </div>
+        <HuahuaAvatar className="h-14 w-14" />
 
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold text-gray-900">

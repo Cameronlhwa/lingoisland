@@ -286,6 +286,10 @@ const translations: Record<string, { en: string; zh: string }> = {
     en: "Pick something people actually talk about → generate your Topic Island.",
     zh: "选择人们实际谈论的话题 → 生成您的主题岛。",
   },
+  "Pick something people actually talk about → build an island or a full journey.": {
+    en: "Pick something people actually talk about → build an island or a full journey.",
+    zh: "选择人们实际谈论的话题 → 创建单个岛屿或完整旅程。",
+  },
   "Filter by category": { en: "Filter by category", zh: "按类别筛选" },
   "Select a category to narrow your results": {
     en: "Select a category to narrow your results",
@@ -301,6 +305,25 @@ const translations: Record<string, { en: string; zh: string }> = {
   "Load more": { en: "Load more", zh: "加载更多" },
   remaining: { en: "remaining", zh: "剩余" },
   "Create Island": { en: "Create Island", zh: "创建岛屿" },
+  "Start learning": { en: "Start learning", zh: "开始学习" },
+  "How do you want to learn?": {
+    en: "How do you want to learn?",
+    zh: "你想怎么学？",
+  },
+  "Choose a single focused lesson, or a multi-island learning path.": {
+    en: "Choose a single focused lesson, or a multi-island learning path.",
+    zh: "选择一节专注课程，或一条多岛屿学习路径。",
+  },
+  "Singular Island": { en: "Singular Island", zh: "单个岛屿" },
+  "One topic lesson with vocab + examples. Quick and focused.": {
+    en: "One topic lesson with vocab + examples. Quick and focused.",
+    zh: "一节主题课，含词汇与例句。快速且专注。",
+  },
+  "Complete Journey": { en: "Complete Journey", zh: "完整旅程" },
+  "A full path of islands and story checkpoints around this topic.": {
+    en: "A full path of islands and story checkpoints around this topic.",
+    zh: "围绕该主题的多岛屿路径与故事关卡。",
+  },
   Preview: { en: "Preview", zh: "预览" },
   Close: { en: "Close", zh: "关闭" },
   "Conversation starters:": {

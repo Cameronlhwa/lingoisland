@@ -40,6 +40,12 @@ export async function GET(
     // Get user entitlements
     const entitlements = await getEntitlements(user.id)
 
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('cefr_level')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
     // Get words (order by position, then created_at as fallback)
     const { data: words } = await supabase
       .from('island_words')
@@ -171,6 +177,7 @@ export async function GET(
       words: wordsWithSentences,
       grammarFocus: grammarFocusWithExamples,
       user_plan: entitlements.isPro ? 'pro' : 'free',
+      user_cefr_level: userProfile?.cefr_level ?? null,
       is_anonymous: user?.is_anonymous ?? false,
       user_topic_island_count: topicIslandCount ?? 0,
       can_create_topic_island: createIslandEligibility.allowed,

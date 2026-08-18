@@ -123,14 +123,14 @@ function CapybaraCard({
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
       {/* Art area */}
-      <div className="flex h-[148px] items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
-        <div className="relative h-36 w-36">
+      <div className="flex h-[200px] items-center justify-center border-b border-[#c8dce6] px-2" style={{ background: "#d5ebf6" }}>
+        <div className="relative h-[188px] w-full">
           <Image
             src={`/progress-islands/stage-${safeStage}.png`}
             alt={`华华's island — Stage ${safeStage}`}
             fill
             className="object-contain"
-            sizes="144px"
+            sizes="(max-width: 768px) 100vw, 320px"
           />
         </div>
       </div>
@@ -183,7 +183,7 @@ function HomeDailyStoryCard({
   if (loading) {
     return (
       <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
-        <div className="flex h-[148px] items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
+        <div className="flex h-[200px] items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-slate-500" />
         </div>
         <div className="flex flex-1 flex-col p-4">
@@ -197,7 +197,7 @@ function HomeDailyStoryCard({
   if (!story) {
     return (
       <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
-        <div className="flex h-[148px] items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
+        <div className="flex h-[200px] items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
           <span className="text-4xl">📖</span>
         </div>
         <div className="flex flex-1 flex-col p-4">
@@ -227,7 +227,7 @@ function HomeDailyStoryCard({
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
       {/* Header area */}
-      <div className="flex h-[148px] flex-col justify-end border-b border-[#c8dce6] p-4" style={{ background: "#d5ebf6" }}>
+      <div className="flex h-[200px] flex-col justify-end border-b border-[#c8dce6] p-4" style={{ background: "#d5ebf6" }}>
         <div className="mb-2 flex items-center gap-2">
           {level && (
             <span className="rounded-full border border-[#b5d4e8] bg-white/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
@@ -273,7 +273,7 @@ function CreateIslandDashCard() {
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
       {/* Art area */}
-      <div className="flex h-[148px] flex-col items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
+      <div className="flex h-[200px] flex-col items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "rgba(74,159,196,0.15)" }}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4a9fc4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <circle cx="12" cy="12" r="10" />
@@ -295,12 +295,20 @@ function CreateIslandDashCard() {
         <p className="mt-0.5 text-xs text-slate-400">
           Pick any topic and get vocab + examples tailored to your level.
         </p>
-        <Link
-          href="/app/topic-islands?create=1"
-          className="mt-auto rounded-xl bg-slate-900 px-4 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-slate-800"
-        >
-          Create island →
-        </Link>
+        <div className="mt-auto flex flex-col gap-2">
+          <Link
+            href="/app/topic-islands?create=1"
+            className="rounded-xl bg-slate-900 px-4 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-slate-800"
+          >
+            Create island →
+          </Link>
+          <Link
+            href="/app/browse-topics"
+            className="rounded-xl border border-[#c8dce6] bg-white px-4 py-2 text-center text-xs font-bold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50"
+          >
+            Browse topics →
+          </Link>
+        </div>
       </div>
     </div>
   );

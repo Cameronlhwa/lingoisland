@@ -96,6 +96,8 @@ export default function TopicIslandLoadingPage() {
     localStorage.removeItem(STORAGE_KEY);
 
     let islandId: string;
+    let sentenceStyle =
+      (pendingRequest.sentenceStyle as string | undefined) ?? "casual";
     try {
       const createResponse = await fetch("/api/topic-islands", {
         method: "POST",
@@ -105,6 +107,7 @@ export default function TopicIslandLoadingPage() {
           level: pendingRequest.cefrLevel || "B1",
           wordTarget: pendingRequest.wordCount,
           grammarTarget,
+          sentenceStyle: pendingRequest.sentenceStyle ?? "casual",
         }),
       });
 
@@ -116,6 +119,7 @@ export default function TopicIslandLoadingPage() {
       const data = await createResponse.json();
       if (!data.islandId) throw new Error("No island ID returned");
       islandId = data.islandId;
+      sentenceStyle = data.sentenceStyle ?? sentenceStyle;
     } catch (err) {
       console.error("[loading] Error creating island:", err);
       router.replace("/app/topic-islands");
@@ -131,10 +135,10 @@ export default function TopicIslandLoadingPage() {
     fetch(`/api/topic-islands/${islandId}/generate-batch`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ batchSize: 5 }),
+      body: JSON.stringify({ batchSize: 5, sentenceStyle }),
     }).catch((err) => console.error("Error starting generation:", err));
 
-    router.replace(`/app/topic-islands/${islandId}`);
+    router.replace(`/app/topic-islands/${islandId}?learn=true`);
   };
 
   return (
