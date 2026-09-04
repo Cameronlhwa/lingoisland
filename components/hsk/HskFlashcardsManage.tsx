@@ -1,0 +1,332 @@
+"use client";
+
+/**
+ * HSK Flashcards manage-cards — forked from `/app/quiz/[id]/manage`.
+ */
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import SpeakerButton from "@/components/app/SpeakerButton";
+import {
+  hskFlashcardsDeck,
+  hskFlashcardsRoot,
+  useHskFlashcardsBasePath,
+} from "@/components/hsk/hskFlashcardsPaths";
+
+interface Deck {
+  id: string;
+  name: string;
+  card_count: number;
+}
+
+interface Flashcard {
+  id: string;
+  direction: "ZH_EN" | "EN_ZH";
+  front: string;
+  back: string;
+  pinyin: string | null;
+  created_at: string;
+}
+
+type DirectionFilter = "all" | "ZH_EN" | "EN_ZH";
+
+export default function HskFlashcardsManage({ deckId }: { deckId: string }) {
+  const router = useRouter();
+  const basePath = useHskFlashcardsBasePath();
+  const root = hskFlashcardsRoot(basePath);
+  const deckPath = hskFlashcardsDeck(basePath, deckId);
+
+  const [deck, setDeck] = useState<Deck | null>(null);
+  const [cards, setCards] = useState<Flashcard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [directionFilter, setDirectionFilter] =
+    useState<DirectionFilter>("all");
+  const [deletingCardId, setDeletingCardId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState<Flashcard | null>(null);
+
+  useEffect(() => {
+    loadDeck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deckId]);
+
+  useEffect(() => {
+    loadCards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [directionFilter, deckId]);
+
+  const loadDeck = async () => {
+    try {
+      const response = await fetch(`/api/hsk/flashcard-decks/${deckId}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          router.push(root);
+          return;
+        }
+        throw new Error("Failed to load deck");
+      }
+      const data = await response.json();
+      setDeck(data.deck);
+    } catch (error) {
+      console.error("Error loading deck:", error);
+    }
+  };
+
+  const loadCards = async () => {
+    setLoading(true);
+    try {
+      const url =
+        directionFilter === "all"
+          ? `/api/hsk/flashcard-decks/${deckId}/cards`
+          : `/api/hsk/flashcard-decks/${deckId}/cards?direction=${directionFilter}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to load cards");
+      const data = await response.json();
+      setCards(data.cards || []);
+    } catch (error) {
+      console.error("Error loading cards:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (card: Flashcard) => {
+    setCardToDelete(card);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!cardToDelete) return;
+
+    setDeletingCardId(cardToDelete.id);
+    try {
+      const response = await fetch(
+        `/api/hsk/flashcard-decks/${deckId}/cards/${cardToDelete.id}`,
+        { method: "DELETE" },
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete card");
+      }
+
+      setCards((prev) => prev.filter((c) => c.id !== cardToDelete.id));
+      setDeck((prev) =>
+        prev ? { ...prev, card_count: Math.max(0, prev.card_count - 1) } : null,
+      );
+      setShowDeleteModal(false);
+      setCardToDelete(null);
+    } catch (error) {
+      console.error("Error deleting card:", error);
+      alert(error instanceof Error ? error.message : "Failed to delete card");
+    } finally {
+      setDeletingCardId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="flex items-center gap-3 text-gray-600">
+          <svg
+            className="h-5 w-5 animate-spin text-gray-400"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            />
+          </svg>
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!deck) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-gray-600">Deck not found</div>
+      </div>
+    );
+  }
+
+  const directionLabel = {
+    ZH_EN: "Chinese → English",
+    EN_ZH: "English → Chinese",
+  };
+
+  const containsChinese = (text: string) => /[\u4e00-\u9fff]/.test(text);
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <Link
+              href={deckPath}
+              className="mb-4 inline-block text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+            >
+              ← Back to Deck
+            </Link>
+            <h1 className="mb-2 text-4xl font-bold tracking-tight text-gray-900">
+              {deck.name}
+            </h1>
+            <p className="text-sm text-gray-600">
+              Manage cards • {deck.card_count} total
+            </p>
+          </div>
+        </div>
+
+        <div className="mb-6 flex gap-2">
+          <button
+            onClick={() => setDirectionFilter("all")}
+            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+              directionFilter === "all"
+                ? "border-gray-900 bg-gray-900 text-white"
+                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setDirectionFilter("ZH_EN")}
+            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+              directionFilter === "ZH_EN"
+                ? "border-gray-900 bg-gray-900 text-white"
+                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Chinese → English
+          </button>
+          <button
+            onClick={() => setDirectionFilter("EN_ZH")}
+            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+              directionFilter === "EN_ZH"
+                ? "border-gray-900 bg-gray-900 text-white"
+                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            English → Chinese
+          </button>
+        </div>
+
+        {cards.length === 0 ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+            <p className="text-gray-600">
+              {directionFilter === "all"
+                ? "No cards in this deck yet."
+                : `No ${directionLabel[directionFilter as "ZH_EN" | "EN_ZH"]} cards.`}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {cards.map((card) => (
+              <div
+                key={card.id}
+                className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+              >
+                <div className="flex-1">
+                  <div className="mb-1 text-sm font-semibold text-gray-900">
+                    {directionLabel[card.direction]}
+                  </div>
+                  <div className="flex items-center gap-2 text-base text-gray-900">
+                    <span className="font-medium">{card.front}</span>
+                    {containsChinese(card.front) && (
+                      <SpeakerButton text={card.front} type="word" size="sm" />
+                    )}
+                    <span className="mx-2 text-gray-400">→</span>
+                    <span>{card.back}</span>
+                    {containsChinese(card.back) && (
+                      <SpeakerButton text={card.back} type="word" size="sm" />
+                    )}
+                  </div>
+                  {card.pinyin && (
+                    <div className="mt-1 text-sm text-gray-500">{card.pinyin}</div>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleDeleteClick(card)}
+                  disabled={deletingCardId === card.id}
+                  className="ml-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                  title="Delete card"
+                >
+                  {deletingCardId === card.id ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {showDeleteModal && cardToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+              <h3 className="mb-4 text-xl font-semibold text-gray-900">
+                Delete this card?
+              </h3>
+              <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div className="mb-2 text-sm font-semibold text-gray-900">
+                  {directionLabel[cardToDelete.direction]}
+                </div>
+                <div className="flex items-center gap-2 text-base text-gray-900">
+                  <span className="font-medium">{cardToDelete.front}</span>
+                  {containsChinese(cardToDelete.front) && (
+                    <SpeakerButton
+                      text={cardToDelete.front}
+                      type="word"
+                      size="sm"
+                    />
+                  )}
+                  <span className="mx-2 text-gray-400">→</span>
+                  <span>{cardToDelete.back}</span>
+                  {containsChinese(cardToDelete.back) && (
+                    <SpeakerButton
+                      text={cardToDelete.back}
+                      type="word"
+                      size="sm"
+                    />
+                  )}
+                </div>
+                {cardToDelete.pinyin && (
+                  <div className="mt-2 text-sm text-gray-500">
+                    {cardToDelete.pinyin}
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setCardToDelete(null);
+                  }}
+                  className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deletingCardId !== null}
+                  className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deletingCardId !== null ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

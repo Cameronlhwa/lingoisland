@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -12,8 +12,16 @@ import JourneyHero from "@/components/app/JourneyHero";
 import { getLocalDateKey } from "@/lib/utils/date";
 import { useSidebar } from "@/components/app/AppLayoutClient";
 import UpgradeModal from "@/components/app/UpgradeModal";
+import OnboardingNudgeBanner from "@/components/Onboarding/OnboardingNudgeBanner";
 import { useSubscription } from "@/hooks/useSubscription";
-import { STAGE_THRESHOLDS } from "@/lib/huahua";
+import { STAGE_THRESHOLDS, STAGE_NAMES, STAGE_EMOJIS } from "@/lib/huahua";
+import { hskLabelForCefr } from "@/lib/levelBands";
+import {
+  HSK_CARD_BORDER,
+  HSK_CARD_SHADOW,
+  HSK_CARD_SHADOW_HOVER,
+} from "@/lib/glossy-theme";
+import { ArrowRight, Flame, Layers, Plus } from "lucide-react";
 
 // ─── Types (unchanged) ────────────────────────────────────────────────────────
 
@@ -58,43 +66,50 @@ const STORAGE_KEY = "pending_topic_island_request";
 
 // ─── Capybara constants ────────────────────────────────────────────────────────
 
-const STAGE_NAMES = ["Bare Island", "Foundation", "Village", "Town", "Thriving City"];
-const STAGE_EMOJIS = ["🏜️", "🏗️", "🏘️", "🏙️", "🌆"];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function TopBar({
-  streakDays,
-  wordsLearned,
-  dueCount,
-  stage,
+function Chip({
+  children,
+  tone = "default",
 }: {
-  streakDays: number;
-  wordsLearned: number;
-  dueCount: number;
-  stage: number;
+  children: ReactNode;
+  tone?: "default" | "accent" | "solid";
 }) {
-  const safeStage = Math.min(5, Math.max(1, stage || 1));
-  const stageName = STAGE_NAMES[safeStage - 1];
-
+  const className =
+    tone === "solid"
+      ? "bg-[var(--lingo-navy)] text-white border-transparent"
+      : tone === "accent"
+        ? "bg-[var(--lingo-sky-pale)] text-[var(--lingo-navy)] border-[var(--lingo-accent-border)]"
+        : "bg-white text-[var(--lingo-navy)] border-[var(--lingo-accent-border)]";
   return (
-    <div className="sticky top-0 z-30 flex h-[52px] items-center justify-between border-b border-slate-100 bg-white px-6">
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600">
-          🔥 {streakDays} day streak
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-          {wordsLearned} words learned
-        </span>
-        {dueCount > 0 && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-            {dueCount} due
-          </span>
-        )}
-      </div>
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
-        🦫 华华 · Stage {safeStage} · {stageName}
-      </span>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${className}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function DashCardShell({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`group flex min-h-[320px] flex-col overflow-hidden rounded-2xl bg-white transition-all hover:-translate-y-0.5 ${className}`}
+      style={{ border: HSK_CARD_BORDER, boxShadow: HSK_CARD_SHADOW }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = HSK_CARD_SHADOW_HOVER;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = HSK_CARD_SHADOW;
+      }}
+    >
+      {children}
     </div>
   );
 }
@@ -121,10 +136,9 @@ function CapybaraCard({
   const stageEmoji = STAGE_EMOJIS[safeStage - 1];
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
-      {/* Art area */}
-      <div className="flex h-[200px] items-center justify-center border-b border-[#c8dce6] px-2" style={{ background: "#d5ebf6" }}>
-        <div className="relative h-[188px] w-full">
+    <DashCardShell>
+      <div className="flex h-[200px] items-center justify-center bg-[var(--lingo-sky-pale)] px-2 sm:h-[220px]">
+        <div className="relative h-full w-full">
           <Image
             src={`/progress-islands/stage-${safeStage}.png`}
             alt={`华华's island — Stage ${safeStage}`}
@@ -134,42 +148,43 @@ function CapybaraCard({
           />
         </div>
       </div>
-
-      {/* Body */}
-      <div className="flex flex-1 flex-col p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-          华华's Island
+      <div className="flex flex-1 flex-col p-5 sm:p-6">
+        <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--lingo-sky-pale)] text-[var(--lingo-blue)]">
+          <Layers className="h-5 w-5" aria-hidden />
+        </span>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+          华华&apos;s Island
         </p>
-        <p className="mt-1 text-sm font-black text-slate-900">
+        <h3 className="lingo-display mt-1.5 text-lg text-[var(--lingo-navy)]">
           Stage {safeStage} · {stageName}
+        </h3>
+        <p className="mt-1.5 text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+          {isComplete
+            ? "Island complete — keep reviewing to stay sharp."
+            : `Currently: ${stageEmoji} ${stageName}`}
         </p>
-        <p className="mt-0.5 text-xs text-slate-400">
-          {isComplete ? "Island complete 🎉" : `Currently: ${stageEmoji} ${stageName}`}
-        </p>
-
-        {/* Progress bar */}
-        <div className="mt-3">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-4">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--lingo-sky-pale)]">
             <div
-              className="h-full rounded-full bg-slate-900 transition-all duration-500"
+              className="h-full rounded-full bg-[var(--lingo-navy)] transition-all duration-500"
               style={{ width: `${stageProgress}%` }}
             />
           </div>
           {!isComplete && (
-            <p className="mt-1.5 text-[10px] text-slate-400">
-              {reviewsUntilNext} more card{reviewsUntilNext !== 1 ? "s" : ""} to Stage {safeStage + 1}
+            <p className="mt-2 text-xs text-[var(--lingo-text-muted)]">
+              {reviewsUntilNext} more card{reviewsUntilNext !== 1 ? "s" : ""} to
+              Stage {safeStage + 1}
             </p>
           )}
         </div>
-
         <Link
           href="/app/quiz"
-          className="mt-auto rounded-xl bg-slate-900 px-4 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-slate-800"
+          className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]"
         >
-          Review cards →
+          Review cards <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </div>
-    </div>
+    </DashCardShell>
   );
 }
 
@@ -182,35 +197,48 @@ function HomeDailyStoryCard({
 }) {
   if (loading) {
     return (
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
-        <div className="flex h-[200px] items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-slate-500" />
+      <DashCardShell>
+        <div className="flex h-[200px] items-center justify-center bg-[var(--lingo-sky-pale)] sm:h-[220px]">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--lingo-accent-border)] border-t-[var(--lingo-blue)]" />
         </div>
-        <div className="flex flex-1 flex-col p-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Daily Story</p>
-          <p className="mt-2 text-xs text-slate-400">Generating today's story…</p>
+        <div className="flex flex-1 flex-col p-5 sm:p-6">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+            Daily Story
+          </p>
+          <p className="mt-2 text-sm text-[var(--lingo-text-muted)]">
+            Generating today&apos;s story…
+          </p>
         </div>
-      </div>
+      </DashCardShell>
     );
   }
 
   if (!story) {
     return (
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
-        <div className="flex h-[200px] items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
-          <span className="text-4xl">📖</span>
+      <DashCardShell>
+        <div className="flex h-[200px] flex-col items-center justify-center bg-[var(--lingo-sky-pale)] sm:h-[220px]">
+          <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
+            📖
+          </span>
         </div>
-        <div className="flex flex-1 flex-col p-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Daily Story</p>
-          <p className="mt-2 text-xs text-slate-400">No story today yet.</p>
+        <div className="flex flex-1 flex-col p-5 sm:p-6">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+            Daily Story
+          </p>
+          <h3 className="lingo-display mt-1.5 text-lg text-[var(--lingo-navy)]">
+            No story yet today
+          </h3>
+          <p className="mt-1.5 flex-1 text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+            Generate a short reading for today&apos;s practice.
+          </p>
           <Link
             href="/app/story/daily"
-            className="mt-auto rounded-xl bg-slate-900 px-4 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-slate-800"
+            className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]"
           >
-            Generate story →
+            Generate story <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>
-      </div>
+      </DashCardShell>
     );
   }
 
@@ -222,95 +250,89 @@ function HomeDailyStoryCard({
   const titleEn = (story as any).title_en as string | null | undefined;
 
   const readMins = lengthChars ? Math.max(1, Math.ceil(lengthChars / 200)) : 2;
-  const excerpt = storyZh ? storyZh.slice(0, 80) + (storyZh.length > 80 ? "…" : "") : "";
+  const excerpt = storyZh
+    ? storyZh.slice(0, 80) + (storyZh.length > 80 ? "…" : "")
+    : "";
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
-      {/* Header area */}
-      <div className="flex h-[200px] flex-col justify-end border-b border-[#c8dce6] p-4" style={{ background: "#d5ebf6" }}>
-        <div className="mb-2 flex items-center gap-2">
+    <DashCardShell>
+      <div className="flex h-[200px] flex-col justify-end bg-[var(--lingo-sky-pale)] p-5 sm:h-[220px] sm:p-6">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
           {level && (
-            <span className="rounded-full border border-[#b5d4e8] bg-white/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-              {level}
+            <span className="rounded-full border border-[var(--lingo-accent-border)] bg-white/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--lingo-navy)]">
+              {hskLabelForCefr(level)}
             </span>
           )}
-          <span className="rounded-full border border-[#b5d4e8] bg-white/70 px-2 py-0.5 text-[10px] font-semibold text-slate-400">
+          <span className="rounded-full border border-[var(--lingo-accent-border)] bg-white/80 px-2.5 py-0.5 text-[10px] font-semibold text-[var(--lingo-text-muted)]">
             ~{readMins} min
           </span>
         </div>
-        <p className="line-clamp-1 text-base font-black leading-tight text-slate-900">
+        <p className="lingo-display line-clamp-2 text-xl leading-tight text-[var(--lingo-navy)]">
           {title ?? "今日故事"}
         </p>
         {titleEn && (
-          <p className="mt-0.5 line-clamp-1 text-[11px] font-medium leading-tight text-slate-500">
+          <p className="mt-1 line-clamp-1 text-sm text-[var(--lingo-text-muted)]">
             {titleEn}
           </p>
         )}
       </div>
-
-      {/* Body */}
-      <div className="flex flex-1 flex-col p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+      <div className="flex flex-1 flex-col p-5 sm:p-6">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
           Daily Story · Today
         </p>
         {excerpt && (
-          <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-slate-500">
+          <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-[var(--lingo-text-muted)]">
             {excerpt}
           </p>
         )}
         <Link
           href={storyId ? `/app/story/${storyId}` : "/app/story/daily"}
-          className="mt-auto rounded-xl bg-slate-900 px-4 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-slate-800"
+          className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]"
         >
-          Read story →
+          Read story <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </div>
-    </div>
+    </DashCardShell>
   );
 }
 
 function CreateIslandDashCard() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#c8dce6]" style={{ background: "#e8f3f8" }}>
-      {/* Art area */}
-      <div className="flex h-[200px] flex-col items-center justify-center border-b border-[#c8dce6]" style={{ background: "#d5ebf6" }}>
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "rgba(74,159,196,0.15)" }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4a9fc4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="16" />
-            <line x1="8" y1="12" x2="16" y2="12" />
-          </svg>
-        </div>
-        <p className="mt-2.5 text-xs font-semibold text-slate-500">New island</p>
+    <DashCardShell>
+      <div className="flex h-[200px] flex-col items-center justify-center bg-[var(--lingo-sky-pale)] sm:h-[220px]">
+        <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[var(--lingo-blue)] shadow-sm">
+          <Plus className="h-7 w-7" strokeWidth={2.2} aria-hidden />
+        </span>
+        <p className="mt-3 text-sm font-semibold text-[var(--lingo-text-muted)]">
+          New island
+        </p>
       </div>
-
-      {/* Body */}
-      <div className="flex flex-1 flex-col p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+      <div className="flex flex-1 flex-col p-5 sm:p-6">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
           Topic Islands
         </p>
-        <p className="mt-1 text-sm font-black text-slate-900">
+        <h3 className="lingo-display mt-1.5 text-lg text-[var(--lingo-navy)]">
           Create a specialized island
-        </p>
-        <p className="mt-0.5 text-xs text-slate-400">
+        </h3>
+        <p className="mt-1.5 flex-1 text-sm leading-relaxed text-[var(--lingo-text-muted)]">
           Pick any topic and get vocab + examples tailored to your level.
         </p>
-        <div className="mt-auto flex flex-col gap-2">
+        <div className="mt-4 flex flex-col gap-2">
           <Link
             href="/app/topic-islands?create=1"
-            className="rounded-xl bg-slate-900 px-4 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-slate-800"
+            className="inline-flex items-center gap-1 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]"
           >
-            Create island →
+            Create island <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
           <Link
             href="/app/browse-topics"
-            className="rounded-xl border border-[#c8dce6] bg-white px-4 py-2 text-center text-xs font-bold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50"
+            className="text-sm font-semibold text-[var(--lingo-text-muted)] transition-colors hover:text-[var(--lingo-navy)]"
           >
             Browse topics →
           </Link>
         </div>
       </div>
-    </div>
+    </DashCardShell>
   );
 }
 
@@ -415,11 +437,15 @@ export default function HomeDashboard({
         .eq("user_id", user.id)
         .not("learned_at", "is", null);
       setTotalWordsLearned(count ?? 0);
-      const jr = await fetch("/api/journey/active", { cache: "no-store" });
-      if (jr.ok) {
-        const d = await jr.json();
-        setActiveJourney(d.journey);
-        setActiveJourneyNodes(d.nodes ?? d.islands ?? []);
+      try {
+        const jr = await fetch("/api/journey/active", { cache: "no-store" });
+        if (jr.ok) {
+          const d = await jr.json();
+          setActiveJourney(d.journey);
+          setActiveJourneyNodes(d.nodes ?? d.islands ?? []);
+        }
+      } catch {
+        // Ignore transient network/Fast Refresh failures
       }
       await loadHuahuaProgress();
     })();
@@ -701,60 +727,54 @@ export default function HomeDashboard({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="flex items-center gap-3 text-gray-400">
-          <svg
-            className="h-5 w-5 animate-spin"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-          </svg>
-          <span className="text-sm">{convertText(t("Loading..."))}</span>
-        </div>
+      <div className="flex min-h-full items-center justify-center bg-white">
+        <span className="text-sm text-[var(--lingo-text-muted)]">
+          {convertText(t("Loading..."))}
+        </span>
       </div>
     );
   }
 
+  const safeStageName = STAGE_NAMES[safeStage - 1];
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Sticky top bar */}
-      <TopBar
-        streakDays={streakDays}
-        wordsLearned={totalWordsLearned}
-        dueCount={dueCardCount}
-        stage={huahuaStage}
-      />
+    <div className="min-h-full bg-white px-4 py-6 sm:px-6 md:px-8 md:py-7">
+      <OnboardingNudgeBanner variant="home" />
 
-      {/* Page content */}
-      <div className="mx-auto max-w-[1060px] px-9 py-8">
+      <div className="mx-auto max-w-6xl">
+        <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="lingo-display text-[30px] leading-tight text-[var(--lingo-navy)] sm:text-[34px]">
+              {timeGreeting}, {firstName}
+            </h1>
+            {!islandLoading && (
+              <p className="mt-1.5 text-[15px] text-[var(--lingo-text-muted)]">
+                {reviewsUntilNext > 0
+                  ? `${reviewsUntilNext} more card${reviewsUntilNext !== 1 ? "s" : ""} and 华华 hits Stage ${safeStage + 1}.`
+                  : "华华's island is thriving — keep it up."}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pb-1">
+            <Chip tone="accent">
+              <Flame className="h-3.5 w-3.5 text-orange-500" aria-hidden />
+              {streakDays} day streak
+            </Chip>
+            <Chip>{totalWordsLearned} words learned</Chip>
+            {dueCardCount > 0 && <Chip>{dueCardCount} due</Chip>}
+            <Chip tone="solid">
+              华华 · Stage {safeStage} · {safeStageName}
+            </Chip>
+          </div>
+        </header>
 
-        {/* Greeting */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-black tracking-tight text-slate-900">
-            {timeGreeting}, {firstName} 👋
-          </h1>
-          {!islandLoading && (
-            <p className="mt-1 text-sm font-medium text-slate-400">
-              {reviewsUntilNext > 0
-                ? `${reviewsUntilNext} more card${reviewsUntilNext !== 1 ? "s" : ""} and 华华 hits Stage ${safeStage + 1}.`
-                : "华华's island is thriving! Keep it up."}
-            </p>
-          )}
-        </div>
-
-        {/* Active Journey — full width */}
         <JourneyHero journey={activeJourney} nodes={activeJourneyNodes} />
 
-        {/* 3-col grid */}
-        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <CapybaraCard stage={huahuaStage} totalReviews={huahuaTotalReviews} />
           <HomeDailyStoryCard story={dailyStoryLocal} loading={dailyLoading} />
           <CreateIslandDashCard />
         </div>
-
       </div>
 
       <UpgradeModal

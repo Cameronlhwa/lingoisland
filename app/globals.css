@@ -1,8 +1,63 @@
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;1,400;1,600&family=DM+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;1,400;1,600&family=DM+Sans:wght@400;500;600&family=Inter:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── LingoIsland design tokens (HSK landing surface) ────
+   Scoped as custom properties rather than a global override so the rest of
+   the site (blog, pricing, etc.) keeps its existing Lora/DM Sans look —
+   components opt in by referencing these vars / the .lingo-display class. */
+:root {
+  --lingo-navy: #0b2b3c;
+  --lingo-navy-soft: #163c50;
+
+  --lingo-blue: #4f9fc5;
+  --lingo-blue-bright: #62b6d8;
+  --lingo-sky: #bfe7f5;
+  --lingo-sky-soft: #ddf3fa;
+  --lingo-sky-pale: #eef9fc;
+
+  --lingo-aqua: #8edad9;
+  --lingo-teal: #42b9b4;
+  --lingo-teal-soft: #76ceca;
+
+  --lingo-accent-start: #59C6DE;
+  --lingo-accent-end: #2176AE;
+  --lingo-accent-gradient: linear-gradient(180deg, #59C6DE 0%, #2176AE 100%);
+  --lingo-accent-gradient-glossy: linear-gradient(180deg, #59C6DE 0%, #3A9FD0 42%, #2176AE 100%);
+  --lingo-accent-shadow: 0 12px 28px rgba(33, 118, 174, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --lingo-accent-tint: rgba(89, 198, 222, 0.12);
+  --lingo-accent-border: rgba(47, 159, 209, 0.16);
+
+  --lingo-cream: #fffdf8;
+  --lingo-white: #ffffff;
+
+  --lingo-text: #123345;
+  --lingo-text-muted: #66869a;
+  --lingo-border: rgba(75, 145, 170, 0.15);
+
+  --lingo-radius-control: 14px;
+  --lingo-radius-btn: 16px;
+  --lingo-radius-card: 24px;
+  --lingo-radius-container: 32px;
+
+  --lingo-shadow-sm: 0 5px 16px rgba(75, 140, 164, 0.08);
+  --lingo-shadow-card: 0 14px 40px rgba(44, 105, 128, 0.08), 0 2px 8px rgba(44, 105, 128, 0.05);
+  --lingo-shadow-card-hover: 0 20px 48px rgba(44, 105, 128, 0.12), 0 5px 12px rgba(44, 105, 128, 0.06);
+  --lingo-shadow-btn: 0 12px 28px rgba(21, 89, 118, 0.22);
+  --lingo-shadow-btn-hover: 0 16px 34px rgba(21, 89, 118, 0.28);
+}
+
+.lingo-display {
+  font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.lingo-body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
 
 @layer base {
   *, *::before, *::after {
@@ -55,6 +110,38 @@
   0%   { transform: translateY(0px); }
   50%  { transform: translateY(-8px); }
   100% { transform: translateY(0px); }
+}
+
+@keyframes gentleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-6px); }
+}
+
+@keyframes softSparkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50%      { opacity: 0.9; transform: scale(1); }
+}
+
+.lingo-float {
+  animation: gentleFloat 6s ease-in-out infinite;
+}
+.lingo-float-slow {
+  animation: gentleFloat 8s ease-in-out infinite;
+  animation-delay: -2.5s;
+}
+.lingo-float-fast {
+  animation: gentleFloat 5s ease-in-out infinite;
+  animation-delay: -1s;
+}
+.lingo-sparkle {
+  animation: softSparkle 3.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lingo-float, .lingo-float-slow, .lingo-float-fast, .lingo-sparkle,
+  .island-float, .hero-wave-svg {
+    animation: none !important;
+  }
 }
 
 @keyframes waveDrift {
@@ -150,4 +237,127 @@
 .topic-chip:hover {
   background: #fff;
   transform: translateY(-1px);
+}
+
+/* ── HSK testimonial card (responsive bg positioning) ─── */
+
+.hsk-testimonial-card {
+  min-height: 280px;
+}
+
+@media (max-width: 768px) {
+  .hsk-testimonial-card {
+    background-position: 50% 50% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hsk-testimonial-card {
+    background-position: 50% 42% !important;
+  }
+}
+
+/* ── HSK night CTA panel (responsive bg positioning) ─── */
+
+.hsk-night-panel {
+  min-height: 440px;
+  background-position: center 45%;
+}
+
+@media (max-width: 1024px) {
+  .hsk-night-panel {
+    min-height: 400px;
+    background-position: center 40%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hsk-night-panel {
+    min-height: 380px;
+    border-radius: 28px;
+    background-position: 40% 38%;
+  }
+}
+
+@media (max-width: 640px) {
+  .hsk-night-panel {
+    min-height: 520px;
+    background-position: 18% 42%;
+  }
+
+  .hsk-night-cta-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+}
+
+/* ── Full-bleed hero artwork positioning ─────────────── */
+
+.hero-scene-bg {
+  background-position: 50% 45%;
+}
+
+@media (max-width: 1024px) {
+  .hero-scene-bg {
+    background-position: 50% 42%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-scene-bg {
+    background-position: 50% 50%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-scene-bg {
+    background-position: 50% 50%;
+  }
+}
+
+/* ── HSK onboarding wizard background ──────────────────
+   Background is viewport-fixed in the component (not content-height),
+   so cover always scales to the screen — never the tall reveal page. */
+
+.hsk-onboarding-bg {
+  background-position: center 40%;
+}
+
+@media (max-width: 768px) {
+  .hsk-onboarding-bg {
+    background-position: 32% 36%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hsk-onboarding-bg {
+    background-position: 28% 34%;
+  }
+}
+
+/* Wide screens: fit by height so corner mascots stay in frame. */
+@media (min-width: 1600px) {
+  .hsk-onboarding-bg {
+    background-size: auto 100%;
+    background-position: center 32%;
+  }
+}
+
+/* ── HSK Prep app typography ────────────────────────────
+   Scoped to /hsk/app so the legacy Islands app and blog headings retain
+   their current type treatment. */
+.hsk-app-theme h1,
+.hsk-app-theme h2,
+.hsk-app-theme h3,
+.hsk-app-theme .lingo-display {
+  font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.hsk-app-theme {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--lingo-text);
 }

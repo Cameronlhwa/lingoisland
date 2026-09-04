@@ -9,6 +9,7 @@ import {
   cardHoverClass,
 } from "@/components/app/ui/styles";
 import { getLocalDateKey } from "@/lib/utils/date";
+import { hskLabelForCefr } from "@/lib/levelBands";
 
 export type DailyStorySummary = {
   id: string;
@@ -79,7 +80,7 @@ export default function DailyStoryCard({
           )}
           <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
             <span className="rounded-full border border-slate-200 bg-white px-2 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold uppercase tracking-wide text-gray-700">
-              {story.level}
+              {hskLabelForCefr(story.level)}
             </span>
             <span className="rounded-full border border-slate-200 bg-white px-2 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold uppercase tracking-wide text-gray-700">
               {timeLabel}

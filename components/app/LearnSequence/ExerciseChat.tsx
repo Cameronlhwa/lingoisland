@@ -4,12 +4,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { pinyin as toPinyin } from "pinyin-pro";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import HuahuaAvatar from "@/components/app/HuahuaAvatar";
+import PrimaryButton from "@/components/landing/PrimaryButton";
+import SecondaryButton from "@/components/landing/SecondaryButton";
+import {
+  HSK_CARD_SHADOW,
+  LINGO_ACCENT_BORDER,
+  LINGO_ACCENT_GRADIENT_GLOSSY,
+} from "@/lib/glossy-theme";
+import { LEARN_CARD_CLASS, LEARN_CARD_STYLE } from "./shell";
 import type { LearnIsland, LearnWord } from "./types";
 
 interface ExerciseChatProps {
   words: LearnWord[];
   island: LearnIsland;
   onComplete: () => void;
+  onBack?: () => void;
   fillContainer?: boolean;
 }
 
@@ -56,14 +65,15 @@ function DisplayToggles({
   const pill = (active: boolean) =>
     ({
       padding: "6px 14px",
-      borderRadius: 20,
-      border: `1.5px solid ${active ? "#2176AE" : "#C2DCF0"}`,
-      background: active ? "#EAF4FB" : "#fff",
-      color: active ? "#2176AE" : "#071E2E",
+      borderRadius: 999,
+      border: `1px solid ${active ? "transparent" : LINGO_ACCENT_BORDER}`,
+      background: active ? LINGO_ACCENT_GRADIENT_GLOSSY : "#fff",
+      color: active ? "#fff" : "var(--lingo-navy)",
       fontSize: 13,
-      fontWeight: 500,
+      fontWeight: 600,
       cursor: "pointer",
       fontFamily: "'DM Sans', system-ui, sans-serif",
+      boxShadow: active ? HSK_CARD_SHADOW : undefined,
     }) as const;
 
   return (
@@ -147,12 +157,9 @@ function isValidExchange(raw: unknown): boolean {
   return true;
 }
 
-/** Matches LearnSlideshow.tsx desktop card (non-compact). */
+/** Matches LearnSlideshow / onboarding glossy card. */
 const LEARN_SEQUENCE_CARD_STYLE: React.CSSProperties = {
-  background: "#fff",
-  borderRadius: "16px",
-  border: "0.5px solid #C2DCF0",
-  padding: "32px 36px 28px",
+  ...LEARN_CARD_STYLE,
   width: "100%",
   maxWidth: "600px",
 };
@@ -194,6 +201,7 @@ function ExerciseChatShell({
       }}
     >
       <div
+        className={isDesktop ? LEARN_CARD_CLASS : undefined}
         style={
           isDesktop
             ? {
@@ -672,6 +680,7 @@ export default function ExerciseChat({
   words,
   island,
   onComplete,
+  onBack,
   fillContainer = false,
 }: ExerciseChatProps) {
   const { convertText } = useCharacterSet();
@@ -963,6 +972,13 @@ export default function ExerciseChat({
 
   return (
     <ExerciseChatShell isDesktop={isDesktop} fillContainer={fillContainer}>
+        {onBack ? (
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+            <SecondaryButton size="compact" onClick={onBack}>
+              ← Back
+            </SecondaryButton>
+          </div>
+        ) : null}
         {isA0 ? null : (
           <DisplayToggles
             showPinyin={showPinyin}
@@ -1052,12 +1068,15 @@ export default function ExerciseChat({
                   style={{
                     padding: isA0 ? "8px 12px" : "8px 16px",
                     borderRadius: 20,
-                    border: `1.5px solid ${isSelected ? "#2176AE" : "#C2DCF0"}`,
-                    background: isSelected ? "#EAF4FB" : "#fff",
-                    color: "#071E2E",
+                    border: `1px solid ${isSelected ? "transparent" : LINGO_ACCENT_BORDER}`,
+                    background: isSelected
+                      ? LINGO_ACCENT_GRADIENT_GLOSSY
+                      : "#fff",
+                    color: isSelected ? "#fff" : "var(--lingo-navy)",
                     fontSize: 14,
                     cursor: "pointer",
                     transition: "all 0.15s",
+                    boxShadow: isSelected ? HSK_CARD_SHADOW : undefined,
                     display: isA0 ? "flex" : undefined,
                     flexDirection: isA0 ? "column" : undefined,
                     alignItems: isA0 ? "center" : undefined,
@@ -1070,7 +1089,7 @@ export default function ExerciseChat({
                         style={{
                           fontWeight: 600,
                           fontSize: 16,
-                          color: "#2176AE",
+                          color: isSelected ? "#fff" : "#2176AE",
                           fontFamily: "'DM Sans', system-ui, sans-serif",
                         }}
                       >
@@ -1086,7 +1105,14 @@ export default function ExerciseChat({
                         {convertText(opt.hanzi)}
                       </span>
                       {optEnglish ? (
-                        <span style={{ color: "#8AABBF", fontSize: 11 }}>
+                        <span
+                          style={{
+                            color: isSelected
+                              ? "rgba(255,255,255,0.8)"
+                              : "#8AABBF",
+                            fontSize: 11,
+                          }}
+                        >
                           {optEnglish}
                         </span>
                       ) : null}
@@ -1104,7 +1130,9 @@ export default function ExerciseChat({
                       {showPinyin ? (
                         <span
                           style={{
-                            color: "#5A7A90",
+                            color: isSelected
+                              ? "rgba(255,255,255,0.8)"
+                              : "#5A7A90",
                             fontSize: 12,
                             marginLeft: 6,
                           }}
@@ -1128,22 +1156,9 @@ export default function ExerciseChat({
               marginBottom: 16,
             }}
           >
-            <button
-              type="button"
-              onClick={handleCheck}
-              style={{
-                background: "#2176AE",
-                color: "#fff",
-                border: "none",
-                borderRadius: 10,
-                padding: "10px 32px",
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: "pointer",
-              }}
-            >
+            <PrimaryButton size="compact" onClick={handleCheck}>
               Check →
-            </button>
+            </PrimaryButton>
           </div>
         ) : null}
 
@@ -1167,22 +1182,9 @@ export default function ExerciseChat({
               marginBottom: 16,
             }}
           >
-            <button
-              type="button"
-              onClick={handleNext}
-              style={{
-                background: "#fff",
-                color: "#2176AE",
-                border: "1.5px solid #2176AE",
-                borderRadius: 10,
-                padding: "10px 32px",
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: "pointer",
-              }}
-            >
+            <SecondaryButton size="compact" onClick={handleNext}>
               {currentIndex < exchanges.length - 1 ? "Next →" : "See results →"}
-            </button>
+            </SecondaryButton>
           </div>
         ) : null}
 
@@ -1226,23 +1228,9 @@ export default function ExerciseChat({
                 You got {score} out of {exchanges.length} correct. 华华 is proud
                 of you!
               </div>
-              <button
-                type="button"
-                onClick={onComplete}
-                style={{
-                  background: "#2176AE",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 10,
-                  padding: "12px 32px",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  width: "100%",
-                }}
-              >
+              <PrimaryButton className="w-full" onClick={onComplete}>
                 Finish practice →
-              </button>
+              </PrimaryButton>
             </div>
           </div>
         ) : null}

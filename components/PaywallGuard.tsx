@@ -27,18 +27,18 @@ export default function PaywallGuard({
 
   const interceptClick = (event: MouseEvent<HTMLDivElement>) => {
     if (!shouldBlock) return;
-    if (isLoading) return;
     event.preventDefault();
     event.stopPropagation();
+    if (isLoading) return;
     setShowUpgradeModal(true);
   };
 
   const interceptKey = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!shouldBlock) return;
-    if (isLoading) return;
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     event.stopPropagation();
+    if (isLoading) return;
     setShowUpgradeModal(true);
   };
 

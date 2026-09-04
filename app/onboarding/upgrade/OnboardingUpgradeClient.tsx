@@ -9,11 +9,13 @@ import {
   type CheckoutPlan,
   type OnboardingUpgradeSnapshot,
   buildUpgradePageUrl,
+  clearUpgradePending,
   markUpgradePending,
   readUpgradeSnapshot,
   writeUpgradeSnapshot,
 } from "@/lib/onboarding/onboardingCheckoutStorage";
 import {
+  fetchIsPro,
   invalidateSubscriptionCache,
   useSubscription,
 } from "@/hooks/useSubscription";
@@ -30,8 +32,9 @@ const ISLAND_ID_RE =
 export default function OnboardingUpgradeClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isPro, isLoading: subscriptionLoading } = useSubscription();
+  const { isPro, isLoading: subscriptionLoading, refetch } = useSubscription();
   const autoCheckoutStarted = useRef(false);
+  const proRedirectStarted = useRef(false);
 
   const islandIdRaw = searchParams.get("islandId") ?? "";
   const islandId = ISLAND_ID_RE.test(islandIdRaw) ? islandIdRaw : "";
@@ -65,7 +68,7 @@ export default function OnboardingUpgradeClient() {
               wordsLearned: stored?.wordsLearned ?? 3,
               wordsPerWeek: stored?.wordsPerWeek ?? 40,
               lockedIslands: stored?.lockedIslands,
-              plan: urlPlan ?? stored?.plan ?? "yearly",
+              plan: urlPlan ?? stored?.plan ?? "monthly",
             }
           : stored;
 
@@ -79,11 +82,20 @@ export default function OnboardingUpgradeClient() {
     setReady(true);
   }, [islandId, router, urlPlan]);
 
+  // After OAuth return, force a fresh Pro check — module cache / anon session
+  // can otherwise leave isPro=false incorrectly.
   useEffect(() => {
-    if (subscriptionLoading) return;
-    if (isPro) {
-      router.replace("/app/journey");
-    }
+    if (!ready) return;
+    void refetch();
+  }, [ready, refetch, autoCheckout]);
+
+  useEffect(() => {
+    if (subscriptionLoading || !isPro || proRedirectStarted.current) return;
+    proRedirectStarted.current = true;
+    clearUpgradePending();
+    // Existing Pro accounts often switch away from the guest user that owned
+    // this island — send them to the app home, not a possibly inaccessible island.
+    router.replace("/app");
   }, [isPro, subscriptionLoading, router]);
 
   const checkout = useOnboardingCheckout(
@@ -91,7 +103,7 @@ export default function OnboardingUpgradeClient() {
       v: 1,
       islandId: islandId || "pending",
       topic: "Your journey",
-      plan: urlPlan ?? "yearly",
+      plan: urlPlan ?? "monthly",
     },
   );
 
@@ -110,9 +122,17 @@ export default function OnboardingUpgradeClient() {
   const runAutoCheckout = useCallback(async () => {
     if (!snapshot || autoCheckoutStarted.current) return;
     autoCheckoutStarted.current = true;
+
     invalidateSubscriptionCache();
+    const pro = await fetchIsPro();
+    if (pro) {
+      clearUpgradePending();
+      router.replace("/app");
+      return;
+    }
+
     await checkout.proceedToCheckout();
-  }, [checkout, snapshot]);
+  }, [checkout, router, snapshot]);
 
   useEffect(() => {
     if (!ready || !snapshot || !autoCheckout || subscriptionLoading || isPro) {
@@ -151,6 +171,7 @@ export default function OnboardingUpgradeClient() {
         wordsLearned={snapshot.wordsLearned}
         wordsPerWeek={snapshot.wordsPerWeek}
         lockedIslands={snapshot.lockedIslands}
+        motivationLabel={snapshot.motivationLabel}
         billingInterval={checkout.plan}
         onBillingIntervalChange={checkout.setPlan}
         onProceedCheckout={() => void checkout.proceedToCheckout()}

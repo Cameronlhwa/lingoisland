@@ -1,5 +1,53 @@
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { hskProfileFieldsFromCefr } from '@/lib/levelBands'
+import { parseHskStandard, type HskStandard } from '@/lib/utils/hsk'
+import {
+  HSK_STANDARD_COOKIE,
+  resolveHskStandard,
+} from '@/lib/hsk/standardPreference'
+
+const PROFILE_COLUMNS =
+  'cefr_level, tts_rate_sentences, tts_rate_words, character_set, hsk_standard'
+const PROFILE_COLUMNS_LEGACY =
+  'cefr_level, tts_rate_sentences, tts_rate_words, character_set'
+
+type ProfileRow = {
+  cefr_level?: string | null
+  tts_rate_sentences?: number | null
+  tts_rate_words?: number | null
+  character_set?: string | null
+  hsk_standard?: string | null
+}
+
+function jsonWithHskCookie(
+  payload: Record<string, unknown>,
+  standard: HskStandard,
+  init?: { status?: number },
+) {
+  const response = NextResponse.json(payload, init)
+  response.cookies.set(HSK_STANDARD_COOKIE, standard, {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: 'lax',
+  })
+  return response
+}
+
+function toPayload(profile: ProfileRow | null, cookieStandard?: string | null) {
+  const hskStandard = resolveHskStandard({
+    profile: profile?.hsk_standard,
+    cookie: cookieStandard,
+  })
+  return {
+    cefrLevel: profile?.cefr_level || 'B1',
+    ttsRateSentences: profile?.tts_rate_sentences || 1.0,
+    ttsRateWords: profile?.tts_rate_words || 1.0,
+    characterSet: profile?.character_set || 'simplified',
+    hskStandard,
+  }
+}
 
 /**
  * GET /api/profile
@@ -16,12 +64,27 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const cookieStore = await cookies()
+    const cookieStandard = cookieStore.get(HSK_STANDARD_COOKIE)?.value ?? null
+
     // Get or create user profile
-    let { data: profile, error } = await supabase
+    const initial = await supabase
       .from('user_profiles')
-      .select('cefr_level, tts_rate_sentences, tts_rate_words, character_set')
+      .select(PROFILE_COLUMNS)
       .eq('user_id', user.id)
       .single()
+    let profile: ProfileRow | null = initial.data as ProfileRow | null
+    let error = initial.error
+
+    if (error && error.message?.includes('hsk_standard')) {
+      const retry = await supabase
+        .from('user_profiles')
+        .select(PROFILE_COLUMNS_LEGACY)
+        .eq('user_id', user.id)
+        .single()
+      profile = retry.data as ProfileRow | null
+      error = retry.error
+    }
 
     if (error && error.code === 'PGRST116') {
       // Profile doesn't exist, create it with default level
@@ -34,7 +97,7 @@ export async function GET() {
           tts_rate_words: 1.0,
           character_set: 'simplified',
         })
-        .select('cefr_level, tts_rate_sentences, tts_rate_words, character_set')
+        .select(PROFILE_COLUMNS_LEGACY)
         .single()
 
       if (insertError) {
@@ -45,7 +108,7 @@ export async function GET() {
         )
       }
 
-      profile = newProfile
+      profile = newProfile as ProfileRow | null
     } else if (error) {
       console.error('Error fetching profile:', error)
       return NextResponse.json(
@@ -54,12 +117,8 @@ export async function GET() {
       )
     }
 
-    return NextResponse.json({
-      cefrLevel: profile?.cefr_level || 'B1',
-      ttsRateSentences: profile?.tts_rate_sentences || 1.0,
-      ttsRateWords: profile?.tts_rate_words || 1.0,
-      characterSet: profile?.character_set || 'simplified',
-    })
+    const payload = toPayload(profile, cookieStandard)
+    return jsonWithHskCookie(payload, payload.hskStandard)
   } catch (error) {
     console.error('Error in GET /api/profile:', error)
     return NextResponse.json(
@@ -85,7 +144,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { cefrLevel, ttsRateSentences, ttsRateWords, characterSet } = body
+    const { cefrLevel, ttsRateSentences, ttsRateWords, characterSet, hskStandard } = body
 
     // Prepare update object
     const updates: {
@@ -94,6 +153,9 @@ export async function PATCH(request: Request) {
       tts_rate_sentences?: number
       tts_rate_words?: number
       character_set?: string
+      hsk_standard?: string
+      hsk_current_level?: number
+      hsk_level_source?: string
     } = {
       user_id: user.id,
     }
@@ -107,12 +169,13 @@ export async function PATCH(request: Request) {
       const validLevels = ['A1', 'A2', 'B1', 'B2', 'C1']
       if (!validLevels.includes(cefrLevel)) {
         return NextResponse.json(
-          { error: 'Invalid CEFR level' },
+          { error: 'Invalid level' },
           { status: 400 }
         )
       }
 
       updates.cefr_level = cefrLevel
+      Object.assign(updates, hskProfileFieldsFromCefr(cefrLevel))
     }
 
     // Validate and add ttsRateSentences if provided
@@ -163,14 +226,39 @@ export async function PATCH(request: Request) {
       updates.character_set = characterSet
     }
 
+    let requestedStandard: HskStandard | undefined
+    if (hskStandard !== undefined) {
+      if (hskStandard !== '2.0' && hskStandard !== '3.0') {
+        return NextResponse.json(
+          { error: 'Invalid HSK standard. Must be "2.0" or "3.0"' },
+          { status: 400 }
+        )
+      }
+      requestedStandard = hskStandard
+      updates.hsk_standard = hskStandard
+    }
+
     // Update or insert profile
-    const { data: profile, error } = await supabase
+    const upserted = await supabase
       .from('user_profiles')
       .upsert(updates, {
         onConflict: 'user_id',
       })
-      .select('cefr_level, tts_rate_sentences, tts_rate_words, character_set')
+      .select(PROFILE_COLUMNS)
       .single()
+    let profile: ProfileRow | null = upserted.data as ProfileRow | null
+    let error = upserted.error
+
+    if (error && updates.hsk_standard) {
+      const { hsk_standard: _ignored, ...withoutStandard } = updates
+      const retry = await supabase
+        .from('user_profiles')
+        .upsert(withoutStandard, { onConflict: 'user_id' })
+        .select(PROFILE_COLUMNS_LEGACY)
+        .single()
+      profile = retry.data as ProfileRow | null
+      error = retry.error
+    }
 
     if (error) {
       console.error('Error updating profile:', error)
@@ -180,12 +268,15 @@ export async function PATCH(request: Request) {
       )
     }
 
-    return NextResponse.json({
-      cefrLevel: profile.cefr_level,
-      ttsRateSentences: profile.tts_rate_sentences,
-      ttsRateWords: profile.tts_rate_words,
-      characterSet: profile.character_set,
-    })
+    const cookieStore = await cookies()
+    const payload = toPayload(
+      {
+        ...profile,
+        hsk_standard: requestedStandard ?? profile?.hsk_standard,
+      },
+      cookieStore.get(HSK_STANDARD_COOKIE)?.value,
+    )
+    return jsonWithHskCookie(payload, payload.hskStandard)
   } catch (error) {
     console.error('Error in PATCH /api/profile:', error)
     return NextResponse.json(

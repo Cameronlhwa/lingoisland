@@ -38,6 +38,7 @@ import LearnChat from "@/components/app/LearnSequence/LearnChat";
 import { useLearnLevel } from "@/components/app/LearnSequence/useLearnLevel";
 import { pickLearnWords } from "@/components/app/LearnSequence/types";
 import HuahuaChatCard from "@/components/app/HuahuaChatCard";
+import { hskLabelForCefr, PROFILE_LEVEL_OPTIONS } from "@/lib/levelBands";
 
 interface Sentence {
   id: string;
@@ -54,6 +55,7 @@ interface Word {
   english: string;
   position?: number;
   learned_at?: string | null;
+  hsk_level?: number | null;
   sentences: Sentence[];
 }
 
@@ -1421,7 +1423,7 @@ export default function TopicIslandDetailPage() {
                 )}
                 <div className="mb-6 flex items-center justify-between">
                   <div className="space-y-1 text-sm text-gray-600">
-                    <p>Level: {island.level}</p>
+                    <p>Level: {hskLabelForCefr(island.level)}</p>
                     <p className="capitalize">Status: {island.status}</p>
                   </div>
                   {island.status === "ready" && words.length > 0 && (
@@ -2212,13 +2214,11 @@ export default function TopicIslandDetailPage() {
                               onChange={(e) => setAddWordsLevel(e.target.value)}
                               className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                             >
-                              <option value="A1">A1 - Beginner</option>
-                              <option value="A2">A2 - Elementary</option>
-                              <option value="B1">B1 - Intermediate</option>
-                              <option value="B2">
-                                B2 - Upper Intermediate
-                              </option>
-                              <option value="C1">C1 - Advanced</option>
+                              {PROFILE_LEVEL_OPTIONS.map((opt) => (
+                                <option key={opt.cefr} value={opt.cefr}>
+                                  HSK {opt.hsk} - {opt.label}
+                                </option>
+                              ))}
                             </select>
                           </div>
 

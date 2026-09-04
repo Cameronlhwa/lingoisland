@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
+import { getEntitlements } from "@/lib/entitlements";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -67,32 +68,13 @@ export async function POST() {
       periodEnd &&
       periodEnd.getTime() > Date.now();
 
-    // Update database
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        plan: isPro ? "pro" : "free",
-        stripe_customer_id:
-          typeof subscription.customer === "string"
-            ? subscription.customer
-            : (subscription.customer as any)?.id ?? subscription.customer,
-        stripe_subscription_id: subscription.id,
-        current_period_end: periodEnd ? periodEnd.toISOString() : null,
-        cancel_at_period_end: isCanceled,
-      })
-      .eq("id", user.id);
-
-    if (updateError) {
-      console.error("[STRIPE SYNC] Failed to update profile:", updateError);
-      return NextResponse.json(
-        { error: "Failed to sync subscription" },
-        { status: 500 }
-      );
-    }
-
+    // Webhooks own entitlement writes. This endpoint previously flattened
+    // HSK-only and dual accounts to `pro` / `free`.
+    const entitlements = await getEntitlements(user.id);
     return NextResponse.json({
       success: true,
-      plan: isPro ? "pro" : "free",
+      stripeStatus: isPro ? "active" : "inactive",
+      plan: entitlements.plan,
       current_period_end: periodEnd ? periodEnd.toISOString() : null,
       cancel_at_period_end: isCanceled,
     });

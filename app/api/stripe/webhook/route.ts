@@ -3,6 +3,11 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { captureServerEvent } from "@/lib/posthog/server";
+import {
+  grantProduct,
+  revokeProduct,
+  type BillableProduct,
+} from "@/lib/product-plans";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -43,9 +48,54 @@ const findProfileUserId = async (stripeCustomerId: string | null) => {
   return data?.id ?? null;
 };
 
+const resolveBillableProduct = (
+  subscription?: Stripe.Subscription | null,
+  session?: Stripe.Checkout.Session | null,
+): BillableProduct => {
+  const raw =
+    subscription?.metadata?.product ?? session?.metadata?.product ?? "core";
+  if (raw === "hsk") return "hsk";
+  const priceId = subscription?.items.data[0]?.price.id;
+  const hskPriceIds = [
+    process.env.STRIPE_PRICE_HSK_MONTHLY,
+    process.env.STRIPE_PRICE_HSK_ANNUAL,
+    process.env.STRIPE_PRICE_HSK_YEARLY,
+  ];
+  return priceId && hskPriceIds.includes(priceId) ? "hsk" : "core";
+};
+
+const upsertProductSubscription = async (
+  userId: string,
+  product: BillableProduct,
+  subscription: Stripe.Subscription,
+  currentPeriodEnd: string | null,
+  cancelAtPeriodEnd: boolean,
+) => {
+  const { error } = await getSupabaseAdmin()
+    .from("product_subscriptions")
+    .upsert(
+      {
+        user_id: userId,
+        product,
+        stripe_subscription_id: subscription.id,
+        status: subscription.status === "trialing" ? "trialing" : "active",
+        current_period_end: currentPeriodEnd,
+        cancel_at_period_end: cancelAtPeriodEnd,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,product" },
+    );
+  if (error) {
+    // Compatibility fallback: legacy profiles.plan remains authoritative until
+    // the product_subscriptions migration has been applied.
+    console.warn("[STRIPE WEBHOOK] Product subscription upsert skipped:", error);
+  }
+};
+
 const upsertActiveSubscription = async (
   userId: string,
-  subscription: Stripe.Subscription
+  subscription: Stripe.Subscription,
+  product: BillableProduct = "core",
 ) => {
   const stripeCustomerId =
     typeof subscription.customer === "string"
@@ -82,6 +132,7 @@ const upsertActiveSubscription = async (
     stripeCustomerId,
     subscriptionId: subscription.id,
     status: subscription.status,
+    product,
     currentPeriodEndUnix,
     currentPeriodEnd,
     cancelAtPeriodEnd: isCanceled,
@@ -93,10 +144,26 @@ const upsertActiveSubscription = async (
     console.error("[STRIPE WEBHOOK] Full subscription object:", JSON.stringify(subscription, null, 2));
   }
 
-  const { error } = await getSupabaseAdmin().from("profiles").upsert(
+  const admin = getSupabaseAdmin();
+  const { data: existing } = await admin
+    .from("profiles")
+    .select("plan")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const nextPlan = grantProduct(existing?.plan, product);
+  await upsertProductSubscription(
+    userId,
+    product,
+    subscription,
+    currentPeriodEnd,
+    isCanceled,
+  );
+
+  const { error } = await admin.from("profiles").upsert(
     {
       id: userId,
-      plan: "pro",
+      plan: nextPlan,
       stripe_customer_id: stripeCustomerId,
       stripe_subscription_id: subscription.id,
       current_period_end: currentPeriodEnd,
@@ -111,26 +178,86 @@ const upsertActiveSubscription = async (
       error
     );
   } else {
-    console.log("[STRIPE WEBHOOK] Successfully upserted subscription for user:", userId);
+    console.log(
+      "[STRIPE WEBHOOK] Successfully upserted subscription for user:",
+      userId,
+      "plan:",
+      nextPlan,
+    );
   }
 };
 
-const clearSubscription = async (userId: string) => {
-  console.log("[STRIPE WEBHOOK] Clearing subscription for user:", userId);
+/**
+ * Safety net: product_track='hsk' is normally already set on user_profiles by
+ * the HSK journey-generation step (pre-payment), but stamp it again here in
+ * case that write didn't happen for this user (e.g. they reached checkout via
+ * some other path). Billing state itself lives on `profiles`, not
+ * `user_profiles` — this only affects which in-app dashboard they land on.
+ */
+const stampHskProductTrack = async (userId: string) => {
   const { error } = await getSupabaseAdmin()
+    .from("user_profiles")
+    .upsert({ user_id: userId, product_track: "hsk" }, { onConflict: "user_id" });
+  if (error) {
+    console.warn("[STRIPE WEBHOOK] Failed to stamp product_track=hsk:", error);
+  }
+};
+
+const clearSubscription = async (
+  userId: string,
+  product: BillableProduct = "core",
+) => {
+  console.log("[STRIPE WEBHOOK] Clearing subscription for user:", userId, {
+    product,
+  });
+  const admin = getSupabaseAdmin();
+  const { data: existing } = await admin
+    .from("profiles")
+    .select("plan")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const nextPlan = revokeProduct(existing?.plan, product);
+  const clearingLastProduct = nextPlan === "free";
+  const { error: subscriptionError } = await admin
+    .from("product_subscriptions")
+    .update({
+      status: "canceled",
+      cancel_at_period_end: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .eq("product", product);
+  if (subscriptionError) {
+    console.warn(
+      "[STRIPE WEBHOOK] Product subscription revoke skipped:",
+      subscriptionError,
+    );
+  }
+
+  const { error } = await admin
     .from("profiles")
     .update({
-      plan: "free",
-      stripe_subscription_id: null,
-      current_period_end: null,
-      cancel_at_period_end: false,
+      plan: nextPlan,
+      ...(clearingLastProduct
+        ? {
+            stripe_subscription_id: null,
+            current_period_end: null,
+            cancel_at_period_end: false,
+          }
+        : {}),
     })
     .eq("id", userId);
 
   if (error) {
     console.error("[STRIPE WEBHOOK] Failed to clear subscription:", error);
   } else {
-    console.log("[STRIPE WEBHOOK] Successfully cleared subscription for user:", userId);
+    console.log(
+      "[STRIPE WEBHOOK] Successfully cleared subscription for user:",
+      userId,
+      "plan:",
+      nextPlan,
+    );
   }
 };
 
@@ -217,8 +344,11 @@ export async function POST(request: Request) {
             : session.subscription?.id;
 
         if (!subscriptionId) {
-          console.warn("[STRIPE WEBHOOK] Missing subscription on session - this might be a one-time payment, not a subscription");
-          break;
+          console.error("[STRIPE WEBHOOK] Missing subscription on checkout session:", session.id);
+          return NextResponse.json(
+            { error: "Missing subscription on checkout session" },
+            { status: 400 },
+          );
         }
 
         console.log("[STRIPE WEBHOOK] Retrieving subscription:", subscriptionId);
@@ -242,11 +372,21 @@ export async function POST(request: Request) {
             clientReferenceId: session.client_reference_id,
             metadata: subscription.metadata,
           });
-          break;
+          // Return an error so Stripe retries rather than leaving a completed
+          // checkout without its corresponding entitlement.
+          return NextResponse.json(
+            { error: "Could not resolve user ID for checkout" },
+            { status: 400 },
+          );
         }
 
         console.log("[STRIPE WEBHOOK] Resolved user ID:", userId);
-        await upsertActiveSubscription(userId, subscription);
+        const product = resolveBillableProduct(subscription, session);
+        await upsertActiveSubscription(userId, subscription, product);
+
+        if (product === "hsk") {
+          await stampHskProductTrack(userId);
+        }
 
         // Track checkout completion in PostHog
         const interval = subscription.items.data[0]?.price?.recurring?.interval ?? "unknown";
@@ -299,9 +439,11 @@ export async function POST(request: Request) {
           status: subscription.status,
         });
 
+        const product = resolveBillableProduct(subscription, null);
+
         if (subscription.status === "active" || subscription.status === "trialing") {
-          console.log("[STRIPE WEBHOOK] Subscription is active/trialing - upgrading to Pro");
-          await upsertActiveSubscription(userId, subscription);
+          console.log("[STRIPE WEBHOOK] Subscription is active/trialing - upgrading plan");
+          await upsertActiveSubscription(userId, subscription, product);
         } else if (subscription.status === "canceled") {
           // Check if subscription has cancel_at set or cancellation_details
           const rawSub = subscription as any;
@@ -319,16 +461,16 @@ export async function POST(request: Request) {
               periodEnd = cancelAt;
             }
             
-            console.log("[STRIPE WEBHOOK] Subscription canceled at period end - maintaining Pro until", periodEnd);
+            console.log("[STRIPE WEBHOOK] Subscription canceled at period end - maintaining access until", periodEnd);
             // Keep them as Pro until the period ends
-            await upsertActiveSubscription(userId, subscription);
+            await upsertActiveSubscription(userId, subscription, product);
           } else {
-            console.log("[STRIPE WEBHOOK] Subscription canceled immediately - downgrading to Free");
-            await clearSubscription(userId);
+            console.log("[STRIPE WEBHOOK] Subscription canceled immediately - revoking product", product);
+            await clearSubscription(userId, product);
           }
         } else if (subscription.status === "unpaid") {
-          console.log("[STRIPE WEBHOOK] Subscription is unpaid - downgrading to Free");
-          await clearSubscription(userId);
+          console.log("[STRIPE WEBHOOK] Subscription is unpaid - revoking product", product);
+          await clearSubscription(userId, product);
         } else {
           console.log("[STRIPE WEBHOOK] Subscription status not handled:", subscription.status);
         }
@@ -365,7 +507,8 @@ export async function POST(request: Request) {
           subscriptionId: subscription.id,
         });
 
-        await clearSubscription(userId);
+        const product = resolveBillableProduct(subscription, null);
+        await clearSubscription(userId, product);
         break;
       }
       default:

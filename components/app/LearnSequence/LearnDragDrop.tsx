@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import PrimaryButton from "@/components/landing/PrimaryButton";
+import SecondaryButton from "@/components/landing/SecondaryButton";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
+import {
+  HSK_CARD_SHADOW,
+  LINGO_ACCENT_BORDER,
+} from "@/lib/glossy-theme";
+import { LearnSequenceCard } from "./shell";
 import { recordTopicIslandQuizActivity } from "@/lib/recordTopicIslandQuizActivity";
 import type { LearnWord } from "./types";
 
 interface LearnDragDropProps {
   words: LearnWord[];
   onComplete: () => void;
+  onBack?: () => void;
   /** Island CEFR level — A0 shows Pinyin targets instead of Hanzi */
   level?: string;
 }
@@ -24,6 +32,7 @@ function shuffleArray<T>(array: T[]): T[] {
 export default function LearnDragDrop({
   words,
   onComplete,
+  onBack,
   level,
 }: LearnDragDropProps) {
   const { convertText } = useCharacterSet();
@@ -119,36 +128,27 @@ export default function LearnDragDrop({
 
   if (showSuccess) {
     return (
-      <div className="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center px-6">
-        <p
-          className="text-2xl font-semibold text-[#071E2E]"
-          style={{ fontFamily: "'Lora', Georgia, serif" }}
-        >
-          Perfect! 🎉
-        </p>
-        <button
-          type="button"
-          onClick={onComplete}
-          className="mt-8 rounded-lg bg-[#2176AE] px-8 py-3 text-sm font-semibold text-white"
-          style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
-        >
-          Continue →
-        </button>
+      <div className="flex justify-center">
+        <LearnSequenceCard className="max-w-md text-center">
+          <p className="lingo-display text-2xl text-[var(--lingo-navy)]">
+            Perfect! 🎉
+          </p>
+          <PrimaryButton className="mt-8 w-full" onClick={onComplete}>
+            Continue →
+          </PrimaryButton>
+        </LearnSequenceCard>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8">
-      <h2
-        className="mb-2 text-center text-xl font-semibold text-[#071E2E]"
-        style={{ fontFamily: "'Lora', Georgia, serif" }}
-      >
+    <LearnSequenceCard>
+      <h2 className="lingo-display mb-2 text-center text-xl text-[var(--lingo-navy)] sm:text-2xl">
         Match the pairs
       </h2>
       <p
-        className="mb-8 text-center text-sm text-[#071E2E]/60"
-        style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+        className="mb-8 text-center text-sm"
+        style={{ color: "var(--lingo-text-muted)" }}
       >
         {useTapMode
           ? isA0
@@ -162,7 +162,7 @@ export default function LearnDragDrop({
       <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="space-y-3">
           <h3
-            className="mb-3 text-sm font-semibold text-[#071E2E]/70"
+            className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]"
             style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
           >
             English
@@ -198,18 +198,34 @@ export default function LearnDragDrop({
                     prev === word.english ? null : word.english,
                   );
                 }}
-                className={`rounded-lg border-2 p-4 transition-all ${
+                className={`rounded-2xl border p-4 transition-all ${
                   isUsed
                     ? useTapMode
-                      ? "cursor-pointer border-[#2176AE]/30 bg-white/40 opacity-60 hover:border-[#2176AE]/50"
-                      : "border-[#2176AE]/30 bg-white/40 opacity-60"
+                      ? "cursor-pointer bg-white/40 opacity-60 hover:opacity-80"
+                      : "bg-white/40 opacity-60"
                     : isSelected || isDragging
-                      ? "cursor-grabbing border-[#071E2E] bg-[#071E2E] text-white shadow-lg"
-                      : "cursor-grab border-[#2176AE]/20 bg-white hover:border-[#2176AE]/50"
+                      ? "cursor-grabbing text-white"
+                      : "cursor-grab bg-white hover:-translate-y-0.5"
                 } ${useTapMode && !isUsed ? "cursor-pointer" : ""} ${
                   !useTapMode && isUsed && !checked ? "cursor-default" : ""
                 }`}
-                style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+                style={{
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  borderColor:
+                    isSelected || isDragging
+                      ? "transparent"
+                      : LINGO_ACCENT_BORDER,
+                  background:
+                    isSelected || isDragging
+                      ? "linear-gradient(180deg, #163F55 0%, #0B2B3C 100%)"
+                      : undefined,
+                  boxShadow:
+                    isSelected || isDragging
+                      ? HSK_CARD_SHADOW
+                      : isUsed
+                        ? undefined
+                        : HSK_CARD_SHADOW,
+                }}
               >
                 {word.english}
               </div>
@@ -219,7 +235,7 @@ export default function LearnDragDrop({
 
         <div className="space-y-3">
           <h3
-            className="mb-3 text-sm font-semibold text-[#071E2E]/70"
+            className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]"
             style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
           >
             {isA0 ? "Pinyin" : "Chinese"}
@@ -245,20 +261,29 @@ export default function LearnDragDrop({
                     setSelectedEnglishWord(null);
                   }
                 }}
-                className={`flex min-h-[56px] items-center justify-between gap-3 rounded-lg border-2 p-4 transition-all ${
+                className={`flex min-h-[56px] items-center justify-between gap-3 rounded-2xl border p-4 transition-all ${
                   checked && result === true
                     ? "border-emerald-500 bg-emerald-50"
                     : checked && result === false
                       ? "border-red-400 bg-red-50"
                       : hasMatch
-                        ? "border-[#2176AE]/40 border-solid bg-white"
-                        : "border-dashed border-[#2176AE]/25 bg-white/50 hover:border-[#2176AE]/40"
+                        ? "border-solid bg-white"
+                        : "border-dashed bg-white/70"
                 } ${useTapMode && !hasMatch ? "cursor-pointer" : ""}`}
+                style={{
+                  borderColor:
+                    checked && result === true
+                      ? undefined
+                      : checked && result === false
+                        ? undefined
+                        : LINGO_ACCENT_BORDER,
+                  boxShadow: hasMatch && !checked ? HSK_CARD_SHADOW : undefined,
+                }}
               >
                 <div className="flex min-w-0 flex-1 items-baseline gap-2">
                   {isA0 ? (
                     <span
-                      className="text-2xl font-semibold text-[#2176AE] md:text-[28px]"
+                      className="text-2xl font-semibold text-[var(--lingo-blue)] md:text-[28px]"
                       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
                     >
                       {word.pinyin}
@@ -266,13 +291,12 @@ export default function LearnDragDrop({
                   ) : (
                     <>
                       <span
-                        className="text-lg font-medium text-[#071E2E]"
-                        style={{ fontFamily: "'Lora', Georgia, serif" }}
+                        className="lingo-display text-lg font-medium text-[var(--lingo-navy)]"
                       >
                         {convertText(word.hanzi)}
                       </span>
                       <span
-                        className="truncate text-sm text-[#071E2E]/50"
+                        className="truncate text-sm text-[var(--lingo-text-muted)]"
                         style={{
                           fontFamily: "'DM Sans', system-ui, sans-serif",
                         }}
@@ -297,11 +321,11 @@ export default function LearnDragDrop({
                           clearMatchForEnglish(dropMatches[word.hanzi]);
                         }
                       }}
-                      className={`text-sm text-[#071E2E]/70 ${
+                      className={`text-sm text-[var(--lingo-text-muted)] ${
                         !useTapMode && !checked
-                          ? "cursor-grab rounded-md border border-[#2176AE]/20 bg-[#D6EEF8]/60 px-2 py-0.5 active:cursor-grabbing"
+                          ? "cursor-grab rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-2 py-0.5 active:cursor-grabbing"
                           : useTapMode && !checked
-                            ? "cursor-pointer rounded-md border border-[#2176AE]/20 bg-[#D6EEF8]/60 px-2 py-0.5"
+                            ? "cursor-pointer rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-2 py-0.5"
                             : ""
                       }`}
                       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
@@ -322,17 +346,17 @@ export default function LearnDragDrop({
         </div>
       </div>
 
-      <div className="flex justify-center">
-        <button
-          type="button"
+      <div className="flex flex-wrap justify-center gap-3">
+        {onBack ? (
+          <SecondaryButton onClick={onBack}>← Back</SecondaryButton>
+        ) : null}
+        <PrimaryButton
           onClick={handleCheck}
           disabled={!allMatched || checked}
-          className="rounded-lg bg-[#2176AE] px-8 py-3 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-          style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
         >
           Check answers
-        </button>
+        </PrimaryButton>
       </div>
-    </div>
+      </LearnSequenceCard>
   );
 }

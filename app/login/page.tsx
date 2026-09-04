@@ -21,6 +21,47 @@ function LoginPageContent() {
   // Handle error from URL params (e.g., from failed OAuth)
   useEffect(() => {
     const error = searchParams.get("error");
+    const nextFromQuery = searchParams.get("next");
+    const autoGoogle = searchParams.get("autogoogle") === "1";
+    if (!error && !autoGoogle) return;
+
+    const keepNext =
+      nextFromQuery && nextFromQuery.startsWith("/")
+        ? `?next=${encodeURIComponent(nextFromQuery)}`
+        : "";
+
+    if (error === "identity_exists" || autoGoogle) {
+      setStatusMessage(
+        "That Google account already exists — signing you in…",
+      );
+      // Clear guest session, then OAuth-sign into the existing Google account.
+      void (async () => {
+        const { redirectTo, cookieOptions, origin } = getOAuthRedirectConfig();
+        const nextPath =
+          nextFromQuery && nextFromQuery.startsWith("/")
+            ? nextFromQuery
+            : "/app";
+        localStorage.setItem("oauth_next", nextPath);
+        document.cookie = `oauth_next=${encodeURIComponent(nextPath)}; ${cookieOptions}`;
+        localStorage.setItem("oauth_origin", origin);
+        document.cookie = `oauth_origin=${origin}; ${cookieOptions}`;
+
+        await supabase.auth.signOut({ scope: "local" }).catch(() => null);
+        const { error: oauthErr } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo },
+        });
+        if (oauthErr) {
+          setStatusMessage(null);
+          setErrorMessage(
+            "Could not continue with Google. Please try signing in below.",
+          );
+          router.replace(`/login${keepNext}`);
+        }
+      })();
+      return;
+    }
+
     if (error) {
       switch (error) {
         case "auth_failed":
@@ -28,9 +69,6 @@ function LoginPageContent() {
           break;
         case "oauth_expired":
           setErrorMessage("OAuth session expired. Please sign in again.");
-          break;
-        case "identity_exists":
-          setErrorMessage("That Google account is already linked to an existing account. Sign in below.");
           break;
         case "oauth_failed":
           setErrorMessage("Sign-in failed. Please try again.");
@@ -41,17 +79,16 @@ function LoginPageContent() {
         default:
           setErrorMessage("An error occurred. Please try again.");
       }
-      // Clear the error from URL
-      router.replace("/login");
+      // Preserve ?next= when clearing the error flag
+      router.replace(`/login${keepNext}`);
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, supabase]);
 
   const handleGoogleLogin = async () => {
     setStatusMessage(null);
     setErrorMessage(null);
     const { origin, redirectTo, cookieOptions } = getOAuthRedirectConfig();
 
-    // Store the next path separately (will be read from cookie in callback)
     // Prefer ?next= query (e.g. from onboarding), then pathname, else /app
     const nextFromQuery = searchParams.get("next");
     const nextPath =
@@ -61,12 +98,13 @@ function LoginPageContent() {
           ? pathname
           : "/app";
     localStorage.setItem("oauth_next", nextPath);
-    document.cookie = `oauth_next=${nextPath}; ${cookieOptions}`;
+    document.cookie = `oauth_next=${encodeURIComponent(nextPath)}; ${cookieOptions}`;
 
-    // Store the origin in both localStorage AND cookie (cookie is more reliable across redirects)
     localStorage.setItem("oauth_origin", origin);
-    // Set cookie that expires in 10 minutes (enough for OAuth flow)
     document.cookie = `oauth_origin=${origin}; ${cookieOptions}`;
+
+    // Drop any lingering guest session so Google signs into the real account.
+    await supabase.auth.signOut({ scope: "local" }).catch(() => null);
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -172,7 +210,9 @@ function LoginPageContent() {
       const nextFromQuery = searchParams.get("next");
       const allowedOnboarding =
         nextFromQuery?.startsWith("/onboarding/topic-island") ||
-        nextFromQuery?.startsWith("/onboarding/journey");
+        nextFromQuery?.startsWith("/onboarding/journey") ||
+        nextFromQuery?.startsWith("/onboarding/upgrade") ||
+        nextFromQuery?.startsWith("/onboarding/hsk");
       const isUnsafe =
         !nextFromQuery ||
         !nextFromQuery.startsWith("/") ||

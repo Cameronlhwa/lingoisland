@@ -12,7 +12,7 @@ import { BackButton } from "@/app/topics/BackButton";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Mandarin Vocabulary by Topic (A2–B2) | 100 Real-Life Topics – LingoIsland",
+  title: "Mandarin Vocabulary by Topic (HSK 3–6) | 100 Real-Life Topics – LingoIsland",
   description:
     "Browse 100 real-life Mandarin topics (HSK 3–6). Learn vocabulary in context with pinyin, example sentences, and a review loop that helps it stick.",
   alternates: {
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     follow: true,
   },
   openGraph: {
-    title: "Mandarin Vocabulary by Topic (A2–B2) | 100 Real-Life Topics – LingoIsland",
+    title: "Mandarin Vocabulary by Topic (HSK 3–6) | 100 Real-Life Topics – LingoIsland",
     description:
       "Browse 100 real-life Mandarin topics (HSK 3–6). Learn vocabulary in context with pinyin, example sentences, and a review loop that helps it stick.",
     url: getCanonicalUrl("topics"),
@@ -48,7 +48,7 @@ function buildTopicsHubStructuredData() {
     "@type": "CollectionPage" as const,
     name: "Mandarin Vocabulary by Topic — 100 Real-Life Topics",
     description:
-      "Browse 100 real-life Mandarin topics for intermediate learners (A2–B2 / HSK 3–6). Chinese vocabulary in context with pinyin and example sentences.",
+      "Browse 100 real-life Mandarin topics for intermediate learners (HSK 3–6). Chinese vocabulary in context with pinyin and example sentences.",
     url: `${siteUrl}/topics`,
     mainEntity: {
       "@type": "ItemList" as const,

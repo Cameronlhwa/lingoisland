@@ -1,12 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
+import { loginHrefForLanding } from "@/lib/utils/app-side";
 
-export default function Footer() {
+export default function Footer({
+  track = "islands",
+}: {
+  /** HSK prep landing uses /hsk/app after sign-in. */
+  track?: "islands" | "hsk";
+}) {
+  const signInHref = loginHrefForLanding(track === "hsk" ? "/hskprep" : "/");
   return (
     <footer
       style={{
-        background: "#071E2E",
-        padding: "32px 48px",
+        background: "#fff",
+        borderTop: "1px solid var(--lingo-border)",
+        padding: "36px 48px",
       }}
     >
       <div
@@ -45,7 +53,7 @@ export default function Footer() {
           </div>
           <span
             style={{
-              color: "#fff",
+              color: "var(--lingo-navy)",
               fontWeight: 600,
               fontSize: 15,
               fontFamily: "'DM Sans', system-ui, sans-serif",
@@ -65,7 +73,7 @@ export default function Footer() {
             { href: "/contact", label: "Contact" },
             { href: "/privacy", label: "Privacy Policy" },
             { href: "/terms", label: "Terms of Service" },
-            { href: "/login", label: "Sign in" },
+            { href: signInHref, label: "Sign in" },
             { href: "/onboarding/journey", label: "Create Topic Island" },
           ].map((link) => (
             <Link
@@ -73,12 +81,13 @@ export default function Footer() {
               href={link.href}
               style={{
                 fontSize: 13,
-                color: "rgba(255,255,255,0.5)",
+                color: "var(--lingo-text-muted)",
                 textDecoration: "none",
                 fontFamily: "'DM Sans', system-ui, sans-serif",
+                fontWeight: 600,
                 transition: "color 0.15s",
               }}
-              className="hover:text-white"
+              className="hover:text-[var(--lingo-navy)]"
             >
               {link.label}
             </Link>

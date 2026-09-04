@@ -1,83 +1,177 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
+import {
+  parseProductPlan,
+  type ProductPlan,
+} from "@/lib/product-plans";
 
 type SubscriptionState = {
+  /** Islands Pro — used by existing Islands paywalls. */
   isPro: boolean;
+  isIslandsPro: boolean;
+  isHskPro: boolean;
+  plan: ProductPlan;
   isLoading: boolean;
+  /** Force a fresh profiles.plan read (e.g. after OAuth). */
+  refetch: () => Promise<{
+    isIslandsPro: boolean;
+    isHskPro: boolean;
+    plan: ProductPlan;
+  }>;
 };
 
-let cachedIsPro: boolean | null = null;
-let inflight: Promise<boolean> | null = null;
+type AccessSnapshot = {
+  isIslandsPro: boolean;
+  isHskPro: boolean;
+  plan: ProductPlan;
+};
+
+let cached: AccessSnapshot | null = null;
+let inflight: Promise<AccessSnapshot> | null = null;
 
 export function invalidateSubscriptionCache(): void {
-  cachedIsPro = null;
+  cached = null;
   inflight = null;
 }
 
-async function fetchIsPro(): Promise<boolean> {
+export async function fetchProductAccess(): Promise<AccessSnapshot> {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return false;
+  if (!user) {
+    return { isIslandsPro: false, isHskPro: false, plan: "free" };
+  }
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("plan, current_period_end")
-    .eq("id", user.id)
-    .maybeSingle();
+  const readPlan = async (): Promise<AccessSnapshot> => {
+    const response = await fetch("/api/entitlements", {
+      cache: "no-store",
+    }).catch(() => null);
+    if (!response?.ok) {
+      return { isIslandsPro: false, isHskPro: false, plan: "free" };
+    }
+    const data = (await response.json()) as {
+      plan?: string;
+      isIslandsPro?: boolean;
+      isHskPro?: boolean;
+    };
+    const plan = parseProductPlan(data.plan);
 
-  if (error || !data) return false;
+    return {
+      plan,
+      isIslandsPro: data.isIslandsPro === true,
+      isHskPro: data.isHskPro === true,
+    };
+  };
 
-  const isProPlan = data.plan === "pro";
-  if (!isProPlan) return false;
+  const snapshot = await readPlan();
+  if (snapshot.isIslandsPro || snapshot.isHskPro) return snapshot;
 
-  const periodEnd =
-    typeof data.current_period_end === "string"
-      ? new Date(data.current_period_end)
-      : null;
+  // One reconcile attempt per tab session — avoids Stripe calls on every render.
+  if (
+    typeof window !== "undefined" &&
+    !user.is_anonymous &&
+    user.email &&
+    !sessionStorage.getItem("lingo_stripe_reconcile_v1")
+  ) {
+    sessionStorage.setItem("lingo_stripe_reconcile_v1", "1");
+    try {
+      const res = await fetch("/api/stripe/reconcile", { method: "POST" });
+      if (res.ok) {
+        invalidateSubscriptionCache();
+        return await readPlan();
+      }
+    } catch {
+      // ignore — fall through to free
+    }
+  }
 
-  // Lifetime/manual grants can have null period end; Stripe-backed Pro should be in the future.
-  return !periodEnd || periodEnd.getTime() > Date.now();
+  return snapshot;
+}
+
+/** @deprecated Prefer fetchProductAccess — kept for call sites that only need Islands. */
+export async function fetchIsPro(): Promise<boolean> {
+  const access = await fetchProductAccess();
+  return access.isIslandsPro;
+}
+
+function loadAccess(): Promise<AccessSnapshot> {
+  if (cached !== null) return Promise.resolve(cached);
+  if (!inflight) {
+    inflight = fetchProductAccess()
+      .then((result) => {
+        cached = result;
+        return result;
+      })
+      .finally(() => {
+        inflight = null;
+      });
+  }
+  return inflight;
 }
 
 export function useSubscription(): SubscriptionState {
-  const [isPro, setIsPro] = useState<boolean>(cachedIsPro ?? false);
-  const [isLoading, setIsLoading] = useState<boolean>(cachedIsPro === null);
+  const [access, setAccess] = useState<AccessSnapshot>(
+    cached ?? { isIslandsPro: false, isHskPro: false, plan: "free" },
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(cached === null);
+
+  const apply = useCallback((result: AccessSnapshot) => {
+    cached = result;
+    setAccess(result);
+    setIsLoading(false);
+  }, []);
+
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    invalidateSubscriptionCache();
+    const result = await fetchProductAccess();
+    apply(result);
+    return result;
+  }, [apply]);
 
   useEffect(() => {
     let active = true;
+    const supabase = createClient();
 
-    if (cachedIsPro !== null) {
-      setIsPro(cachedIsPro);
-      setIsLoading(false);
-      return;
-    }
-
-    if (!inflight) {
-      inflight = fetchIsPro()
-        .then((result) => {
-          cachedIsPro = result;
-          return result;
-        })
-        .finally(() => {
-          inflight = null;
-        });
-    }
-
-    void inflight.then((result) => {
+    void loadAccess().then((result) => {
       if (!active) return;
-      setIsPro(result);
-      setIsLoading(false);
+      apply(result);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (
+        event !== "SIGNED_IN" &&
+        event !== "SIGNED_OUT" &&
+        event !== "USER_UPDATED" &&
+        event !== "TOKEN_REFRESHED"
+      ) {
+        return;
+      }
+      invalidateSubscriptionCache();
+      setIsLoading(true);
+      void fetchProductAccess().then((result) => {
+        if (!active) return;
+        apply(result);
+      });
     });
 
     return () => {
       active = false;
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [apply]);
 
-  return { isPro, isLoading };
+  return {
+    isPro: access.isIslandsPro,
+    isIslandsPro: access.isIslandsPro,
+    isHskPro: access.isHskPro,
+    plan: access.plan,
+    isLoading,
+    refetch,
+  };
 }
-

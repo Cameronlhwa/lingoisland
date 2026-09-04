@@ -3,12 +3,19 @@
 import { useEffect, useState } from "react";
 import ChineseTooltipText from "@/components/app/ChineseTooltipText";
 import SpeakerWithSpeed from "@/components/app/SpeakerWithSpeed";
+import PrimaryButton from "@/components/landing/PrimaryButton";
+import SecondaryButton from "@/components/landing/SecondaryButton";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import {
   buildSentenceBreakdown,
   type BreakdownToken,
 } from "@/lib/chineseTokenizer";
+import {
+  LINGO_ACCENT_CHIP_SHADOW,
+  LINGO_ACCENT_GRADIENT_GLOSSY,
+} from "@/lib/glossy-theme";
 import { getSentenceForLevel, isBeginnerLearnLevel } from "./levels";
+import { LearnEyebrow, LearnSequenceCard } from "./shell";
 import type { LearnIsland, LearnWord } from "./types";
 
 interface LearnSlideshowProps {
@@ -63,7 +70,7 @@ function HighlightedSentence({
     return (
       <ChineseTooltipText
         text={displaySentence}
-        className={`text-xl font-medium text-[#071E2E] md:text-[26px] ${className}`}
+        className={`text-xl font-medium text-[var(--lingo-navy)] md:text-[26px] ${className}`}
       />
     );
   }
@@ -74,13 +81,12 @@ function HighlightedSentence({
 
   return (
     <span
-      className={`text-xl font-medium text-[#071E2E] md:text-[26px] ${className}`}
-      style={{ fontFamily: "'Lora', Georgia, serif" }}
+      className={`lingo-display text-xl font-medium text-[var(--lingo-navy)] md:text-[26px] ${className}`}
     >
       {before ? (
         <ChineseTooltipText text={before} className="inline" />
       ) : null}
-      <span className="font-medium text-[#2176AE]">
+      <span className="font-medium text-[var(--lingo-blue)]">
         <ChineseTooltipText text={target} className="inline" />
       </span>
       {after ? <ChineseTooltipText text={after} className="inline" /> : null}
@@ -100,8 +106,8 @@ function HighlightedPinyin({
   const normalizedTarget = targetPinyin.trim();
   const idx = sentencePinyin.indexOf(normalizedTarget);
   const sizeClass = isA0
-    ? "text-center text-xl font-semibold text-[#2176AE] md:text-[22px]"
-    : "text-center text-sm text-[#5A7A90] md:text-sm";
+    ? "text-center text-xl font-semibold text-[var(--lingo-blue)] md:text-[22px]"
+    : "text-center text-sm text-[var(--lingo-text-muted)] md:text-sm";
 
   if (idx === -1) {
     return (
@@ -122,13 +128,13 @@ function HighlightedPinyin({
     <p
       className={
         isA0
-          ? "text-center text-xl font-semibold text-[#5A7A90] md:text-[22px]"
-          : "text-center text-sm text-[#5A7A90]"
+          ? "text-center text-xl font-semibold text-[var(--lingo-text-muted)] md:text-[22px]"
+          : "text-center text-sm text-[var(--lingo-text-muted)]"
       }
       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
     >
       {before}
-      <span className="font-semibold text-[#2176AE]">{target}</span>
+      <span className="font-semibold text-[var(--lingo-blue)]">{target}</span>
       {after}
     </p>
   );
@@ -162,7 +168,7 @@ function BreakdownTable({
   if (!tokens) {
     return (
       <p
-        className="text-center text-sm text-[#8AABBF]"
+        className="text-center text-sm text-[var(--lingo-text-muted)]"
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         Loading breakdown…
@@ -197,9 +203,8 @@ function BreakdownTable({
                   borderRight:
                     i < tokens.length - 1 ? "0.5px solid #E8F3FA" : "none",
                   fontSize: hanziSize,
-                  color: token.isTarget ? "#2176AE" : "#071E2E",
+                  color: token.isTarget ? "var(--lingo-blue)" : "var(--lingo-navy)",
                   fontWeight: token.isTarget ? 500 : 400,
-                  fontFamily: "'Lora', Georgia, serif",
                 }}
               >
                 {convertText(token.hanzi)}
@@ -216,7 +221,7 @@ function BreakdownTable({
                   borderRight:
                     i < tokens.length - 1 ? "0.5px solid #E8F3FA" : "none",
                   fontSize: pinyinSize,
-                  color: token.isTarget ? "#2176AE" : "#5A7A90",
+                  color: token.isTarget ? "var(--lingo-blue)" : "var(--lingo-text-muted)",
                   fontWeight: token.isTarget ? 500 : 400,
                   fontFamily: "'DM Sans', system-ui, sans-serif",
                 }}
@@ -235,7 +240,7 @@ function BreakdownTable({
                   borderRight:
                     i < tokens.length - 1 ? "0.5px solid #E8F3FA" : "none",
                   fontSize: englishSize,
-                  color: token.isTarget ? "#2176AE" : "#8AABBF",
+                  color: token.isTarget ? "var(--lingo-blue)" : "var(--lingo-text-muted)",
                   fontWeight: token.isTarget ? 500 : 400,
                   fontFamily: "'DM Sans', system-ui, sans-serif",
                 }}
@@ -268,10 +273,15 @@ function WordSlideContent({
 
   return (
     <div className="text-center">
+      {typeof word.hsk_level === "number" ? (
+        <div className="mb-3 inline-flex items-center rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-3 py-1.5 text-xs font-bold text-[var(--lingo-navy)]">
+          {word.hsk_level === 7 ? "HSK 7-9" : `HSK ${word.hsk_level}`}
+        </div>
+      ) : null}
       {isA0 ? (
         <>
           <div
-            className="mb-2 font-semibold text-[#2176AE] md:mb-3"
+            className="mb-2 font-semibold text-[var(--lingo-blue)] md:mb-3"
             style={{
               fontFamily: "'DM Sans', system-ui, sans-serif",
               fontSize: pinyinSize,
@@ -280,9 +290,8 @@ function WordSlideContent({
             {word.pinyin}
           </div>
           <div
-            className="font-bold text-[#071E2E]"
+            className="lingo-display font-bold text-[var(--lingo-navy)]"
             style={{
-              fontFamily: "'Lora', Georgia, serif",
               fontSize: compact ? "28px" : "36px",
               marginBottom: compact ? "12px" : "16px",
             }}
@@ -293,9 +302,8 @@ function WordSlideContent({
       ) : (
         <>
           <div
-            className="font-bold text-[#071E2E]"
+            className="lingo-display font-bold text-[var(--lingo-navy)]"
             style={{
-              fontFamily: "'Lora', Georgia, serif",
               fontSize: hanziSize,
               marginBottom: compact ? "12px" : "16px",
             }}
@@ -305,8 +313,8 @@ function WordSlideContent({
           <div
             className={`mb-2 md:mb-3 ${
               beginner
-                ? "text-xl font-semibold text-[#2176AE] md:text-[22px]"
-                : "text-lg text-[#5A7A90] md:text-lg"
+                ? "text-xl font-semibold text-[var(--lingo-blue)] md:text-[22px]"
+                : "text-lg text-[var(--lingo-text-muted)] md:text-lg"
             }`}
             style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
           >
@@ -315,7 +323,7 @@ function WordSlideContent({
         </>
       )}
       <div
-        className="mb-6 text-[15px] text-[#5A7A90] md:mb-8"
+        className="mb-6 text-[15px] text-[var(--lingo-text-muted)] md:mb-8"
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         {word.english}
@@ -373,7 +381,7 @@ function BeginnerSentenceContent({
         </>
       )}
       <p
-        className="mt-1 text-sm text-[#5A7A90]"
+        className="mt-1 text-sm text-[var(--lingo-text-muted)]"
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         {sentence.english}
@@ -382,12 +390,11 @@ function BeginnerSentenceContent({
         <SpeakerWithSpeed text={sentence.hanzi} type="sentence" size="md" />
       </div>
       <div
-        className="my-5 border-t border-[#E8F3FA] md:my-5"
+        className="my-5 border-t border-[var(--lingo-accent-border)] md:my-5"
         style={{ borderTopWidth: "0.5px" }}
       />
       <p
-        className="mb-4 text-[11px] font-medium uppercase tracking-[0.08em] text-[#8AABBF]"
-        style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+        className="mb-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]"
       >
         Word by word
       </p>
@@ -418,13 +425,13 @@ function StandardSentenceContent({
         />
       </div>
       <p
-        className="mt-2 text-[13px] text-[#5A7A90]"
+        className="mt-2 text-[13px] text-[var(--lingo-text-muted)]"
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         {sentence.pinyin}
       </p>
       <p
-        className="mt-1 text-[13px] text-[#5A7A90]"
+        className="mt-1 text-[13px] text-[var(--lingo-text-muted)]"
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         {sentence.english}
@@ -455,7 +462,6 @@ export default function LearnSlideshow({
   island,
   learnLevel,
   onComplete,
-  onSkip,
 }: LearnSlideshowProps) {
   const level = learnLevel ?? island.level;
   const isBeginnerLevel = isBeginnerLearnLevel(level);
@@ -511,7 +517,7 @@ export default function LearnSlideshow({
         if (!sentence) {
           return (
             <p
-              className="text-center text-sm text-[#8AABBF]"
+              className="text-center text-sm text-[var(--lingo-text-muted)]"
               style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
             >
               Example sentence loading…
@@ -541,12 +547,12 @@ export default function LearnSlideshow({
       <div>
         <WordSlideContent word={word} beginner={false} compact={compact} />
         {sentence ? (
-          <div className="mt-8 border-t border-[#E8F3FA] pt-8">
+          <div className="mt-8 border-t border-[var(--lingo-accent-border)] pt-8">
             <StandardSentenceContent word={word} sentence={sentence} />
           </div>
         ) : (
           <p
-            className="mt-6 text-center text-sm text-[#8AABBF]"
+            className="mt-6 text-center text-sm text-[var(--lingo-text-muted)]"
             style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
           >
             Example sentence loading…
@@ -557,180 +563,37 @@ export default function LearnSlideshow({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex flex-col"
-      style={{ background: "#D6EEF8" }}
-    >
-      <div
-        className="flex items-start justify-between"
-        style={{ padding: compact ? "16px 20px 0" : "20px 32px 0" }}
-      >
-        <div>
-          <div
-            style={{
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-              fontSize: "11px",
-              letterSpacing: "0.08em",
-              color: "#2176AE",
-              textTransform: "uppercase",
-              fontWeight: 500,
-            }}
-          >
-            Getting started
-          </div>
-          <div
-            style={{
-              fontFamily: "'Lora', Georgia, serif",
-              fontSize: "18px",
-              color: "#071E2E",
-              marginTop: "2px",
-            }}
-          >
-            Step 1 of 3 — Learn
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onSkip ?? onComplete}
-          style={{
-            fontFamily: "'DM Sans', system-ui, sans-serif",
-            fontSize: "13px",
-            color: "#2176AE",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            paddingTop: "4px",
-          }}
-        >
-          Skip for now
-        </button>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          gap: "6px",
-          padding: compact ? "10px 20px 0" : "12px 32px 0",
-        }}
-      >
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            style={{
-              height: "3px",
-              borderRadius: "2px",
-              flex: 1,
-              background: i === 0 ? "#2176AE" : "#B8D8EC",
-            }}
-          />
-        ))}
-      </div>
-
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: compact ? "20px 20px 20px" : "24px 32px 32px",
-        }}
-      >
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "16px",
-            border: "0.5px solid #C2DCF0",
-            padding: compact ? "20px" : "32px 36px 28px",
-            width: "100%",
-            maxWidth: "600px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              gap: "6px",
-              justifyContent: "center",
-              marginBottom: "16px",
-            }}
-          >
-            {words.map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: "7px",
-                  height: "7px",
-                  borderRadius: "50%",
-                  background:
-                    i <= wordIndex ? "#2176AE" : "#B8D8EC",
-                }}
-              />
-            ))}
-          </div>
-
-          <div
-            style={{
-              textAlign: "center",
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-              fontSize: "12px",
-              color: "#2176AE",
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              marginBottom: "20px",
-              fontWeight: 500,
-            }}
-          >
-            {slideLabel}
-          </div>
-
-          {renderSlideContent()}
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "12px",
-              marginTop: "24px",
-            }}
-          >
-            {!isFirstSlide ? (
-              <button
-                type="button"
-                onClick={handleBack}
-                style={{
-                  background: "#fff",
-                  color: "#2176AE",
-                  border: "1.5px solid #2176AE",
-                  borderRadius: "10px",
-                  padding: "12px 32px",
-                  fontFamily: "'DM Sans', system-ui, sans-serif",
-                  fontSize: "15px",
-                  cursor: "pointer",
-                  fontWeight: 500,
-                }}
-              >
-                ← Back
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={handleNext}
+    <div className="flex justify-center">
+      <LearnSequenceCard className="max-w-[600px]" style={{ padding: compact ? "20px" : undefined }}>
+        <div className="mb-4 flex justify-center gap-1.5">
+          {words.map((_, i) => (
+            <div
+              key={i}
+              className="h-2 w-2 rounded-full"
               style={{
-                background: "#2176AE",
-                color: "#fff",
-                border: "none",
-                borderRadius: "10px",
-                padding: "12px 40px",
-                fontFamily: "'DM Sans', system-ui, sans-serif",
-                fontSize: "15px",
-                cursor: "pointer",
-                fontWeight: 500,
+                background:
+                  i <= wordIndex ? LINGO_ACCENT_GRADIENT_GLOSSY : "var(--lingo-sky)",
+                boxShadow: i <= wordIndex ? LINGO_ACCENT_CHIP_SHADOW : undefined,
               }}
-            >
-              {isLastSlide ? "Start matching →" : "Next →"}
-            </button>
-          </div>
+            />
+          ))}
         </div>
-      </div>
+
+        <div className="mb-5 text-center">
+          <LearnEyebrow>{slideLabel}</LearnEyebrow>
+        </div>
+
+        {renderSlideContent()}
+
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          {!isFirstSlide ? (
+            <SecondaryButton onClick={handleBack}>← Back</SecondaryButton>
+          ) : null}
+          <PrimaryButton onClick={handleNext}>
+            {isLastSlide ? "Start matching →" : "Next →"}
+          </PrimaryButton>
+        </div>
+      </LearnSequenceCard>
     </div>
   );
 }

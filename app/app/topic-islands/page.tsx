@@ -15,6 +15,8 @@ import {
   SENTENCE_STYLE_OPTIONS,
   type SentenceStyle,
 } from "@/lib/sentenceStyle";
+import { PROFILE_LEVEL_OPTIONS } from "@/lib/levelBands";
+import { hskLabelForCefr } from "@/lib/levelBands";
 
 interface TopicIsland {
   id: string;
@@ -380,7 +382,7 @@ export default function TopicIslandsPage() {
                     </h3>
                     <div className="space-y-1 text-sm text-gray-600">
                       <p>
-                        {t("Level")}: {island.level}
+                        {t("Level")}: {hskLabelForCefr(island.level)}
                       </p>
                       <p>
                         {t("Word target")}: {island.word_target} {t("words")}
@@ -507,11 +509,11 @@ export default function TopicIslandsPage() {
                     }
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-gray-900 focus:outline-none"
                   >
-                    <option value="A1">A1 - Beginner</option>
-                    <option value="A2">A2 - Elementary</option>
-                    <option value="B1">B1 - Intermediate</option>
-                    <option value="B2">B2 - Upper Intermediate</option>
-                    <option value="C1">C1 - Advanced</option>
+                    {PROFILE_LEVEL_OPTIONS.map((opt) => (
+                      <option key={opt.cefr} value={opt.cefr}>
+                        HSK {opt.hsk} - {opt.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -761,7 +763,7 @@ export default function TopicIslandsPage() {
                                     {convertText(island.topic)}
                                   </span>
                                   <span className="text-xs text-gray-500">
-                                    {island.level}
+                                    {hskLabelForCefr(island.level)}
                                   </span>
                                 </label>
                               ))

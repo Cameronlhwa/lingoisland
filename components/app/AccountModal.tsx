@@ -7,10 +7,23 @@ import { createClient } from "@/lib/supabase/browser";
 import { cardBaseClass } from "@/components/app/ui/styles";
 import { useTTS } from "@/contexts/TTSContext";
 import { useAnalytics } from "@/lib/posthog/client";
+import { PROFILE_LEVEL_OPTIONS } from "@/lib/levelBands";
+import {
+  hasAnyProAccess,
+  type ProductPlan,
+} from "@/lib/product-plans";
+import {
+  DEFAULT_HSK_STANDARD,
+  parseHskStandard,
+  type HskStandard,
+} from "@/lib/utils/hsk";
+import { HSK_STANDARD_COOKIE } from "@/lib/hsk/standardPreference";
 
 type Entitlements = {
-  plan: "free" | "pro";
+  plan: ProductPlan;
   isPro: boolean;
+  isIslandsPro?: boolean;
+  isHskPro?: boolean;
   current_period_end: string | null;
   stripe_subscription_id: string | null;
   cancel_at_period_end: boolean;
@@ -30,10 +43,12 @@ export default function AccountModal({
   open,
   onClose,
   initialTab = "subscription",
+  hideDecorativeImages = false,
 }: {
   open: boolean;
   onClose: () => void;
   initialTab?: "subscription" | "profile";
+  hideDecorativeImages?: boolean;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -78,6 +93,7 @@ export default function AccountModal({
   const [ttsRateSentences, setTtsRateSentences] = useState(1.0);
   const [ttsRateWords, setTtsRateWords] = useState(1.0);
   const [characterSet, setCharacterSet] = useState<"simplified" | "traditional">("simplified");
+  const [hskStandard, setHskStandard] = useState<HskStandard>(DEFAULT_HSK_STANDARD);
   const [ttsSaving, setTtsSaving] = useState(false);
   const [ttsSaveStatus, setTtsSaveStatus] = useState<
     "idle" | "saved" | "error"
@@ -165,7 +181,7 @@ export default function AccountModal({
 
   useEffect(() => {
     if (!open || !entitlements) return;
-    setActiveTab(entitlements.plan === "pro" ? "profile" : "subscription");
+    setActiveTab(hasAnyProAccess(entitlements.plan) ? "profile" : "subscription");
   }, [open, entitlements]);
 
   // Auto-sync from Stripe when modal opens and user has a subscription
@@ -208,6 +224,7 @@ export default function AccountModal({
           setTtsRateSentences(data.ttsRateSentences || 1.0);
           setTtsRateWords(data.ttsRateWords || 1.0);
           setCharacterSet(data.characterSet || "simplified");
+          setHskStandard(parseHskStandard(data.hskStandard));
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -226,7 +243,7 @@ export default function AccountModal({
   const subscriptionState = useMemo(() => {
     if (!entitlements) return null;
 
-    const isPro = entitlements.plan === "pro";
+    const isPro = hasAnyProAccess(entitlements.plan);
     const hasStripeId = !!entitlements.stripe_subscription_id;
     const hasPeriodEnd = !!entitlements.current_period_end;
     const isCanceled = entitlements.cancel_at_period_end;
@@ -489,6 +506,36 @@ export default function AccountModal({
     await saveTtsSettings(1.0, 1.0);
   }, [saveTtsSettings]);
 
+  const handleHskStandardChange = useCallback(
+    async (newStandard: HskStandard) => {
+      setHskStandard(newStandard);
+      setTtsSaving(true);
+      setTtsSaveStatus("idle");
+      document.cookie = `${HSK_STANDARD_COOKIE}=${newStandard}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+      try {
+        const response = await fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hskStandard: newStandard }),
+        });
+
+        if (response.ok) {
+          setTtsSaveStatus("saved");
+          setTimeout(() => setTtsSaveStatus("idle"), 2000);
+          window.location.reload();
+        } else {
+          setTtsSaveStatus("error");
+        }
+      } catch (error) {
+        console.error("Error saving HSK standard:", error);
+        setTtsSaveStatus("error");
+      } finally {
+        setTtsSaving(false);
+      }
+    },
+    [],
+  );
+
   const handleCharacterSetChange = useCallback(
     async (newCharacterSet: "simplified" | "traditional") => {
       setCharacterSet(newCharacterSet);
@@ -678,11 +725,11 @@ export default function AccountModal({
                   disabled={levelLoading}
                   className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
                 >
-                  <option value="A1">A1 (Beginner)</option>
-                  <option value="A2">A2 (Elementary)</option>
-                  <option value="B1">B1 (Intermediate)</option>
-                  <option value="B2">B2 (Upper Intermediate)</option>
-                  <option value="C1">C1 (Advanced)</option>
+                  {PROFILE_LEVEL_OPTIONS.map((opt) => (
+                    <option key={opt.cefr} value={opt.cefr}>
+                      HSK {opt.hsk} ({opt.label})
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -832,6 +879,56 @@ export default function AccountModal({
                 </div>
               </div>
 
+              {/* HSK syllabus */}
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-5">
+                <h3 className="mb-1 text-base font-semibold text-gray-900">
+                  HSK syllabus
+                </h3>
+                <p className="mb-4 text-xs text-gray-600">
+                  Choose which official vocabulary list to study in HSK Prep
+                </p>
+                <div className="space-y-3">
+                  <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-gray-200 bg-white p-3 transition-colors hover:border-gray-300">
+                    <input
+                      type="radio"
+                      name="hskStandard"
+                      value="3.0"
+                      checked={hskStandard === "3.0"}
+                      onChange={() => handleHskStandardChange("3.0")}
+                      disabled={ttsSaving}
+                      className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">
+                        HSK 3.0
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        New HSK — levels 1–9
+                      </div>
+                    </div>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-gray-200 bg-white p-3 transition-colors hover:border-gray-300">
+                    <input
+                      type="radio"
+                      name="hskStandard"
+                      value="2.0"
+                      checked={hskStandard === "2.0"}
+                      onChange={() => handleHskStandardChange("2.0")}
+                      disabled={ttsSaving}
+                      className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">
+                        HSK 2.0
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Legacy HSK — levels 1–6
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
               <button
                 onClick={handleSignOut}
                 className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
@@ -843,7 +940,7 @@ export default function AccountModal({
         ) : (
           <div className="mt-6 grid gap-6 md:grid-cols-[1.15fr_1fr]">
             {/* Left decorative panel - conditional based on Pro status */}
-            {entitlements?.plan === "pro" ? (
+            {entitlements && hasAnyProAccess(entitlements.plan) ? (
               // Pro user - show success/confirmation design
               <div
                 className="relative min-h-[360px] overflow-hidden rounded-2xl border border-emerald-200 p-7 text-gray-900 shadow-sm"
@@ -852,13 +949,15 @@ export default function AccountModal({
                 }}
               >
                 {/* Capybara boat in bottom left */}
-                <div className="absolute bottom-3 left-3 w-20 md:w-24">
-                  <img
-                    src="/boats/boat-capybara.png"
-                    alt="Capybara in boat"
-                    className="w-full h-auto"
-                  />
-                </div>
+                {!hideDecorativeImages && (
+                  <div className="absolute bottom-3 left-3 w-20 md:w-24">
+                    <img
+                      src="/boats/boat-capybara.png"
+                      alt="Capybara in boat"
+                      className="w-full h-auto"
+                    />
+                  </div>
+                )}
                 <div className="relative z-10">
                   <div className="flex items-center gap-2">
                     <span className="text-3xl">✓</span>
@@ -895,13 +994,15 @@ export default function AccountModal({
                 }}
               >
                 {/* Capybara boat in bottom left */}
-                <div className="absolute bottom-3 left-3 w-20 md:w-24">
-                  <img
-                    src="/boats/boat-capybara.png"
-                    alt="Capybara in boat"
-                    className="w-full h-auto"
-                  />
-                </div>
+                {!hideDecorativeImages && (
+                  <div className="absolute bottom-3 left-3 w-20 md:w-24">
+                    <img
+                      src="/boats/boat-capybara.png"
+                      alt="Capybara in boat"
+                      className="w-full h-auto"
+                    />
+                  </div>
+                )}
                 <div className="relative z-10">
                   <h2 className="text-2xl font-semibold text-gray-900">
                     Upgrade to Pro
@@ -937,9 +1038,13 @@ export default function AccountModal({
                       actually use!
                     </p>
                   </div>
-                  {entitlements?.plan === "pro" ? (
+                  {entitlements && hasAnyProAccess(entitlements.plan) ? (
                     <span className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white">
-                      Pro
+                      {entitlements.plan === "both"
+                        ? "Islands + HSK"
+                        : entitlements.plan === "hsk"
+                          ? "HSK Prep"
+                          : "Islands Pro"}
                     </span>
                   ) : null}
                 </div>
@@ -952,7 +1057,7 @@ export default function AccountModal({
                   <div className="mt-4 text-sm text-red-600">
                     {entitlementsError}
                   </div>
-                ) : entitlements?.plan === "pro" ? (
+                ) : entitlements && hasAnyProAccess(entitlements.plan) ? (
                   // Pro user view - show benefits and management
                   <div className="mt-6 flex flex-1 flex-col gap-4">
                     {renewalDate ? (

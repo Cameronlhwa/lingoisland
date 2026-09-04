@@ -16,11 +16,13 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get quiz islands
+    // Get quiz islands (Islands tree only — HSK Flashcards decks live in
+    // /api/hsk/flashcard-decks and are scoped out via origin)
     const { data: islands, error: islandsError } = await supabase
       .from('quiz_islands')
       .select('*')
       .eq('user_id', user.id)
+      .eq('origin', 'islands')
       .order('created_at', { ascending: false })
 
     if (islandsError) {
@@ -107,6 +109,7 @@ export async function POST(request: Request) {
       .insert({
         user_id: user.id,
         name: name.trim(),
+        origin: 'islands',
       })
       .select()
       .single()
@@ -160,6 +163,7 @@ export async function DELETE(request: Request) {
       .delete()
       .eq('id', quizIslandId)
       .eq('user_id', user.id)
+      .eq('origin', 'islands')
 
     if (error) {
       console.error('Error deleting quiz island:', error)

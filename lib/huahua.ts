@@ -5,6 +5,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export const STAGE_THRESHOLDS = [0, 10, 20, 30, 40] as const
+export const STAGE_NAMES = ["Bare Island", "Foundation", "Village", "Town", "Thriving City"] as const
+export const STAGE_EMOJIS = ["🏜️", "🏗️", "🏘️", "🏙️", "🌆"] as const
 
 export function stageForDailyReviews(reviews: number): number {
   if (reviews >= 40) return 5

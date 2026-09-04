@@ -13,59 +13,50 @@ import { createClient } from "@/lib/supabase/browser";
 import AppLogo from "@/components/app/AppLogo";
 import { Loader2 } from "lucide-react";
 import { getTopicSuggestions } from "@/lib/onboarding/topicSuggestions";
+import {
+  buildUpgradePageUrl,
+  markUpgradePending,
+  writeUpgradeSnapshot,
+  type JourneyNodeSnapshot,
+} from "@/lib/onboarding/onboardingCheckoutStorage";
+import {
+  HSK_CARD_SHADOW,
+  HSK_BTN_GRADIENT,
+  HSK_BTN_SHADOW,
+  LINGO_ACCENT_GRADIENT_GLOSSY,
+  LINGO_ACCENT_CHIP_SHADOW,
+} from "@/lib/glossy-theme";
+import {
+  JOURNEY_LEVEL_OPTIONS,
+  cefrFromProfile,
+  hskProfileFieldsFromCefr,
+  type CefrLevel,
+} from "@/lib/levelBands";
 
-/** Primary actions — same language as /onboarding/story & StoryWizard */
+const NAVY = "#071E2E";
+const BLUE = "#2176AE";
+const MUTED = "#5A7A90";
+const CARD_BORDER = "#C2DCF0";
+const FONT_BODY = "'DM Sans', system-ui, sans-serif";
+const FONT_DISPLAY = "'Lora', Georgia, serif";
+
+const CARD = "w-full rounded-3xl bg-white p-6 sm:p-8";
+
+/** Primary actions — glossy navy CTA (shared with HSK onboarding / landing) */
 const BTN_PRIMARY =
-  "flex w-full min-h-[48px] items-center justify-center gap-2 rounded-lg border border-gray-900 bg-gray-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-800 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:bg-gray-900 sm:text-base";
+  "flex w-full min-h-[48px] items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:brightness-100 sm:text-base";
 
 /** Outline / chip — unselected */
 const CHIP_OFF =
-  "rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 hover:bg-gray-50";
+  "rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:bg-[#F4FAFD]";
 
 /** Chip — selected */
 const CHIP_ON =
-  "rounded-full border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-800";
+  "rounded-full border-0 px-4 py-2 text-sm font-medium text-white transition-colors";
 
 /** “Why” & similar option rows */
 const OPTION_ROW =
-  "flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition-all hover:border-gray-900 hover:bg-gray-50";
-
-const OPTION_ROW_ON =
-  "border-2 border-gray-900 bg-gray-50 shadow-sm ring-1 ring-gray-900/10";
-
-const LEVEL_OPTIONS = [
-  {
-    value: "A0",
-    label: "Just starting out",
-    sublabel: "I don't know any Mandarin yet",
-    note: "Everyone starts here. LingoIsland is built for this.",
-  },
-  {
-    value: "A1",
-    label: "I know a little",
-    sublabel: "Greetings, numbers, basic phrases",
-  },
-  {
-    value: "A2",
-    label: "Getting the basics",
-    sublabel: "Simple exchanges, some characters",
-  },
-  {
-    value: "B1",
-    label: "Simple conversations",
-    sublabel: "I get by but have big gaps",
-  },
-  {
-    value: "B2",
-    label: "Conversational",
-    sublabel: "I speak but vocabulary holds me back",
-  },
-  {
-    value: "C1",
-    label: "Pretty fluent",
-    sublabel: "Filling specific areas",
-  },
-] as const;
+  "flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-left transition-all hover:bg-[#F4FAFD]";
 
 const WHY_OPTIONS = [
   {
@@ -190,8 +181,6 @@ const BRANCH_OPTIONS: Record<
   },
 };
 
-const BASE_CEFR_LEVELS = ["A0", "A1", "A2", "B1", "B2", "C1"] as const;
-type CefrLevel = (typeof BASE_CEFR_LEVELS)[number];
 type WhyKey = (typeof WHY_OPTIONS)[number]["key"];
 
 const A0_TOPIC = "Introducing Yourself";
@@ -239,16 +228,6 @@ type Step =
   | "generating"
   | "starting-island";
 
-/** Maps stored profile values (including legacy A1-/A1+ style) to a base band. */
-function cefrFromProfile(raw: string | null | undefined): CefrLevel {
-  if (!raw) return "B1";
-  const t = raw.trim();
-  if (BASE_CEFR_LEVELS.includes(t as CefrLevel)) return t as CefrLevel;
-  const m = t.toUpperCase().match(/^(A0|A1|A2|B1|B2|C1)/);
-  if (m) return m[1] as CefrLevel;
-  return "B1";
-}
-
 function whyKeyFromProfile(
   goal: string | null | undefined,
 ): WhyKey | "" {
@@ -281,8 +260,13 @@ export default function JourneyOnboardingFlow({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Stub HSK entry point (?track=hsk from /app/hskprep's CTA) — writes just
+  // enough to user_profiles to make the in-app HSK track reachable for
+  // testing. Not the real HSK onboarding UX, which is a separate prompt.
+  const hskTrack = searchParams.get("track") === "hsk";
   const supabase = useMemo(() => createClient(), []);
   const urlTopicSynced = useRef(false);
+  const islandFromUrl = searchParams.get("islandId")?.trim() || null;
   const [step, setStep] = useState<Step>("level");
   const [topic, setTopic] = useState("");
   const [cefrLevel, setCefrLevel] = useState<CefrLevel | "">("");
@@ -335,10 +319,18 @@ export default function JourneyOnboardingFlow({
     }
   };
 
+  // Legacy ?islandId= links used to resume the free first lesson — send them
+  // to the plan reveal / upgrade instead.
+  useEffect(() => {
+    if (!islandFromUrl || !publicSurface) return;
+    router.replace(buildUpgradePageUrl(islandFromUrl));
+  }, [islandFromUrl, publicSurface, router]);
+
   // After login: restore draft and jump to generation.
   useEffect(() => {
     if (typeof window === "undefined" || draftResumeRef.current) return;
     if (searchParams.get("resume") !== "1") return;
+    if (searchParams.get("islandId")) return;
     const raw = sessionStorage.getItem(JOURNEY_ONBOARDING_DRAFT_KEY);
     if (!raw) {
       router.replace(JOURNEY_RESUME_PATH);
@@ -366,6 +358,7 @@ export default function JourneyOnboardingFlow({
   // Deep link: ?topic=… prefills topic and starts at why (skip level only if we already have level from profile later)
   useEffect(() => {
     if (urlTopicSynced.current) return;
+    if (searchParams.get("islandId")) return;
     const t = searchParams.get("topic")?.trim();
     if (t) {
       urlTopicSynced.current = true;
@@ -437,7 +430,9 @@ export default function JourneyOnboardingFlow({
         typeof up?.learning_goal === "string" && up.learning_goal.length > 0;
       setNeedsLevel(!levelExists);
       setNeedsWhy(!whyExists);
-      if (levelExists) setCefrLevel(cefrFromProfile(up?.cefr_level));
+      if (levelExists) {
+        setCefrLevel(cefrFromProfile(up?.cefr_level));
+      }
       if (whyExists) {
         setProfileLearningGoal(up?.learning_goal ?? "");
         setWhyKey(whyKeyFromProfile(up?.learning_goal));
@@ -449,26 +444,30 @@ export default function JourneyOnboardingFlow({
     };
   }, [smartProfileSkip, supabase]);
 
+  // When profile already has a level, skip the level question instead of
+  // showing it pre-selected (e.g. a stored C1 band).
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-      const { data: up } = await supabase
-        .from("user_profiles")
-        .select("cefr_level")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (!cancelled && up?.cefr_level) {
-        setCefrLevel(cefrFromProfile(up.cefr_level));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [supabase]);
+    if (!smartProfileSkip || !profileLoaded || step !== "level" || needsLevel) {
+      return;
+    }
+    if (!collectProfileQuestions) {
+      if (!whyKey) setWhyKey("fluency");
+      if (!branchAnswer) setBranchAnswer("curious");
+      setStep("generating");
+      return;
+    }
+    if (needsWhy) setStep("why");
+    else setStep("generating");
+  }, [
+    smartProfileSkip,
+    profileLoaded,
+    step,
+    needsLevel,
+    needsWhy,
+    collectProfileQuestions,
+    whyKey,
+    branchAnswer,
+  ]);
 
   useLayoutEffect(() => {
     if (step !== "generating") return;
@@ -514,9 +513,81 @@ export default function JourneyOnboardingFlow({
     }
 
     sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
-    router.push(
-      `/app/topic-islands/${isData.islandId}?journeyFirst=1&learn=true`,
-    );
+    const islandId = isData.islandId as string;
+    if (!islandId) {
+      throw new Error("Could not start island");
+    }
+
+    // Build upgrade snapshot from journey + first island (no free lesson first).
+    let islandName: string | undefined;
+    let journeyTopic = topic.trim() || A0_TOPIC;
+    let wordsPerWeek = 40;
+    let lockedIslands: JourneyNodeSnapshot[] = [];
+    let islandTopic = topic.trim() || A0_TOPIC;
+
+    try {
+      const [islandRes, journeyRes] = await Promise.all([
+        fetch(`/api/topic-islands/${islandId}`),
+        fetch(`/api/journey/${id}`),
+      ]);
+      if (islandRes.ok) {
+        const islandData = await islandRes.json();
+        islandTopic = islandData.island?.topic ?? islandTopic;
+        islandName = islandData.journeyContext?.name ?? islandName;
+        journeyTopic =
+          islandData.journeyContext?.journeyTopic || journeyTopic;
+        wordsPerWeek =
+          islandData.journeyContext?.wordsPerWeek || wordsPerWeek;
+        if (Array.isArray(islandData.journeyContext?.lockedIslands)) {
+          lockedIslands = islandData.journeyContext.lockedIslands;
+        }
+      }
+      if (journeyRes.ok) {
+        const journeyData = await journeyRes.json();
+        journeyTopic = journeyData.journey?.topic || journeyTopic;
+        wordsPerWeek = journeyData.journey?.words_per_week || wordsPerWeek;
+        const nodes = (journeyData.nodes ?? []) as Array<{
+          order: number;
+          name: string;
+          zh: string | null;
+          node_type: "island" | "story";
+          hint: string | null;
+        }>;
+        const firstIsland = nodes.find(
+          (n) => n.node_type === "island" && n.order === 1,
+        );
+        if (firstIsland?.name) islandName = firstIsland.name;
+        if (lockedIslands.length === 0) {
+          lockedIslands = nodes
+            .filter((n) => !(n.node_type === "island" && n.order === 1))
+            .map((n) => ({
+              order: n.order,
+              name: n.name,
+              zh: n.zh,
+              node_type: n.node_type,
+              hint: n.hint,
+            }));
+        }
+      }
+    } catch {
+      // Snapshot still works with topic/level fallbacks.
+    }
+
+    writeUpgradeSnapshot({
+      v: 1,
+      islandId,
+      topic: islandTopic,
+      journeyTopic,
+      islandLevel: level,
+      islandName,
+      wordsLearned: 0,
+      wordsPerWeek,
+      lockedIslands,
+      plan: "monthly",
+      motivationLabel: whyKey ? whyLabel(whyKey) : undefined,
+    });
+    markUpgradePending();
+    router.replace(buildUpgradePageUrl(islandId));
   };
 
   useEffect(() => {
@@ -553,7 +624,14 @@ export default function JourneyOnboardingFlow({
 
         if (smartProfileSkip) {
           const updates: Record<string, unknown> = {};
-          if (needsLevel && cefrLevel) updates.cefr_level = cefrLevel;
+          if (needsLevel && cefrLevel) {
+            updates.cefr_level = cefrLevel;
+            Object.assign(
+              updates,
+              hskProfileFieldsFromCefr(cefrLevel, { setTarget: hskTrack }),
+            );
+            if (hskTrack) updates.product_track = "hsk";
+          }
           if (needsWhy && effectiveWhyText)
             updates.learning_goal = effectiveWhyText;
           if (Object.keys(updates).length > 0) {
@@ -582,6 +660,7 @@ export default function JourneyOnboardingFlow({
               savedNodesRef.current.length > 0
                 ? savedNodesRef.current
                 : undefined,
+            track: hskTrack ? "hsk" : undefined,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -644,12 +723,51 @@ export default function JourneyOnboardingFlow({
     whyKey,
   ]);
 
-  const shell = (inner: ReactNode, maxWidth: "lg" | "2xl" = "lg") => (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center px-6 py-10 sm:py-14">
+  const optionStyle = (selected: boolean) => ({
+    boxShadow: HSK_CARD_SHADOW,
+    borderColor: selected ? NAVY : CARD_BORDER,
+    borderWidth: selected ? 2 : 1,
+    borderStyle: "solid" as const,
+  });
+
+  const shell = (
+    inner: ReactNode,
+    maxWidth: "lg" | "2xl" = "lg",
+    opts?: { bounceLogo?: boolean; hideLogo?: boolean },
+  ) => (
+    <div
+      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-10"
+      style={{ fontFamily: FONT_BODY, background: "#EAF6FB" }}
+    >
       <div
-        className={`w-full ${maxWidth === "2xl" ? "max-w-2xl" : "max-w-lg"}`}
-      >
-        {inner}
+        aria-hidden
+        className="hsk-onboarding-bg absolute inset-0"
+        style={{
+          backgroundImage: "url(/hskprep/hsk-onboarding-bg.png)",
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 55% at 50% 38%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.22) 45%, transparent 72%)",
+        }}
+      />
+      <div className="relative z-10 flex w-full flex-col items-center">
+        {!opts?.hideLogo && (
+          <div className={`mb-6 ${opts?.bounceLogo ? "animate-bounce" : ""}`}>
+            <AppLogo />
+          </div>
+        )}
+        <div
+          className={`${CARD} ${maxWidth === "2xl" ? "max-w-2xl" : "max-w-lg"}`}
+          style={{ boxShadow: HSK_CARD_SHADOW }}
+        >
+          {inner}
+        </div>
       </div>
     </div>
   );
@@ -659,17 +777,40 @@ export default function JourneyOnboardingFlow({
       {[0, 1, 2, 3].map((i) => (
         <div
           key={i}
-          className={`h-1 w-12 rounded-full sm:w-16 ${
-            i <= active ? "bg-gray-900" : "bg-gray-200"
-          }`}
+          className="h-1 w-12 rounded-full sm:w-16"
+          style={{
+            background: i <= active ? BLUE : "rgba(194, 220, 240, 0.9)",
+          }}
         />
       ))}
     </div>
   );
 
+  const heading = (text: string) => (
+    <h2
+      className="mt-6 text-xl font-bold sm:text-2xl"
+      style={{ fontFamily: FONT_DISPLAY, color: NAVY }}
+    >
+      {text}
+    </h2>
+  );
+
+  const subcopy = (text: ReactNode) => (
+    <p className="mt-2 text-sm" style={{ color: MUTED }}>
+      {text}
+    </p>
+  );
+
+  const primaryBtnStyle = {
+    background: HSK_BTN_GRADIENT,
+    boxShadow: HSK_BTN_SHADOW,
+  };
+
   if (!profileLoaded) {
     return shell(
-      <p className="text-sm text-gray-500">Loading your learning profile…</p>,
+      <p className="text-sm" style={{ color: MUTED }}>
+        Loading your learning profile…
+      </p>,
       "lg",
     );
   }
@@ -678,39 +819,43 @@ export default function JourneyOnboardingFlow({
     return shell(
       <>
         {progressDash(0)}
-        <h2 className="mt-8 text-2xl font-black text-gray-900">
-          What best describes your level?
-        </h2>
-        <p className="mt-2 text-gray-600">
-          Vocabulary and sentence difficulty will match this. You can change it
-          anytime in settings.
-        </p>
-        <div className="mt-6 space-y-2">
-          {LEVEL_OPTIONS.map((group) => (
-            <button
-              key={group.value}
-              type="button"
-              onClick={() => setCefrLevel(group.value)}
-              className={`${OPTION_ROW} flex-col items-stretch gap-1 sm:flex-row sm:items-start ${
-                cefrLevel === group.value ? OPTION_ROW_ON : ""
-              }`}
-            >
-              <div className="text-left">
-                <h3 className="text-sm font-bold text-gray-900">
-                  {group.label}{" "}
-                  <span className="font-normal text-gray-500">
-                    ({group.value})
-                  </span>
-                </h3>
-                <p className="mt-1 text-sm text-gray-600">{group.sublabel}</p>
-                {"note" in group && group.note ? (
-                  <p className="mt-1 text-xs font-medium text-teal-600">
-                    {group.note}
+        {heading("What best describes your level?")}
+        {subcopy(
+          "Vocabulary and sentence difficulty will match this. You can change it anytime in settings.",
+        )}
+        <div className="mt-6 space-y-3">
+          {JOURNEY_LEVEL_OPTIONS.map((group) => {
+            const selected = cefrLevel === group.cefr;
+            return (
+              <button
+                key={group.cefr}
+                type="button"
+                onClick={() => setCefrLevel(group.cefr)}
+                className={`${OPTION_ROW} flex-col items-stretch gap-1 sm:flex-row sm:items-start`}
+                style={optionStyle(selected)}
+              >
+                <div className="text-left">
+                  <h3 className="text-sm font-bold" style={{ color: NAVY }}>
+                    {group.label}{" "}
+                    <span className="font-normal" style={{ color: MUTED }}>
+                      (HSK {group.hsk})
+                    </span>
+                  </h3>
+                  <p className="mt-1 text-sm" style={{ color: MUTED }}>
+                    {group.sublabel}
                   </p>
-                ) : null}
-              </div>
-            </button>
-          ))}
+                  {group.note ? (
+                    <p
+                      className="mt-1 text-xs font-medium"
+                      style={{ color: BLUE }}
+                    >
+                      {group.note}
+                    </p>
+                  ) : null}
+                </div>
+              </button>
+            );
+          })}
         </div>
         <button
           type="button"
@@ -721,6 +866,12 @@ export default function JourneyOnboardingFlow({
             setError(null);
             try {
               const selectedLevel = cefrLevel;
+              const hskFields = hskProfileFieldsFromCefr(selectedLevel, {
+                setTarget: hskTrack,
+              });
+              const profilePatch = hskTrack
+                ? { product_track: "hsk" as const, ...hskFields }
+                : hskFields;
               const {
                 data: { user },
               } = await supabase.auth.getUser();
@@ -733,12 +884,13 @@ export default function JourneyOnboardingFlow({
                 if (existing) {
                   await supabase
                     .from("user_profiles")
-                    .update({ cefr_level: selectedLevel })
+                    .update({ cefr_level: selectedLevel, ...profilePatch })
                     .eq("user_id", user.id);
                 } else {
                   await supabase.from("user_profiles").insert({
                     user_id: user.id,
                     cefr_level: selectedLevel,
+                    ...profilePatch,
                   });
                 }
               }
@@ -766,7 +918,8 @@ export default function JourneyOnboardingFlow({
               setLevelSaving(false);
             }
           }}
-          className={`mt-10 ${BTN_PRIMARY}`}
+          className={`mt-8 ${BTN_PRIMARY}`}
+          style={primaryBtnStyle}
         >
           {levelSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
           Continue
@@ -781,26 +934,30 @@ export default function JourneyOnboardingFlow({
     return shell(
       <>
         {progressDash(1)}
-        <h2 className="mt-8 text-2xl font-black text-gray-900">
-          Why are you learning Mandarin?
-        </h2>
-        <p className="mt-2 text-gray-600">
-          We&apos;ll tailor your vocabulary and stories around your real goals.
-        </p>
-        <div className="mt-6 space-y-2">
-          {WHY_OPTIONS.map((o) => (
-            <button
-              key={o.key}
-              type="button"
-              onClick={() => setWhyKey(o.key)}
-              className={`${OPTION_ROW} flex-col items-stretch gap-1 ${
-                whyKey === o.key ? OPTION_ROW_ON : ""
-              }`}
-            >
-              <span className="font-medium text-gray-900">{o.label}</span>
-              <span className="text-sm text-gray-600">{o.sublabel}</span>
-            </button>
-          ))}
+        {heading("Why are you learning Mandarin?")}
+        {subcopy(
+          "We'll tailor your vocabulary and stories around your real goals.",
+        )}
+        <div className="mt-6 space-y-3">
+          {WHY_OPTIONS.map((o) => {
+            const selected = whyKey === o.key;
+            return (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => setWhyKey(o.key)}
+                className={`${OPTION_ROW} flex-col items-stretch gap-1`}
+                style={optionStyle(selected)}
+              >
+                <span className="font-medium" style={{ color: NAVY }}>
+                  {o.label}
+                </span>
+                <span className="text-sm" style={{ color: MUTED }}>
+                  {o.sublabel}
+                </span>
+              </button>
+            );
+          })}
         </div>
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
         <button
@@ -811,7 +968,8 @@ export default function JourneyOnboardingFlow({
             setBranchAnswer("");
             setStep("branch");
           }}
-          className={`mt-10 ${BTN_PRIMARY}`}
+          className={`mt-8 ${BTN_PRIMARY}`}
+          style={primaryBtnStyle}
         >
           Continue
         </button>
@@ -824,22 +982,24 @@ export default function JourneyOnboardingFlow({
     return shell(
       <>
         {progressDash(2)}
-        <h2 className="mt-8 text-2xl font-black text-gray-900">
-          {branch.question}
-        </h2>
-        <div className="mt-6 space-y-2">
-          {branch.options.map((o) => (
-            <button
-              key={o.key}
-              type="button"
-              onClick={() => setBranchAnswer(o.key)}
-              className={`${OPTION_ROW} ${
-                branchAnswer === o.key ? OPTION_ROW_ON : ""
-              }`}
-            >
-              <span className="font-medium text-gray-900">{o.label}</span>
-            </button>
-          ))}
+        {heading(branch.question)}
+        <div className="mt-6 space-y-3">
+          {branch.options.map((o) => {
+            const selected = branchAnswer === o.key;
+            return (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => setBranchAnswer(o.key)}
+                className={OPTION_ROW}
+                style={optionStyle(selected)}
+              >
+                <span className="font-medium" style={{ color: NAVY }}>
+                  {o.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
         <button
           type="button"
@@ -850,7 +1010,8 @@ export default function JourneyOnboardingFlow({
             setTopic("");
             setStep("topic");
           }}
-          className={`mt-10 ${BTN_PRIMARY}`}
+          className={`mt-8 ${BTN_PRIMARY}`}
+          style={primaryBtnStyle}
         >
           Continue
         </button>
@@ -864,17 +1025,20 @@ export default function JourneyOnboardingFlow({
       return shell(
         <>
           {progressDash(3)}
-          <div className="mt-8 rounded-2xl border-2 border-gray-900 bg-white p-8 text-center shadow-sm">
+          <div className="mt-6 text-center">
             <img
               src="/capybara-waving.png"
               alt=""
               className="mx-auto h-20 w-20 rounded-full object-cover"
               aria-hidden
             />
-            <h2 className="mt-4 text-2xl font-black text-gray-900">
+            <h2
+              className="mt-4 text-xl font-bold sm:text-2xl"
+              style={{ fontFamily: FONT_DISPLAY, color: NAVY }}
+            >
               {A0_TOPIC}
             </h2>
-            <p className="mt-3 text-gray-600">
+            <p className="mt-3 text-sm" style={{ color: MUTED }}>
               Your first five Mandarin words — greetings and introducing
               yourself. No prior knowledge needed.
             </p>
@@ -886,6 +1050,7 @@ export default function JourneyOnboardingFlow({
                 setStep("generating");
               }}
               className={`mt-8 ${BTN_PRIMARY}`}
+              style={primaryBtnStyle}
             >
               Let&apos;s start →
             </button>
@@ -898,31 +1063,47 @@ export default function JourneyOnboardingFlow({
     return shell(
       <>
         {progressDash(3)}
-        <h2 className="mt-8 text-2xl font-black text-gray-900">
-          What topic do you want to learn?
-        </h2>
-        <p className="mt-2 text-gray-600">
-          Pick a suggestion or type your own topic.
-        </p>
+        {heading("What topic do you want to learn?")}
+        {subcopy("Pick a suggestion or type your own topic.")}
         <div className="mt-6 flex flex-wrap gap-2">
-          {topicSuggestions.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setTopic(c)}
-              className={topic === c ? CHIP_ON : CHIP_OFF}
-            >
-              {c}
-            </button>
-          ))}
+          {topicSuggestions.map((c) => {
+            const selected = topic === c;
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setTopic(c)}
+                className={selected ? CHIP_ON : CHIP_OFF}
+                style={
+                  selected
+                    ? {
+                        background: LINGO_ACCENT_GRADIENT_GLOSSY,
+                        boxShadow: LINGO_ACCENT_CHIP_SHADOW,
+                      }
+                    : {
+                        borderColor: CARD_BORDER,
+                        color: NAVY,
+                        background: "white",
+                      }
+                }
+              >
+                {c}
+              </button>
+            );
+          })}
         </div>
-        <label className="mt-6 block text-sm font-medium text-gray-700">
+        <label className="mt-6 block text-sm font-medium" style={{ color: NAVY }}>
           <span className="sr-only">Topic</span>
           <input
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder={topicPlaceholder}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+            className="w-full rounded-lg border px-4 py-3 text-base shadow-sm focus:outline-none"
+            style={{
+              borderColor: CARD_BORDER,
+              color: NAVY,
+              background: "white",
+            }}
           />
         </label>
         {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
@@ -933,7 +1114,8 @@ export default function JourneyOnboardingFlow({
             setError(null);
             setStep("generating");
           }}
-          className={`mt-10 ${BTN_PRIMARY}`}
+          className={`mt-8 ${BTN_PRIMARY}`}
+          style={primaryBtnStyle}
         >
           Build my journey →
         </button>
@@ -944,11 +1126,11 @@ export default function JourneyOnboardingFlow({
   if (step === "generating") {
     if (isA0) {
       return shell(
-        <div className="flex flex-col items-center text-center">
+        <div className="flex flex-col items-center py-4 text-center">
           <div className="animate-bounce" aria-hidden>
-            <AppLogo size="md" textClassName="text-xl font-black text-gray-900" />
+            <AppLogo size="md" />
           </div>
-          <p className="mt-6 text-sm text-gray-500">
+          <p className="mt-6 text-sm" style={{ color: MUTED }}>
             Starting your first lesson…
           </p>
           {error ? (
@@ -967,33 +1149,42 @@ export default function JourneyOnboardingFlow({
       <>
         <div className="flex flex-col items-center text-center">
           <div className="animate-bounce" aria-hidden>
-            <AppLogo
-              size="md"
-              textClassName="text-xl font-black text-gray-900"
-            />
+            <AppLogo size="md" />
           </div>
           {!publicSurface && (
-            <p className="mt-4 text-sm text-gray-500">
-              Building your journey — you'll be taken there in a moment
+            <p className="mt-4 text-sm" style={{ color: MUTED }}>
+              Building your journey — you&apos;ll be taken there in a moment
             </p>
           )}
         </div>
-        <div className="mx-auto mt-6 h-2 w-full max-w-md overflow-hidden rounded-full bg-gray-200">
+        <div
+          className="mx-auto mt-6 h-2.5 w-full max-w-md overflow-hidden rounded-full"
+          style={{ background: "#E0F0F8" }}
+        >
           <div
-            className="h-full rounded-full bg-gray-900 transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${progressPct}%`,
+              background: `linear-gradient(90deg, ${BLUE}, #59C6DE)`,
+              boxShadow: "0 0 12px rgba(33,118,174,0.35)",
+            }}
           />
         </div>
-        <p className="mt-2 text-center text-xs font-medium text-gray-500">
+        <p
+          className="mt-2 text-center text-xs font-medium"
+          style={{ color: MUTED }}
+        >
           {progressPct}% complete
         </p>
-        <ul className="mt-10 w-full space-y-3 text-left">
+        <ul className="mt-8 w-full space-y-3 text-left">
           {genSteps.map((s, i) => (
             <li
               key={s}
-              className={`text-gray-800 transition-opacity ${
-                i < generatingStep ? "opacity-100" : "opacity-30"
-              }`}
+              className="transition-opacity"
+              style={{
+                color: NAVY,
+                opacity: i < generatingStep ? 1 : 0.3,
+              }}
             >
               {s}
             </li>
@@ -1008,32 +1199,31 @@ export default function JourneyOnboardingFlow({
 
   if (step === "starting-island") {
     return shell(
-      <div className="flex flex-col items-center text-center">
+      <div className="flex flex-col items-center py-2 text-center">
         <div className="animate-bounce" aria-hidden>
-          <AppLogo size="md" textClassName="text-xl font-black text-gray-900" />
+          <AppLogo size="md" />
         </div>
-        <h2 className="mt-8 text-2xl font-black text-gray-900">
-          {isA0 ? "Getting your first words ready…" : "Building your first island…"}
+        <h2
+          className="mt-6 text-xl font-bold sm:text-2xl"
+          style={{ fontFamily: FONT_DISPLAY, color: NAVY }}
+        >
+          Building your Mandarin path…
         </h2>
-        <p className="mt-3 text-gray-600">
-          {isA0 ? (
-            <>
-              Loading greetings and introductions for absolute beginners.
-              <br />
-              This only takes a moment.
-            </>
-          ) : (
-            <>
-              We&apos;re generating 3 words tailored to your level and topic.
-              <br />
-              This only takes a moment.
-            </>
-          )}
+        <p className="mt-3 text-sm" style={{ color: MUTED }}>
+          We&apos;re setting up your first islands around your goals.
+          <br />
+          This only takes a moment.
         </p>
-        <div className="mx-auto mt-8 h-2 w-full max-w-xs overflow-hidden rounded-full bg-gray-200">
+        <div
+          className="mx-auto mt-8 h-2.5 w-full max-w-xs overflow-hidden rounded-full"
+          style={{ background: "#E0F0F8" }}
+        >
           <div
-            className="h-full animate-pulse rounded-full bg-gray-900"
-            style={{ width: "60%" }}
+            className="h-full animate-pulse rounded-full"
+            style={{
+              width: "60%",
+              background: `linear-gradient(90deg, ${BLUE}, #59C6DE)`,
+            }}
           />
         </div>
         {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
@@ -1041,6 +1231,7 @@ export default function JourneyOnboardingFlow({
           <button
             type="button"
             className={`mt-6 ${BTN_PRIMARY}`}
+            style={primaryBtnStyle}
             onClick={() => {
               void startIslandAndRedirect(journeyId, cefrLevel || "B1").catch(
                 (e) => {
@@ -1056,6 +1247,7 @@ export default function JourneyOnboardingFlow({
         ) : null}
       </div>,
       "lg",
+      { hideLogo: true },
     );
   }
 

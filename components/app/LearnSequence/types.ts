@@ -12,6 +12,8 @@ export interface LearnWord {
   pinyin: string;
   english: string;
   position?: number;
+  /** Set for words drawn from an official HSK band (curriculum units). */
+  hsk_level?: number | null;
   sentences: LearnSentence[];
 }
 

@@ -8,13 +8,13 @@ import {
   type SentenceStyle,
 } from "@/lib/sentenceStyle";
 
-const LEVELS = [
-  { code: "A1", label: "A1", desc: "Absolute beginner" },
-  { code: "A2", label: "A2", desc: "Elementary" },
-  { code: "B1", label: "B1", desc: "Intermediate" },
-  { code: "B2", label: "B2", desc: "Upper intermediate" },
-  { code: "C1", label: "C1", desc: "Advanced" },
-];
+import { PROFILE_LEVEL_OPTIONS } from "@/lib/levelBands";
+
+const LEVELS = PROFILE_LEVEL_OPTIONS.map((o) => ({
+  code: o.cefr,
+  label: `HSK ${o.hsk}`,
+  desc: o.label,
+}));
 
 export default function JourneyCreatePage() {
   const router = useRouter();

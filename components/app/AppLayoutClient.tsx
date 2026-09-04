@@ -6,9 +6,9 @@ import { PiBookOpenTextLight } from "react-icons/pi";
 import { BsCardChecklist } from "react-icons/bs";
 import { TbRobot } from "react-icons/tb";
 import { createPortal } from "react-dom";
-import { AnimatePresence } from "framer-motion";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/app/Sidebar";
+import SideUpgradeModal from "@/components/app/SideUpgradeModal";
 import MobileTabBar from "@/components/app/MobileTabBar";
 import AppLogo from "@/components/app/AppLogo";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@/contexts/OnboardingContext";
 import { ProgressIslandUpgradeProvider } from "@/contexts/ProgressIslandUpgradeContext";
 import OnboardingNudgeCard from "@/components/Onboarding/OnboardingNudgeCard";
+import OnboardingNudgeBanner from "@/components/Onboarding/OnboardingNudgeBanner";
 import ProgressIslandUpgradePopup from "@/components/app/ProgressIslandUpgradePopup";
 import type { EntrySource } from "@/types/onboarding";
 import { createClient } from "@/lib/supabase/browser";
@@ -66,12 +67,14 @@ const SidebarContext = createContext<{
   openAccountModal: (tab?: "subscription" | "profile") => void;
   openSignupModal: (feature?: string) => void;
   isAnonymous: boolean;
+  productTrack: "core" | "hsk";
 }>({
   isOpen: false,
   setIsOpen: () => {},
   openAccountModal: () => {},
   openSignupModal: () => {},
   isAnonymous: false,
+  productTrack: "core",
 });
 
 export const useSidebar = () => useContext(SidebarContext);
@@ -98,8 +101,9 @@ function OnboardingRedirect() {
 
   useEffect(() => {
     if (!pathname?.startsWith("/app")) return;
-    if (pathname.startsWith("/app/onboarding")) return;
     if (pathname.startsWith("/app/topic-islands/")) return;
+
+    const onOnboardingPage = pathname.startsWith("/app/onboarding");
 
     let cancelled = false;
     const run = async () => {
@@ -111,10 +115,13 @@ function OnboardingRedirect() {
       if (cancelled) return;
       if (gate.shouldMarkOnboardingComplete) {
         await markJourneyOnboardingComplete(supabase, user.id);
-        return;
       }
       if (gate.needsJourneyWizard) {
-        router.replace("/app/onboarding");
+        if (!onOnboardingPage) router.replace("/app/onboarding");
+        return;
+      }
+      if (onOnboardingPage) {
+        router.replace("/app");
       }
     };
     void run();
@@ -126,9 +133,32 @@ function OnboardingRedirect() {
   return null;
 }
 
+/** Opens the same upgrade UX after a server-side direct-URL redirect. */
+function ProductAccessUpgradeGate() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedProduct = searchParams.get("upgradeProduct");
+  const product =
+    requestedProduct === "core" || requestedProduct === "hsk"
+      ? requestedProduct
+      : null;
+
+  if (!product) return null;
+
+  return (
+    <SideUpgradeModal
+      open
+      product={product}
+      onClose={() => router.replace(pathname)}
+    />
+  );
+}
+
 function OnboardingUpgradeGate() {
   const pathname = usePathname();
   const router = useRouter();
+  const supabase = createClient();
   const { isPro, isLoading } = useSubscription();
 
   useEffect(() => {
@@ -140,23 +170,61 @@ function OnboardingUpgradeGate() {
     if (!pathname?.startsWith("/app")) return;
     if (!isUpgradePending()) return;
 
-    const snap = readUpgradeSnapshot();
-    router.replace(buildUpgradePageUrl(snap?.islandId ?? ""));
-  }, [isLoading, isPro, pathname, router]);
+    // Only trap anonymous guests mid-onboarding. A permanent signed-in account
+    // (even free) must not be bounced back to /onboarding/upgrade after login —
+    // that was sending existing users to the paywall forever.
+    let cancelled = false;
+    void supabase.auth.getUser().then(({ data: { user } }) => {
+      if (cancelled) return;
+      if (!user?.is_anonymous) {
+        clearUpgradePending();
+        return;
+      }
+      const snap = readUpgradeSnapshot();
+      router.replace(buildUpgradePageUrl(snap?.islandId ?? ""));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, isPro, pathname, router, supabase]);
 
   return null;
 }
 
 function CheckoutSuccessHandler() {
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
-    if (pathname !== "/app" || typeof window === "undefined") return;
+    const isIslandsHome = pathname === "/app";
+    const isHskHome = pathname === "/hsk/app";
+    if ((!isIslandsHome && !isHskHome) || typeof window === "undefined") {
+      return;
+    }
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") !== "success") return;
+
+    const snap = readUpgradeSnapshot();
     clearUpgradePending();
     invalidateSubscriptionCache();
-  }, [pathname]);
+    sessionStorage.removeItem("lingo_stripe_reconcile_v1");
+
+    if (isHskHome) {
+      window.history.replaceState({}, "", "/hsk/app");
+      router.refresh();
+      return;
+    }
+
+    // After journey onboarding purchase, open the first island so learning
+    // starts immediately (island may still be generating — PreCourseLoading handles that).
+    if (snap?.islandId) {
+      router.replace(`/app/topic-islands/${snap.islandId}`);
+      return;
+    }
+
+    window.history.replaceState({}, "", "/app");
+  }, [pathname, router]);
 
   return null;
 }
@@ -171,35 +239,23 @@ function OnboardingBootstrap() {
 }
 
 function OnboardingNudgeSlot() {
-  const { currentNudge, dismissNudge, completeNudge } = useOnboarding();
-  const { isAnonymous, openSignupModal } = useSidebar();
+  const { currentNudge } = useOnboarding();
+  const { productTrack } = useSidebar();
   const pathname = usePathname();
+  const isHome = pathname === "/app";
   const isIslandPage =
     pathname?.startsWith("/app/topic-islands/") &&
     pathname !== "/app/topic-islands";
 
-  if (!currentNudge) return null;
-
-  const wrapperBg = isIslandPage ? "bg-gray-50" : "";
+  // Home renders the nudge below TopBar inside HomeDashboard.
+  if (isHome || productTrack !== "core" || !currentNudge || !isIslandPage) {
+    return null;
+  }
 
   return (
-    <div className={`relative z-50 w-full ${wrapperBg} pt-4 pb-2`}>
-      <div className="mx-auto max-w-3xl px-4">
-        <AnimatePresence mode="wait">
-          <OnboardingNudgeCard
-            key={currentNudge.key}
-            nudge={currentNudge}
-            onDismiss={() => dismissNudge(currentNudge.key)}
-            onComplete={() => completeNudge(currentNudge.key)}
-            onCtaClick={
-              isAnonymous
-                ? () => {
-                    openSignupModal(currentNudge.title);
-                  }
-                : undefined
-            }
-          />
-        </AnimatePresence>
+    <div className="relative z-40 w-full bg-gray-50 px-4 pt-4 pb-3 md:px-8">
+      <div className="mx-auto max-w-[1060px]">
+        <OnboardingNudgeBanner />
       </div>
     </div>
   );
@@ -208,9 +264,11 @@ function OnboardingNudgeSlot() {
 function PersistentSettingsNudge() {
   const { persistentSettingsNudge, dismissNudge, completeNudge } =
     useOnboarding();
-  const { openAccountModal, isAnonymous } = useSidebar();
+  const { openAccountModal, isAnonymous, productTrack } = useSidebar();
 
-  if (!persistentSettingsNudge || isAnonymous) return null;
+  if (!persistentSettingsNudge || isAnonymous || productTrack !== "core") {
+    return null;
+  }
 
   const handleOpenSettings = () => {
     openAccountModal("profile");
@@ -218,22 +276,29 @@ function PersistentSettingsNudge() {
   };
 
   return (
-    <div className="fixed bottom-24 left-4 z-50 max-w-sm md:bottom-4 md:left-[272px]">
-      <OnboardingNudgeCard
-        key={persistentSettingsNudge.key}
-        nudge={persistentSettingsNudge}
-        onDismiss={() => dismissNudge(persistentSettingsNudge.key)}
-        onComplete={() => completeNudge(persistentSettingsNudge.key)}
-        onCtaClick={handleOpenSettings}
-      />
+    <div className="pointer-events-none fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] right-4 z-40 max-w-sm md:bottom-6 md:right-8">
+      <div className="pointer-events-auto">
+        <OnboardingNudgeCard
+          key={persistentSettingsNudge.key}
+          nudge={persistentSettingsNudge}
+          onDismiss={() => dismissNudge(persistentSettingsNudge.key)}
+          onComplete={() => completeNudge(persistentSettingsNudge.key)}
+          onCtaClick={handleOpenSettings}
+        />
+      </div>
     </div>
   );
 }
 
 export default function AppLayoutClient({
   children,
+  productTrack = "core",
+  hskAppTheme = false,
 }: {
   children: React.ReactNode;
+  productTrack?: "core" | "hsk";
+  /** Applies the HSK Prep typography only to the standalone /hsk/app preview. */
+  hskAppTheme?: boolean;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -305,8 +370,9 @@ export default function AppLayoutClient({
       openAccountModal,
       openSignupModal,
       isAnonymous,
+      productTrack,
     }),
-    [sidebarOpen, openAccountModal, openSignupModal, isAnonymous],
+    [sidebarOpen, openAccountModal, openSignupModal, isAnonymous, productTrack],
   );
 
   return (
@@ -326,8 +392,9 @@ export default function AppLayoutClient({
           <OnboardingUpgradeGate />
           <CheckoutSuccessHandler />
           <OnboardingBootstrap />
+          <ProductAccessUpgradeGate />
           {isFullscreenOnboarding ? (
-            <div className="min-h-screen bg-white">
+            <div className={`min-h-screen bg-white ${hskAppTheme ? "hsk-app-theme lingo-body" : ""}`}>
               <main className="flex min-h-screen w-full flex-col bg-white">
                 {children}
               </main>

@@ -24,6 +24,7 @@ export async function GET(
       .select('*')
       .eq('id', params.id)
       .eq('user_id', user.id)
+      .eq('origin', 'islands')
       .single()
 
     if (error || !quizIsland) {
@@ -95,6 +96,7 @@ export async function PATCH(
       .update({ name: name.trim() })
       .eq('id', quizIslandId)
       .eq('user_id', user.id)
+      .eq('origin', 'islands')
       .select()
       .single()
 

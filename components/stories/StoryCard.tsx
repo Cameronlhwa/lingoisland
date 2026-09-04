@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
+import { hskLabelForCefr } from "@/lib/levelBands";
 
 export type StorySummary = {
   id: string;
@@ -36,7 +37,7 @@ export default function StoryCard({ story }: { story: StorySummary }) {
     >
       <div className="mb-3 flex items-center justify-between">
         <div className="text-sm font-medium text-gray-600">
-          {story.level} {dateLabel ? `• ${dateLabel}` : ""}
+          {hskLabelForCefr(story.level)} {dateLabel ? `• ${dateLabel}` : ""}
         </div>
         <span
           className={`rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${badgeTone}`}

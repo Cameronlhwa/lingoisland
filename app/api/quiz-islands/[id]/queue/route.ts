@@ -83,6 +83,7 @@ export async function GET(
       .select('id')
       .eq('id', params.id)
       .eq('user_id', user.id)
+      .eq('origin', 'islands')
       .single()
 
     if (!quizIsland) {

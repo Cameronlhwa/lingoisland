@@ -4,6 +4,7 @@ import { getFixedA0JourneyPlan, isA0Level } from '@/lib/a0Course'
 import { generateJourneyPlan } from '@/lib/deepseek/generate-journey'
 import { normalizeSentenceStyle } from '@/lib/sentenceStyle'
 import { journeysHasSentenceStyleColumn } from '@/lib/supabase/schemaFeatures'
+import { hskProfileFieldsFromCefr } from '@/lib/levelBands'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -30,6 +31,8 @@ type Body = {
   sentenceStyle?: string
   /** Pre-generated plan nodes from the unauthenticated preview — skips DeepSeek */
   savedNodes?: SavedNode[]
+  /** Set by the ?track=hsk onboarding entry point. */
+  track?: string
 }
 
 export async function POST(request: Request) {
@@ -222,10 +225,21 @@ export async function POST(request: Request) {
     }
 
     // Keep profile CEFR aligned with the selected journey level so island generation
-    // reflects what the user picked during onboarding.
+    // reflects what the user picked during onboarding. Also dual-write HSK fields
+    // (and stamp product_track when ?track=hsk) after auth is guaranteed.
+    const hskFields = hskProfileFieldsFromCefr(level, {
+      setTarget: body.track === 'hsk',
+    })
+    const hskStub =
+      body.track === 'hsk'
+        ? { product_track: 'hsk' as const, ...hskFields }
+        : hskFields
     const { error: upsertProfileErr } = await supabase
       .from('user_profiles')
-      .upsert({ user_id: user.id, cefr_level: level }, { onConflict: 'user_id' })
+      .upsert(
+        { user_id: user.id, cefr_level: level, ...hskStub },
+        { onConflict: 'user_id' }
+      )
     if (upsertProfileErr) {
       console.warn('[journey/generate] user_profiles upsert', upsertProfileErr)
     }

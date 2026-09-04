@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
+import { isIslandsExperienceActive } from "@/lib/utils/app-side";
 import type {
   OnboardingStepKey,
   OnboardingNudge,
@@ -78,8 +79,9 @@ function parseRow(row: Record<string, unknown>): UserOnboardingRow {
   };
 }
 
-/** Nudges show on home or topic island page (for visit_home only). */
+/** Nudges show on home or topic island page (for visit_home only) — Islands track only. */
 function isEligiblePath(step: OnboardingStepKey, pathname: string): boolean {
+  if (!isIslandsExperienceActive(pathname)) return false;
   if (step === "visit_home") {
     return pathname === "/app/topic-islands" || pathname.startsWith("/app/topic-islands/");
   }
@@ -325,7 +327,13 @@ export function useOnboardingNudges() {
 
   // Persistent settings nudge - always show if not completed/dismissed, regardless of rate limit
   let persistentSettingsNudge: OnboardingNudge | null = null;
-  if (!disabled && !state.loading && state.row && pathname === "/app") {
+  if (
+    !disabled &&
+    !state.loading &&
+    state.row &&
+    pathname === "/app" &&
+    isIslandsExperienceActive(pathname)
+  ) {
     const completed = new Set(state.row.steps_completed);
     const dismissed = new Set(state.row.steps_dismissed);
     

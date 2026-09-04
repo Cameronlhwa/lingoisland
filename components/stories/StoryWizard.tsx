@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/browser";
+import { hskLabelForCefr } from "@/lib/levelBands";
 
 type TopicIsland = {
   id: string;
@@ -46,40 +47,46 @@ type CEFRLevel =
 
 const LEVEL_GROUPS: {
   base: "A1" | "A2" | "B1" | "B2" | "C1";
+  hsk: number;
   label: string;
   description: string;
   levels: CEFRLevel[];
 }[] = [
   {
     base: "A1",
+    hsk: 2,
     label: "Beginner",
     description:
-      "Just starting out with basic phrases and survival vocabulary (HSK 1-2).",
+      "Just starting out with basic phrases and survival vocabulary.",
     levels: ["A1-", "A1", "A1+"],
   },
   {
     base: "A2",
+    hsk: 3,
     label: "Upper beginner",
     description:
-      "You can handle basics but still need support in conversations (HSK 3).",
+      "You can handle basics but still need support in conversations.",
     levels: ["A2-", "A2", "A2+"],
   },
   {
     base: "B1",
+    hsk: 4,
     label: "Intermediate",
     description:
-      "You can talk about everyday topics but struggle with nuance (HSK 4-5).",
+      "You can talk about everyday topics but struggle with nuance.",
     levels: ["B1-", "B1", "B1+"],
   },
   {
     base: "B2",
+    hsk: 5,
     label: "Upper intermediate",
     description:
-      "You follow most native content but miss some details (HSK 5-6).",
+      "You follow most native content but miss some details.",
     levels: ["B2-", "B2", "B2+"],
   },
   {
     base: "C1",
+    hsk: 6,
     label: "Advanced",
     description:
       "You're fluent but still learning sophisticated vocabulary and idioms.",
@@ -87,6 +94,11 @@ const LEVEL_GROUPS: {
   },
 ];
 
+function fineGrainLabel(lvl: CEFRLevel, hsk: number): string {
+  if (lvl.endsWith("-")) return "Easier";
+  if (lvl.endsWith("+")) return "Harder";
+  return `HSK ${hsk}`;
+}
 function normalizeWords(value: string) {
   return value
     .split(/[,，\n]/g)
@@ -312,7 +324,7 @@ export default function StoryWizard() {
                   >
                     <div className="max-w-sm">
                       <h3 className="text-base font-semibold text-gray-900">
-                        {group.label} ({group.base})
+                        {group.label} (HSK {group.hsk})
                       </h3>
                       <p className="mt-1 text-sm text-gray-600">
                         {group.description}
@@ -329,7 +341,7 @@ export default function StoryWizard() {
                           }}
                           className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:border-gray-900 hover:bg-gray-50"
                         >
-                          {lvl}
+                          {fineGrainLabel(lvl, group.hsk)}
                         </button>
                       ))}
                     </div>
@@ -508,7 +520,7 @@ export default function StoryWizard() {
                   <span className="text-xs text-gray-500">Longer</span>
                 </div>
                 <p className="mt-2 text-xs text-gray-500">
-                  Current level: <span className="font-medium text-gray-900">{level}</span>
+                  Current level: <span className="font-medium text-gray-900">{hskLabelForCefr(level)}</span>
                 </p>
               </div>
             </div>

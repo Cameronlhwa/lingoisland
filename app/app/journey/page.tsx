@@ -1,11 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { BookOpen, Check, Clock, Lock, Map, Plus } from "lucide-react";
 import { useElementWidth } from "@/hooks/useElementWidth";
 import { BrowsePreviousJourneys } from "@/components/app/BrowsePreviousJourneys";
 import type { CompletedJourney } from "@/types/journey";
+import { HSK_APP_LABELS } from "@/lib/hsk-app-labels";
+import { useSidebar } from "@/components/app/AppLayoutClient";
+import HskCurriculumSection from "@/components/hsk/HskCurriculumSection";
 
 const BASE_W = 380;
 const MAP_TOP_PADDING = 64;
@@ -430,6 +433,7 @@ function JourneyMapNode({
   showLabel,
   onContinue,
   scale = 1,
+  hskLevel,
 }: {
   node: PathNode;
   baseNode: { bx: number; cy: number };
@@ -437,6 +441,7 @@ function JourneyMapNode({
   showLabel: boolean;
   onContinue: (node: PathNode) => void;
   scale?: number;
+  hskLevel?: number;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const isStory = node.type === "story";
@@ -476,6 +481,14 @@ function JourneyMapNode({
         cursor: storyClickable ? "pointer" : undefined,
       }}
     >
+      {!isStory && hskLevel && (
+        <span
+          style={{ position: "absolute", top: -6, right: -6, zIndex: 70 }}
+          className="rounded-full bg-blue-600 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-sm"
+        >
+          HSK {hskLevel}
+        </span>
+      )}
       {isStory ? (
         <>
           <button
@@ -680,6 +693,7 @@ function JourneySidebarPanel({
   currentNode,
   comingUp,
   onContinue,
+  sectionLabel = "Journey",
 }: {
   journey: { topic: string };
   islands: PathNode[];
@@ -689,6 +703,7 @@ function JourneySidebarPanel({
   currentNode: PathNode | null;
   comingUp: PathNode[];
   onContinue: (node: PathNode) => void;
+  sectionLabel?: string;
 }) {
   const progressPct =
     islands.length > 0 ? (islandsDone / islands.length) * 100 : 0;
@@ -701,7 +716,7 @@ function JourneySidebarPanel({
           <div className="mb-2 flex items-center gap-2">
             <Map className="h-4 w-4 text-gray-400" />
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
-              Journey
+              {sectionLabel}
             </p>
           </div>
           <h2 className="text-lg font-black leading-tight text-gray-900">
@@ -820,6 +835,12 @@ function pathNodeCountStories(islandCount: number) {
 export default function JourneyPage() {
   const STORY_CACHE_KEY = "journey_story_checkpoint_cache_v1";
   const router = useRouter();
+  const pathname = usePathname() ?? "";
+  const isHskApp = pathname.startsWith("/hsk/app");
+  const appBase = isHskApp ? "/hsk/app" : "/app";
+  const { productTrack } = useSidebar();
+  const isHskCurriculum = productTrack === "hsk" || isHskApp;
+  const journeySectionLabel = isHskApp ? HSK_APP_LABELS.journey.nav : "Journey";
   const pageRef = useRef<HTMLDivElement | null>(null);
   const storyRequestRef = useRef<Record<string, Promise<string | null>>>({});
   const [loading, setLoading] = useState(true);
@@ -835,6 +856,7 @@ export default function JourneyPage() {
   } | null>(null);
   const [apiNodes, setApiNodes] = useState<ApiNode[]>([]);
   const [isPro, setIsPro] = useState(false);
+  const [hskLevelByIslandId, setHskLevelByIslandId] = useState<Record<string, number>>({});
   const [pastJourneys, setPastJourneys] = useState<CompletedJourney[]>([]);
   const pageWidth = useElementWidth(pageRef, 920);
   const wide = isDesktopViewport && pageWidth > 560;
@@ -863,6 +885,22 @@ export default function JourneyPage() {
     };
     void load();
   }, []);
+
+  useEffect(() => {
+    if (!journey?.id) return;
+    let cancelled = false;
+    fetch(`/api/journey/${journey.id}/hsk-levels`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.levelsByIslandId) {
+          setHskLevelByIslandId(data.levelsByIslandId);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [journey?.id]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 768px)");
@@ -915,6 +953,14 @@ export default function JourneyPage() {
       };
     });
   }, [apiNodes, isPro]);
+
+  const hskVocabRangeLabel = useMemo(() => {
+    const levels = Object.values(hskLevelByIslandId);
+    if (levels.length === 0) return null;
+    const min = Math.min(...levels);
+    const max = Math.max(...levels);
+    return min === max ? `HSK ${min} vocab` : `HSK ${min}–${max} vocab`;
+  }, [hskLevelByIslandId]);
 
   const islands = pathNodes.filter((node) => node.type === "island");
   const islandsDone = islands.filter((node) => node.completed).length;
@@ -1002,7 +1048,7 @@ export default function JourneyPage() {
       const storyId = await resolveCheckpointStoryId(currentNode);
       if (storyId) {
         router.prefetch(
-          `/app/journey/${journey.id}/story/${storyId}?journeyNodeId=${encodeURIComponent(currentNode.id)}`,
+          `${appBase}/journey/${journey.id}/story/${storyId}?journeyNodeId=${encodeURIComponent(currentNode.id)}`,
         );
       }
     })();
@@ -1015,20 +1061,20 @@ export default function JourneyPage() {
       const cachedStoryId = node.storyId ?? checkpointStoryIds[node.id];
       if (cachedStoryId) {
         router.push(
-          `/app/journey/${journey.id}/story/${cachedStoryId}?journeyNodeId=${encodeURIComponent(node.id)}`,
+          `${appBase}/journey/${journey.id}/story/${cachedStoryId}?journeyNodeId=${encodeURIComponent(node.id)}`,
         );
         return;
       }
 
       router.push(
-        `/app/journey/${journey.id}/story-loading?journeyNodeId=${encodeURIComponent(node.id)}`,
+        `${appBase}/journey/${journey.id}/story-loading?journeyNodeId=${encodeURIComponent(node.id)}`,
       );
       return;
     }
     if (node.islandId) {
       const params = new URLSearchParams({ journeyFirst: "1" });
       if (node.current) params.set("learn", "true");
-      router.push(`/app/topic-islands/${node.islandId}?${params.toString()}`);
+      router.push(`${appBase}/topic-islands/${node.islandId}?${params.toString()}`);
       return;
     }
     const response = await fetch(`/api/journey/${journey.id}/start-island`, {
@@ -1040,7 +1086,7 @@ export default function JourneyPage() {
     if (data.islandId) {
       const params = new URLSearchParams({ journeyFirst: "1" });
       if (node.current) params.set("learn", "true");
-      router.push(`/app/topic-islands/${data.islandId}?${params.toString()}`);
+      router.push(`${appBase}/topic-islands/${data.islandId}?${params.toString()}`);
     }
   };
 
@@ -1057,9 +1103,13 @@ export default function JourneyPage() {
     }
 
     router.push(
-      `/app/journey/${journey.id}/story-loading?journeyNodeId=${encodeURIComponent(node.id)}`,
+      `${appBase}/journey/${journey.id}/story-loading?journeyNodeId=${encodeURIComponent(node.id)}`,
     );
   };
+
+  if (isHskCurriculum) {
+    return <HskCurriculumSection basePath={appBase} />;
+  }
 
   if (loading) {
     return (
@@ -1075,18 +1125,19 @@ export default function JourneyPage() {
         <div className="max-w-[520px] text-center">
           <p className="mb-4 text-5xl">🗺️</p>
           <h2 className="text-xl font-black text-gray-900">
-            Start your first Journey
+            {isHskApp ? HSK_APP_LABELS.journey.title : "Start your first Journey"}
           </h2>
           <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-gray-400">
-            Pick a topic. Get a personalised 5-island path with stories woven in
-            to lock in the words.
+            {isHskApp
+              ? HSK_APP_LABELS.journey.description
+              : "Pick a topic. Get a personalised 5-island path with stories woven in to lock in the words."}
           </p>
           <button
             type="button"
-            onClick={() => router.push("/app/journey/create")}
+            onClick={() => router.push(`${appBase}/journey/create`)}
             className="mt-6 rounded-xl bg-gray-900 px-7 py-3 text-sm font-black text-white transition-colors hover:bg-gray-700"
           >
-            Create a Journey →
+            {isHskApp ? "Build your path →" : "Create a Journey →"}
           </button>
         </div>
       </div>
@@ -1099,19 +1150,24 @@ export default function JourneyPage() {
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
-              Learning Path
+              {isHskApp ? HSK_APP_LABELS.journey.eyebrow : "Learning Path"}
             </p>
             <h1 className="mt-1 text-3xl font-black tracking-tight text-gray-900">
               {journey.topic}
             </h1>
             <p className="mt-1 text-sm text-gray-500">
               {learnedWords} / {totalWords} words learned
+              {hskVocabRangeLabel && (
+                <span className="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                  {hskVocabRangeLabel}
+                </span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => router.push("/app/journey/past")}
+              onClick={() => router.push(`${appBase}/journey/past`)}
               className="flex items-center justify-center gap-2 rounded-xl bg-[#1a2332] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#2d3a4d]"
             >
               <Clock className="h-3.5 w-3.5" />
@@ -1119,7 +1175,7 @@ export default function JourneyPage() {
             </button>
             <button
               type="button"
-              onClick={() => router.push("/app/journey/create")}
+              onClick={() => router.push(`${appBase}/journey/create`)}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -1211,6 +1267,7 @@ export default function JourneyPage() {
                     }
                     showLabel={showMapLabels}
                     scale={mapUiScale}
+                    hskLevel={node.islandId ? hskLevelByIslandId[node.islandId] : undefined}
                   />
                 ))}
 
@@ -1238,6 +1295,7 @@ export default function JourneyPage() {
               learnedWords={learnedWords}
               currentNode={currentNode}
               comingUp={comingUp}
+              sectionLabel={journeySectionLabel}
               onContinue={(pathNode) =>
                 pathNode.type === "story"
                   ? handleStoryOpen(pathNode)

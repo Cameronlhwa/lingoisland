@@ -19,7 +19,7 @@ export function BlogAuthorBio() {
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         <span className="font-semibold">Cameron</span> — Founder of LingoIsland & Mandarin learner
-        (B2).{" "}
+        (HSK 5).{" "}
         <Link href="/founder" className="font-semibold underline-offset-2 hover:underline" style={{ color: "#2176AE" }}>
           Read Cameron&apos;s story
         </Link>
