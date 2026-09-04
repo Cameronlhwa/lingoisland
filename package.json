@@ -18,7 +18,14 @@
     "gen:landing-examples": "tsx scripts/generate-landing-example-islands.ts",
     "gen:boat-capybara": "tsx scripts/generate-boat-capybara.ts",
     "gen:testimonial-faces": "tsx scripts/generate-testimonial-faces.ts",
-    "gen:blog-images": "tsx scripts/generate-blog-images.ts"
+    "gen:blog-images": "tsx scripts/generate-blog-images.ts",
+    "import:hsk-vocabulary": "python3 scripts/import_hsk_vocabulary.py",
+    "import:hsk-vocabulary-2.0": "python3 scripts/import_hsk_vocabulary_2_0.py",
+    "db:migrate:hsk-vocabulary": "tsx scripts/runHskVocabularyMigration.ts",
+    "seed:hsk-vocabulary": "tsx scripts/seedHskVocabulary.ts",
+    "seed:hsk-vocabulary-2.0": "tsx scripts/seedHskVocabulary.ts --standard 2.0",
+    "hsk:tag-sample": "tsx scripts/tagHskWords.ts --sample",
+    "hsk:tag-full": "tsx scripts/tagHskWords.ts --full --write"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.19",

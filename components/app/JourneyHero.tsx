@@ -2,7 +2,13 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import PathNode, { type JourneyNode } from "@/components/app/PathNode";
+import {
+  HSK_CARD_BORDER,
+  HSK_CARD_SHADOW,
+  HSK_CARD_SHADOW_HOVER,
+} from "@/lib/glossy-theme";
 
 export default function JourneyHero({
   journey,
@@ -28,7 +34,6 @@ export default function JourneyHero({
     const order = node.order ?? node.position ?? 0;
     return order === 1 ? 5 : 10;
   };
-  const islandsDone = islands.filter((n) => n.completed_at).length;
   const wordsLearned = islands.reduce(
     (sum, n) => sum + (n.completed_at ? getIslandWordCount(n) : 0),
     0,
@@ -37,89 +42,130 @@ export default function JourneyHero({
 
   if (!journey) {
     return (
-      <div className="mb-4 rounded-2xl border-2 border-dashed border-gray-200 bg-white p-6 text-center transition-all hover:border-gray-400">
-        <p className="mb-3 text-3xl">🗺️</p>
-        <h2 className="mb-1 text-base font-black text-gray-900">
-          Start your first Journey
+      <section
+        className="mb-5 rounded-2xl bg-white p-6 sm:p-7"
+        style={{
+          border: "1px dashed var(--lingo-accent-border)",
+          boxShadow: HSK_CARD_SHADOW,
+        }}
+      >
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+          Active journey
+        </p>
+        <h2 className="lingo-display mt-2 text-2xl text-[var(--lingo-navy)]">
+          Start your first journey
         </h2>
-        <p className="mx-auto mb-4 max-w-xs text-sm text-gray-400">
-          Pick a topic. Get a personalised 5-island path with stories woven in
-          to lock in the words.
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+          Pick a topic and get a personalized 5-island path with stories woven
+          in to lock in the words.
         </p>
         <button
+          type="button"
           onClick={() => router.push("/app/journey/create")}
-          className="rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-gray-700"
+          className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
+          style={{
+            background: "var(--lingo-navy)",
+            boxShadow: "0 8px 18px -10px rgba(7,30,46,.7)",
+          }}
         >
-          Create a Journey →
+          Create a journey <ArrowRight className="h-4 w-4" aria-hidden />
         </button>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div
+    <section
+      role="button"
+      tabIndex={0}
       onClick={() => router.push("/app/journey")}
-      className="group mb-4 cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:border-gray-400 hover:shadow-sm"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push("/app/journey");
+        }
+      }}
+      className="group mb-5 cursor-pointer rounded-2xl bg-white p-5 transition-all hover:-translate-y-0.5 sm:p-6"
+      style={{ border: HSK_CARD_BORDER, boxShadow: HSK_CARD_SHADOW }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = HSK_CARD_SHADOW_HOVER;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = HSK_CARD_SHADOW;
+      }}
     >
-      <div className="mb-4 flex items-start justify-between">
-        <div>
-          <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-            Active Journey
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+            Active journey
           </p>
-          <h2 className="text-lg font-black text-gray-900">{journey.topic}</h2>
-          <p className="mt-0.5 text-xs text-gray-400">
+          <h2 className="lingo-display mt-1.5 text-2xl text-[var(--lingo-navy)] sm:text-[28px]">
+            {journey.topic}
+          </h2>
+          <p className="mt-1.5 text-sm text-[var(--lingo-text-muted)]">
             5 islands · 2 stories · {totalWords} words
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-black leading-none text-gray-900">
+          <p className="lingo-display text-3xl leading-none text-[var(--lingo-navy)]">
             {wordsLearned}
           </p>
-          <p className="mt-0.5 text-xs text-gray-400">of {totalWords} words</p>
+          <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">
+            of {totalWords} words
+          </p>
         </div>
       </div>
 
-      <div className="mb-4 flex w-full items-center">
-        {sortedNodes.map((node, i) => (
-          <div key={node.id} className="flex min-w-0 flex-1 items-center">
-            <div className="flex flex-1 justify-center">
-              <PathNode
-                node={{ ...node, current: currentNode?.id === node.id }}
-                compact
-              />
+      {sortedNodes.length > 0 && (
+        <div className="mt-5 flex w-full items-center">
+          {sortedNodes.map((node, i) => (
+            <div key={node.id} className="flex min-w-0 flex-1 items-center">
+              <div className="flex flex-1 justify-center">
+                <PathNode
+                  node={{ ...node, current: currentNode?.id === node.id }}
+                  compact
+                />
+              </div>
+              {i < sortedNodes.length - 1 && (
+                <div
+                  className="mx-1 h-px max-w-10 flex-1"
+                  style={{
+                    background: node.completed_at
+                      ? "var(--lingo-teal)"
+                      : "var(--lingo-accent-border)",
+                  }}
+                />
+              )}
             </div>
-            {i < sortedNodes.length - 1 ? (
-              <div
-                className={`mx-1 h-px max-w-10 flex-1 ${node.completed_at ? "bg-teal-300" : "bg-gray-200"}`}
-              />
-            ) : null}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      <div className="mb-3 h-1.5 rounded-full bg-gray-100">
-        <div
-          className="h-1.5 rounded-full bg-teal-500 transition-all"
-          style={{ width: `${(islandsDone / 5) * 100}%` }}
-        />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-400">
-          Up next:{" "}
-          <span className="font-semibold text-gray-700">
-            {currentNode?.name ?? "Journey"}
-          </span>
-          {currentNode?.node_type === "story" ? (
-            <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
-              Story
-            </span>
-          ) : null}
+      <div
+        className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t pt-4"
+        style={{ borderColor: "var(--lingo-accent-border)" }}
+      >
+        <p className="text-sm text-[var(--lingo-text-muted)]">
+          {currentNode ? (
+            <>
+              Up next:{" "}
+              <span className="font-semibold text-[var(--lingo-navy)]">
+                {currentNode.name}
+              </span>
+              {currentNode.node_type === "story" ? (
+                <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
+                  Story
+                </span>
+              ) : null}
+            </>
+          ) : (
+            "Journey complete"
+          )}
         </p>
-        <p className="text-xs font-medium text-gray-400 transition-colors group-hover:text-gray-700">
-          View journey →
-        </p>
+        <span className="inline-flex items-center gap-1 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]">
+          View journey <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+        </span>
       </div>
-    </div>
+    </section>
   );
 }

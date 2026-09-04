@@ -1,39 +1,37 @@
 import FAQAccordion from "./FAQAccordion";
+import SectionHeader from "./SectionHeader";
 import { FAQ_ITEMS } from "@/lib/landing-content";
 
-export default function FAQ() {
+type FAQItemType = { question: string; answer: string };
+
+type FAQProps = {
+  id?: string;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  items?: FAQItemType[];
+};
+
+export default function FAQ({
+  id = "faq",
+  eyebrow = "Questions",
+  title = "Frequently asked questions",
+  subtitle = "Clear answers about how LingoIsland works.",
+  items = FAQ_ITEMS,
+}: FAQProps) {
   return (
     <section
-      id="faq"
+      id={id}
       className="fade-section"
-      style={{ background: "#F4F8FB", padding: "80px 24px" }}
+      style={{
+        background:
+          "radial-gradient(circle at 12% 30%, rgba(160,224,239,0.14), transparent 30%), #FCFEFF",
+        padding: "120px 24px",
+      }}
     >
       <div style={{ maxWidth: 700, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <h2
-            style={{
-              fontFamily: "'Lora', Georgia, serif",
-              fontWeight: 600,
-              fontSize: 36,
-              lineHeight: 1.15,
-              color: "#071E2E",
-              marginBottom: 12,
-            }}
-          >
-            Frequently asked questions
-          </h2>
-          <p
-            style={{
-              fontSize: 16,
-              color: "#3a6e88",
-              lineHeight: 1.65,
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-            }}
-          >
-            Clear answers about how LingoIsland works.
-          </p>
-        </div>
-        <FAQAccordion items={FAQ_ITEMS} />
+        <SectionHeader eyebrow={eyebrow} title={title} subtitle={subtitle} />
+        <FAQAccordion items={items} />
       </div>
     </section>
   );

@@ -3,16 +3,21 @@ import JourneyOnboardingFlow from "@/components/Onboarding/JourneyOnboardingFlow
 
 export default function AppOnboardingPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <Suspense
-        fallback={
-          <div className="flex min-h-screen items-center justify-center text-slate-600">
-            Loading…
-          </div>
-        }
-      >
-        <JourneyOnboardingFlow />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div
+          className="flex min-h-screen items-center justify-center"
+          style={{
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+            background: "#EAF6FB",
+            color: "#5A7A90",
+          }}
+        >
+          Loading…
+        </div>
+      }
+    >
+      <JourneyOnboardingFlow />
+    </Suspense>
   );
 }

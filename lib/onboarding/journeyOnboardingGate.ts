@@ -1,9 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { hasAnyProAccess } from "@/lib/product-plans";
 
 /**
  * Journey wizard at /app/onboarding should run only for accounts that explicitly
  * need it (onboarding_complete === false) and have no prior app activity.
- * Existing users who already have islands/journeys get the flag healed to true.
+ * Existing users who already have islands/journeys, or who already have paid
+ * access (including manual grants), get the flag healed to true instead of
+ * being trapped in first-run setup.
  */
 export async function evaluateJourneyOnboardingGate(
   supabase: SupabaseClient,
@@ -15,7 +18,7 @@ export async function evaluateJourneyOnboardingGate(
 }> {
   const { data: prof } = await supabase
     .from("profiles")
-    .select("onboarding_complete, active_journey_id")
+    .select("onboarding_complete, active_journey_id, plan")
     .eq("id", userId)
     .maybeSingle();
 
@@ -25,6 +28,13 @@ export async function evaluateJourneyOnboardingGate(
 
   if (prof.onboarding_complete === true) {
     return { needsJourneyWizard: false, shouldMarkOnboardingComplete: false };
+  }
+
+  if (hasAnyProAccess(prof.plan)) {
+    return {
+      needsJourneyWizard: false,
+      shouldMarkOnboardingComplete: true,
+    };
   }
 
   const [{ count: islandC }, { count: journeyC }] = await Promise.all([

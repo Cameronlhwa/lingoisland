@@ -3,6 +3,9 @@
 import { useId, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+const SHADOW = "0 14px 40px rgba(44,105,128,0.08), 0 2px 8px rgba(44,105,128,0.05)";
+const SHADOW_REST = "0 1px 2px rgba(7,30,46,0.04), 0 8px 16px -12px rgba(33,118,174,0.2)";
+
 type FAQItem = {
   question: string;
   answer: string;
@@ -25,10 +28,12 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
           <div
             key={item.question}
             style={{
-              background: "#fff",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.07)",
+              background: "rgba(255,255,255,0.94)",
+              border: "1px solid rgba(72,150,175,0.12)",
+              borderRadius: 18,
               overflow: "hidden",
+              boxShadow: isOpen ? SHADOW : SHADOW_REST,
+              transition: "box-shadow 0.25s ease",
             }}
           >
             <button
@@ -51,9 +56,9 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
             >
               <span
                 style={{
-                  fontSize: 15,
-                  fontWeight: 500,
-                  color: "#071E2E",
+                  fontSize: 15.5,
+                  fontWeight: 700,
+                  color: "var(--lingo-navy)",
                   fontFamily: "'DM Sans', system-ui, sans-serif",
                   lineHeight: 1.4,
                 }}
@@ -63,13 +68,15 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
               <span
                 style={{
                   fontSize: 18,
-                  color: "#7aA0b4",
+                  color: isOpen ? "var(--lingo-teal)" : "#7aA0b4",
                   flexShrink: 0,
-                  fontWeight: 300,
+                  fontWeight: 400,
                   lineHeight: 1,
+                  transition: "color 0.15s, transform 0.2s",
+                  transform: isOpen ? "rotate(45deg)" : "none",
                 }}
               >
-                {isOpen ? "−" : "+"}
+                +
               </span>
             </button>
             <AnimatePresence initial={false}>
@@ -84,9 +91,9 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
                 >
                   <p
                     style={{
-                      padding: "0 24px 18px",
-                      fontSize: 14,
-                      color: "#5a7a88",
+                      padding: "0 24px 20px",
+                      fontSize: 14.5,
+                      color: "var(--lingo-text-muted)",
                       lineHeight: 1.65,
                       fontFamily: "'DM Sans', system-ui, sans-serif",
                     }}

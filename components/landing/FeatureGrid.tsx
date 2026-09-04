@@ -1,40 +1,38 @@
 import FeatureCard from "./FeatureCard";
+import SectionHeader from "./SectionHeader";
 import { FEATURE_HIGHLIGHTS } from "@/lib/landing-content";
 
-export default function FeatureGrid() {
+type Feature = { title: string; description: string };
+
+type FeatureGridProps = {
+  id?: string;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  features?: Feature[];
+};
+
+export default function FeatureGrid({
+  id,
+  eyebrow = "What's included",
+  title = "Everything you need to make words stick",
+  subtitle = "Build vocabulary you can actually use, then lock it in with context and review.",
+  features = FEATURE_HIGHLIGHTS,
+}: FeatureGridProps) {
   return (
     <section
+      id={id}
       className="fade-section"
-      style={{ background: "#fff", padding: "80px 24px" }}
+      style={{
+        background:
+          "radial-gradient(circle at 88% 25%, var(--lingo-accent-tint), transparent 30%), #fff",
+        padding: "120px 24px",
+      }}
     >
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <h2
-            style={{
-              fontFamily: "'Lora', Georgia, serif",
-              fontWeight: 600,
-              fontSize: 36,
-              lineHeight: 1.15,
-              color: "#071E2E",
-              marginBottom: 12,
-            }}
-          >
-            Everything you need to make words stick
-          </h2>
-          <p
-            style={{
-              fontSize: 16,
-              color: "#3a6e88",
-              lineHeight: 1.65,
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-            }}
-          >
-            Build vocabulary you can actually use, then lock it in with context
-            and review.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURE_HIGHLIGHTS.map((feature) => (
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+        <SectionHeader eyebrow={eyebrow} title={title} subtitle={subtitle} />
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature) => (
             <FeatureCard
               key={feature.title}
               title={feature.title}

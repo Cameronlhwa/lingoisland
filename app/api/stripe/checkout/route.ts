@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
+import { getEntitlements } from "@/lib/entitlements";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -9,6 +10,13 @@ type CheckoutRequest = {
   interval: "monthly" | "yearly";
   cancelContext?: "onboarding" | "pricing";
   islandId?: string;
+  /** Which subscription tier to check out. Defaults to the core "pro" plan. */
+  product?: "core" | "hsk";
+  /**
+   * Absolute-path cancel URL (same origin). Used for HSK onboarding so Stripe
+   * "back" returns to the plan reveal instead of /pricing.
+   */
+  cancelPath?: string;
 };
 
 export async function POST(request: Request) {
@@ -48,13 +56,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid interval" }, { status: 400 });
     }
 
+    const product = body?.product === "hsk" ? "hsk" : "core";
+    const entitlements = await getEntitlements(user.id);
+    const alreadySubscribed =
+      product === "core"
+        ? entitlements.isIslandsPro
+        : entitlements.isHskPro;
+    if (alreadySubscribed) {
+      return NextResponse.json(
+        { error: `Already subscribed to ${product === "core" ? "Islands" : "HSK Prep"}` },
+        { status: 409 },
+      );
+    }
+
+    // TODO(cameron): STRIPE_PRICE_HSK_MONTHLY / STRIPE_PRICE_HSK_ANNUAL need
+    // real Stripe Price IDs created before this tier can go live — these are
+    // new, separate prices from the core $9.99/mo subscription above, per the
+    // HSK onboarding plan-reveal spec ($14.99/mo, or $9.99/mo billed $119.99/yr).
     const priceId =
-      interval === "monthly"
-        ? process.env.STRIPE_PRICE_PRO_MONTHLY
-        : process.env.STRIPE_PRICE_PRO_YEARLY;
+      product === "hsk"
+        ? interval === "monthly"
+          ? process.env.STRIPE_PRICE_HSK_MONTHLY
+          : process.env.STRIPE_PRICE_HSK_ANNUAL ||
+            process.env.STRIPE_PRICE_HSK_YEARLY
+        : interval === "monthly"
+          ? process.env.STRIPE_PRICE_PRO_MONTHLY
+          : process.env.STRIPE_PRICE_PRO_YEARLY;
 
     if (!priceId) {
-      console.error("[STRIPE CHECKOUT] Missing price ID for", interval);
+      console.error("[STRIPE CHECKOUT] Missing price ID for", product, interval);
       return NextResponse.json(
         { error: "Stripe price not configured" },
         { status: 500 }
@@ -105,10 +135,33 @@ export async function POST(request: Request) {
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-    const cancelUrl =
-      cancelContext === "onboarding" && islandId
-        ? `${siteUrl}/onboarding/upgrade?canceled=1&islandId=${encodeURIComponent(islandId)}&plan=${interval}`
-        : `${siteUrl}/pricing`;
+    if (!siteUrl || !/^https?:\/\/[^/]+/i.test(siteUrl)) {
+      console.error("[STRIPE CHECKOUT] NEXT_PUBLIC_SITE_URL is not configured");
+      return NextResponse.json(
+        { error: "Checkout is not configured" },
+        { status: 500 },
+      );
+    }
+    const rawCancelPath =
+      typeof body?.cancelPath === "string" ? body.cancelPath.trim() : "";
+    // Only allow same-site relative paths (open-redirect guard).
+    const safeCancelPath =
+      rawCancelPath.startsWith("/") &&
+      !rawCancelPath.startsWith("//") &&
+      !rawCancelPath.includes("://")
+        ? rawCancelPath
+        : null;
+
+    let cancelUrl = `${siteUrl}/pricing`;
+    if (safeCancelPath) {
+      cancelUrl = `${siteUrl}${safeCancelPath}`;
+    } else if (cancelContext === "onboarding" && body?.product === "hsk") {
+      cancelUrl = `${siteUrl}/onboarding/hsk?resume=1&canceled=1&plan=${interval}`;
+    } else if (cancelContext === "onboarding" && islandId) {
+      cancelUrl = `${siteUrl}/onboarding/upgrade?canceled=1&islandId=${encodeURIComponent(islandId)}&plan=${interval}`;
+    }
+
+    const successPath = product === "hsk" ? "/hsk/app" : "/app";
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -119,15 +172,17 @@ export async function POST(request: Request) {
         metadata: {
           user_id: user.id,
           plan: interval,
+          product,
         },
       },
       metadata: {
         user_id: user.id,
         plan: interval,
+        product,
         cancel_context: cancelContext,
         ...(islandId ? { island_id: islandId } : {}),
       },
-      success_url: `${siteUrl}/app?checkout=success`,
+      success_url: `${siteUrl}${successPath}?checkout=success`,
       cancel_url: cancelUrl,
     });
 

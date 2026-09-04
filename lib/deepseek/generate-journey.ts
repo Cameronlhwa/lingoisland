@@ -82,6 +82,9 @@ Respond in this exact JSON format:
       ],
       temperature: 0.35,
       max_tokens: 2000,
+      // See generate-hsk-journey.ts — V4 Flash thinking shares max_tokens with content.
+      thinking: { type: 'disabled' },
+      response_format: { type: 'json_object' },
     }),
   })
 
@@ -93,7 +96,7 @@ Respond in this exact JSON format:
   }
 
   const data = await response.json()
-  const content = data.choices[0]?.message?.content
+  const content = data.choices?.[0]?.message?.content
   if (!content) {
     throw new Error('No content in DeepSeek response')
   }

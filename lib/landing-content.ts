@@ -196,6 +196,70 @@ export const HOW_IT_WORKS_STEPS = [
   },
 ];
 
+/** Three-pillar cards on the main landing — same visual system as /hskprep. */
+export const LANDING_PILLARS = [
+  {
+    icon: "explore",
+    title: "Real-life Topics",
+    body: "Pick what you actually want to talk about — coffee shops, work, travel, dating, whatever comes up in your life.",
+  },
+  {
+    icon: "schedule",
+    title: "Level-tuned Sentences",
+    body: "Every word comes with authentic example sentences matched to your level — not textbook fragments.",
+  },
+  {
+    icon: "quiz",
+    title: "Stories + Review",
+    body: "Turn each island into a short story, then lock it in with quizzes, flashcards, and spaced repetition.",
+  },
+];
+
+export const LANDING_COMPARE = {
+  textbookUnits: [
+    { unit: "Unit 1", title: "Standard of Living", page: "p. 12" },
+    { unit: "Unit 2", title: "Environmental Protection", page: "p. 28" },
+    { unit: "Unit 3", title: "Workplace Ethics", page: "p. 44" },
+    { unit: "Unit 4", title: "Economic Development", page: "p. 61" },
+  ],
+  textbookEyebrow: "Traditional Textbook",
+  textbookTitle: "HSK 4 · Fixed Course",
+  islandEyebrow: "LingoIsland",
+  reasonPrompt: "Why are you learning Mandarin?",
+  reasonAnswer: "Getting around China and chatting with friends.",
+  islandUnits: [
+    {
+      title: "Ordering at a Café",
+      word: "咖啡",
+      pinyin: "kāfēi",
+      level: "HSK 4",
+      wordCount: "18 words",
+    },
+    {
+      title: "Talking About Work",
+      word: "工作",
+      pinyin: "gōngzuò",
+      level: "HSK 4",
+      wordCount: "22 words",
+    },
+    {
+      title: "Weekend Plans",
+      word: "计划",
+      pinyin: "jìhuà",
+      level: "HSK 4",
+      wordCount: "16 words",
+    },
+  ],
+};
+
+export const LANDING_TESTIMONIAL = {
+  headline: "Hear from Cameron, content creator with 125K+ subscribers on YouTube",
+  quote:
+    "As someone who could barely hold a Mandarin conversation a year ago, I reached conversational fluency in just six months with LingoIsland, because I could finally learn around topics I actually cared about, not whatever chapter a textbook said was next.",
+  name: "Cameron Lim",
+  image: "/Cameron Lim Profile Photo.jpg",
+};
+
 export const LEARNER_BULLETS = [
   "Learners who can comfortably talk about certain topics, but not others.",
   "Busy professionals who need practical Mandarin fast.",
@@ -262,7 +326,7 @@ export const FOUNDER_PAGE = {
     items: [
       { title: "Real-life topics first", line: "Vocabulary you’ll actually use—not textbook filler." },
       { title: "Reinforcement beats cramming", line: "Stories and review bring words back at the right time." },
-      { title: "CEFR control and clarity", line: "You choose your level; content stays comprehensible." },
+      { title: "HSK level control and clarity", line: "You choose your level; content stays comprehensible." },
       { title: "Sleek UI that doesn’t feel like homework", line: "Clean, focused, minimal friction." },
       { title: "Fast iteration via feedback", line: "Ship, learn, and improve from real learners." },
       { title: "Small daily wins", line: "Progress you can feel every day." },

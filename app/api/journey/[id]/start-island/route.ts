@@ -8,6 +8,11 @@ import {
   journeysHasSentenceStyleColumn,
   topicIslandsHasSentenceStyleColumn,
 } from '@/lib/supabase/schemaFeatures'
+import { hskToCefr } from '@/lib/levelBands'
+import {
+  seedCurriculumIslandWords,
+  type CurriculumSeedWord,
+} from '@/lib/hsk/seedCurriculumIsland'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -67,8 +72,22 @@ export async function POST(
       return NextResponse.json({ islandId: ji.island_id, alreadyStarted: true })
     }
 
+    const curriculumUnitId = (journey as { curriculum_unit_id?: string | null })
+      .curriculum_unit_id
+    const seedWords = Array.isArray((ji as { seed_words?: unknown }).seed_words)
+      ? ((ji as { seed_words?: CurriculumSeedWord[] }).seed_words ?? [])
+      : []
+    const isCurriculumUnit = !!curriculumUnitId && seedWords.length > 0
+
     const entitlements = await getEntitlements(user.id)
-    if (order > 1 && !entitlements.isPro) {
+    if (isCurriculumUnit) {
+      if (!entitlements.isHskPro) {
+        return NextResponse.json(
+          { error: 'An HSK Prep subscription is required', code: 'PRODUCT_ACCESS_REQUIRED' },
+          { status: 403 }
+        )
+      }
+    } else if (order > 1 && !entitlements.isPro) {
       return NextResponse.json(
         { error: 'Subscribe to unlock islands 2–5', code: 'PAYWALL_JOURNEY' },
         { status: 403 }
@@ -81,14 +100,24 @@ export async function POST(
       .eq('user_id', user.id)
       .maybeSingle()
 
-    const profileLevel = up?.cefr_level || 'B1'
-    const requestedLevel =
-      typeof body.cefrLevel === 'string'
-        ? body.cefrLevel.trim()
-        : typeof body.level === 'string'
-          ? body.level.trim()
-          : ''
-    const level = requestedLevel || profileLevel
+    let level: string
+    if (isCurriculumUnit) {
+      const { data: unitRow } = await supabase
+        .from('curriculum_units')
+        .select('milestone_level')
+        .eq('id', curriculumUnitId as string)
+        .maybeSingle()
+      level = hskToCefr(Number(unitRow?.milestone_level ?? 4))
+    } else {
+      const profileLevel = up?.cefr_level || 'B1'
+      const requestedLevel =
+        typeof body.cefrLevel === 'string'
+          ? body.cefrLevel.trim()
+          : typeof body.level === 'string'
+            ? body.level.trim()
+            : ''
+      level = requestedLevel || profileLevel
+    }
 
     const topic = `${ji.name} — ${journey.topic}`
 
@@ -111,7 +140,14 @@ export async function POST(
 
     const isA0 = isA0Level(level)
     // A0 island 1 uses the fixed 5-word mini-course; A1+ island 1 stays at 3.
-    const wordTarget = order === 1 ? (isA0 ? 5 : 3) : 10
+    // Curriculum-unit islands use the exact count seeded at unit-build time.
+    const wordTarget = isCurriculumUnit
+      ? seedWords.length
+      : order === 1
+        ? isA0
+          ? 5
+          : 3
+        : 10
     const journeyHasStyleColumn = await journeysHasSentenceStyleColumn(supabase)
     const sentenceStyle = normalizeSentenceStyle(
       body.sentenceStyle ??
@@ -143,14 +179,68 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to create island' }, { status: 500 })
     }
 
-    const { error: linkErr } = await supabase
+    // Conditional link — only claim the node if it's still unlinked. Guards
+    // against a double-submit race creating two islands for the same node.
+    const { data: linkedRows, error: linkErr } = await supabase
       .from('journey_islands')
       .update({ island_id: island.id })
       .eq('id', ji.id)
+      .is('island_id', null)
+      .select('id')
+
+    if (!linkErr && (linkedRows ?? []).length === 0) {
+      // Someone else linked first — drop our island and return theirs.
+      await supabase.from('topic_islands').delete().eq('id', island.id)
+      const { data: winner } = await supabase
+        .from('journey_islands')
+        .select('island_id')
+        .eq('id', ji.id)
+        .maybeSingle()
+      if (winner?.island_id) {
+        return NextResponse.json({ islandId: winner.island_id, alreadyStarted: true })
+      }
+      return NextResponse.json({ error: 'Failed to link island' }, { status: 500 })
+    }
 
     if (linkErr) {
       await supabase.from('topic_islands').delete().eq('id', island.id)
       return NextResponse.json({ error: 'Failed to link island' }, { status: 500 })
+    }
+
+    // Curriculum-unit island: seed the pre-assigned vocab, then run
+    // sentence-only generation (generate-batch with wordsPreseeded).
+    if (isCurriculumUnit) {
+      const seeded = await seedCurriculumIslandWords(supabase, {
+        islandId: island.id,
+        userId: user.id,
+        seedWords,
+      })
+      if (!seeded.ok) {
+        console.error('[start-island] curriculum seed failed', seeded.error)
+        await supabase.from('journey_islands').update({ island_id: null }).eq('id', ji.id)
+        await supabase.from('topic_islands').delete().eq('id', island.id)
+        return NextResponse.json(
+          { error: seeded.error || 'Failed to seed curriculum island' },
+          { status: 500 },
+        )
+      }
+
+      const originC = new URL(request.url).origin
+      const cookieHeaderC = request.headers.get('cookie') ?? ''
+      void fetch(`${originC}/api/topic-islands/${island.id}/generate-batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(cookieHeaderC ? { Cookie: cookieHeaderC } : {}),
+        },
+        body: JSON.stringify({
+          wordsPreseeded: true,
+          sentenceTierMode: 'full',
+          sentenceStyle,
+        }),
+      }).catch((err) => console.error('[start-island] curriculum generate-batch', err))
+
+      return NextResponse.json({ islandId: island.id })
     }
 
     // A0 island 1 only: seed fixed course content — do not call generate-batch.

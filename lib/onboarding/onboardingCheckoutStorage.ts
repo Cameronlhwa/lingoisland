@@ -19,6 +19,8 @@ export type OnboardingUpgradeSnapshot = {
   wordsPerWeek?: number;
   lockedIslands?: JourneyNodeSnapshot[];
   plan: CheckoutPlan;
+  /** e.g. Work / Travel — shown on the Mandarin plan reveal */
+  motivationLabel?: string;
 };
 
 const SNAPSHOT_KEY = "lingo_onboarding_checkout_v1";

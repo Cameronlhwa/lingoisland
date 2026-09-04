@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { advanceCurriculumAfterUnitComplete } from '@/lib/hsk/curriculum'
+import {
+  markCurriculumIslandWordsLearned,
+  type CurriculumSeedWord,
+} from '@/lib/hsk/seedCurriculumIsland'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +36,7 @@ export async function POST(
 
     const { data: ji, error: findErr } = await supabase
       .from('journey_islands')
-      .select('id, journey_id')
+      .select('id, journey_id, node_type, seed_words')
       .eq('id', journeyIslandId)
       .eq('journey_id', params.id)
       .maybeSingle()
@@ -42,7 +47,7 @@ export async function POST(
 
     const { data: journeyRow } = await supabase
       .from('journeys')
-      .select('user_id')
+      .select('user_id, curriculum_unit_id')
       .eq('id', ji.journey_id)
       .single()
 
@@ -60,6 +65,24 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
     }
 
+    // Curriculum unit: finishing an island marks the HSK words it taught as learned.
+    if (journeyRow.curriculum_unit_id && ji.node_type !== 'story') {
+      const seeds = (Array.isArray(ji.seed_words)
+        ? ji.seed_words
+        : []) as CurriculumSeedWord[]
+      const hskWordIds = seeds
+        .map((s) => s.hsk_word_id)
+        .filter((v): v is string => typeof v === 'string')
+      try {
+        await markCurriculumIslandWordsLearned(supabase, {
+          userId: user.id,
+          hskWordIds,
+        })
+      } catch (e) {
+        console.warn('[journey/complete] markCurriculumIslandWordsLearned', e)
+      }
+    }
+
     // node_type column may not exist yet in DB; use step_order < 100 to identify islands.
     // Stories use step_order 102 and 105 in the legacy schema.
     const { data: all } = await supabase
@@ -75,6 +98,17 @@ export async function POST(
         .from('journeys')
         .update({ completed_at: now })
         .eq('id', params.id)
+
+      if (journeyRow.curriculum_unit_id) {
+        try {
+          await advanceCurriculumAfterUnitComplete(supabase, {
+            journeyId: params.id,
+            userId: user.id,
+          })
+        } catch (e) {
+          console.warn('[journey/complete] advanceCurriculumAfterUnitComplete', e)
+        }
+      }
     }
 
     return NextResponse.json({ ok: true, journeyCompleted: !!done })

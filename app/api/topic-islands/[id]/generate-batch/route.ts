@@ -79,6 +79,9 @@ export async function POST(
       | undefined
     const sentenceTierMode =
       body.sentenceTierMode === 'easy_same' ? 'easy_same' : 'full'
+    // Curriculum-unit islands seed their island_words at build time; skip the
+    // DeepSeek word-list step and go straight to sentence generation.
+    const wordsPreseeded = body.wordsPreseeded === true
 
     // Update status to selecting
     await supabase
@@ -206,8 +209,15 @@ export async function POST(
       status: 'selecting',
     }, true)
 
-      // If we've reached the target, mark as ready and return
-      if (currentWords >= island.word_target) {
+      // If we've reached the target, mark as ready and return. For pre-seeded
+      // islands the words are always all present up front, so only short-circuit
+      // once their sentences exist too.
+      const preseededSentencesDone =
+        wordsPreseeded && sentencesGenerated >= currentWords * tiersPerWord
+      if (
+        currentWords >= island.word_target &&
+        (!wordsPreseeded || preseededSentencesDone)
+      ) {
         await supabase
           .from('topic_islands')
           .update({ status: 'ready' })
@@ -242,18 +252,20 @@ export async function POST(
 
     let currentPosition = (maxPositionData?.position || 0)
 
-    // STAGE 1: Generate word list upfront
-    let wordList: Word[]
-    try {
-      wordList = await generateWordList({
+    // STAGE 1: Generate word list upfront — unless the island's words were
+    // pre-seeded (curriculum-unit islands seed island_words at build time).
+    let wordList: Word[] = []
+    if (!wordsPreseeded) {
+      try {
+        wordList = await generateWordList({
           topic: island.topic,
           level: baseLevel,
           detailedLevel,
-        wordCount: wordsNeeded,
+          wordCount: wordsNeeded,
           existingWords,
         })
       } catch (error) {
-      console.error('Word list generation error:', error)
+        console.error('Word list generation error:', error)
         await supabase
           .from('topic_islands')
           .update({ status: 'error' })
@@ -261,12 +273,13 @@ export async function POST(
 
         return NextResponse.json(
           {
-          error: 'Failed to generate word list',
+            error: 'Failed to generate word list',
             message: error instanceof Error ? error.message : 'Unknown error',
           },
           { status: 500 }
         )
       }
+    }
 
     // ── Fire grammar focus in the background — don't block word/sentence generation ──
     const grammarFocusPromise: Promise<void> = grammarTarget > 0
@@ -321,48 +334,70 @@ export async function POST(
         })()
       : Promise.resolve()
 
-    // ── Insert all words in parallel ──
-    const wordInsertPromises = wordList.map((word, index) => {
-      const position = currentPosition + index + 1
-      return dbClient
-        .from('island_words')
-        .insert({
-          island_id: islandId,
-          user_id: user.id,
-          hanzi: word.hanzi,
-          pinyin: word.pinyin,
-          english: word.english,
-          difficulty_tag: 'core',
-          position,
-        })
-        .select()
-        .single()
-        .then(({ data, error }) => ({ word, position, data, error }))
-    })
-
-    const wordResults = await Promise.allSettled(wordInsertPromises)
-
+    // ── Insert all words in parallel (or load the pre-seeded ones) ──
     const insertedWords: Array<Word & { id: string; position: number }> = []
-    for (const result of wordResults) {
-      if (result.status === 'rejected') {
-        console.error('Word insert promise rejected:', result.reason)
-        continue
+
+    if (wordsPreseeded) {
+      const { data: seededRows } = await dbClient
+        .from('island_words')
+        .select('id, hanzi, pinyin, english, position')
+        .eq('island_id', islandId)
+        .order('position', { ascending: true })
+      for (const row of seededRows ?? []) {
+        insertedWords.push({
+          id: row.id as string,
+          hanzi: row.hanzi as string,
+          pinyin: row.pinyin as string,
+          english: row.english as string,
+          position: (row.position as number) ?? insertedWords.length + 1,
+        })
       }
-      const { word, position, data: wordData, error: wordError } = result.value
-      if (wordError) {
-        if ((wordError as any).code === '23503') {
-          console.error('Island deleted during word insert (FK error). Stopping.')
-          break
+    } else {
+      const wordInsertPromises = wordList.map((word, index) => {
+        const position = currentPosition + index + 1
+        return dbClient
+          .from('island_words')
+          .insert({
+            island_id: islandId,
+            user_id: user.id,
+            hanzi: word.hanzi,
+            pinyin: word.pinyin,
+            english: word.english,
+            difficulty_tag: 'core',
+            position,
+          })
+          .select()
+          .single()
+          .then(({ data, error }) => ({ word, position, data, error }))
+      })
+
+      const wordResults = await Promise.allSettled(wordInsertPromises)
+
+      for (const result of wordResults) {
+        if (result.status === 'rejected') {
+          console.error('Word insert promise rejected:', result.reason)
+          continue
         }
-        console.error('Error inserting word:', wordError)
-        continue
+        const { word, position, data: wordData, error: wordError } = result.value
+        if (wordError) {
+          if ((wordError as any).code === '23503') {
+            console.error('Island deleted during word insert (FK error). Stopping.')
+            break
+          }
+          console.error('Error inserting word:', wordError)
+          continue
+        }
+        if (wordData) {
+          insertedWords.push({ ...word, id: wordData.id, position })
+        }
       }
-      if (wordData) {
-        insertedWords.push({ ...word, id: wordData.id, position })
-      }
+      currentPosition += wordList.length
     }
-    currentPosition += wordList.length
-    await updateProgress({ wordsSelected: currentWords + insertedWords.length, status: 'selecting' })
+    // Pre-seeded islands already counted their words in `currentWords`.
+    const totalWordsSelected = wordsPreseeded
+      ? currentWords
+      : currentWords + insertedWords.length
+    await updateProgress({ wordsSelected: totalWordsSelected, status: 'selecting' })
 
     // All words generate sentences (position-based paywall removed)
     const wordsToGenerate = insertedWords
@@ -393,7 +428,7 @@ export async function POST(
     }
 
     await updateProgress({
-      wordsSelected: currentWords + insertedWords.length,
+      wordsSelected: totalWordsSelected,
       status: 'generating',
     }, true)
 

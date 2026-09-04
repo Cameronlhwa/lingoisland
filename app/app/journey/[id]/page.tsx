@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, usePathname } from "next/navigation";
 import {
   ArrowLeft,
   BookOpen,
@@ -355,6 +355,8 @@ function StatBox({ value, label, tone }: { value: number; label: string; tone: "
 export default function JourneyDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname() ?? "";
+  const appBase = pathname.startsWith("/hsk/app") ? "/hsk/app" : "/app";
   const journeyId = params?.id as string;
   const pageRef = useRef<HTMLDivElement | null>(null);
   const storyRequestRef = useRef<Record<string, Promise<string | null>>>({});
@@ -365,6 +367,7 @@ export default function JourneyDetailPage() {
     topic: string;
     completed_at: string | null;
     created_at: string;
+    curriculum_unit_id?: string | null;
   } | null>(null);
   const [apiNodes, setApiNodes] = useState<ApiNode[]>([]);
   const [storyClickError, setStoryClickError] = useState<string | null>(null);
@@ -506,11 +509,11 @@ export default function JourneyDetailPage() {
     setStoryClickError(null);
     const cached = node.storyId ?? checkpointStoryIds[node.id];
     if (cached) {
-      router.push(`/app/journey/${journey.id}/story/${cached}?journeyNodeId=${encodeURIComponent(node.id)}`);
+      router.push(`${appBase}/journey/${journey.id}/story/${cached}?journeyNodeId=${encodeURIComponent(node.id)}`);
       return;
     }
-    router.push(`/app/journey/${journey.id}/story-loading?journeyNodeId=${encodeURIComponent(node.id)}`);
-  }, [journey, checkpointStoryIds, router]);
+    router.push(`${appBase}/journey/${journey.id}/story-loading?journeyNodeId=${encodeURIComponent(node.id)}`);
+  }, [journey, checkpointStoryIds, router, appBase]);
 
   const handleNavigate = useCallback(async (node: PathNode) => {
     if (!journey) return;
@@ -522,7 +525,7 @@ export default function JourneyDetailPage() {
     if (node.islandId) {
       const params = new URLSearchParams({ journeyFirst: "1" });
       if (node.current) params.set("learn", "true");
-      router.push(`/app/topic-islands/${node.islandId}?${params.toString()}`);
+      router.push(`${appBase}/topic-islands/${node.islandId}?${params.toString()}`);
       return;
     }
     // Island not yet started — create it via start-island
@@ -535,9 +538,9 @@ export default function JourneyDetailPage() {
     if (data.islandId) {
       const params = new URLSearchParams({ journeyFirst: "1" });
       if (node.current) params.set("learn", "true");
-      router.push(`/app/topic-islands/${data.islandId}?${params.toString()}`);
+      router.push(`${appBase}/topic-islands/${data.islandId}?${params.toString()}`);
     }
-  }, [journey, handleStoryOpen, router]);
+  }, [journey, handleStoryOpen, router, appBase]);
 
   // Prefetch current story checkpoint on mount
   useEffect(() => {
@@ -574,6 +577,7 @@ export default function JourneyDetailPage() {
   }
 
   const isCompleted = !!journey.completed_at;
+  const isCurriculumUnit = !!journey.curriculum_unit_id;
   const progressPct = islands.length > 0 ? (islandsDone / islands.length) * 100 : 0;
 
   return (
@@ -585,14 +589,24 @@ export default function JourneyDetailPage() {
           <div>
             <button
               type="button"
-              onClick={() => router.push("/app/journey/past")}
+              onClick={() =>
+                router.push(
+                  isCurriculumUnit ? `${appBase}/journey` : "/app/journey/past",
+                )
+              }
               className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-gray-400 transition-colors hover:text-gray-700"
             >
               <ArrowLeft size={13} />
-              My Journeys
+              {isCurriculumUnit ? "My HSK Path" : "My Journeys"}
             </button>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
-              {isCompleted ? "Completed Journey" : "In Progress"}
+              {isCurriculumUnit
+                ? isCompleted
+                  ? "Unit complete"
+                  : "Current unit"
+                : isCompleted
+                  ? "Completed Journey"
+                  : "In Progress"}
             </p>
             <h1 className="mt-1 text-3xl font-black tracking-tight text-gray-900">{journey.topic}</h1>
             <p className="mt-1 text-sm text-gray-500">{learnedWords} / {totalWords} words learned</p>
@@ -604,13 +618,15 @@ export default function JourneyDetailPage() {
                 Completed {formatDate(journey.completed_at)}
               </span>
             )}
-            <button
-              type="button"
-              onClick={() => router.push("/app/journey/create")}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-xs font-semibold text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
-            >
-              New Journey
-            </button>
+            {!isCurriculumUnit && (
+              <button
+                type="button"
+                onClick={() => router.push("/app/journey/create")}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-xs font-semibold text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
+              >
+                New Journey
+              </button>
+            )}
           </div>
         </div>
 

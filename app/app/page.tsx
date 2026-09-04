@@ -1,5 +1,5 @@
 import HomeDashboard from "@/components/app/HomeDashboard";
 
-export default async function AppPage() {
+export default function AppPage() {
   return <HomeDashboard dailyStory={null} />;
 }

@@ -24,7 +24,6 @@ export default function OnboardingCheckoutAuth({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [linking, setLinking] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isAnonymous, setIsAnonymous] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -59,21 +58,17 @@ export default function OnboardingCheckoutAuth({
     setErrorMessage(null);
     setLinking(true);
     const { redirectTo, cookieOptions } = getOAuthRedirectConfig();
-    const next = `${returnPath}${returnPath.includes("?") ? "&" : "?"}autoCheckout=1&plan=${plan}`;
-    document.cookie = `oauth_next=${next}; ${cookieOptions}`;
+    const sep = returnPath.includes("?") ? "&" : "?";
+    const next = `${returnPath}${sep}resume=1&autoCheckout=1&plan=${plan}`;
+    // Encode so query `&` in the path survive the cookie round-trip.
+    document.cookie = `oauth_next=${encodeURIComponent(next)}; ${cookieOptions}`;
     localStorage.setItem("oauth_next", next);
 
-    if (isAnonymous) {
-      const { error } = await supabase.auth.linkIdentity({
-        provider: "google",
-        options: { redirectTo },
-      });
-      if (error) {
-        setErrorMessage(error.message || "Could not link Google account.");
-        setLinking(false);
-      }
-      return;
-    }
+    // Always sign OUT of the guest session first, then sign INTO Google.
+    // linkIdentity fails when that Google identity already belongs to an
+    // existing Pro account, and can leave the anonymous JWT in place after
+    // a "successful" callback — which is what trapped users on the paywall.
+    await supabase.auth.signOut({ scope: "local" }).catch(() => null);
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -85,43 +80,204 @@ export default function OnboardingCheckoutAuth({
     }
   };
 
+  const confirmEmailForCheckout = async (
+    userId: string,
+    accountEmail: string,
+  ): Promise<{ email: string; tokenHash?: string }> => {
+    const res = await fetch("/api/auth/confirm-for-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, email: accountEmail }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data?.error || "Could not finish account setup");
+    }
+    return {
+      email: typeof data.email === "string" ? data.email : accountEmail,
+      tokenHash:
+        typeof data.tokenHash === "string" ? data.tokenHash : undefined,
+    };
+  };
+
+  /** Confirm email and open a real non-anonymous session, then continue checkout. */
+  const completeSignup = async (userId: string, accountEmail: string) => {
+    const confirmed = await confirmEmailForCheckout(userId, accountEmail);
+
+    if (confirmed.tokenHash) {
+      const { data: otpData, error: otpErr } = await supabase.auth.verifyOtp({
+        token_hash: confirmed.tokenHash,
+        type: "email",
+      });
+      if (!otpErr && otpData.user && !otpData.user.is_anonymous) {
+        await ensureProfiles(otpData.user.id);
+        onComplete();
+        return;
+      }
+    }
+
+    await supabase.auth.refreshSession().catch(() => null);
+    const {
+      data: { user: refreshed },
+    } = await supabase.auth.getUser();
+    if (refreshed && !refreshed.is_anonymous) {
+      await ensureProfiles(refreshed.id);
+      onComplete();
+      return;
+    }
+
+    // Clear guest JWT, then password sign-in against the confirmed account.
+    await supabase.auth.signOut({ scope: "local" }).catch(() => null);
+    const { data: signedIn, error } = await supabase.auth.signInWithPassword({
+      email: confirmed.email || accountEmail,
+      password,
+    });
+    if (error || !signedIn.user || signedIn.user.is_anonymous) {
+      throw new Error(
+        error?.message ||
+          "Account created, but we could not start your session. Please try Google, or refresh and try again.",
+      );
+    }
+    await ensureProfiles(signedIn.user.id);
+    onComplete();
+  };
+
+  /** Primary path: create an account (sign up), not log in. */
+  const signUpWithEmail = async () => {
+    const trimmedEmail = email.trim();
+
+    const { data: signedUp, error: signUpErr } = await supabase.auth.signUp({
+      email: trimmedEmail,
+      password,
+    });
+
+    if (signUpErr) {
+      // Only fall back to login when signup says the email is taken.
+      if (/already|registered|exists/i.test(signUpErr.message)) {
+        const { data: signedIn, error: signInErr } =
+          await supabase.auth.signInWithPassword({
+            email: trimmedEmail,
+            password,
+          });
+        if (!signInErr && signedIn.user) {
+          await ensureProfiles(signedIn.user.id);
+          if (signedIn.user.is_anonymous) {
+            await completeSignup(signedIn.user.id, trimmedEmail);
+            return;
+          }
+          onComplete();
+          return;
+        }
+        setErrorMessage(
+          "That email is already registered. Use the same password, or continue with Google.",
+        );
+        return;
+      }
+      setErrorMessage(signUpErr.message);
+      return;
+    }
+
+    const newUser = signedUp.user;
+    if (!newUser?.id) {
+      setErrorMessage("Could not create your account. Please try again.");
+      return;
+    }
+
+    // Supabase anti-enumeration: existing email can return a user with no identities.
+    if (Array.isArray(newUser.identities) && newUser.identities.length === 0) {
+      const { data: signedIn, error: signInErr } =
+        await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
+        });
+      if (!signInErr && signedIn.user) {
+        await ensureProfiles(signedIn.user.id);
+        onComplete();
+        return;
+      }
+      setErrorMessage(
+        "That email is already registered. Use the same password, or continue with Google.",
+      );
+      return;
+    }
+
+    if (signedUp.session && !newUser.is_anonymous) {
+      await ensureProfiles(newUser.id);
+      onComplete();
+      return;
+    }
+
+    await completeSignup(newUser.id, trimmedEmail);
+  };
+
+  /** Guest onboarding: attach email/password to the anonymous user (still a signup). */
+  const convertGuestToAccount = async () => {
+    const trimmedEmail = email.trim();
+    const { error: updateErr } = await supabase.auth.updateUser({
+      email: trimmedEmail,
+      password,
+    });
+
+    if (!updateErr) {
+      await supabase.auth.refreshSession().catch(() => null);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setErrorMessage("Could not finish account setup. Please try again.");
+        return;
+      }
+      if (!user.is_anonymous) {
+        await ensureProfiles(user.id);
+        onComplete();
+        return;
+      }
+      await completeSignup(user.id, trimmedEmail);
+      return;
+    }
+
+    const msg = updateErr.message || "";
+
+    // Password already set on this guest — just attach email / confirm.
+    if (/different from the old password/i.test(msg)) {
+      const { error: emailOnlyErr } = await supabase.auth.updateUser({
+        email: trimmedEmail,
+      });
+      if (!emailOnlyErr) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          await completeSignup(user.id, trimmedEmail);
+          return;
+        }
+      }
+    }
+
+    // Email already used on another account — fall back to signup/login helpers.
+    if (/already|registered|exists/i.test(msg)) {
+      await supabase.auth.signOut().catch(() => null);
+      await signUpWithEmail();
+      return;
+    }
+
+    setErrorMessage(msg);
+  };
+
   const handleEmail = async (event: FormEvent) => {
     event.preventDefault();
     setIsSubmitting(true);
     setErrorMessage(null);
-    setStatusMessage(null);
     try {
       if (isAnonymous) {
-        const { error: updateErr } = await supabase.auth.updateUser({
-          email,
-          password,
-        });
-        if (updateErr) {
-          setErrorMessage(updateErr.message);
-          return;
-        }
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) await ensureProfiles(user.id);
-        onComplete();
-        return;
+        await convertGuestToAccount();
+      } else {
+        await signUpWithEmail();
       }
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) {
-        setErrorMessage(error.message);
-        return;
-      }
-      if (data.user?.id) await ensureProfiles(data.user.id);
-      if (!data.session) {
-        setStatusMessage("Check your email to confirm, then return here.");
-        return;
-      }
-      onComplete();
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Something went wrong. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -134,14 +290,15 @@ export default function OnboardingCheckoutAuth({
           className="text-xl font-bold text-[#071E2E]"
           style={{ fontFamily: "'Lora', Georgia, serif" }}
         >
-          Create your account to continue
+          Sign in to continue
         </h3>
         <p
           className="mt-2 text-sm text-[#5A7A90]"
           style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
-          Save your journey and unlock the full path. You&apos;ll go to secure
-          checkout right after sign-up.
+          Create an account or sign in with an existing one to unlock your
+          personalized path. You&apos;ll go to secure checkout right after — or
+          straight into the app if you already have Pro.
         </p>
 
         <button
@@ -163,6 +320,7 @@ export default function OnboardingCheckoutAuth({
           <input
             type="email"
             required
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
@@ -172,6 +330,7 @@ export default function OnboardingCheckoutAuth({
             type="password"
             required
             minLength={6}
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (6+ characters)"
@@ -180,15 +339,12 @@ export default function OnboardingCheckoutAuth({
           {errorMessage ? (
             <p className="text-sm text-red-600">{errorMessage}</p>
           ) : null}
-          {statusMessage ? (
-            <p className="text-sm text-emerald-700">{statusMessage}</p>
-          ) : null}
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full rounded-lg bg-[#2176AE] py-3 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {isSubmitting ? "Creating account…" : "Create account & continue"}
+            {isSubmitting ? "Continuing…" : "Continue with email"}
           </button>
         </form>
 

@@ -4,8 +4,9 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import { useRouter } from "next/navigation";
+import { hskLabelForCefr } from "@/lib/levelBands";
 
-// Base CEFR levels for onboarding (simplified)
+// Base levels for onboarding (UI shows HSK; values stay CEFR for generation)
 type Level = "A1" | "A2" | "B1" | "B2" | "C1";
 
 // Extended levels are still valid for existing users
@@ -28,41 +29,46 @@ type ExtendedLevel =
 
 const LEVEL_GROUPS: {
   base: Level;
+  hsk: number;
   label: string;
   description: string;
 }[] = [
   {
     base: "A1",
+    hsk: 2,
     label: "Beginner",
     description:
-      "Just starting out with basic phrases and survival vocabulary (HSK 1-2).",
+      "Just starting out with basic phrases and survival vocabulary.",
   },
   {
     base: "A2",
+    hsk: 3,
     label: "Upper beginner",
     description:
-      "You can handle basics but still need support in conversations (HSK 3).",
+      "You can handle basics but still need support in conversations.",
   },
   {
     base: "B1",
+    hsk: 4,
     label: "Intermediate",
     description:
-      "You can talk about everyday topics but struggle with nuance (HSK 4-5).",
+      "You can talk about everyday topics but struggle with nuance.",
   },
   {
     base: "B2",
+    hsk: 5,
     label: "Upper intermediate",
     description:
-      "You follow most native content but miss some details (HSK 5-6).",
+      "You follow most native content but miss some details.",
   },
   {
     base: "C1",
+    hsk: 6,
     label: "Advanced",
     description:
       "You're fluent but still learning sophisticated vocabulary and idioms.",
   },
 ];
-
 const STORAGE_KEY = "pending_story_request";
 
 const TOPIC_SUGGESTIONS = [
@@ -278,7 +284,7 @@ export default function OnboardingStoryPage() {
                   className="flex w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition-all hover:border-gray-900 hover:bg-gray-50"
                 >
                   <h2 className="text-base font-semibold text-gray-900">
-                    {group.label} ({group.base})
+                    {group.label} (HSK {group.hsk})
                   </h2>
                   <p className="text-sm text-gray-600">{group.description}</p>
                 </button>
@@ -411,7 +417,7 @@ export default function OnboardingStoryPage() {
 
             <div>
               <p className="text-sm text-gray-600">
-                Current level: <span className="font-medium text-gray-900">{level}</span>
+                Current level: <span className="font-medium text-gray-900">{hskLabelForCefr(level)}</span>
               </p>
             </div>
           </div>

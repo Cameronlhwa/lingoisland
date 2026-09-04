@@ -21,6 +21,10 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
 const translations: Record<string, { en: string; zh: string }> = {
   // Navigation
   Home: { en: "Home", zh: "首页" },
+  "Personalized Topics": { en: "Personalized Topics", zh: "个性化主题" },
+  "Official HSK Vocabulary": { en: "Official HSK Vocabulary", zh: "官方 HSK 词汇" },
+  "150+ Practice Tests": { en: "150+ Practice Tests", zh: "150+ 模拟测试" },
+  "Self-Paced Review": { en: "Self-Paced Review", zh: "自主复习" },
   "Daily Review": { en: "Daily Review", zh: "每日复习" },
   "Topic Islands": { en: "Topic Islands", zh: "主题岛" },
   "Decks & Quiz": { en: "Decks & Quiz", zh: "卡片组与测验" },

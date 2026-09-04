@@ -409,6 +409,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
+      signal: AbortSignal.timeout(15_000),
       body: JSON.stringify({
         model: "deepseek-v4-flash",
         messages: [

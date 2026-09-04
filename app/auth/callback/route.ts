@@ -33,16 +33,43 @@ export async function GET(request: NextRequest) {
       url: requestUrl.href,
     })
     const origin = getOriginFromRequest(request)
+
+    // Preserve intended return path (upgrade/checkout) across the login bounce.
+    const nextFromCookie = request.cookies.get('oauth_next')?.value
+    const nextFromUrl = requestUrl.searchParams.get('next')
+    let preservedNext = nextFromCookie || nextFromUrl || '/app'
+    try {
+      preservedNext = decodeURIComponent(preservedNext)
+    } catch {
+      // keep raw
+    }
+    const safeNext =
+      preservedNext.startsWith('/') &&
+      !preservedNext.startsWith('//') &&
+      !preservedNext.includes('\\')
+        ? preservedNext
+        : '/app'
+
     if (error_code === 'flow_state_not_found') {
       console.error('[AUTH CALLBACK] Flow state not found - session expired or cookies cleared during OAuth')
       return NextResponse.redirect(new URL('/login?error=oauth_expired', origin))
     }
     if (error_code === 'identity_already_exists') {
-      // User's Google account is already a separate Supabase user — send them to sign-in directly
-      return NextResponse.redirect(new URL('/login?error=identity_exists', origin))
+      // Google identity already belongs to another user (often an existing Pro).
+      // Send them to login with return URL so they can sign into that account.
+      const params = new URLSearchParams({
+        error: 'identity_exists',
+        next: safeNext,
+        autogoogle: '1',
+      })
+      return NextResponse.redirect(new URL(`/login?${params.toString()}`, origin))
     }
     // Any other OAuth error: redirect to login with a generic message
-    return NextResponse.redirect(new URL('/login?error=oauth_failed', origin))
+    const failParams = new URLSearchParams({
+      error: 'oauth_failed',
+      next: safeNext,
+    })
+    return NextResponse.redirect(new URL(`/login?${failParams.toString()}`, origin))
   }
   
   // Try to get 'next' from cookie first (stored before OAuth), then from URL, then default
@@ -64,7 +91,8 @@ export async function GET(request: NextRequest) {
   const allowedOnboarding =
     next.startsWith('/onboarding/topic-island') ||
     next.startsWith('/onboarding/journey') ||
-    next.startsWith('/onboarding/upgrade')
+    next.startsWith('/onboarding/upgrade') ||
+    next.startsWith('/onboarding/hsk')
   const onboardingIsUnsafe =
     !isSafeInternalPath ||
     next === '/login' ||
@@ -146,6 +174,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(errorUrl)
     }
 
+    // OAuth must never leave an anonymous guest session in place. If it does,
+    // force a clean Google sign-in to the real account.
+    if (user.is_anonymous) {
+      console.error(
+        '[AUTH CALLBACK] Still anonymous after OAuth code exchange:',
+        user.id,
+      )
+      await supabase.auth.signOut()
+      const params = new URLSearchParams({
+        error: 'identity_exists',
+        next,
+        autogoogle: '1',
+      })
+      return NextResponse.redirect(new URL(`/login?${params.toString()}`, origin))
+    }
+
     // Check if user_profiles exists, create if needed
     const { data: existingUserProfile, error: profileCheckError } = await supabase
       .from('user_profiles')
@@ -197,6 +241,29 @@ export async function GET(request: NextRequest) {
       }
     } else {
       console.log('[AUTH CALLBACK] Billing profile already exists. User:', user.id, 'Plan:', existingProfile.plan)
+    }
+
+    // If still free, check Stripe by email / customer id — common when Google
+    // lands on a profiles row that never received the webhook update.
+    if (!existingProfile || existingProfile.plan === 'free' || !existingProfile.plan) {
+      try {
+        const { reconcileUserSubscription } = await import(
+          '@/lib/stripe/reconcileUserSubscription'
+        )
+        const result = await reconcileUserSubscription({
+          userId: user.id,
+          email: user.email,
+        })
+        if (result.reconciled) {
+          console.log(
+            '[AUTH CALLBACK] Reconciled Pro from Stripe for',
+            user.id,
+            user.email,
+          )
+        }
+      } catch (err) {
+        console.warn('[AUTH CALLBACK] Stripe reconcile skipped:', err)
+      }
     }
   } 
   // Handle email verification, password reset, or email change

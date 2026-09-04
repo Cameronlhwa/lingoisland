@@ -11,21 +11,25 @@ export default function AppLogo({
   size = "md",
   textClassName = "text-xl font-bold text-gray-900",
   href,
+  showMark = true,
 }: {
   size?: LogoSize;
   textClassName?: string;
   href?: string;
+  showMark?: boolean;
 }) {
   const px = LOGO_SIZES[size];
   const content = (
     <>
-      <Image
-        src="/logo.png"
-        alt="Lingo Island Logo"
-        width={px}
-        height={px}
-        className="rounded-lg"
-      />
+      {showMark && (
+        <Image
+          src="/logo.png"
+          alt="Lingo Island Logo"
+          width={px}
+          height={px}
+          className="rounded-lg"
+        />
+      )}
       <span className={textClassName}>
         Lingo<span className="text-gray-500">Island</span>
       </span>

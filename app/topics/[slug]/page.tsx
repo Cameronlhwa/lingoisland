@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const title = `${topicName} in Chinese (Vocabulary + Sentences) | LingoIsland`;
-  const description = `Learn Chinese vocabulary for ${topicName} with pinyin, example sentences, and intermediate-friendly phrases (A2–B2 / HSK 3–6). Start your Topic Island in minutes.`;
+  const description = `Learn Chinese vocabulary for ${topicName} with pinyin, example sentences, and intermediate-friendly HSK 3–6 phrases. Start your Topic Island in minutes.`;
 
   const indexable = content && meetsIndexingMinimum(content);
 

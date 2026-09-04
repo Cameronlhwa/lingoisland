@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
+import { hskLabelForCefr } from "@/lib/levelBands";
 
 const LEVELS = ["A2", "B1", "B2"] as const;
 
@@ -118,7 +119,7 @@ export default function DemoIslandCard() {
                   : "text-gray-400 hover:text-white"
               }`}
             >
-              {item}
+              {hskLabelForCefr(item)}
             </button>
           ))}
         </div>

@@ -50,7 +50,13 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     const headerSecret = request.headers.get("x-cron-secret");
     
-    if (cronSecret && headerSecret !== cronSecret) {
+    // Vercel Cron sends Authorization: Bearer <CRON_SECRET>. Retain the
+    // custom header for existing manual integrations, but never leave this
+    // endpoint public when no secret is configured.
+    const hasValidSecret =
+      Boolean(cronSecret) &&
+      (authHeader === `Bearer ${cronSecret}` || headerSecret === cronSecret);
+    if (!hasValidSecret) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

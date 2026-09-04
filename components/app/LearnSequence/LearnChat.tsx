@@ -8,12 +8,21 @@ import {
   useState,
 } from "react";
 import { pinyin } from "pinyin-pro";
+import PrimaryButton from "@/components/landing/PrimaryButton";
+import SecondaryButton from "@/components/landing/SecondaryButton";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
+import {
+  HSK_CARD_SHADOW,
+  LINGO_ACCENT_BORDER,
+  LINGO_ACCENT_GRADIENT_GLOSSY,
+  LINGO_ACCENT_TINT,
+} from "@/lib/glossy-theme";
 import ExerciseChat from "./ExerciseChat";
 import {
   resolveLearnLevel,
   useExerciseChatForIsland,
 } from "./levels";
+import { LearnSequenceCard } from "./shell";
 import type { LearnIsland, LearnWord } from "./types";
 
 interface LearnChatProps {
@@ -21,6 +30,7 @@ interface LearnChatProps {
   island: LearnIsland;
   learnLevel?: string;
   onComplete: () => void;
+  onBack?: () => void;
   fillContainer?: boolean;
   allIslandWords?: LearnWord[];
 }
@@ -50,18 +60,14 @@ function PracticeWordStrip({ words }: { words: LearnWord[] }) {
 
   return (
     <div className="mb-4">
-      <p
-        className="mb-2.5 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-[#8AABBF]"
-        style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
-      >
+      <p className="mb-2.5 text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
         Words to practice
       </p>
       <div className="flex flex-wrap justify-center gap-2">
         {words.map((w) => (
           <div key={w.id} className="group relative">
             <div
-              className="cursor-default rounded-full border border-[#C2DCF0] bg-white px-3.5 py-1.5 text-sm font-medium text-[#071E2E] shadow-sm transition-colors group-hover:border-[#2176AE] group-hover:bg-[#EAF4FB]"
-              style={{ fontFamily: "'Lora', Georgia, serif" }}
+              className="cursor-default rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-3.5 py-1.5 text-sm font-bold text-[var(--lingo-navy)] transition-colors group-hover:bg-white"
             >
               {convertText(w.hanzi)}
             </div>
@@ -69,7 +75,7 @@ function PracticeWordStrip({ words }: { words: LearnWord[] }) {
               className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-lg border border-[#C2DCF0] bg-white px-3 py-2 text-center opacity-0 shadow-md transition-opacity group-hover:opacity-100"
               style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
             >
-              <p className="text-xs font-medium text-[#5A7A90]">{w.pinyin}</p>
+              <p className="text-xs font-medium text-[var(--lingo-text-muted)]">{w.pinyin}</p>
               <p className="mt-0.5 text-xs italic text-[#8AABBF]">{w.english}</p>
             </div>
           </div>
@@ -98,10 +104,17 @@ function ChatBubble({
     <div
       className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
         message.role === "user"
-          ? "bg-[#2176AE] text-white"
-          : "bg-white text-[#071E2E] shadow-sm"
+          ? "text-white"
+          : "bg-white text-[var(--lingo-navy)]"
       }`}
-      style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+      style={{
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+        background:
+          message.role === "user"
+            ? LINGO_ACCENT_GRADIENT_GLOSSY
+            : "#fff",
+        boxShadow: HSK_CARD_SHADOW,
+      }}
     >
       <p className="whitespace-pre-wrap">{convertText(message.content)}</p>
       {showExtras && showPinyin && pinyinLine && (
@@ -132,6 +145,7 @@ function LearnChatB1Plus({
   words,
   island,
   onComplete,
+  onBack,
   fillContainer = false,
   allIslandWords,
 }: LearnChatProps) {
@@ -167,6 +181,7 @@ function LearnChatB1Plus({
     const res = await fetch("/api/learn-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(20_000),
       body: JSON.stringify({
         messages: history,
         islandLevel: island.level,
@@ -276,16 +291,17 @@ function LearnChatB1Plus({
 
   return (
     <div
-      className={`mx-auto flex max-w-2xl flex-col px-6 py-6 ${
-        fillContainer ? "h-full min-h-0" : "h-[calc(100vh-8rem)]"
+      className={`mx-auto flex max-w-2xl flex-col ${
+        fillContainer ? "h-full min-h-0 px-6 py-6" : "min-h-0"
       }`}
     >
+      <LearnSequenceCard className="flex min-h-0 flex-1 flex-col">
       <div className="mb-4 text-center">
         <button
           type="button"
           onClick={() => setShowWordList((v) => !v)}
-          className="text-sm font-semibold text-[#2176AE] underline-offset-2 hover:underline"
-          style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+          className="text-sm font-semibold underline-offset-2 hover:underline"
+          style={{ color: "var(--lingo-teal)" }}
         >
           {showWordList ? "Hide" : "View"} words on this island (
           {islandWords.length})
@@ -293,22 +309,33 @@ function LearnChatB1Plus({
 
         {showWordList && (
           <div
-            className="mt-3 max-h-44 overflow-y-auto rounded-xl border border-[#2176AE]/20 bg-white/80 text-left"
-            style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+            className="mt-3 max-h-44 overflow-y-auto rounded-2xl bg-white text-left"
+            style={{
+              border: `1px solid ${LINGO_ACCENT_BORDER}`,
+              boxShadow: HSK_CARD_SHADOW,
+            }}
           >
             {islandWords.map((w) => (
               <div
                 key={w.id}
-                className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-[#2176AE]/10 px-4 py-2.5 last:border-b-0"
+                className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b px-4 py-2.5 last:border-b-0"
+                style={{ borderColor: LINGO_ACCENT_BORDER }}
               >
-                <span
-                  className="text-sm font-medium text-[#071E2E]"
-                  style={{ fontFamily: "'Lora', Georgia, serif" }}
-                >
+                <span className="lingo-display text-sm font-medium text-[var(--lingo-navy)]">
                   {convertText(w.hanzi)}
                 </span>
-                <span className="text-xs text-[#071E2E]/50">{w.pinyin}</span>
-                <span className="text-xs text-[#071E2E]/60">· {w.english}</span>
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--lingo-text-muted)" }}
+                >
+                  {w.pinyin}
+                </span>
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--lingo-text-muted)" }}
+                >
+                  · {w.english}
+                </span>
               </div>
             ))}
           </div>
@@ -321,24 +348,26 @@ function LearnChatB1Plus({
         <button
           type="button"
           onClick={() => setShowPinyin((v) => !v)}
-          className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-            showPinyin
-              ? "border-[#2176AE] bg-[#2176AE] text-white"
-              : "border-[#2176AE]/30 bg-white/70 text-[#071E2E]"
-          }`}
-          style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+          className="rounded-full px-3 py-1 text-xs font-semibold transition-colors"
+          style={{
+            color: showPinyin ? "#fff" : "var(--lingo-navy)",
+            background: showPinyin ? LINGO_ACCENT_GRADIENT_GLOSSY : "#fff",
+            border: `1px solid ${showPinyin ? "transparent" : LINGO_ACCENT_BORDER}`,
+            boxShadow: showPinyin ? HSK_CARD_SHADOW : undefined,
+          }}
         >
           {showPinyin ? "Hide" : "Show"} Pinyin
         </button>
         <button
           type="button"
           onClick={() => setShowEnglish((v) => !v)}
-          className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-            showEnglish
-              ? "border-[#2176AE] bg-[#2176AE] text-white"
-              : "border-[#2176AE]/30 bg-white/70 text-[#071E2E]"
-          }`}
-          style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+          className="rounded-full px-3 py-1 text-xs font-semibold transition-colors"
+          style={{
+            color: showEnglish ? "#fff" : "var(--lingo-navy)",
+            background: showEnglish ? LINGO_ACCENT_GRADIENT_GLOSSY : "#fff",
+            border: `1px solid ${showEnglish ? "transparent" : LINGO_ACCENT_BORDER}`,
+            boxShadow: showEnglish ? HSK_CARD_SHADOW : undefined,
+          }}
         >
           {showEnglish ? "Hide" : "Show"} English
         </button>
@@ -346,10 +375,16 @@ function LearnChatB1Plus({
 
       <div
         ref={scrollRef}
-        className="mb-4 flex-1 space-y-3 overflow-y-auto rounded-xl border border-[#2176AE]/20 bg-white/60 p-4"
+        className="mb-4 flex-1 space-y-3 overflow-y-auto rounded-2xl p-4"
+        style={{
+          background: LINGO_ACCENT_TINT,
+          border: `1px solid ${LINGO_ACCENT_BORDER}`,
+        }}
       >
         {loading ? (
-          <p className="text-sm text-[#071E2E]/50">Starting practice…</p>
+          <p className="text-sm" style={{ color: "var(--lingo-text-muted)" }}>
+            Starting practice…
+          </p>
         ) : (
           messages.map((msg, i) => (
             <div
@@ -366,7 +401,9 @@ function LearnChatB1Plus({
           ))
         )}
         {sending && (
-          <p className="text-sm text-[#071E2E]/50">华华 is typing…</p>
+          <p className="text-sm" style={{ color: "var(--lingo-text-muted)" }}>
+            华华 is typing…
+          </p>
         )}
       </div>
 
@@ -374,7 +411,7 @@ function LearnChatB1Plus({
         <p className="mb-2 text-center text-sm text-red-600">{error}</p>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex items-stretch gap-2">
         <input
           type="text"
           value={input}
@@ -387,28 +424,33 @@ function LearnChatB1Plus({
           }}
           disabled={loading || sending}
           placeholder="Type your message…"
-          className="flex-1 rounded-lg border border-[#2176AE]/25 bg-white px-4 py-2.5 text-sm text-[#071E2E] focus:border-[#2176AE] focus:outline-none focus:ring-2 focus:ring-[#2176AE]/20 disabled:opacity-50"
-          style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+          className="flex-1 px-4 py-2.5 text-sm text-[var(--lingo-navy)] focus:outline-none focus:ring-2 disabled:opacity-50"
+          style={{
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+            borderRadius: 18,
+            background: "#fff",
+            border: `1px solid ${LINGO_ACCENT_BORDER}`,
+            boxShadow: HSK_CARD_SHADOW,
+          }}
         />
-        <button
-          type="button"
+        <PrimaryButton
+          size="compact"
           onClick={() => void handleSend()}
           disabled={loading || sending || !input.trim()}
-          className="rounded-lg bg-[#2176AE] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
-          style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
         >
           Send
-        </button>
+        </PrimaryButton>
       </div>
 
-      <button
-        type="button"
-        onClick={onComplete}
-        className="mt-4 w-full rounded-lg border border-[#2176AE]/30 bg-white/70 py-3 text-sm font-semibold text-[#2176AE] transition-colors hover:bg-white"
-        style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
-      >
-        Finish practice →
-      </button>
+      <div className="mt-4 flex flex-wrap justify-center gap-3">
+        {onBack ? (
+          <SecondaryButton onClick={onBack}>← Back</SecondaryButton>
+        ) : null}
+        <SecondaryButton className="flex-1" onClick={onComplete}>
+          Finish practice →
+        </SecondaryButton>
+      </div>
+      </LearnSequenceCard>
     </div>
   );
 }
@@ -418,6 +460,7 @@ export default function LearnChat({
   island,
   learnLevel,
   onComplete,
+  onBack,
   fillContainer = false,
   allIslandWords,
 }: LearnChatProps) {
@@ -435,6 +478,7 @@ export default function LearnChat({
         words={words}
         island={exerciseIsland}
         onComplete={onComplete}
+        onBack={onBack}
         fillContainer={fillContainer}
       />
     );
@@ -445,6 +489,7 @@ export default function LearnChat({
       words={words}
       island={island}
       onComplete={onComplete}
+      onBack={onBack}
       fillContainer={fillContainer}
       allIslandWords={allIslandWords}
     />

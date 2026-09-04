@@ -1,4 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  hasAnyProAccess,
+  hasHskAccess,
+  hasIslandsAccess,
+  parseProductPlan,
+  type ProductPlan,
+} from "@/lib/product-plans";
 
 export type Feature =
   | "create_topic_island"
@@ -26,23 +33,30 @@ const FEATURE_DEFAULTS: Record<Feature, { free: boolean; pro: boolean }> = {
   mark_known: { free: false, pro: true }, // Free: 1/month, Pro: unlimited
 };
 
+function isPeriodActive(currentPeriodEnd: string | null | undefined): boolean {
+  if (!currentPeriodEnd) return true; // null = lifetime / manual grant
+  return new Date(currentPeriodEnd).getTime() > Date.now();
+}
+
+export type ProductAccess = "core" | "hsk";
+
 /**
  * Determine the subscription state based on profile data
  */
 export function getSubscriptionState(
-  plan: "free" | "pro",
+  plan: ProductPlan | "free" | "pro",
   stripeSubscriptionId: string | null,
   currentPeriodEnd: string | null,
   cancelAtPeriodEnd: boolean
 ): SubscriptionState {
-  if (plan !== "pro") {
+  if (!hasAnyProAccess(plan)) {
     return "free";
   }
 
   const hasStripeId = !!stripeSubscriptionId;
   const hasPeriodEnd = !!currentPeriodEnd;
 
-  // Lifetime Pro: Pro plan with no Stripe subscription
+  // Lifetime Pro: paid plan with no Stripe subscription
   if (!hasStripeId && !hasPeriodEnd) {
     return "lifetime";
   }
@@ -62,8 +76,11 @@ export function getSubscriptionState(
 }
 
 export async function getEntitlements(userId: string): Promise<{
-  plan: "free" | "pro";
+  plan: ProductPlan;
+  /** Islands Pro (legacy name — prefer isIslandsPro for new code). */
   isPro: boolean;
+  isIslandsPro: boolean;
+  isHskPro: boolean;
   current_period_end: string | null;
   stripe_subscription_id: string | null;
   cancel_at_period_end: boolean;
@@ -80,20 +97,59 @@ export async function getEntitlements(userId: string): Promise<{
     console.error("[ENTITLEMENTS] Failed to load profile:", error);
   }
 
-  const plan = data?.plan === "pro" ? "pro" : "free";
-  const currentPeriodEnd = data?.current_period_end
-    ? new Date(data.current_period_end)
-    : null;
+  const plan = parseProductPlan(data?.plan);
   const currentPeriodEndValue = data?.current_period_end ?? null;
   const stripeSubscriptionId = data?.stripe_subscription_id ?? null;
   const cancelAtPeriodEnd = data?.cancel_at_period_end ?? false;
-  
-  // User is considered Pro if plan='pro' AND either:
-  // 1. current_period_end is NULL (manual grant with no expiry)
-  // 2. current_period_end is in the future (active Stripe subscription)
-  const isPro =
-    plan === "pro" &&
-    (!currentPeriodEnd || currentPeriodEnd.getTime() > Date.now());
+  const periodOk = isPeriodActive(currentPeriodEndValue);
+
+  // product_subscriptions is the source of truth after its migration ships.
+  // Retain the profiles.plan fallback so existing deployments stay functional
+  // while the migration is rolling out.
+  const { data: productSubscriptions, error: subscriptionsError } =
+    await supabase
+      .from("product_subscriptions")
+      .select("product, status, current_period_end")
+      .eq("user_id", userId);
+  const hasProductSubscriptionTable = !subscriptionsError;
+  if (
+    subscriptionsError &&
+    subscriptionsError.code !== "42P01" &&
+    subscriptionsError.code !== "PGRST205"
+  ) {
+    console.warn(
+      "[ENTITLEMENTS] Failed to load product subscriptions:",
+      subscriptionsError,
+    );
+  }
+  const isActiveProduct = (product: ProductAccess) =>
+    (productSubscriptions ?? []).some(
+      (subscription) =>
+        subscription.product === product &&
+        (subscription.status === "active" || subscription.status === "trialing") &&
+        isPeriodActive(subscription.current_period_end),
+    );
+
+  // A rollout may create the table before every existing subscriber has been
+  // backfilled. Keep the established profiles.plan entitlement as a fallback
+  // until each product has its own subscription row. Webhook cancellation and
+  // renewal also update profiles.plan, so this does not revive canceled access.
+  const isIslandsPro =
+    isActiveProduct("core") ||
+    (!hasProductSubscriptionTable || !(productSubscriptions ?? []).some(
+      (subscription) => subscription.product === "core",
+    )) &&
+      hasIslandsAccess(plan) &&
+      periodOk;
+  const isHskPro =
+    isActiveProduct("hsk") ||
+    (!hasProductSubscriptionTable || !(productSubscriptions ?? []).some(
+      (subscription) => subscription.product === "hsk",
+    )) &&
+      hasHskAccess(plan) &&
+      periodOk;
+  // Islands feature gates historically used isPro
+  const isPro = isIslandsPro;
 
   // TODO: Flip specific feature flags in FEATURE_DEFAULTS for selective paywalls.
   const features = Object.fromEntries(
@@ -103,14 +159,31 @@ export async function getEntitlements(userId: string): Promise<{
     ])
   ) as Record<Feature, boolean>;
 
-  return { 
-    plan, 
-    isPro, 
-    current_period_end: currentPeriodEndValue, 
-    stripe_subscription_id: stripeSubscriptionId, 
+  return {
+    plan,
+    isPro,
+    isIslandsPro,
+    isHskPro,
+    current_period_end: currentPeriodEndValue,
+    stripe_subscription_id: stripeSubscriptionId,
     cancel_at_period_end: cancelAtPeriodEnd,
-    features 
+    features,
   };
+}
+
+/**
+ * Product-level authorization for server components and route handlers.
+ * Never use product_track or the side cookie for access control: both are
+ * preferences that a browser can change.
+ */
+export async function hasProductAccess(
+  userId: string,
+  product: ProductAccess,
+): Promise<boolean> {
+  const entitlements = await getEntitlements(userId);
+  return product === "core"
+    ? entitlements.isIslandsPro
+    : entitlements.isHskPro;
 }
 
 /**

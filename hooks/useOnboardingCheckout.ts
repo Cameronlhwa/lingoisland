@@ -5,9 +5,14 @@ import { createClient } from "@/lib/supabase/browser";
 import {
   type CheckoutPlan,
   type OnboardingUpgradeSnapshot,
+  clearUpgradePending,
   updateSnapshotPlan,
   writeUpgradeSnapshot,
 } from "@/lib/onboarding/onboardingCheckoutStorage";
+import {
+  fetchIsPro,
+  invalidateSubscriptionCache,
+} from "@/hooks/useSubscription";
 
 export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
   const supabase = createClient();
@@ -70,6 +75,14 @@ export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
       return;
     }
 
+    invalidateSubscriptionCache();
+    const pro = await fetchIsPro();
+    if (pro) {
+      clearUpgradePending();
+      window.location.href = "/app";
+      return;
+    }
+
     await startCheckout(plan);
   }, [plan, snapshot, startCheckout, supabase]);
 
@@ -82,6 +95,16 @@ export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
       setError("Please finish creating your account to continue.");
       return;
     }
+
+    // Existing Pro accounts (e.g. signed in via Google) should skip Stripe.
+    invalidateSubscriptionCache();
+    const pro = await fetchIsPro();
+    if (pro) {
+      clearUpgradePending();
+      window.location.href = "/app";
+      return;
+    }
+
     await startCheckout(pendingPlanRef.current);
   }, [startCheckout, supabase]);
 

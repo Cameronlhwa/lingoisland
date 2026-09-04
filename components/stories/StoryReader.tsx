@@ -9,6 +9,7 @@ import type { IslandChatSelectedWord } from "@/components/IslandSideChat";
 import { pinyin } from "pinyin-pro";
 import SpeakerButton from "@/components/app/SpeakerButton";
 import ChineseTooltipText from "@/components/app/ChineseTooltipText";
+import { hskLabelForCefr } from "@/lib/levelBands";
 
 export type StoryDetail = {
   id: string;
@@ -374,7 +375,7 @@ export default function StoryReader({
                   <span className="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
                     {story.kind === "daily" ? "Daily" : "Custom"}
                   </span>
-                  <span>Level: {story.level}</span>
+                  <span>Level: {hskLabelForCefr(story.level)}</span>
                   {dateLabel ? <span>{dateLabel}</span> : null}
                 </div>
                 {isEditingTitle ? (
