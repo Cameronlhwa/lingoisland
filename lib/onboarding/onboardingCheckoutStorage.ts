@@ -10,7 +10,8 @@ export type JourneyNodeSnapshot = {
 
 export type OnboardingUpgradeSnapshot = {
   v: 1;
-  islandId: string;
+  /** Present only when checkout follows a generated journey island. */
+  islandId?: string;
   topic: string;
   journeyTopic?: string;
   islandLevel?: string;
@@ -54,7 +55,7 @@ export function readUpgradeSnapshot(): OnboardingUpgradeSnapshot | null {
     const raw = localStorage.getItem(SNAPSHOT_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as OnboardingUpgradeSnapshot;
-    if (parsed?.v !== 1 || !parsed.islandId) return null;
+    if (parsed?.v !== 1) return null;
     return parsed;
   } catch {
     return null;

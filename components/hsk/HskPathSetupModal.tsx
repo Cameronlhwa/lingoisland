@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import {
   MOTIVATION_BUCKETS,
-  HSK_INTEREST_OPTIONS,
+  getHskInterestCategories,
   type HskMotivation,
 } from "@/components/Onboarding/hsk/hskPersonalizationContent";
 import HskVocabChecklist from "@/components/Onboarding/hsk/HskVocabChecklist";
@@ -72,6 +72,7 @@ export default function HskPathSetupModal({
   const pill = "rounded-full border px-4 py-2 text-sm font-medium transition-colors";
   const btn =
     "flex w-full min-h-[48px] items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-semibold text-white transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50";
+  const interestCategories = getHskInterestCategories(targetLevel);
 
   return (
     <div
@@ -133,39 +134,48 @@ export default function HskPathSetupModal({
               Which of these are you into?
             </h2>
             <p className="mt-2 text-sm" style={{ color: MUTED }}>
-              Pick at least three — each unit of your path leans on a different one.
+              Pick at least five — each unit of your path leans on a different one.
             </p>
-            <div className="mt-5 flex flex-wrap gap-2.5">
-              {HSK_INTEREST_OPTIONS.map((opt) => {
-                const Icon = opt.icon;
-                const on = interests.includes(opt.value);
-                return (
-                  <button
-                    key={opt.value}
-                    className={`${pill} inline-flex items-center gap-2`}
-                    style={{
-                      borderColor: on ? NAVY : BORDER,
-                      background: on ? NAVY : "white",
-                      color: on ? "white" : NAVY,
-                    }}
-                    onClick={() =>
-                      setInterests((p) =>
-                        p.includes(opt.value)
-                          ? p.filter((v) => v !== opt.value)
-                          : [...p, opt.value],
-                      )
-                    }
-                  >
-                    <Icon className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-                    {opt.value}
-                  </button>
-                );
-              })}
+            <div className="mt-5 max-h-[48vh] space-y-5 overflow-y-auto pr-1">
+              {interestCategories.map((category) => (
+                <section key={category.label}>
+                  <h3 className="text-xs font-bold uppercase tracking-[0.1em]" style={{ color: MUTED }}>
+                    {category.label}
+                  </h3>
+                  <div className="mt-2 flex flex-wrap gap-2.5">
+                    {category.options.map((opt) => {
+                      const Icon = opt.icon;
+                      const on = interests.includes(opt.value);
+                      return (
+                        <button
+                          key={opt.value}
+                          className={`${pill} inline-flex items-center gap-2`}
+                          style={{
+                            borderColor: on ? NAVY : BORDER,
+                            background: on ? NAVY : "white",
+                            color: on ? "white" : NAVY,
+                          }}
+                          onClick={() =>
+                            setInterests((p) =>
+                              p.includes(opt.value)
+                                ? p.filter((v) => v !== opt.value)
+                                : [...p, opt.value],
+                            )
+                          }
+                        >
+                          <Icon className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                          {opt.value}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
             </div>
             <button
               className={`${btn} mt-7`}
               style={{ background: HSK_BTN_GRADIENT, boxShadow: HSK_BTN_SHADOW }}
-              disabled={interests.length < 3}
+              disabled={interests.length < 5}
               onClick={() => setStep("personalize")}
             >
               Continue

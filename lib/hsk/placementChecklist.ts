@@ -5,17 +5,19 @@ export const CHECKLIST_PASS_RATE = 0.6;
 export type ChecklistWord = {
   id: string;
   hanzi: string;
+  pinyin: string;
   level: number;
 };
 
 export type ChecklistDecoy = {
   id: string;
   hanzi: string;
+  pinyin: string;
 };
 
 export type ChecklistItem =
-  | { kind: "word"; id: string; hanzi: string; level: number }
-  | { kind: "decoy"; id: string; hanzi: string };
+  | { kind: "word"; id: string; hanzi: string; pinyin: string; level: number }
+  | { kind: "decoy"; id: string; hanzi: string; pinyin: string };
 
 export function scoreChecklist({
   words,

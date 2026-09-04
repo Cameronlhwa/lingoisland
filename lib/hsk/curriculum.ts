@@ -9,7 +9,7 @@ import {
 import { countUnlearnedHskWords } from "@/lib/hsk/vocabPool";
 
 const MIN_UNLEARNED_FOR_MILESTONE = 8;
-const MIN_INTERESTS = 3;
+const MIN_INTERESTS = 5;
 
 const MOTIVATIONS: HskMotivation[] = ["school", "job", "heritage", "hobby"];
 
@@ -136,7 +136,7 @@ export async function createCurriculumForUser(
     return { ok: false, error: "hsk_target_level is required" };
   }
   if (!prof.interests || prof.interests.length < MIN_INTERESTS) {
-    return { ok: false, error: "at least three interests are required" };
+    return { ok: false, error: "at least five interests are required" };
   }
 
   const target = Math.min(HSK_PATH_MAX_LEVEL, Math.max(1, prof.hsk_target_level));
