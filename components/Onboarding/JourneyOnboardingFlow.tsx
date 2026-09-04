@@ -11,13 +11,11 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import AppLogo from "@/components/app/AppLogo";
+import OnboardingUpgradeClient from "@/app/onboarding/upgrade/OnboardingUpgradeClient";
 import { Loader2 } from "lucide-react";
 import { getTopicSuggestions } from "@/lib/onboarding/topicSuggestions";
 import {
   buildUpgradePageUrl,
-  markUpgradePending,
-  writeUpgradeSnapshot,
-  type JourneyNodeSnapshot,
 } from "@/lib/onboarding/onboardingCheckoutStorage";
 import {
   HSK_CARD_SHADOW,
@@ -195,30 +193,9 @@ const GEN_STEPS = [
   "Finalizing your plan…",
 ];
 
-const JOURNEY_ONBOARDING_DRAFT_KEY = "journey_onboarding_draft_v1";
-const JOURNEY_RESUME_PATH = "/onboarding/journey";
-
 const HARDCODED_TIME_LABEL = "15min";
 const HARDCODED_DAILY_MINUTES = 15;
 const HARDCODED_DAYS_PER_WEEK = 4;
-
-type SavedNode = {
-  node_type: string;
-  position: number;
-  step_order: number;
-  name: string;
-  zh: string | null;
-  hint: string | null;
-  word_count: number | null;
-};
-
-type JourneyOnboardingDraft = {
-  topic: string;
-  whyKey: WhyKey | "";
-  branchAnswer: string;
-  cefrLevel: CefrLevel | "";
-  savedNodes?: SavedNode[];
-};
 
 type Step =
   | "level"
@@ -226,7 +203,7 @@ type Step =
   | "branch"
   | "topic"
   | "generating"
-  | "starting-island";
+  | "upgrade";
 
 function whyKeyFromProfile(
   goal: string | null | undefined,
@@ -245,9 +222,14 @@ function whyLabel(whyKey: WhyKey | ""): string {
   return WHY_OPTIONS.find((o) => o.key === whyKey)?.label ?? "General fluency improvement";
 }
 
+function branchLabel(whyKey: WhyKey | "", branchAnswer: string): string {
+  const branch = BRANCH_OPTIONS[whyKey || "fluency"];
+  return branch?.options.find((option) => option.key === branchAnswer)?.label ?? "";
+}
+
 /**
- * Journey setup wizard. When `publicSurface` is true (e.g. `/onboarding/journey`), the flow
- * runs outside `/app` auth; anonymous sign-in happens silently before generation.
+ * Journey setup wizard. On the public surface (`/onboarding/journey`), the
+ * answers personalize the subscription screen instead of creating a journey.
  */
 export default function JourneyOnboardingFlow({
   publicSurface = false,
@@ -274,10 +256,7 @@ export default function JourneyOnboardingFlow({
   const [whyKey, setWhyKey] = useState<WhyKey | "">("");
   const [branchAnswer, setBranchAnswer] = useState("");
   const [generatingStep, setGeneratingStep] = useState(0);
-  const [journeyId, setJourneyId] = useState<string | null>(null);
   const generateStartedRef = useRef(false);
-  const draftResumeRef = useRef(false);
-  const savedNodesRef = useRef<SavedNode[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [profileLoaded, setProfileLoaded] = useState(!smartProfileSkip);
@@ -298,26 +277,21 @@ export default function JourneyOnboardingFlow({
     profileLearningGoal ||
     "General fluency improvement";
 
-  const persistDraft = () => {
-    try {
-      const draft: JourneyOnboardingDraft = {
-        topic: topic.trim(),
-        whyKey,
-        branchAnswer,
-        cefrLevel,
-        savedNodes:
-          savedNodesRef.current.length > 0
-            ? savedNodesRef.current
-            : undefined,
-      };
-      sessionStorage.setItem(
-        JOURNEY_ONBOARDING_DRAFT_KEY,
-        JSON.stringify(draft),
-      );
-    } catch {
-      // sessionStorage blocked
-    }
-  };
+  const upgradePersonalization = useMemo(
+    () => ({
+      topic: topic.trim() || A0_TOPIC,
+      journeyTopic: topic.trim() || A0_TOPIC,
+      islandLevel: cefrLevel || "B1",
+      wordsLearned: 0,
+      wordsPerWeek: 40,
+      motivationLabel: whyKey
+        ? [whyLabel(whyKey), branchLabel(whyKey, branchAnswer)]
+            .filter(Boolean)
+            .join(" · ")
+        : undefined,
+    }),
+    [branchAnswer, cefrLevel, topic, whyKey],
+  );
 
   // Legacy ?islandId= links used to resume the free first lesson — send them
   // to the plan reveal / upgrade instead.
@@ -325,35 +299,6 @@ export default function JourneyOnboardingFlow({
     if (!islandFromUrl || !publicSurface) return;
     router.replace(buildUpgradePageUrl(islandFromUrl));
   }, [islandFromUrl, publicSurface, router]);
-
-  // After login: restore draft and jump to generation.
-  useEffect(() => {
-    if (typeof window === "undefined" || draftResumeRef.current) return;
-    if (searchParams.get("resume") !== "1") return;
-    if (searchParams.get("islandId")) return;
-    const raw = sessionStorage.getItem(JOURNEY_ONBOARDING_DRAFT_KEY);
-    if (!raw) {
-      router.replace(JOURNEY_RESUME_PATH);
-      return;
-    }
-    try {
-      const d = JSON.parse(raw) as JourneyOnboardingDraft;
-      if (d.topic) setTopic(d.topic);
-      if (d.whyKey && WHY_OPTIONS.some((o) => o.key === d.whyKey))
-        setWhyKey(d.whyKey);
-      if (d.branchAnswer) setBranchAnswer(d.branchAnswer);
-      if (d.cefrLevel) setCefrLevel(cefrFromProfile(String(d.cefrLevel)));
-      if (Array.isArray(d.savedNodes) && d.savedNodes.length > 0) {
-        savedNodesRef.current = d.savedNodes;
-      }
-      draftResumeRef.current = true;
-      setStep("generating");
-      router.replace(JOURNEY_RESUME_PATH);
-    } catch {
-      sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
-      router.replace(JOURNEY_RESUME_PATH);
-    }
-  }, [searchParams, router]);
 
   // Deep link: ?topic=… prefills topic and starts at why (skip level only if we already have level from profile later)
   useEffect(() => {
@@ -487,112 +432,8 @@ export default function JourneyOnboardingFlow({
     return () => timers.forEach(clearTimeout);
   }, [step, isA0]);
 
-  const startIslandAndRedirect = async (
-    id: string,
-    level: string,
-  ): Promise<void> => {
-    setStep("starting-island");
-    const isRes = await fetch(`/api/journey/${id}/start-island`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ order: 1, cefrLevel: level }),
-    });
-    const isData = await isRes.json().catch(() => ({}));
-    if (!isRes.ok) {
-      throw new Error(isData.error || "Could not start island");
-    }
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      await supabase
-        .from("profiles")
-        .update({ onboarding_complete: true })
-        .eq("id", user.id);
-    }
-
-    sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
-    const islandId = isData.islandId as string;
-    if (!islandId) {
-      throw new Error("Could not start island");
-    }
-
-    // Build upgrade snapshot from journey + first island (no free lesson first).
-    let islandName: string | undefined;
-    let journeyTopic = topic.trim() || A0_TOPIC;
-    let wordsPerWeek = 40;
-    let lockedIslands: JourneyNodeSnapshot[] = [];
-    let islandTopic = topic.trim() || A0_TOPIC;
-
-    try {
-      const [islandRes, journeyRes] = await Promise.all([
-        fetch(`/api/topic-islands/${islandId}`),
-        fetch(`/api/journey/${id}`),
-      ]);
-      if (islandRes.ok) {
-        const islandData = await islandRes.json();
-        islandTopic = islandData.island?.topic ?? islandTopic;
-        islandName = islandData.journeyContext?.name ?? islandName;
-        journeyTopic =
-          islandData.journeyContext?.journeyTopic || journeyTopic;
-        wordsPerWeek =
-          islandData.journeyContext?.wordsPerWeek || wordsPerWeek;
-        if (Array.isArray(islandData.journeyContext?.lockedIslands)) {
-          lockedIslands = islandData.journeyContext.lockedIslands;
-        }
-      }
-      if (journeyRes.ok) {
-        const journeyData = await journeyRes.json();
-        journeyTopic = journeyData.journey?.topic || journeyTopic;
-        wordsPerWeek = journeyData.journey?.words_per_week || wordsPerWeek;
-        const nodes = (journeyData.nodes ?? []) as Array<{
-          order: number;
-          name: string;
-          zh: string | null;
-          node_type: "island" | "story";
-          hint: string | null;
-        }>;
-        const firstIsland = nodes.find(
-          (n) => n.node_type === "island" && n.order === 1,
-        );
-        if (firstIsland?.name) islandName = firstIsland.name;
-        if (lockedIslands.length === 0) {
-          lockedIslands = nodes
-            .filter((n) => !(n.node_type === "island" && n.order === 1))
-            .map((n) => ({
-              order: n.order,
-              name: n.name,
-              zh: n.zh,
-              node_type: n.node_type,
-              hint: n.hint,
-            }));
-        }
-      }
-    } catch {
-      // Snapshot still works with topic/level fallbacks.
-    }
-
-    writeUpgradeSnapshot({
-      v: 1,
-      islandId,
-      topic: islandTopic,
-      journeyTopic,
-      islandLevel: level,
-      islandName,
-      wordsLearned: 0,
-      wordsPerWeek,
-      lockedIslands,
-      plan: "monthly",
-      motivationLabel: whyKey ? whyLabel(whyKey) : undefined,
-    });
-    markUpgradePending();
-    router.replace(buildUpgradePageUrl(islandId));
-  };
-
   useEffect(() => {
-    // The A0 course is fixed and seeded directly into the user's island, so
-    // start immediately. Other levels wait for their existing progress UI.
+    // A0 needs no simulated progress; other levels retain the in-app animation.
     if (
       step !== "generating" ||
       (!isA0 && generatingStep < GEN_STEPS.length)
@@ -604,22 +445,11 @@ export default function JourneyOnboardingFlow({
     const run = async () => {
       setError(null);
       try {
-        // Silent anonymous auth so island generation works without email/password.
-        let {
+        const {
           data: { user },
         } = await supabase.auth.getUser();
         if (!user) {
-          const { data: anonData, error: anonErr } =
-            await supabase.auth.signInAnonymously();
-          if (anonErr) {
-            throw new Error(
-              anonErr.message || "Could not start a guest session",
-            );
-          }
-          user = anonData.user;
-        }
-        if (!user) {
-          throw new Error("Could not start a guest session");
+          throw new Error("Could not load your account. Please try again.");
         }
 
         if (smartProfileSkip) {
@@ -642,8 +472,6 @@ export default function JourneyOnboardingFlow({
           }
         }
 
-        persistDraft();
-
         const res = await fetch("/api/journey/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -656,10 +484,6 @@ export default function JourneyOnboardingFlow({
             learningGoal: effectiveWhyText,
             timeLabel: HARDCODED_TIME_LABEL,
             daysPerWeek: HARDCODED_DAYS_PER_WEEK,
-            savedNodes:
-              savedNodesRef.current.length > 0
-                ? savedNodesRef.current
-                : undefined,
             track: hskTrack ? "hsk" : undefined,
           }),
         });
@@ -674,28 +498,18 @@ export default function JourneyOnboardingFlow({
           throw new Error("Please try again — session not ready");
         }
 
-        const id = data.journeyId as string;
-        if (!id) {
+        if (!data.journeyId) {
           throw new Error("Could not create journey");
         }
-        setJourneyId(id);
 
-        // In-app authenticated creation (non-public): go to journey page.
-        if (!publicSurface && !draftResumeRef.current) {
-          sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
-          await supabase
-            .from("profiles")
-            .update({ onboarding_complete: true })
-            .eq("id", user.id);
-          router.push("/app/journey");
-          return;
-        }
-
-        await startIslandAndRedirect(id, cefrLevel || "B1");
+        await supabase
+          .from("profiles")
+          .update({ onboarding_complete: true })
+          .eq("id", user.id);
+        router.push("/app/journey");
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Something went wrong";
         setError(msg);
-        sessionStorage.removeItem(JOURNEY_ONBOARDING_DRAFT_KEY);
         if (isA0) {
           setStep("topic");
         } else if (whyKey) {
@@ -813,6 +627,10 @@ export default function JourneyOnboardingFlow({
       </p>,
       "lg",
     );
+  }
+
+  if (step === "upgrade") {
+    return <OnboardingUpgradeClient personalization={upgradePersonalization} />;
   }
 
   if (step === "level") {
@@ -1047,7 +865,7 @@ export default function JourneyOnboardingFlow({
               onClick={() => {
                 setTopic(A0_TOPIC);
                 setError(null);
-                setStep("generating");
+                setStep(publicSurface ? "upgrade" : "generating");
               }}
               className={`mt-8 ${BTN_PRIMARY}`}
               style={primaryBtnStyle}
@@ -1112,12 +930,12 @@ export default function JourneyOnboardingFlow({
           disabled={!topic.trim()}
           onClick={() => {
             setError(null);
-            setStep("generating");
+            setStep(publicSurface ? "upgrade" : "generating");
           }}
           className={`mt-8 ${BTN_PRIMARY}`}
           style={primaryBtnStyle}
         >
-          Build my journey →
+          {publicSurface ? "See my personalized plan →" : "Build my journey →"}
         </button>
       </>,
     );
@@ -1194,60 +1012,6 @@ export default function JourneyOnboardingFlow({
           <p className="mt-6 text-center text-sm text-red-600">{error}</p>
         )}
       </>,
-    );
-  }
-
-  if (step === "starting-island") {
-    return shell(
-      <div className="flex flex-col items-center py-2 text-center">
-        <div className="animate-bounce" aria-hidden>
-          <AppLogo size="md" />
-        </div>
-        <h2
-          className="mt-6 text-xl font-bold sm:text-2xl"
-          style={{ fontFamily: FONT_DISPLAY, color: NAVY }}
-        >
-          Building your Mandarin path…
-        </h2>
-        <p className="mt-3 text-sm" style={{ color: MUTED }}>
-          We&apos;re setting up your first islands around your goals.
-          <br />
-          This only takes a moment.
-        </p>
-        <div
-          className="mx-auto mt-8 h-2.5 w-full max-w-xs overflow-hidden rounded-full"
-          style={{ background: "#E0F0F8" }}
-        >
-          <div
-            className="h-full animate-pulse rounded-full"
-            style={{
-              width: "60%",
-              background: `linear-gradient(90deg, ${BLUE}, #59C6DE)`,
-            }}
-          />
-        </div>
-        {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
-        {journeyId && error ? (
-          <button
-            type="button"
-            className={`mt-6 ${BTN_PRIMARY}`}
-            style={primaryBtnStyle}
-            onClick={() => {
-              void startIslandAndRedirect(journeyId, cefrLevel || "B1").catch(
-                (e) => {
-                  setError(
-                    e instanceof Error ? e.message : "Could not start island",
-                  );
-                },
-              );
-            }}
-          >
-            Try again
-          </button>
-        ) : null}
-      </div>,
-      "lg",
-      { hideLogo: true },
     );
   }
 

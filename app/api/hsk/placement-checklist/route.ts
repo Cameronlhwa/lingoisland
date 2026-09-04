@@ -35,7 +35,7 @@ export async function GET() {
     for (let level = 1; level <= 6; level++) {
       const { data, error } = await supabase
         .from("hsk_words")
-        .select("id, hanzi, level")
+        .select("id, hanzi, pinyin, level")
         .eq("standard", HSK_PATH_STANDARD)
         .eq("level", level)
         .eq("is_placeholder", false);
@@ -50,6 +50,7 @@ export async function GET() {
         ...data.slice(0, CHECKLIST_WORDS_PER_LEVEL).map((w) => ({
           id: w.id as string,
           hanzi: w.hanzi as string,
+          pinyin: w.pinyin as string,
           level: w.level as number,
         })),
       );
@@ -57,7 +58,7 @@ export async function GET() {
 
     const { data: decoyRows, error: decoyErr } = await supabase
       .from("hsk_placement_decoys")
-      .select("id, hanzi, difficulty_level");
+      .select("id, hanzi, pinyin, difficulty_level");
     if (decoyErr || !decoyRows || decoyRows.length === 0) {
       return NextResponse.json(
         { error: "Placement decoys are not seeded yet" },
@@ -68,6 +69,7 @@ export async function GET() {
     const decoys = decoyRows.slice(0, CHECKLIST_DECOY_COUNT).map((d) => ({
       id: d.id as string,
       hanzi: d.hanzi as string,
+      pinyin: d.pinyin as string,
     }));
 
     const items: ChecklistItem[] = shuffleInPlace([

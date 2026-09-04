@@ -10,11 +10,15 @@ import {
   BookOpen,
   Briefcase,
   Building2,
+  Camera,
   Clapperboard,
+  Code2,
   Globe,
   GraduationCap,
+  Heart,
   Home,
   Landmark,
+  Languages,
   Music,
   Palette,
   PartyPopper,
@@ -32,22 +36,129 @@ export type HskMotivation = "school" | "job" | "heritage" | "hobby";
  * step. Each curriculum unit leans on one of these (cycling), so the roadmap
  * feels varied. Stored on user_profiles.interests (text[]).
  */
-export const HSK_INTEREST_OPTIONS: { value: string; icon: LucideIcon }[] = [
-  { value: "Food & cooking", icon: UtensilsCrossed },
-  { value: "Film & TV / C-dramas", icon: Clapperboard },
-  { value: "Music", icon: Music },
-  { value: "Travel", icon: Globe },
-  { value: "Business & career", icon: Briefcase },
-  { value: "Technology", icon: Sparkles },
-  { value: "Sports & fitness", icon: Activity },
-  { value: "History & culture", icon: Landmark },
-  { value: "Gaming", icon: PartyPopper },
-  { value: "Art & design", icon: Palette },
-  { value: "Science & nature", icon: BookOpen },
-  { value: "News & current events", icon: ScrollText },
-  { value: "Health & wellness", icon: Home },
-  { value: "Relationships & family", icon: Users },
+export type HskInterestOption = { value: string; icon: LucideIcon };
+
+export const HSK_INTEREST_CATEGORIES: {
+  label: string;
+  options: HskInterestOption[];
+}[] = [
+  {
+    label: "Entertainment & culture",
+    options: [
+      { value: "Film & TV / C-dramas", icon: Clapperboard },
+      { value: "Music", icon: Music },
+      { value: "Gaming", icon: PartyPopper },
+      { value: "Art & design", icon: Palette },
+      { value: "Books & reading", icon: BookOpen },
+      { value: "History & culture", icon: Landmark },
+    ],
+  },
+  {
+    label: "Travel & everyday life",
+    options: [
+      { value: "Travel", icon: Globe },
+      { value: "Food & cooking", icon: UtensilsCrossed },
+      { value: "Home & living", icon: Home },
+      { value: "Health & wellness", icon: Heart },
+      { value: "Relationships & family", icon: Users },
+      { value: "Fashion & beauty", icon: Palette },
+    ],
+  },
+  {
+    label: "Work & learning",
+    options: [
+      { value: "Business & career", icon: Briefcase },
+      { value: "Technology", icon: Code2 },
+      { value: "Entrepreneurship", icon: TrendingUp },
+      { value: "School & study", icon: GraduationCap },
+      { value: "Finance & economics", icon: Building2 },
+      { value: "Languages & linguistics", icon: Languages },
+    ],
+  },
+  {
+    label: "Science, nature & ideas",
+    options: [
+      { value: "Science & nature", icon: BookOpen },
+      { value: "News & current events", icon: ScrollText },
+      { value: "Space & the future", icon: Sparkles },
+      { value: "Psychology & self-development", icon: Heart },
+      { value: "Animals & pets", icon: Home },
+      { value: "Environment & sustainability", icon: Globe },
+    ],
+  },
+  {
+    label: "Active & social",
+    options: [
+      { value: "Sports & fitness", icon: Activity },
+      { value: "Photography", icon: Camera },
+      { value: "Social life", icon: Users },
+      { value: "Personal style", icon: Palette },
+    ],
+  },
 ];
+
+export const HSK_INTEREST_OPTIONS = HSK_INTEREST_CATEGORIES.flatMap(
+  (category) => category.options,
+);
+
+const HSK_LEVEL_VOCABULARY_THEMES: Record<number, HskInterestOption[]> = {
+  1: [
+    { value: "Getting to know people", icon: Users },
+    { value: "Eating out & favorite foods", icon: UtensilsCrossed },
+    { value: "Everyday errands & shopping", icon: Building2 },
+    { value: "Home, family & routines", icon: Home },
+    { value: "Feeling well & getting help", icon: Heart },
+  ],
+  2: [
+    { value: "Planning a busy week", icon: Home },
+    { value: "Trying something new", icon: Sparkles },
+    { value: "School, classes & learning", icon: GraduationCap },
+    { value: "Getting around & making plans", icon: Globe },
+    { value: "Catching up with friends", icon: Users },
+  ],
+  3: [
+    { value: "Big choices & life decisions", icon: TrendingUp },
+    { value: "Conversations that go somewhere", icon: Users },
+    { value: "Workdays, meetings & goals", icon: Briefcase },
+    { value: "Travel mishaps & problem-solving", icon: Globe },
+    { value: "Explaining what you mean", icon: BookOpen },
+  ],
+  4: [
+    { value: "Health, habits & self-care", icon: Heart },
+    { value: "Relationships, feelings & confidence", icon: Users },
+    { value: "Personal goals & career wins", icon: TrendingUp },
+    { value: "What is happening in the world", icon: ScrollText },
+    { value: "Hosting, manners & showing appreciation", icon: Home },
+  ],
+  5: [
+    { value: "Wellness, medicine & looking after yourself", icon: Heart },
+    { value: "Startups, ideas & the future", icon: Sparkles },
+    { value: "Work wins, setbacks & problem-solving", icon: Briefcase },
+    { value: "Making a home your own", icon: Home },
+    { value: "Cooking, tea & hosting friends", icon: UtensilsCrossed },
+  ],
+  6: [
+    { value: "Society, borders & belonging", icon: Landmark },
+    { value: "Trust, conflict & complicated relationships", icon: Users },
+    { value: "Stories, writing & vivid language", icon: BookOpen },
+    { value: "Politics, power & global issues", icon: Globe },
+    { value: "Culture, ideas & thoughtful opinions", icon: Languages },
+  ],
+};
+
+/** Adds familiar themes that align with the learner's next vocabulary level. */
+export function getHskInterestCategories(
+  targetLevel: number,
+): { label: string; options: HskInterestOption[] }[] {
+  const level = Math.min(6, Math.max(1, Math.round(targetLevel)));
+  return [
+    {
+      label: "Ideas for your next chapter",
+      options: HSK_LEVEL_VOCABULARY_THEMES[level],
+    },
+    ...HSK_INTEREST_CATEGORIES,
+  ];
+}
 
 export const MOTIVATION_BUCKETS: {
   value: HskMotivation;

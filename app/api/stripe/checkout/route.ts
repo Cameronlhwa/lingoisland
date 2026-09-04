@@ -159,6 +159,8 @@ export async function POST(request: Request) {
       cancelUrl = `${siteUrl}/onboarding/hsk?resume=1&canceled=1&plan=${interval}`;
     } else if (cancelContext === "onboarding" && islandId) {
       cancelUrl = `${siteUrl}/onboarding/upgrade?canceled=1&islandId=${encodeURIComponent(islandId)}&plan=${interval}`;
+    } else if (cancelContext === "onboarding") {
+      cancelUrl = `${siteUrl}/onboarding/upgrade?canceled=1&plan=${interval}`;
     }
 
     const successPath = product === "hsk" ? "/hsk/app" : "/app";

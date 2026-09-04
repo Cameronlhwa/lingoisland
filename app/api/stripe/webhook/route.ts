@@ -386,6 +386,20 @@ export async function POST(request: Request) {
 
         if (product === "hsk") {
           await stampHskProductTrack(userId);
+        } else {
+          // Core subscribers entering from public onboarding do not yet have a
+          // generated journey. Mark setup complete so `/app` stays the post-pay
+          // destination instead of redirecting them into journey creation.
+          const { error: onboardingError } = await getSupabaseAdmin()
+            .from("profiles")
+            .update({ onboarding_complete: true })
+            .eq("id", userId);
+          if (onboardingError) {
+            console.error(
+              "[STRIPE WEBHOOK] Failed to mark core onboarding complete:",
+              onboardingError,
+            );
+          }
         }
 
         // Track checkout completion in PostHog

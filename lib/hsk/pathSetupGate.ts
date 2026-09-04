@@ -19,7 +19,7 @@ export function needsPathSetup(
   if (!profile) return true;
   if (profile.active_curriculum_id) return false;
   if (profile.hsk_target_level == null) return true;
-  if (!profile.interests || profile.interests.length < 3) return true;
+  if (!profile.interests || profile.interests.length < 5) return true;
   if (
     typeof profile.hsk_personalization_text !== "string" ||
     profile.hsk_personalization_text.trim().length === 0

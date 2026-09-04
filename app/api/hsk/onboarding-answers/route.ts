@@ -62,9 +62,9 @@ export async function POST(request: Request) {
       const cleaned = body.interests
         .filter((i): i is string => typeof i === "string" && i.trim().length > 0)
         .slice(0, 20);
-      if (cleaned.length > 0 && cleaned.length < 3) {
+      if (cleaned.length > 0 && cleaned.length < 5) {
         return NextResponse.json(
-          { error: "Pick at least three interests" },
+          { error: "Pick at least five interests" },
           { status: 400 },
         );
       }

@@ -102,6 +102,12 @@ function OnboardingRedirect() {
   useEffect(() => {
     if (!pathname?.startsWith("/app")) return;
     if (pathname.startsWith("/app/topic-islands/")) return;
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      // Let CheckoutSuccessHandler settle the successful purchase on /app
+      // before evaluating whether this account needs onboarding.
+      if (params.get("checkout") === "success") return;
+    }
 
     const onOnboardingPage = pathname.startsWith("/app/onboarding");
 
@@ -181,7 +187,11 @@ function OnboardingUpgradeGate() {
         return;
       }
       const snap = readUpgradeSnapshot();
-      router.replace(buildUpgradePageUrl(snap?.islandId ?? ""));
+      router.replace(
+        snap?.islandId
+          ? buildUpgradePageUrl(snap.islandId)
+          : "/onboarding/upgrade",
+      );
     });
 
     return () => {

@@ -9,16 +9,6 @@ import { hskProfileFieldsFromCefr } from '@/lib/levelBands'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-type SavedNode = {
-  node_type?: string
-  position?: number
-  step_order?: number
-  name?: string
-  zh?: string | null
-  hint?: string | null
-  word_count?: number | null
-}
-
 type Body = {
   topic?: string
   why?: string
@@ -29,8 +19,6 @@ type Body = {
   dailyMinutes?: number
   learningGoal?: string
   sentenceStyle?: string
-  /** Pre-generated plan nodes from the unauthenticated preview — skips DeepSeek */
-  savedNodes?: SavedNode[]
   /** Set by the ?track=hsk onboarding entry point. */
   track?: string
 }
@@ -84,8 +72,6 @@ export async function POST(request: Request) {
     const wordsPerWeek = Math.round((mins / 15) * daysPerWeek * 10)
 
     // ---------- Build the journey plan ----------
-    // Fast path: reuse the pre-generated nodes the client saved before login.
-    // This skips the DeepSeek call, preserves stories, and avoids the double-wait UX.
     type IslandRow = { type: 'island'; position: number; stepOrder: number; name: string; zh: string | null; wordCount: number }
     type StoryRow  = { type: 'story';  position: number; stepOrder: number; name: string; hint: string }
 
@@ -93,31 +79,7 @@ export async function POST(request: Request) {
     let storyRows: StoryRow[]
     let planTitle: string
 
-    const hasSavedNodes = user && Array.isArray(body.savedNodes) && body.savedNodes.length > 0
-
-    if (hasSavedNodes) {
-      const pn = body.savedNodes as SavedNode[]
-      planTitle = topic
-      islandRows = pn
-        .filter((n) => (n.node_type ?? 'island') === 'island')
-        .map((n) => ({
-          type: 'island' as const,
-          position: Number(n.position ?? 1),
-          stepOrder: Number(n.step_order ?? n.position ?? 1),
-          name: String(n.name ?? ''),
-          zh: n.zh ?? null,
-          wordCount: Number(n.word_count ?? 10),
-        }))
-      storyRows = pn
-        .filter((n) => n.node_type === 'story')
-        .map((n) => ({
-          type: 'story' as const,
-          position: Number(n.position ?? 3),
-          stepOrder: Number(n.step_order ?? 102),
-          name: String(n.name ?? 'Story checkpoint'),
-          hint: String(n.hint ?? ''),
-        }))
-    } else if (isA0Level(level)) {
+    if (isA0Level(level)) {
       // A0: fully fixed journey plan — no DeepSeek call, no generation latency.
       const plan = getFixedA0JourneyPlan(topic)
       planTitle = plan.journeyTitle || topic

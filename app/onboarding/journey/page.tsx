@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** Public entry: full journey wizard without signing in first (auth at “Build my journey”). */
+/** Public entry: collect journey preferences before showing a tailored plan. */
 export default function OnboardingJourneyPage() {
   return (
     <Suspense

@@ -29,7 +29,17 @@ function planFromParam(value: string | null): CheckoutPlan | null {
 const ISLAND_ID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export default function OnboardingUpgradeClient() {
+type JourneyPersonalization = Omit<
+  OnboardingUpgradeSnapshot,
+  "v" | "islandId" | "plan"
+>;
+
+export default function OnboardingUpgradeClient({
+  personalization,
+}: {
+  /** Answers collected before checkout; no journey needs to be generated. */
+  personalization?: JourneyPersonalization;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isPro, isLoading: subscriptionLoading, refetch } = useSubscription();
@@ -48,6 +58,16 @@ export default function OnboardingUpgradeClient() {
 
   useEffect(() => {
     markUpgradePending();
+
+    if (personalization) {
+      setSnapshot({
+        v: 1,
+        ...personalization,
+        plan: urlPlan ?? "monthly",
+      });
+      setReady(true);
+      return;
+    }
 
     const stored = readUpgradeSnapshot();
     const merged: OnboardingUpgradeSnapshot | null =
@@ -72,7 +92,10 @@ export default function OnboardingUpgradeClient() {
             }
           : stored;
 
-    if (!merged?.islandId || !ISLAND_ID_RE.test(merged.islandId)) {
+    if (
+      !merged ||
+      (merged.islandId && !ISLAND_ID_RE.test(merged.islandId))
+    ) {
       router.replace("/onboarding/journey");
       return;
     }
@@ -80,7 +103,7 @@ export default function OnboardingUpgradeClient() {
     writeUpgradeSnapshot(merged);
     setSnapshot(merged);
     setReady(true);
-  }, [islandId, router, urlPlan]);
+  }, [islandId, personalization, router, urlPlan]);
 
   // After OAuth return, force a fresh Pro check — module cache / anon session
   // can otherwise leave isPro=false incorrectly.
@@ -115,9 +138,12 @@ export default function OnboardingUpgradeClient() {
   }, [ready, snapshot, searchParams, urlPlan, checkout.setPlan]);
 
   const returnPath = useMemo(() => {
+    if (personalization) return "/onboarding/upgrade";
     if (!snapshot) return "/onboarding/upgrade";
-    return buildUpgradePageUrl(snapshot.islandId);
-  }, [snapshot]);
+    return snapshot.islandId
+      ? buildUpgradePageUrl(snapshot.islandId)
+      : "/onboarding/upgrade";
+  }, [personalization, snapshot]);
 
   const runAutoCheckout = useCallback(async () => {
     if (!snapshot || autoCheckoutStarted.current) return;

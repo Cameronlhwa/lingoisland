@@ -12,7 +12,11 @@ import {
   HSK_PATH_LEVEL_OPTIONS,
 } from "@/lib/hsk/pathStandard";
 import { formatHskLevel } from "@/lib/utils/hsk";
-import type { ChecklistItem, ChecklistWord } from "@/lib/hsk/placementChecklist";
+import type {
+  ChecklistDecoy,
+  ChecklistItem,
+  ChecklistWord,
+} from "@/lib/hsk/placementChecklist";
 
 const NAVY = "#071E2E";
 const MUTED = "#5A7A90";
@@ -36,7 +40,7 @@ export default function HskVocabChecklist({
   const supabase = useMemo(() => createClient(), []);
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [words, setWords] = useState<ChecklistWord[]>([]);
-  const [decoys, setDecoys] = useState<{ id: string }[]>([]);
+  const [decoys, setDecoys] = useState<ChecklistDecoy[]>([]);
   const [known, setKnown] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -169,7 +173,7 @@ export default function HskVocabChecklist({
               key={`${item.kind}-${item.id}`}
               type="button"
               onClick={() => toggle(item.id)}
-              className="rounded-xl border px-2 py-3 text-lg leading-none transition-colors"
+              className="rounded-xl border px-2 py-2.5 text-center transition-colors"
               style={{
                 borderColor: on ? NAVY : BORDER,
                 background: on ? NAVY : "white",
@@ -178,7 +182,15 @@ export default function HskVocabChecklist({
                 fontFamily: "'Noto Sans SC', 'PingFang SC', sans-serif",
               }}
             >
-              {item.hanzi}
+              <span
+                className="block text-lg leading-none"
+                style={{ fontFamily: "'Noto Sans SC', 'PingFang SC', sans-serif" }}
+              >
+                {item.hanzi}
+              </span>
+              <span className="mt-1 block text-[10px] leading-none opacity-70">
+                {item.pinyin}
+              </span>
             </button>
           );
         })}

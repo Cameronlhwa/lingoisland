@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/browser";
 import {
   MOTIVATION_BUCKETS,
   PERSONALIZATION_CONTENT,
-  HSK_INTEREST_OPTIONS,
+  getHskInterestCategories,
   type HskMotivation,
 } from "./hskPersonalizationContent";
 import HskPlanReveal, { type HskGenerationResult } from "./HskPlanReveal";
@@ -669,40 +669,52 @@ export default function HskOnboardingFlow() {
         <div className={CARD} style={{ boxShadow: HSK_CARD_SHADOW, maxWidth: 640 }}>
           <Heading>Which of these are you into?</Heading>
           <p className="mt-2 text-sm" style={{ color: "#5A7A90" }}>
-            Pick at least three — each unit of your path leans on a different
+            Pick at least five — each unit of your path leans on a different
             one, so the vocabulary shows up in scenes you actually care about.
           </p>
-          <div className="mt-5 flex flex-wrap gap-2.5">
-            {HSK_INTEREST_OPTIONS.map((opt) => {
-              const on = interests.includes(opt.value);
-              const Icon = opt.icon;
-              return (
-                <button
-                  key={opt.value}
-                  className={`${PILL_OFF} inline-flex items-center gap-2`}
-                  style={{
-                    borderColor: on ? NAVY : CARD_BORDER,
-                    background: on ? NAVY : "white",
-                    color: on ? "white" : NAVY,
-                  }}
-                  onClick={() =>
-                    setInterests((prev) =>
-                      prev.includes(opt.value)
-                        ? prev.filter((v) => v !== opt.value)
-                        : [...prev, opt.value],
-                    )
-                  }
+          <div className="mt-5 max-h-[48vh] space-y-5 overflow-y-auto pr-1">
+            {getHskInterestCategories(targetLevel).map((category) => (
+              <section key={category.label}>
+                <h3
+                  className="text-xs font-bold uppercase tracking-[0.1em]"
+                  style={{ color: "#5A7A90" }}
                 >
-                  <Icon className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-                  {opt.value}
-                </button>
-              );
-            })}
+                  {category.label}
+                </h3>
+                <div className="mt-2 flex flex-wrap gap-2.5">
+                  {category.options.map((opt) => {
+                    const on = interests.includes(opt.value);
+                    const Icon = opt.icon;
+                    return (
+                      <button
+                        key={opt.value}
+                        className={`${PILL_OFF} inline-flex items-center gap-2`}
+                        style={{
+                          borderColor: on ? NAVY : CARD_BORDER,
+                          background: on ? NAVY : "white",
+                          color: on ? "white" : NAVY,
+                        }}
+                        onClick={() =>
+                          setInterests((prev) =>
+                            prev.includes(opt.value)
+                              ? prev.filter((v) => v !== opt.value)
+                              : [...prev, opt.value],
+                          )
+                        }
+                      >
+                        <Icon className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                        {opt.value}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
           <button
             className={`${BTN_PRIMARY} mt-7`}
             style={{ background: HSK_BTN_GRADIENT, boxShadow: HSK_BTN_SHADOW }}
-            disabled={interests.length < 3}
+            disabled={interests.length < 5}
             onClick={() => setStep("generating")}
           >
             Build my path
