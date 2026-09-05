@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import AppLogo from "@/components/app/AppLogo";
 import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import type { CheckoutPlan } from "@/lib/onboarding/onboardingCheckoutStorage";
@@ -285,9 +286,17 @@ export default function OnboardingCheckoutAuth({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#071E2E]/50 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-[#C2DCF0] bg-white p-6 shadow-xl">
+      <div
+        className="w-full max-w-md rounded-[22px] border border-[#C2DCF0] bg-white p-6 shadow-xl sm:p-7"
+        style={{ boxShadow: "0 20px 48px -20px rgba(7,30,46,0.45)" }}
+      >
+        <AppLogo
+          size="sm"
+          showMark={false}
+          textClassName="text-sm font-bold text-[#071E2E]"
+        />
         <h3
-          className="text-xl font-bold text-[#071E2E]"
+          className="mt-5 text-2xl font-bold text-[#071E2E]"
           style={{ fontFamily: "'Lora', Georgia, serif" }}
         >
           Sign in to continue
@@ -297,7 +306,7 @@ export default function OnboardingCheckoutAuth({
           style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
           Create an account or sign in with an existing one to unlock your
-          personalized path. You&apos;ll go to secure checkout right after — or
+          personalized plan. You&apos;ll go to secure checkout right after, or
           straight into the app if you already have Pro.
         </p>
 
@@ -305,15 +314,15 @@ export default function OnboardingCheckoutAuth({
           type="button"
           onClick={handleGoogle}
           disabled={linking}
-          className="mt-5 flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-60"
+          className="mt-5 flex w-full items-center justify-center rounded-xl border border-[#C2DCF0] bg-white px-4 py-3 text-sm font-semibold text-[#071E2E] transition-colors hover:bg-[#EAF6FB] disabled:opacity-60"
         >
           {linking ? "Connecting…" : "Continue with Google"}
         </button>
 
         <div className="my-5 flex items-center gap-3">
-          <div className="h-px flex-1 bg-gray-200" />
-          <span className="text-xs text-gray-400">or</span>
-          <div className="h-px flex-1 bg-gray-200" />
+          <div className="h-px flex-1 bg-[#C2DCF0]" />
+          <span className="text-xs text-[#8AABBF]">or</span>
+          <div className="h-px flex-1 bg-[#C2DCF0]" />
         </div>
 
         <form onSubmit={handleEmail} className="space-y-3">
@@ -324,7 +333,7 @@ export default function OnboardingCheckoutAuth({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-[#2176AE] focus:outline-none"
+            className="w-full rounded-xl border border-[#C2DCF0] px-4 py-3 text-sm text-[#071E2E] focus:border-[#2176AE] focus:outline-none"
           />
           <input
             type="password"
@@ -334,7 +343,7 @@ export default function OnboardingCheckoutAuth({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (6+ characters)"
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-[#2176AE] focus:outline-none"
+            className="w-full rounded-xl border border-[#C2DCF0] px-4 py-3 text-sm text-[#071E2E] focus:border-[#2176AE] focus:outline-none"
           />
           {errorMessage ? (
             <p className="text-sm text-red-600">{errorMessage}</p>
@@ -342,7 +351,7 @@ export default function OnboardingCheckoutAuth({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-[#2176AE] py-3 text-sm font-semibold text-white disabled:opacity-60"
+            className="w-full rounded-xl bg-[#071E2E] py-3 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:brightness-110 disabled:opacity-60"
           >
             {isSubmitting ? "Continuing…" : "Continue with email"}
           </button>
