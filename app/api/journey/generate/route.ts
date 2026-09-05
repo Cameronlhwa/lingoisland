@@ -113,7 +113,7 @@ export async function POST(request: Request) {
           stepOrder: island.position,
           name: island.topic,
           zh: island.zh,
-          wordCount: island.position === 1 ? 3 : 10,
+          wordCount: island.position === 1 ? 5 : 10,
         }))
       storyRows = plan.stories.map((story) => ({
         type: 'story' as const,

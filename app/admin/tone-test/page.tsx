@@ -14,7 +14,7 @@ export default async function ToneTestPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?next=/admin/tone-test");
   if (!user.email || !ADMIN_EMAILS.has(user.email.toLowerCase())) notFound();
 
   return <ToneTestClient />;

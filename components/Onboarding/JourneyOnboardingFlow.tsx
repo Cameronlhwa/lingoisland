@@ -183,7 +183,7 @@ type WhyKey = (typeof WHY_OPTIONS)[number]["key"];
 
 const A0_TOPIC = "Introducing Yourself";
 
-const TOPIC_PLACEHOLDER_TEXT = "Type any topic you want here!";
+const TOPIC_PLACEHOLDER_TEXT = "Tell us something personal, like a hobby, place, or goal";
 
 const GEN_STEPS = [
   "Analyzing your topic…",
@@ -193,14 +193,39 @@ const GEN_STEPS = [
   "Finalizing your plan…",
 ];
 
-const HARDCODED_TIME_LABEL = "15min";
-const HARDCODED_DAILY_MINUTES = 15;
-const HARDCODED_DAYS_PER_WEEK = 4;
+const TIME_OPTIONS = [
+  { value: "5min", minutes: 5, label: "5 minutes", sublabel: "A quick daily habit" },
+  { value: "15min", minutes: 15, label: "15 minutes", sublabel: "Steady and sustainable" },
+  { value: "30min", minutes: 30, label: "30 minutes", sublabel: "A focused practice session" },
+  { value: "1h+", minutes: 60, label: "1 hour+", sublabel: "A deep-dive routine" },
+] as const;
+
+const DAYS_OPTIONS = [
+  { days: 3, label: "1–3 days a week" },
+  { days: 5, label: "4–5 days a week" },
+  { days: 7, label: "6–7 days a week" },
+] as const;
+
+const FREE_TIME_OPTIONS = [
+  { key: "food", label: "Try new food or eat at restaurants", topic: "Food & local restaurants" },
+  { key: "music", label: "Listen to music or go to concerts", topic: "Music & live events" },
+  { key: "travel", label: "Travel or explore new places", topic: "Travel & city life" },
+  { key: "friends", label: "Spend time with friends", topic: "Friends & everyday conversation" },
+  { key: "film", label: "Watch movies or TV shows", topic: "Film, TV & stories" },
+  { key: "fitness", label: "Exercise or play sports", topic: "Fitness & outdoor life" },
+  { key: "games", label: "Play games or work on tech projects", topic: "Games & technology" },
+  { key: "family", label: "Cook or spend time with family", topic: "Family & home life" },
+] as const;
+
+type TimeLabel = (typeof TIME_OPTIONS)[number]["value"];
+type FreeTimeKey = (typeof FREE_TIME_OPTIONS)[number]["key"];
 
 type Step =
   | "level"
   | "why"
   | "branch"
+  | "time"
+  | "free-time"
   | "topic"
   | "generating"
   | "upgrade";
@@ -255,6 +280,12 @@ export default function JourneyOnboardingFlow({
   const [levelSaving, setLevelSaving] = useState(false);
   const [whyKey, setWhyKey] = useState<WhyKey | "">("");
   const [branchAnswer, setBranchAnswer] = useState("");
+  const [timeLabel, setTimeLabel] = useState<TimeLabel>("15min");
+  const [daysPerWeek, setDaysPerWeek] = useState<(typeof DAYS_OPTIONS)[number]["days"]>(5);
+  const [freeTimeKeys, setFreeTimeKeys] = useState<FreeTimeKey[]>([]);
+  const [previewNodes, setPreviewNodes] = useState<
+    { order: number; name: string; zh: string | null; node_type: "island" | "story"; hint: string | null }[]
+  >([]);
   const [generatingStep, setGeneratingStep] = useState(0);
   const generateStartedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -276,6 +307,12 @@ export default function JourneyOnboardingFlow({
     whyLabel(whyKey) ||
     profileLearningGoal ||
     "General fluency improvement";
+  const dailyMinutes = TIME_OPTIONS.find((option) => option.value === timeLabel)?.minutes ?? 15;
+  const wordsPerWeek = Math.round((dailyMinutes / 15) * daysPerWeek * 10);
+  const freeTimeTopics = FREE_TIME_OPTIONS
+    .filter((option) => freeTimeKeys.includes(option.key))
+    .map((option) => option.topic);
+  const enrichedWhyText = [effectiveWhyText, ...freeTimeTopics].join(" · ");
 
   const upgradePersonalization = useMemo(
     () => ({
@@ -283,14 +320,15 @@ export default function JourneyOnboardingFlow({
       journeyTopic: topic.trim() || A0_TOPIC,
       islandLevel: cefrLevel || "B1",
       wordsLearned: 0,
-      wordsPerWeek: 40,
+      wordsPerWeek,
+      lockedIslands: previewNodes,
       motivationLabel: whyKey
         ? [whyLabel(whyKey), branchLabel(whyKey, branchAnswer)]
             .filter(Boolean)
             .join(" · ")
         : undefined,
     }),
-    [branchAnswer, cefrLevel, topic, whyKey],
+    [branchAnswer, cefrLevel, previewNodes, topic, whyKey, wordsPerWeek],
   );
 
   // Legacy ?islandId= links used to resume the free first lesson — send them
@@ -398,11 +436,11 @@ export default function JourneyOnboardingFlow({
     if (!collectProfileQuestions) {
       if (!whyKey) setWhyKey("fluency");
       if (!branchAnswer) setBranchAnswer("curious");
-      setStep("generating");
+      setStep("time");
       return;
     }
     if (needsWhy) setStep("why");
-    else setStep("generating");
+    else setStep("time");
   }, [
     smartProfileSkip,
     profileLoaded,
@@ -448,11 +486,11 @@ export default function JourneyOnboardingFlow({
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        if (!user) {
+        if (!user && !publicSurface) {
           throw new Error("Could not load your account. Please try again.");
         }
 
-        if (smartProfileSkip) {
+        if (smartProfileSkip && user) {
           const updates: Record<string, unknown> = {};
           if (needsLevel && cefrLevel) {
             updates.cefr_level = cefrLevel;
@@ -477,13 +515,13 @@ export default function JourneyOnboardingFlow({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             topic: topic.trim() || A0_TOPIC,
-            why: effectiveWhyText,
+            why: enrichedWhyText,
             level: cefrLevel || "B1",
             cefrLevel: cefrLevel || "B1",
-            dailyMinutes: HARDCODED_DAILY_MINUTES,
-            learningGoal: effectiveWhyText,
-            timeLabel: HARDCODED_TIME_LABEL,
-            daysPerWeek: HARDCODED_DAYS_PER_WEEK,
+            dailyMinutes,
+            learningGoal: enrichedWhyText,
+            timeLabel,
+            daysPerWeek,
             track: hskTrack ? "hsk" : undefined,
           }),
         });
@@ -492,14 +530,18 @@ export default function JourneyOnboardingFlow({
           throw new Error(data.error || "Could not create journey");
         }
 
-        // Unauthenticated preview path should not happen after anonymous auth,
-        // but if it does, treat as error and retry.
         if (data?.preview?.journey && !data.journeyId) {
-          throw new Error("Please try again — session not ready");
+          setPreviewNodes(data.preview.nodes ?? []);
+          setStep("upgrade");
+          return;
         }
 
         if (!data.journeyId) {
           throw new Error("Could not create journey");
+        }
+
+        if (!user) {
+          throw new Error("Could not load your account. Please try again.");
         }
 
         await supabase
@@ -530,7 +572,11 @@ export default function JourneyOnboardingFlow({
     needsWhy,
     cefrLevel,
     effectiveWhyText,
+    enrichedWhyText,
     topic,
+    timeLabel,
+    dailyMinutes,
+    daysPerWeek,
     collectProfileQuestions,
     publicSurface,
     isA0,
@@ -588,7 +634,7 @@ export default function JourneyOnboardingFlow({
 
   const progressDash = (active: number) => (
     <div className="flex justify-center gap-2 sm:gap-3">
-      {[0, 1, 2, 3].map((i) => (
+      {[0, 1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
           className="h-1 w-12 rounded-full sm:w-16"
@@ -717,19 +763,19 @@ export default function JourneyOnboardingFlow({
                 setTopic(A0_TOPIC);
                 setWhyKey("fluency");
                 setBranchAnswer("curious");
-                setStep("topic");
+                setStep("time");
                 return;
               }
 
               if (!collectProfileQuestions) {
                 if (!whyKey) setWhyKey("fluency");
                 if (!branchAnswer) setBranchAnswer("curious");
-                setStep("generating");
+                setStep("time");
                 return;
               }
 
               if (!smartProfileSkip || needsWhy) setStep("why");
-              else setStep("generating");
+              else setStep("time");
             } catch {
               setError("Could not save your level. Try again.");
             } finally {
@@ -826,6 +872,99 @@ export default function JourneyOnboardingFlow({
             setError(null);
             // Reset topic so first chip pre-selects for this branch.
             setTopic("");
+            setStep("time");
+          }}
+          className={`mt-8 ${BTN_PRIMARY}`}
+          style={primaryBtnStyle}
+        >
+          Continue
+        </button>
+      </>,
+      "2xl",
+    );
+  }
+
+  if (step === "time") {
+    return shell(
+      <>
+        {progressDash(3)}
+        {heading("What kind of rhythm feels realistic?")}
+        {subcopy("A little consistency goes a long way. Pick the pace that fits your week.")}
+        <p className="mt-6 text-sm font-semibold" style={{ color: NAVY }}>Most sessions would be…</p>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {TIME_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setTimeLabel(option.value)}
+              className={`${OPTION_ROW} flex-col items-start gap-1`}
+              style={optionStyle(timeLabel === option.value)}
+            >
+              <span className="font-semibold" style={{ color: NAVY }}>{option.label}</span>
+              <span className="text-xs" style={{ color: MUTED }}>{option.sublabel}</span>
+            </button>
+          ))}
+        </div>
+        <p className="mt-6 text-sm font-semibold" style={{ color: NAVY }}>And you could make time on…</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {DAYS_OPTIONS.map(({ days, label }) => (
+            <button
+              key={days}
+              type="button"
+              onClick={() => setDaysPerWeek(days)}
+              className={daysPerWeek === days ? CHIP_ON : CHIP_OFF}
+              style={daysPerWeek === days
+                ? { background: LINGO_ACCENT_GRADIENT_GLOSSY, boxShadow: LINGO_ACCENT_CHIP_SHADOW }
+                : { borderColor: CARD_BORDER, color: NAVY, background: "white" }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setStep(isA0 ? "topic" : "free-time")}
+          className={`mt-8 ${BTN_PRIMARY}`}
+          style={primaryBtnStyle}
+        >
+          Continue
+        </button>
+      </>,
+    );
+  }
+
+  if (step === "free-time") {
+    const toggleFreeTime = (key: FreeTimeKey) => {
+      setFreeTimeKeys((current) => {
+        if (current.includes(key)) return current.filter((item) => item !== key);
+        return current.length < 3 ? [...current, key] : current;
+      });
+    };
+    return shell(
+      <>
+        {progressDash(4)}
+        {heading("What would you do if you had free time over the afternoon?")}
+        {subcopy("Pick up to three. We’ll make your first journey feel more like you.")}
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          {FREE_TIME_OPTIONS.map((option) => {
+            const selected = freeTimeKeys.includes(option.key);
+            return (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => toggleFreeTime(option.key)}
+                className={`${OPTION_ROW} min-h-[68px]`}
+                style={optionStyle(selected)}
+              >
+                <span className="font-medium" style={{ color: NAVY }}>{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          disabled={freeTimeKeys.length === 0}
+          onClick={() => {
             setStep("topic");
           }}
           className={`mt-8 ${BTN_PRIMARY}`}
@@ -842,7 +981,7 @@ export default function JourneyOnboardingFlow({
     if (isA0) {
       return shell(
         <>
-          {progressDash(3)}
+          {progressDash(5)}
           <div className="mt-6 text-center">
             <img
               src="/capybara-waving.png"
@@ -865,7 +1004,7 @@ export default function JourneyOnboardingFlow({
               onClick={() => {
                 setTopic(A0_TOPIC);
                 setError(null);
-                setStep(publicSurface ? "upgrade" : "generating");
+                setStep("generating");
               }}
               className={`mt-8 ${BTN_PRIMARY}`}
               style={primaryBtnStyle}
@@ -880,9 +1019,9 @@ export default function JourneyOnboardingFlow({
 
     return shell(
       <>
-        {progressDash(3)}
-        {heading("What topic do you want to learn?")}
-        {subcopy("Pick a suggestion or type your own topic.")}
+        {progressDash(5)}
+        {heading("What would you love to talk about in Mandarin?")}
+        {subcopy("Make it personal. Choose a suggestion or tell us about a hobby, place, person, or goal that matters to you.")}
         <div className="mt-6 flex flex-wrap gap-2">
           {topicSuggestions.map((c) => {
             const selected = topic === c;
@@ -930,7 +1069,7 @@ export default function JourneyOnboardingFlow({
           disabled={!topic.trim()}
           onClick={() => {
             setError(null);
-            setStep(publicSurface ? "upgrade" : "generating");
+            setStep("generating");
           }}
           className={`mt-8 ${BTN_PRIMARY}`}
           style={primaryBtnStyle}
