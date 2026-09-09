@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { pinyin } from "pinyin-pro";
 
 type Mode = "word" | "sentence";
 type Result = Record<string, unknown>;
@@ -157,6 +158,15 @@ function statusForScore(score: number | null) {
       : STATUS_STYLES.close;
 }
 
+function pinyinForCharacter(character: string) {
+  const result = pinyin(character, {
+    toneType: "symbol",
+    type: "array",
+    nonZh: "removed",
+  });
+  return Array.isArray(result) ? result[0] ?? "" : "";
+}
+
 export default function ToneTestClient() {
   const [mode, setMode] = useState<Mode>("word");
   const [referenceText, setReferenceText] = useState("");
@@ -178,6 +188,10 @@ export default function ToneTestClient() {
     [result],
   );
   const characters = useMemo(() => extractCharacters(result), [result]);
+  const referenceCharacters = useMemo(
+    () => Array.from(referenceText).map((hanzi) => ({ hanzi, pinyin: pinyinForCharacter(hanzi) })),
+    [referenceText],
+  );
 
   useEffect(() => {
     if (!recording) return;
@@ -347,6 +361,23 @@ export default function ToneTestClient() {
         <label htmlFor="reference-text" className="mb-2 block text-sm font-semibold text-[var(--lingo-text)]">
           {mode === "word" ? "Reference Hanzi" : "Reference sentence (Hanzi)"}
         </label>
+        {referenceText && (
+          <div
+            aria-label="Pinyin guide"
+            className="mb-2 flex min-h-8 flex-wrap items-end gap-x-1 rounded-xl bg-[var(--lingo-sky-pale)] px-4 py-1.5 text-center"
+          >
+            {referenceCharacters.map(({ hanzi, pinyin: pronunciation }, index) => (
+              <ruby key={`${hanzi}-${index}`} className="text-lg leading-tight text-[var(--lingo-navy)]">
+                {hanzi}
+                {pronunciation && (
+                  <rt className="pb-0.5 text-[10px] font-semibold text-[var(--lingo-blue)]">
+                    {pronunciation}
+                  </rt>
+                )}
+              </ruby>
+            ))}
+          </div>
+        )}
         <input
           id="reference-text"
           value={referenceText}
