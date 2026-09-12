@@ -29,21 +29,10 @@ export function resolveLearnLevel(
 
 export function getSentenceForLevel(
   sentences: LearnSentence[],
-  level: string,
+  _level: string,
 ): LearnSentence | undefined {
-  const tierMap: Record<string, "easy" | "same" | "hard"> = {
-    A0: "easy",
-    A1: "easy",
-    A2: "easy",
-    B1: "same",
-    B2: "same",
-    C1: "hard",
-  };
-  const upper = level.trim().toUpperCase();
-  const levelKey = upper.startsWith("A0") ? "A0" : upper.slice(0, 2);
-  const targetTier = tierMap[levelKey] ?? "same";
   return (
-    sentences.find((s) => s.tier === targetTier) ??
+    sentences.find((s) => s.tier === "easy") ??
     sentences.find((s) => s.tier === "same") ??
     sentences[0]
   );

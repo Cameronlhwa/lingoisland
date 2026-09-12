@@ -24,6 +24,7 @@ export function utcDateString(date = new Date()): string {
 export type HuahuaResult = {
   huahuaReviewsToday: number
   huahuaStage: number
+  didStageUpgrade: boolean
 }
 
 /**
@@ -64,6 +65,7 @@ export async function incrementHuahua(
 
   const newReviewsToday = prevReviews + count
   const newTotal = (profile?.huahua_total_reviews ?? 0) + count
+  const previousStage = stageForDailyReviews(prevReviews)
   const newStage = stageForDailyReviews(newReviewsToday)
 
   const { error: writeErr } = await supabase
@@ -85,7 +87,11 @@ export async function incrementHuahua(
     return incrementHuahuaFallback(supabase, userId, count)
   }
 
-  return { huahuaReviewsToday: newReviewsToday, huahuaStage: newStage }
+  return {
+    huahuaReviewsToday: newReviewsToday,
+    huahuaStage: newStage,
+    didStageUpgrade: newStage > previousStage,
+  }
 }
 
 /**
@@ -108,11 +114,12 @@ async function incrementHuahuaFallback(
 
   if (readErr) {
     console.error('[huahua] fallback read error:', readErr.message)
-    return { huahuaReviewsToday: 0, huahuaStage: 1 }
+    return { huahuaReviewsToday: 0, huahuaStage: 1, didStageUpgrade: false }
   }
 
   const prevTotal = profile?.huahua_total_reviews ?? 0
   const newTotal = prevTotal + count
+  const previousStage = stageForDailyReviews(prevTotal)
   const newStage = stageForDailyReviews(newTotal)
 
   const { error: writeErr } = await supabase
@@ -126,7 +133,11 @@ async function incrementHuahuaFallback(
     console.error('[huahua] fallback write error:', writeErr.message)
   }
 
-  return { huahuaReviewsToday: newTotal, huahuaStage: newStage }
+  return {
+    huahuaReviewsToday: newTotal,
+    huahuaStage: newStage,
+    didStageUpgrade: newStage > previousStage,
+  }
 }
 
 /**
@@ -156,7 +167,7 @@ export async function readHuahua(
       .maybeSingle()
     const total = fb?.huahua_total_reviews ?? 0
     const stage = fb?.huahua_stage ?? stageForDailyReviews(total)
-    return { huahuaReviewsToday: total, huahuaStage: stage }
+    return { huahuaReviewsToday: total, huahuaStage: stage, didStageUpgrade: false }
   }
 
   // Prefer daily counter when available; fall back to total reviews.
@@ -164,11 +175,11 @@ export async function readHuahua(
   if (profile?.huahua_reviews_today != null) {
     const reviews = isToday ? (profile.huahua_reviews_today ?? 0) : 0
     const stage = isToday ? (profile?.huahua_stage ?? stageForDailyReviews(reviews)) : 1
-    return { huahuaReviewsToday: reviews, huahuaStage: stage }
+    return { huahuaReviewsToday: reviews, huahuaStage: stage, didStageUpgrade: false }
   }
 
   // Daily columns not in response — use total reviews.
   const total = profile?.huahua_total_reviews ?? 0
   const stage = profile?.huahua_stage ?? stageForDailyReviews(total)
-  return { huahuaReviewsToday: total, huahuaStage: stage }
+  return { huahuaReviewsToday: total, huahuaStage: stage, didStageUpgrade: false }
 }

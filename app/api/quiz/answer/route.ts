@@ -117,12 +117,13 @@ export async function POST(request: Request) {
       console.error('Error logging quiz_activity_events:', eventErr)
     }
 
-    const { huahuaReviewsToday, huahuaStage } = await incrementHuahua(supabase, user.id, 1)
+    const { huahuaReviewsToday, huahuaStage, didStageUpgrade } = await incrementHuahua(supabase, user.id, 1)
 
     return NextResponse.json({
       reviewState: updatedState,
       huahuaTotalReviews: huahuaReviewsToday,
       huahuaStage,
+      didStageUpgrade,
     })
   } catch (error) {
     console.error('Error in POST /api/quiz/answer:', error)

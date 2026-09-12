@@ -94,12 +94,15 @@ function Chip({
 function DashCardShell({
   children,
   className = "",
+  id,
 }: {
   children: ReactNode;
   className?: string;
+  id?: string;
 }) {
   return (
     <div
+      id={id}
       className={`group flex min-h-[320px] flex-col overflow-hidden rounded-2xl bg-white transition-all hover:-translate-y-0.5 ${className}`}
       style={{ border: HSK_CARD_BORDER, boxShadow: HSK_CARD_SHADOW }}
       onMouseEnter={(e) => {
@@ -136,7 +139,7 @@ function CapybaraCard({
   const stageEmoji = STAGE_EMOJIS[safeStage - 1];
 
   return (
-    <DashCardShell>
+    <DashCardShell id="progress-island-card">
       <div className="flex h-[200px] items-center justify-center bg-[var(--lingo-sky-pale)] px-2 sm:h-[220px]">
         <div className="relative h-full w-full">
           <Image
@@ -320,7 +323,7 @@ function CreateIslandDashCard() {
         <div className="mt-4 flex flex-col gap-2">
           <Link
             href="/app/topic-islands?create=1"
-            className="inline-flex items-center gap-1 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]"
+            className="inline-flex items-center gap-1 text-sm font-bold text-[var(--lingo-blue)] transition-colors hover:text-[var(--lingo-navy)]"
           >
             Create island <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>

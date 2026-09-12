@@ -1,7 +1,6 @@
 "use client";
 
 import HuahuaAvatar from "@/components/app/HuahuaAvatar";
-import { hskLabelForCefr } from "@/lib/levelBands";
 import {
   LINGO_ACCENT_CHIP_SHADOW,
   LINGO_ACCENT_GRADIENT_GLOSSY,
@@ -10,14 +9,12 @@ import { LearnEyebrow, LearnSequenceCard } from "./shell";
 
 interface PreCourseLoadingProps {
   topic: string;
-  level: string;
   progressLabel: string;
   progressPercentage: number;
 }
 
 export default function PreCourseLoading({
   topic,
-  level,
   progressLabel,
   progressPercentage,
 }: PreCourseLoadingProps) {
@@ -40,10 +37,6 @@ export default function PreCourseLoading({
           <h2 className="lingo-display mb-2 text-xl text-[var(--lingo-navy)]">
             {topic}
           </h2>
-          <p className="mb-6 text-sm text-[var(--lingo-text-muted)]">
-            {hskLabelForCefr(level)}
-          </p>
-
           <div className="mb-2 flex justify-between text-xs font-medium text-[var(--lingo-text-muted)]">
             <span>Building your island</span>
             <span>{progressLabel}</span>

@@ -174,13 +174,14 @@ export async function POST(request: Request) {
     }
 
     // Advance 华华 progression (daily-resetting counter).
-    const { huahuaReviewsToday, huahuaStage } = await incrementHuahua(supabase, user.id, count)
+    const { huahuaReviewsToday, huahuaStage, didStageUpgrade } = await incrementHuahua(supabase, user.id, count)
 
     return NextResponse.json({
       ok: true,
       todayCount: huahuaReviewsToday,
       huahuaTotalReviews: huahuaReviewsToday,
       huahuaStage,
+      didStageUpgrade,
     })
   } catch (error) {
     console.error('Error in POST /api/quiz-activity:', error)

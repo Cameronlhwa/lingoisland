@@ -15,15 +15,11 @@ interface WordListResponse {
 
 export async function generateWordList({
   topic,
-  level,
-  detailedLevel,
   wordCount,
   existingWords,
   suggestions,
 }: {
   topic: string
-  level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
-  detailedLevel?: string
   wordCount: number
   existingWords: string[]
   suggestions?: string[]
@@ -47,25 +43,15 @@ export async function generateWordList({
       ? `\n\nPRIORITY SUGGESTIONS: Use as many of these as possible (up to ${wordCount}), but ONLY if they are not already in the island: ${suggestions.join(', ')}`
       : ''
 
-  const levelDescriptions = {
-    A1: 'beginner (very basic phrases, survival vocabulary, simple present tense)',
-    A2: 'upper beginner (simple sentence structures, common everyday vocabulary)',
-    B1: 'intermediate (more complex structures, varied vocabulary, can discuss familiar topics)',
-    B2: 'upper intermediate (advanced structures, nuanced vocabulary, can express opinions)',
-    C1: 'advanced (complex discourse, subtle meanings, idiomatic expressions, sophisticated vocabulary)',
-  }
-
-  const actualDetailedLevel = detailedLevel || level
-
   const prompt = `You are a Mandarin Chinese learning assistant. Generate a list of Chinese vocabulary words for a topic island.
 
-Topic: ${topic}
-Learner's level: ${actualDetailedLevel} (${level} band: ${levelDescriptions[level]})${existingWordsList}${suggestionsList}
+Topic: ${topic}${existingWordsList}${suggestionsList}
 
 Requirements:
 - Generate EXACTLY ${wordCount} unique words
 - Use Simplified Chinese (not Traditional)
-- Use natural, high-frequency vocabulary appropriate for ${level} learners
+- Choose vocabulary for the topic itself, not for a learner level or HSK band
+- Include the concrete, useful words someone would genuinely need to discuss this topic, even when their difficulty varies
 - Do NOT use rare idioms or classical Chinese
 - Provide accurate pinyin with tone marks
 - Words should be relevant to the topic

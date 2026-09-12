@@ -1,8 +1,16 @@
 /**
  * Record in-page topic-island reviews (flashcards / drag-drop) for 华华 island progress.
  */
-export async function recordTopicIslandQuizActivity(count: number): Promise<void> {
-  if (count <= 0) return;
+export type TopicIslandQuizActivity = {
+  todayCount: number;
+  huahuaStage: number;
+  didStageUpgrade: boolean;
+};
+
+export async function recordTopicIslandQuizActivity(
+  count: number,
+): Promise<TopicIslandQuizActivity | null> {
+  if (count <= 0) return null;
 
   const tzOffset = new Date().getTimezoneOffset();
   try {
@@ -25,7 +33,19 @@ export async function recordTopicIslandQuizActivity(count: number): Promise<void
         }),
       );
     }
+    if (
+      typeof data?.todayCount === "number" &&
+      typeof data?.huahuaStage === "number"
+    ) {
+      return {
+        todayCount: data.todayCount,
+        huahuaStage: data.huahuaStage,
+        didStageUpgrade: data.didStageUpgrade === true,
+      };
+    }
+    return null;
   } catch {
     // Non-blocking — same as island page quiz flow.
+    return null;
   }
 }

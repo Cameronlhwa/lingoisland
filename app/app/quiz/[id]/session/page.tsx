@@ -119,7 +119,8 @@ export default function QuizSessionPage() {
       if (typeof result?.todayCount === "number" && progressUpgrade) {
         didShowUpgrade = checkAndShowUpgrade(
           result.todayCount,
-          progressUpgrade.showUpgrade
+          progressUpgrade.showUpgrade,
+          result.didStageUpgrade === true,
         );
       }
 
