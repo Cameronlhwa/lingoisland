@@ -9,6 +9,7 @@ import {
   Compass,
   Library,
   ClipboardCheck,
+  Mic,
 } from "lucide-react";
 import { HSK_APP_LABELS } from "@/lib/hsk-app-labels";
 
@@ -33,6 +34,13 @@ export const sidebarItems: SidebarItem[] = [
     label: "Journey",
     icon: (className = iconClass) => (
       <Map className={className} aria-hidden strokeWidth={2} />
+    ),
+  },
+  {
+    href: "/app/pronunciation",
+    label: "Pronunciation",
+    icon: (className = iconClass) => (
+      <Mic className={className} aria-hidden strokeWidth={2} />
     ),
   },
   {

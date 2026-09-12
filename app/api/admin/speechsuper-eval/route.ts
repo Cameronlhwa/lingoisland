@@ -1,6 +1,6 @@
-import { createHash, randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { scoreWithSpeechSuper, SpeechSuperError, type SpeechSuperMode } from "@/lib/speechsuper/client";
 
 const ADMIN_EMAILS = new Set([
   "cameronlimhwa@gmail.com",
@@ -10,13 +10,7 @@ const ADMIN_EMAILS = new Set([
 
 const MAX_AUDIO_BYTES = 15 * 1024 * 1024;
 
-type Mode = "word" | "sentence";
-
-function sha1(content: string) {
-  return createHash("sha1").update(content).digest("hex");
-}
-
-function isAllowedMode(value: FormDataEntryValue | null): value is Mode {
+function isAllowedMode(value: FormDataEntryValue | null): value is SpeechSuperMode {
   return value === "word" || value === "sentence";
 }
 
@@ -63,89 +57,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Audio file is too large" }, { status: 413 });
     }
 
-    const sampleRate = 16_000;
-    const coreType = mode === "word" ? "word.eval.promax.cn" : "sent.eval.cn";
-    const timestamp = Date.now().toString();
-    const tokenId = randomUUID().replace(/-/g, "").toUpperCase();
-    const audioType = "wav";
-
-    const params = {
-      connect: {
-        cmd: "connect",
-        param: {
-          sdk: { version: 16777472, source: 9, protocol: 2 },
-          app: {
-            applicationId: appKey,
-            sig: sha1(`${appKey}${timestamp}${secretKey}`),
-            timestamp,
-          },
-        },
-      },
-      start: {
-        cmd: "start",
-        param: {
-          app: {
-            applicationId: appKey,
-            sig: sha1(`${appKey}${timestamp}${user.id}${secretKey}`),
-            userId: user.id,
-            timestamp,
-          },
-          audio: {
-            audioType,
-            sampleRate,
-            channel: 1,
-            sampleBytes: 2,
-          },
-          request: {
-            coreType,
-            refText: referenceText.trim().slice(0, mode === "word" ? 64 : 500),
-            tokenId,
-          },
-        },
-      },
-    };
-
-    const speechSuperForm = new FormData();
-    speechSuperForm.append("text", JSON.stringify(params));
-    speechSuperForm.append(
-      "audio",
-      new Blob([await audio.arrayBuffer()], { type: "audio/wav" }),
-      "recording.wav",
-    );
-
-    const response = await fetch(`https://api.speechsuper.com/${coreType}`, {
-      method: "POST",
-      headers: { "Request-Index": "0" },
-      body: speechSuperForm,
-      signal: AbortSignal.timeout(30_000),
+    const result = await scoreWithSpeechSuper({
+      appKey,
+      secretKey,
+      userId: user.id,
+      mode,
+      referenceText: referenceText.trim(),
+      audio: new Blob([await audio.arrayBuffer()], { type: "audio/wav" }),
     });
 
-    const responseText = await response.text();
-    if (!response.ok) {
-      console.error("[speechsuper-eval] API error", response.status, responseText.slice(0, 500));
+    return NextResponse.json(result);
+  } catch (error) {
+    if (error instanceof SpeechSuperError) {
       return NextResponse.json(
-        { error: "SpeechSuper evaluation failed" },
-        { status: response.status >= 400 && response.status < 500 ? 502 : 503 },
+        { error: error.message, ...(error.raw ? { raw: error.raw } : {}) },
+        { status: error.status },
       );
     }
-
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = JSON.parse(responseText);
-    } catch {
-      console.error("[speechsuper-eval] Non-JSON response", responseText.slice(0, 500));
-      return NextResponse.json({ error: "SpeechSuper returned an invalid response" }, { status: 502 });
-    }
-
-    const errId = typeof parsed.errId === "number" ? parsed.errId : 0;
-    if (errId !== 0 || typeof parsed.error === "string") {
-      const message = typeof parsed.error === "string" ? parsed.error : `SpeechSuper error ${errId}`;
-      console.error("[speechsuper-eval] SpeechSuper reported an error", errId, message);
-      return NextResponse.json({ error: message, raw: parsed }, { status: 422 });
-    }
-
-    return NextResponse.json(parsed);
-  } catch (error) {
     console.error("Error in POST /api/admin/speechsuper-eval:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

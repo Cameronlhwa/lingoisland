@@ -2,21 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { pinyin } from "pinyin-pro";
+import { normalizeSpeechSuperResult } from "@/lib/pronunciation/normalizeScore";
 
 type Mode = "word" | "sentence";
 type Result = Record<string, unknown>;
-type PhonemeScore = {
-  role: "initial" | "final" | "other";
-  phone: string;
-  pronunciation: number | null;
-};
-type CharacterScore = {
-  hanzi: string;
-  pinyin: string | null;
-  targetTone: number | null;
-  score: number | null;
-  phonemes: PhonemeScore[];
-};
 
 const STATUS_STYLES = {
   strong: "border-teal-300 bg-teal-50",
@@ -41,54 +30,6 @@ const FEEDBACK = {
     "慢慢来！(Take it easy!) Every recording is useful practice. 🎉",
   ],
 };
-
-function asNumber(value: unknown) {
-  const parsed = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function speechResult(value: Result | null) {
-  const nested = value?.result;
-  return nested && typeof nested === "object" ? (nested as Record<string, unknown>) : null;
-}
-
-function toneNumber(value: unknown) {
-  const match = typeof value === "string" ? value.match(/tone([1-4])/i) : null;
-  return match ? Number(match[1]) : null;
-}
-
-function extractPhonemes(word: Record<string, unknown>): PhonemeScore[] {
-  const phonemes = word.phonemes;
-  if (!Array.isArray(phonemes)) return [];
-  return phonemes.flatMap((item) => {
-    if (!item || typeof item !== "object") return [];
-    const phoneme = item as Record<string, unknown>;
-    const category = asNumber(phoneme.category);
-    const role = category === 0 ? "initial" : category === 1 ? "final" : "other";
-    const phone = typeof phoneme.phone === "string" ? phoneme.phone : "";
-    if (!phone) return [];
-    return [{ role, phone, pronunciation: asNumber(phoneme.pronunciation) } as PhonemeScore];
-  });
-}
-
-function extractCharacters(value: Result | null): CharacterScore[] {
-  const words = speechResult(value)?.words;
-  if (!Array.isArray(words)) return [];
-  return words.flatMap((item) => {
-    if (!item || typeof item !== "object") return [];
-    const word = item as Record<string, unknown>;
-    const hanzi = typeof word.word === "string" ? word.word : "";
-    const scores = word.scores as Record<string, unknown> | undefined;
-    if (!hanzi) return [];
-    return [{
-      hanzi,
-      pinyin: typeof word.symbolpinyin === "string" ? word.symbolpinyin : typeof word.pinyin === "string" ? word.pinyin : null,
-      targetTone: toneNumber(word.tone),
-      score: asNumber(scores?.tone ?? scores?.overall ?? scores?.pronunciation),
-      phonemes: extractPhonemes(word),
-    }];
-  });
-}
 
 function pcmToWav(chunks: Float32Array[], sourceRate: number): Blob {
   const targetRate = 16_000;
@@ -183,11 +124,12 @@ export default function ToneTestClient() {
   const processor = useRef<ScriptProcessorNode | null>(null);
   const pcmChunks = useRef<Float32Array[]>([]);
   const maxSeconds = mode === "word" ? 20 : 90;
-  const overallScore = useMemo(
-    () => asNumber(speechResult(result)?.overall),
+  const normalized = useMemo(
+    () => (result ? normalizeSpeechSuperResult(result) : null),
     [result],
   );
-  const characters = useMemo(() => extractCharacters(result), [result]);
+  const overallScore = normalized?.overall ?? null;
+  const characters = normalized?.characters ?? [];
   const referenceCharacters = useMemo(
     () => Array.from(referenceText).map((hanzi) => ({ hanzi, pinyin: pinyinForCharacter(hanzi) })),
     [referenceText],
@@ -299,7 +241,6 @@ export default function ToneTestClient() {
   const feedback = band && result
     ? FEEDBACK[band][JSON.stringify(result).length % FEEDBACK[band].length]
     : null;
-  const metrics = speechResult(result);
 
   return (
     <main
@@ -444,15 +385,16 @@ export default function ToneTestClient() {
             </span>
           </div>
           {feedback && <p className="mt-4 rounded-2xl bg-[var(--lingo-sky-pale)] px-4 py-3 text-sm font-medium text-[var(--lingo-text)]">{feedback}</p>}
-          {metrics && (
+          {normalized && (
             <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {[
-                ["Pronunciation", metrics.pronunciation],
-                ["Tone", metrics.tone],
-                ["Fluency", metrics.fluency],
-                ["Rhythm", metrics.rhythm],
-              ].map(([label, value]) => {
-                const score = asNumber(value);
+              {(
+                [
+                  ["Pronunciation", normalized.pronunciation],
+                  ["Tone", normalized.tone],
+                  ["Fluency", normalized.fluency],
+                  ["Rhythm", normalized.rhythm],
+                ] as [string, number | null][]
+              ).map(([label, score]) => {
                 return (
                   <div key={String(label)} className={`rounded-2xl border p-3 ${statusForScore(score)}`}>
                     <p className="text-xs font-semibold text-[var(--lingo-text-muted)]">{String(label)}</p>
