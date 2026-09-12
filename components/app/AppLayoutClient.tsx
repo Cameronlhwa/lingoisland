@@ -371,7 +371,9 @@ export default function AppLayoutClient({
 
   const pathname = usePathname();
   /** Journey onboarding: full-page like legacy /onboarding — no sidebar, tab bar, or app chrome */
-  const isFullscreenOnboarding = pathname === "/app/onboarding";
+  const isFullscreenOnboarding =
+    pathname === "/app/onboarding" ||
+    /\/topic-islands\/[^/]+\/learn(?:\/|$)/.test(pathname);
 
   const sidebarContextValue = useMemo(
     () => ({

@@ -126,19 +126,12 @@ export default function TopicIslandLoadingPage() {
       return;
     }
 
-    setStatusText("Generating words and sentences…");
-
     // Reset the hint so it shows fresh on every newly created island
     localStorage.removeItem("island_hint_dismissed");
 
-    // Fire-and-forget — island detail page shows its own progress bar
-    fetch(`/api/topic-islands/${islandId}/generate-batch`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ batchSize: 5, sentenceStyle }),
-    }).catch((err) => console.error("Error starting generation:", err));
-
-    router.replace(`/app/topic-islands/${islandId}?learn=true`);
+    router.replace(
+      `/app/topic-islands/${islandId}/learn/preparing?sentenceStyle=${encodeURIComponent(sentenceStyle)}`,
+    );
   };
 
   return (

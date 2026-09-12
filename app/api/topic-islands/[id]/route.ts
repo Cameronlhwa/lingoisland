@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getEntitlements, isWordLocked, canCreateTopicIsland } from '@/lib/entitlements'
+import { getEntitlements, canCreateTopicIsland } from '@/lib/entitlements'
+import { getIslandReadiness } from '@/lib/islands/readiness'
 
 /**
  * GET /api/topic-islands/[id]
@@ -171,10 +172,21 @@ export async function GET(
         sentences: (sentences || []).filter((s) => s.word_id === word.id),
       }
     })
+    const readiness = getIslandReadiness(
+      (words || []).map((word) => ({ id: word.id })),
+      (sentences || []).map((sentence) => ({
+        word_id: sentence.word_id,
+        tier: sentence.tier,
+      })),
+      island.word_target,
+    )
 
     return NextResponse.json({
       island,
       words: wordsWithSentences,
+      learn_ready: readiness.learnReady,
+      incomplete_word_ids: readiness.incompleteWordIds,
+      required_sentence_count: readiness.requiredSentenceCount,
       grammarFocus: grammarFocusWithExamples,
       user_plan: entitlements.isPro ? 'pro' : 'free',
       user_cefr_level: userProfile?.cefr_level ?? null,

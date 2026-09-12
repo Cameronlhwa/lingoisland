@@ -24,15 +24,16 @@ export function useProgressIslandUpgrade() {
 }
 
 /**
- * Call this when you have the user's current todayCount (or progressStage) and want to
- * show the upgrade popup if they just crossed a 10-review milestone.
+ * Call this after a review API confirms it crossed a stage threshold.
  * Persists last-seen stage per day in sessionStorage so we only show once per stage per day.
  * @returns true if the upgrade popup was shown
  */
 export function checkAndShowUpgrade(
   todayCount: number,
-  showUpgrade: (stage: number) => void
+  showUpgrade: (stage: number) => void,
+  didStageUpgrade: boolean,
 ): boolean {
+  if (!didStageUpgrade) return false;
   if (typeof sessionStorage === "undefined") return false;
   const dateKey = new Date().toISOString().split("T")[0];
   const storageKey = `${STORAGE_KEY}_${dateKey}`;
@@ -45,7 +46,7 @@ export function checkAndShowUpgrade(
   const stage = Math.min(5, Math.floor(todayCount / 10));
   if (stage > lastSeen && stage >= 1) {
     sessionStorage.setItem(storageKey, String(stage));
-    showUpgrade(stage + 1); // display 1–6
+    showUpgrade(Math.min(5, stage + 1));
     return true;
   }
   return false;
@@ -74,14 +75,6 @@ export function ProgressIslandUpgradeProvider({
 
   const onClose = useCallback(() => {
     setShow(false);
-    if (typeof window === "undefined") return;
-    const pathname = window.location.pathname;
-    if (pathname === "/app" || pathname === "/app/") {
-      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-      document.getElementById("progress-island-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      window.location.href = "/app";
-    }
   }, []);
 
   return (

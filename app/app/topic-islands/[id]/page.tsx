@@ -10,7 +10,7 @@ import {
   writeUpgradeSnapshot,
 } from "@/lib/onboarding/onboardingCheckoutStorage";
 import Link from "next/link";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useRouter, useParams, usePathname, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useGlossary } from "@/contexts/GlossaryContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
@@ -97,8 +97,10 @@ interface Island {
 export default function TopicIslandDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const islandId = params.id as string;
+  const appBase = pathname.startsWith("/hsk/app") ? "/hsk/app" : "/app";
   const { t } = useLanguage();
   const { convertText } = useCharacterSet();
   const progressUpgrade = useProgressIslandUpgrade();
@@ -195,6 +197,19 @@ export default function TopicIslandDetailPage() {
       hint: string | null;
     }>;
   } | null>(null);
+
+  // Preserve old shared links while moving the lesson flow to dedicated routes.
+  // New entry points never render this page before preparation begins.
+  useEffect(() => {
+    if (!wantsLearnSequence || !island) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("learn");
+    const query = params.toString();
+    router.replace(
+      `${appBase}/topic-islands/${islandId}/learn/preparing${query ? `?${query}` : ""}`,
+    );
+  }, [appBase, island, islandId, router, searchParams, wantsLearnSequence]);
+
   useEffect(() => {
     setShowNewUserHint(!localStorage.getItem("island_hint_dismissed"));
   }, []);
@@ -1191,7 +1206,11 @@ export default function TopicIslandDetailPage() {
         );
       }
       if (typeof data?.todayCount === "number" && progressUpgrade) {
-        checkAndShowUpgrade(data.todayCount, progressUpgrade.showUpgrade);
+        checkAndShowUpgrade(
+          data.todayCount,
+          progressUpgrade.showUpgrade,
+          data.didStageUpgrade === true,
+        );
       }
     } catch {
       // Ignore quiz-activity telemetry failures to avoid interrupting quiz flow.
@@ -1329,7 +1348,6 @@ export default function TopicIslandDetailPage() {
     return (
       <PreCourseLoading
         topic={island.topic}
-        level={island.level}
         progressLabel={progressLabel}
         progressPercentage={progressPercentage}
       />

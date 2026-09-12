@@ -5,6 +5,10 @@ import PrimaryButton from "@/components/landing/PrimaryButton";
 import SecondaryButton from "@/components/landing/SecondaryButton";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import {
+  checkAndShowUpgrade,
+  useProgressIslandUpgrade,
+} from "@/contexts/ProgressIslandUpgradeContext";
+import {
   HSK_CARD_SHADOW,
   LINGO_ACCENT_BORDER,
 } from "@/lib/glossy-theme";
@@ -36,6 +40,7 @@ export default function LearnDragDrop({
   level,
 }: LearnDragDropProps) {
   const { convertText } = useCharacterSet();
+  const progressUpgrade = useProgressIslandUpgrade();
   const isA0 = (level ?? "").trim().toUpperCase().startsWith("A0");
   const [shuffledEnglish, setShuffledEnglish] = useState<LearnWord[]>([]);
   const [dropMatches, setDropMatches] = useState<Record<string, string>>({});
@@ -105,7 +110,16 @@ export default function LearnDragDrop({
     if (allCorrect) {
       if (!recordedProgressRef.current) {
         recordedProgressRef.current = true;
-        void recordTopicIslandQuizActivity(words.length);
+        void (async () => {
+          const activity = await recordTopicIslandQuizActivity(words.length);
+          if (activity && progressUpgrade) {
+            checkAndShowUpgrade(
+              activity.todayCount,
+              progressUpgrade.showUpgrade,
+              activity.didStageUpgrade,
+            );
+          }
+        })();
       }
       setShowSuccess(true);
       setTimeout(() => onComplete(), 1500);

@@ -225,21 +225,6 @@ export async function POST(
         )
       }
 
-      const originC = new URL(request.url).origin
-      const cookieHeaderC = request.headers.get('cookie') ?? ''
-      void fetch(`${originC}/api/topic-islands/${island.id}/generate-batch`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(cookieHeaderC ? { Cookie: cookieHeaderC } : {}),
-        },
-        body: JSON.stringify({
-          wordsPreseeded: true,
-          sentenceTierMode: 'full',
-          sentenceStyle,
-        }),
-      }).catch((err) => console.error('[start-island] curriculum generate-batch', err))
-
       return NextResponse.json({ islandId: island.id })
     }
 
@@ -261,18 +246,6 @@ export async function POST(
       }
       return NextResponse.json({ islandId: island.id })
     }
-
-    const sentenceTierMode = 'full'
-    const origin = new URL(request.url).origin
-    const cookieHeader = request.headers.get('cookie') ?? ''
-    void fetch(`${origin}/api/topic-islands/${island.id}/generate-batch`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-      body: JSON.stringify({ sentenceTierMode, sentenceStyle }),
-    }).catch((err) => console.error('[start-island] generate-batch', err))
 
     return NextResponse.json({ islandId: island.id })
   } catch (e) {

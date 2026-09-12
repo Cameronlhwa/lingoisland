@@ -44,12 +44,14 @@ export async function generateReplacementWord({
     B2: 'upper intermediate (advanced structures, nuanced vocabulary)',
   }
 
-  // First, generate just the word
-  const wordPrompt = `Generate ONE Chinese vocabulary word for the topic "${topic}" at ${level} level (${levelDescriptions[level]})${existingWordsList}
+  // First, generate a replacement based on the island topic. Vocabulary in
+  // Topic Islands is intentionally not CEFR/HSK restricted; level only guides
+  // the example sentences generated below.
+  const wordPrompt = `Generate ONE Chinese vocabulary word for the topic "${topic}"${existingWordsList}
 
 Requirements:
 - Use Simplified Chinese (not Traditional)
-- Use natural, high-frequency vocabulary appropriate for A2-B2 learners
+- Choose a concrete, useful word that genuinely belongs in this topic, regardless of learner level or HSK band
 - Do NOT use rare idioms or classical Chinese
 - Provide accurate pinyin with tone marks
 - The word must be different from: ${existingWords.join(', ') || 'none'}

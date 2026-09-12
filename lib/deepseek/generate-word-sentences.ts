@@ -283,13 +283,18 @@ Output ONLY valid JSON (no markdown, no code blocks, no explanation). Format:
           content: prompt,
         },
       ],
+      // Sentence generation is structured extraction, not a reasoning task.
+      // Leaving DeepSeek V4 thinking enabled can consume the completion budget
+      // before it emits JSON, producing empty or truncated responses.
+      thinking: { type: 'disabled' },
+      response_format: { type: 'json_object' },
       temperature: generationConfig?.temperature ?? 0.9,
       top_p: generationConfig?.topP ?? 0.93,
       frequency_penalty: generationConfig?.frequencyPenalty ?? 0.5,
       presence_penalty: generationConfig?.presencePenalty ?? 0.35,
       max_tokens:
         generationConfig?.maxTokens ??
-        (sentenceTierMode === 'easy_same' ? 1400 : 2200),
+        (sentenceTierMode === 'easy_same' ? 1800 : 3000),
     }),
   })
 

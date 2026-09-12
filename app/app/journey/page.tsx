@@ -887,7 +887,7 @@ export default function JourneyPage() {
   }, []);
 
   useEffect(() => {
-    if (!journey?.id) return;
+    if (!isHskApp || !journey?.id) return;
     let cancelled = false;
     fetch(`/api/journey/${journey.id}/hsk-levels`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
@@ -900,7 +900,7 @@ export default function JourneyPage() {
     return () => {
       cancelled = true;
     };
-  }, [journey?.id]);
+  }, [isHskApp, journey?.id]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 768px)");
@@ -1072,9 +1072,11 @@ export default function JourneyPage() {
       return;
     }
     if (node.islandId) {
-      const params = new URLSearchParams({ journeyFirst: "1" });
-      if (node.current) params.set("learn", "true");
-      router.push(`${appBase}/topic-islands/${node.islandId}?${params.toString()}`);
+      router.push(
+        node.current
+          ? `${appBase}/topic-islands/${node.islandId}/learn/preparing?journeyFirst=1`
+          : `${appBase}/topic-islands/${node.islandId}?journeyFirst=1`,
+      );
       return;
     }
     const response = await fetch(`/api/journey/${journey.id}/start-island`, {
@@ -1084,9 +1086,11 @@ export default function JourneyPage() {
     });
     const data = await response.json();
     if (data.islandId) {
-      const params = new URLSearchParams({ journeyFirst: "1" });
-      if (node.current) params.set("learn", "true");
-      router.push(`${appBase}/topic-islands/${data.islandId}?${params.toString()}`);
+      router.push(
+        node.current
+          ? `${appBase}/topic-islands/${data.islandId}/learn/preparing?journeyFirst=1`
+          : `${appBase}/topic-islands/${data.islandId}?journeyFirst=1`,
+      );
     }
   };
 
@@ -1157,7 +1161,7 @@ export default function JourneyPage() {
             </h1>
             <p className="mt-1 text-sm text-gray-500">
               {learnedWords} / {totalWords} words learned
-              {hskVocabRangeLabel && (
+              {isHskApp && hskVocabRangeLabel && (
                 <span className="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
                   {hskVocabRangeLabel}
                 </span>
@@ -1267,7 +1271,7 @@ export default function JourneyPage() {
                     }
                     showLabel={showMapLabels}
                     scale={mapUiScale}
-                    hskLevel={node.islandId ? hskLevelByIslandId[node.islandId] : undefined}
+                    hskLevel={isHskApp && node.islandId ? hskLevelByIslandId[node.islandId] : undefined}
                   />
                 ))}
 

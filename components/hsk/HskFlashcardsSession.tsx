@@ -132,6 +132,7 @@ export default function HskFlashcardsSession({
         didShowUpgrade = checkAndShowUpgrade(
           result.todayCount,
           progressUpgrade.showUpgrade,
+          result.didStageUpgrade === true,
         );
       }
 

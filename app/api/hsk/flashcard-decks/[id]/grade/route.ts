@@ -85,7 +85,7 @@ export async function POST(
       console.error('Error logging quiz activity:', activityError)
     }
 
-    const { huahuaReviewsToday, huahuaStage } = await incrementHuahua(supabase, user.id, 1)
+    const { huahuaReviewsToday, huahuaStage, didStageUpgrade } = await incrementHuahua(supabase, user.id, 1)
 
     return NextResponse.json({
       success: true,
@@ -93,6 +93,7 @@ export async function POST(
       todayCount: huahuaReviewsToday,
       huahuaTotalReviews: huahuaReviewsToday,
       huahuaStage,
+      didStageUpgrade,
     })
   } catch (error) {
     console.error('Error in POST /api/hsk/flashcard-decks/[id]/grade:', error)

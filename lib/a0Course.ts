@@ -165,15 +165,17 @@ export async function seedA0IslandFromCourse(
     const order = WORD_TO_SENTENCE_ORDER[w.hanzi];
     const courseSentence = order != null ? sentenceByOrder.get(order) : null;
     if (!courseSentence) continue;
-    sentenceRows.push({
-      island_id: islandId,
-      word_id: w.id,
-      user_id: userId,
-      tier: "easy",
-      hanzi: courseSentence.zh,
-      pinyin: courseSentence.pinyin,
-      english: courseSentence.english,
-    });
+    for (const tier of ["easy", "same", "hard"]) {
+      sentenceRows.push({
+        island_id: islandId,
+        word_id: w.id,
+        user_id: userId,
+        tier,
+        hanzi: courseSentence.zh,
+        pinyin: courseSentence.pinyin,
+        english: courseSentence.english,
+      });
+    }
   }
 
   if (sentenceRows.length > 0) {
@@ -199,7 +201,7 @@ export async function seedA0IslandFromCourse(
       words_selected: wordCount,
       sentences_generated: sentenceCount,
       sentence_attempts: sentenceCount,
-      sentence_tasks: sentenceCount,
+      sentence_tasks: wordCount * 3,
     })
     .eq("id", islandId);
 

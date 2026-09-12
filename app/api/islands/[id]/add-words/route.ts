@@ -130,8 +130,6 @@ export async function POST(
 
     const wordList = await generateWordList({
       topic: island.topic,
-      level: baseLevel,
-      detailedLevel,
       wordCount: count,
       existingWords,
       suggestions: filteredSuggestions,

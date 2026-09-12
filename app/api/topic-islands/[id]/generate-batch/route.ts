@@ -6,6 +6,7 @@ import { limitConcurrency } from '@/lib/utils/concurrency'
 import { getEntitlements } from '@/lib/entitlements'
 import { generateGrammarFocus } from '@/lib/deepseek/generate-grammar-focus'
 import { normalizeSentenceStyle } from '@/lib/sentenceStyle'
+import { getIslandReadiness, REQUIRED_SENTENCE_TIERS } from '@/lib/islands/readiness'
 
 /**
  * POST /api/topic-islands/[id]/generate-batch
@@ -77,17 +78,31 @@ export async function POST(
     const reviewVocabConfig = body.reviewVocab as
       | { mode: 'random' | 'select'; islandIds?: string[] }
       | undefined
-    const sentenceTierMode =
-      body.sentenceTierMode === 'easy_same' ? 'easy_same' : 'full'
+    // Every island lesson requires all three persisted tiers before it can be
+    // opened. Learn currently displays the easy tier, while the others remain
+    // available on the island itself and for future learning modes.
+    const sentenceTierMode = 'full'
     // Curriculum-unit islands seed their island_words at build time; skip the
     // DeepSeek word-list step and go straight to sentence generation.
     const wordsPreseeded = body.wordsPreseeded === true
 
-    // Update status to selecting
-    await supabase
+    // Atomically claim the job. The initial status read above is only useful
+    // for a friendly response; this conditional update prevents two requests
+    // from generating the same island concurrently.
+    const { data: claimedIsland, error: claimError } = await supabase
       .from('topic_islands')
       .update({ status: 'selecting' })
       .eq('id', islandId)
+      .in('status', ['draft', 'error', 'ready'])
+      .select('id')
+      .maybeSingle()
+
+    if (claimError || !claimedIsland) {
+      return NextResponse.json({
+        message: 'Generation already in progress',
+        status: 'generating' as const,
+      })
+    }
 
     // Fetch known words based on review vocab configuration
     let knownWords: string[] = []
@@ -145,7 +160,7 @@ export async function POST(
       body.sentenceStyle ?? island.sentence_style,
     )
 
-    const tiersPerWord = sentenceTierMode === 'easy_same' ? 2 : 3
+    const tiersPerWord = REQUIRED_SENTENCE_TIERS.length
     const sentenceTasksTotal = island.word_target * tiersPerWord
     let wordsSelected = 0
     let sentencesGenerated = 0
@@ -202,6 +217,23 @@ export async function POST(
     sentencesGenerated = currentSentenceCount || 0
     sentenceAttempts = sentencesGenerated
 
+    const { data: existingWordRows } = await supabase
+      .from('island_words')
+      .select('id')
+      .eq('island_id', islandId)
+    const { data: existingSentenceRows } = await supabase
+      .from('island_sentences')
+      .select('word_id, tier')
+      .eq('island_id', islandId)
+    const initialReadiness = getIslandReadiness(
+      (existingWordRows || []).map((word) => ({ id: word.id })),
+      (existingSentenceRows || []).map((sentence) => ({
+        word_id: sentence.word_id,
+        tier: sentence.tier,
+      })),
+      island.word_target,
+    )
+
     await updateProgress({
       wordsSelected,
       sentencesGenerated,
@@ -209,15 +241,9 @@ export async function POST(
       status: 'selecting',
     }, true)
 
-      // If we've reached the target, mark as ready and return. For pre-seeded
-      // islands the words are always all present up front, so only short-circuit
-      // once their sentences exist too.
-      const preseededSentencesDone =
-        wordsPreseeded && sentencesGenerated >= currentWords * tiersPerWord
-      if (
-        currentWords >= island.word_target &&
-        (!wordsPreseeded || preseededSentencesDone)
-      ) {
+      // Never infer readiness from word count alone. An island is ready only
+      // after every word has all required sentence tiers in the database.
+      if (initialReadiness.learnReady) {
         await supabase
           .from('topic_islands')
           .update({ status: 'ready' })
@@ -255,12 +281,10 @@ export async function POST(
     // STAGE 1: Generate word list upfront — unless the island's words were
     // pre-seeded (curriculum-unit islands seed island_words at build time).
     let wordList: Word[] = []
-    if (!wordsPreseeded) {
+    if (!wordsPreseeded && wordsNeeded > 0) {
       try {
         wordList = await generateWordList({
           topic: island.topic,
-          level: baseLevel,
-          detailedLevel,
           wordCount: wordsNeeded,
           existingWords,
         })
@@ -282,7 +306,7 @@ export async function POST(
     }
 
     // ── Fire grammar focus in the background — don't block word/sentence generation ──
-    const grammarFocusPromise: Promise<void> = grammarTarget > 0
+    const grammarFocusPromise: Promise<void> = grammarTarget > 0 && currentWords === 0
       ? (async () => {
           try {
             const { data: recentGrammar } = await supabase
@@ -399,11 +423,14 @@ export async function POST(
       : currentWords + insertedWords.length
     await updateProgress({ wordsSelected: totalWordsSelected, status: 'selecting' })
 
-    // All words generate sentences (position-based paywall removed)
-    const wordsToGenerate = insertedWords
-
-    if (insertedWords.length === 0) {
-      // No words were inserted, mark as error
+    // Reconcile persisted state after word insertion. On a retry this selects
+    // only words missing one or more tiers, so already-complete work is kept.
+    const { data: wordsForSentences, error: wordsForSentencesError } = await dbClient
+      .from('island_words')
+      .select('id, hanzi, pinyin, english, position')
+      .eq('island_id', islandId)
+      .order('position', { ascending: true })
+    if (wordsForSentencesError || !wordsForSentences?.length) {
       await supabase
         .from('topic_islands')
         .update({ status: 'error' })
@@ -411,11 +438,48 @@ export async function POST(
 
       return NextResponse.json(
         {
-          error: 'Failed to insert words',
-          message: 'No words could be inserted into the database',
+          error: 'Failed to load island words',
+          message: wordsForSentencesError?.message || 'No words could be found in the database',
         },
         { status: 500 }
       )
+    }
+
+    const { data: savedSentenceRows } = await dbClient
+      .from('island_sentences')
+      .select('word_id, tier')
+      .eq('island_id', islandId)
+    const readinessAfterWords = getIslandReadiness(
+      wordsForSentences.map((word) => ({ id: word.id })),
+      (savedSentenceRows || []).map((sentence) => ({
+        word_id: sentence.word_id,
+        tier: sentence.tier,
+      })),
+      island.word_target,
+    )
+    const incompleteWordIds = new Set(readinessAfterWords.incompleteWordIds)
+    const wordsToGenerate = wordsForSentences
+      .filter((word) => incompleteWordIds.has(word.id))
+      .map((word) => ({
+        id: word.id as string,
+        hanzi: word.hanzi as string,
+        pinyin: word.pinyin as string,
+        english: word.english as string,
+        position: (word.position as number) ?? 0,
+      }))
+
+    // A partial attempt can have one or two saved tiers. Replace only the
+    // incomplete word's tiers so the three-row unique constraint stays valid.
+    if (wordsToGenerate.length > 0) {
+      await dbClient
+        .from('island_sentences')
+        .delete()
+        .eq('island_id', islandId)
+        .in('word_id', wordsToGenerate.map((word) => word.id))
+      sentencesGenerated = (savedSentenceRows || []).filter(
+        (sentence) => !incompleteWordIds.has(sentence.word_id),
+      ).length
+      sentenceAttempts = sentencesGenerated
     }
 
     // STAGE 2: Generate sentences in parallel (max 5 concurrent)
@@ -539,12 +603,7 @@ export async function POST(
 
     const sentenceGenerationTasks = wordsToGenerate.map((word, index) => {
       return async () => {
-        const styleCount =
-          sentenceTierMode === 'easy_same'
-            ? 2
-            : Math.random() < 0.5
-              ? 2
-              : 3
+        const styleCount = Math.random() < 0.5 ? 2 : 3
         const contextCount = Math.random() < 0.5 ? 1 : 2
         const chosenStyles = pickRandomUnique(SENTENCE_STYLES, styleCount)
         const chosenContexts = pickRandomUnique(CONTEXTS, contextCount)
@@ -553,7 +612,10 @@ export async function POST(
         let avoidOpeners: string[] = []
         let avoidPatterns: string[] = []
 
-        const maxAttempts = 3
+        // The provider can occasionally return a successful response with no
+        // completion under concurrent load. Retry those transient failures
+        // before marking the island as repairable.
+        const maxAttempts = 5
         while (attempt < maxAttempts) {
           attempt++
           let sentences
@@ -572,14 +634,14 @@ export async function POST(
                       topP: 0.9,
                       frequencyPenalty: 0.4,
                       presencePenalty: 0.2,
-                      maxTokens: 1800,
+                      maxTokens: 3000,
                     }
                   : {
                       temperature: 0.7,
                       topP: 0.86,
                       frequencyPenalty: 0.3,
                       presencePenalty: 0.15,
-                      maxTokens: 1600,
+                      maxTokens: 3200,
                     }
 
             sentences = await generateWordSentences({
@@ -601,6 +663,9 @@ export async function POST(
           })
           } catch (error) {
             console.error(`Error generating sentences for word ${word.hanzi}:`, error)
+            if (attempt < maxAttempts) {
+              await new Promise((resolve) => setTimeout(resolve, attempt * 500))
+            }
             continue
           }
 
@@ -749,8 +814,9 @@ export async function POST(
       }
     })
 
-    // Execute sentence generation — 8 concurrent slots (was 5)
-    const sentenceResults = await limitConcurrency(sentenceGenerationTasks, 8)
+    // Keep provider load low enough to avoid empty completions while retaining
+    // parallelism across an island.
+    const sentenceResults = await limitConcurrency(sentenceGenerationTasks, 3)
 
     // Wait for grammar focus to finish writing (it started in parallel)
     await grammarFocusPromise
@@ -765,33 +831,63 @@ export async function POST(
       )
     }
 
-    // Final status check
-    const { count: finalCount } = await supabase
+    // Final status check is based on persisted tier coverage, not successful
+    // request counts or word count alone.
+    const { data: finalWords } = await supabase
       .from('island_words')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('island_id', islandId)
+    const { data: finalSentences } = await supabase
+      .from('island_sentences')
+      .select('word_id, tier')
+      .eq('island_id', islandId)
+    const finalReadiness = getIslandReadiness(
+      (finalWords || []).map((word) => ({ id: word.id })),
+      (finalSentences || []).map((sentence) => ({
+        word_id: sentence.word_id,
+        tier: sentence.tier,
+      })),
+      island.word_target,
+    )
 
-    const finalTotal = finalCount || 0
-
-    if (finalTotal >= island.word_target) {
+    if (finalReadiness.learnReady) {
       await supabase
         .from('topic_islands')
-        .update({ status: 'ready' })
+        .update({
+          status: 'ready',
+          words_selected: finalWords?.length || 0,
+          sentences_generated: finalReadiness.completedSentenceCount,
+          sentence_attempts: finalReadiness.completedSentenceCount,
+          sentence_tasks: finalReadiness.requiredSentenceCount,
+        })
         .eq('id', islandId)
 
       return NextResponse.json({
         addedWords: insertedWords.length,
-        totalWords: finalTotal,
+        totalWords: finalWords?.length || 0,
         status: 'ready' as const,
       })
     }
 
-    // Not at target yet, mark as generating
+    // Keep failed work visibly retryable rather than exposing an incomplete
+    // lesson as ready.
+    await supabase
+      .from('topic_islands')
+      .update({
+        status: 'error',
+        words_selected: finalWords?.length || 0,
+        sentences_generated: finalReadiness.completedSentenceCount,
+        sentence_attempts: finalReadiness.completedSentenceCount,
+        sentence_tasks: finalReadiness.requiredSentenceCount,
+      })
+      .eq('id', islandId)
+
     return NextResponse.json({
       addedWords: insertedWords.length,
-      totalWords: finalTotal,
-      status: 'generating' as const,
-    })
+      totalWords: finalWords?.length || 0,
+      status: 'error' as const,
+      error: 'Some example sentences could not be generated. Retry to finish the lesson.',
+    }, { status: 500 })
   } catch (error) {
     console.error('Error in POST /api/topic-islands/[id]/generate-batch:', error)
     

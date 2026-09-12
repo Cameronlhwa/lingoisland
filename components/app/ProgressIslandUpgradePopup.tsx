@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 
@@ -87,15 +88,24 @@ export default function ProgressIslandUpgradePopup({
           id="progress-island-upgrade-desc"
           className="mt-2 text-slate-600"
         >
-          {convertText(t("Stage"))} {stage} — {convertText(t("华华 is waiting for you!"))}
+          {convertText(t("Stage"))} {stage} — {convertText(t("华华 upgraded the island!"))}
         </p>
+        <div className="relative mt-4 h-40 overflow-hidden rounded-xl bg-[var(--lingo-sky-pale)]">
+          <Image
+            src={`/progress-islands/stage-${stage}.png`}
+            alt={`华华's upgraded Progress Island — Stage ${stage}`}
+            fill
+            sizes="(max-width: 640px) 100vw, 384px"
+            className="object-contain"
+          />
+        </div>
         <button
           ref={buttonRef}
           type="button"
           onClick={onClose}
           className="mt-4 w-full rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
         >
-          {convertText(t("Click to see 华华!"))}
+          {convertText(t("Keep practicing"))}
         </button>
       </div>
     </div>

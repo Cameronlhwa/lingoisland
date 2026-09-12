@@ -34,7 +34,7 @@ interface TopicIsland {
 function islandDetailHref(island: TopicIsland): string {
   const wordCount = island.words_selected ?? island.word_target;
   if (island.status === "ready" && wordCount >= 5) {
-    return `/app/topic-islands/${island.id}?learn=true`;
+    return `/app/topic-islands/${island.id}/learn/preparing`;
   }
   return `/app/topic-islands/${island.id}`;
 }
@@ -299,22 +299,19 @@ export default function TopicIslandsPage() {
           }
         : undefined;
 
-      // Start generation in the background (fire-and-forget)
-      fetch(`/api/topic-islands/${islandId}/generate-batch`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          batchSize: 5,
-          reviewVocab: reviewVocabConfig,
-          sentenceStyle: sentenceStyle ?? formData.sentenceStyle,
-        }),
-      }).catch((err) =>
-        console.error("Error starting topic island generation:", err),
-      );
       // Image generation disabled - using pre-generated library images for cost savings
 
-      // Immediately navigate to island page; it will show loading/progress
-      router.push(`/app/topic-islands/${islandId}?learn=true`);
+      // The dedicated preparation page owns generation and only opens Learn
+      // once all persisted sentence tiers are ready.
+      const preparationParams = new URLSearchParams({
+        sentenceStyle: sentenceStyle ?? formData.sentenceStyle,
+      });
+      if (reviewVocabConfig) {
+        preparationParams.set("reviewVocab", JSON.stringify(reviewVocabConfig));
+      }
+      router.push(
+        `/app/topic-islands/${islandId}/learn/preparing?${preparationParams.toString()}`,
+      );
     } catch (error) {
       console.error("Error creating island:", error);
       const errorMessage =
