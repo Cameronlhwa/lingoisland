@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { pinyin } from "pinyin-pro";
 import { normalizeSpeechSuperResult } from "@/lib/pronunciation/normalizeScore";
+import { bandForScore, pickEncouragement } from "@/lib/pronunciation/encouragement";
+import { abortPcmRecording, startPcmRecording, stopPcmRecording, type PcmRecorderHandle } from "@/lib/audio/recordPcm";
 
 type Mode = "word" | "sentence";
 type Result = Record<string, unknown>;
@@ -12,80 +14,6 @@ const STATUS_STYLES = {
   close: "border-orange-300 bg-orange-50",
   unavailable: "border-gray-200 bg-gray-50",
 };
-
-const FEEDBACK = {
-  strong: [
-    "正确！(Correct!) 🎉 Those tones landed beautifully.",
-    "好极了！(Amazing!) 华华 heard a really clear match there. 🦫",
-    "太棒了！(Great!) Your tone shapes sound very steady.",
-  ],
-  close: [
-    "很接近！(So close!) Try letting the tone move a little more clearly.",
-    "不错！(Nice work!) One tiny tone adjustment and you’ll have it. 🦫",
-    "继续！(Keep going!) The sound is there — give the tone a little more space.",
-  ],
-  rough: [
-    "没关系！(No worries!) Let’s try that one again, nice and slowly. 🦫",
-    "再来一次！(One more try!) Focus on the tone shape, not perfection.",
-    "慢慢来！(Take it easy!) Every recording is useful practice. 🎉",
-  ],
-};
-
-function pcmToWav(chunks: Float32Array[], sourceRate: number): Blob {
-  const targetRate = 16_000;
-  const inputLength = chunks.reduce((total, chunk) => total + chunk.length, 0);
-  if (inputLength === 0) throw new Error("No microphone audio was captured.");
-  const input = new Float32Array(inputLength);
-  let offset = 0;
-  chunks.forEach((chunk) => {
-    input.set(chunk, offset);
-    offset += chunk.length;
-  });
-  let peak = 0;
-  let squaredSum = 0;
-  for (let index = 0; index < input.length; index += 1) {
-    const sample = input[index];
-    peak = Math.max(peak, Math.abs(sample));
-    squaredSum += sample * sample;
-  }
-  const rms = Math.sqrt(squaredSum / inputLength);
-  if (rms < 0.001) {
-    throw new Error("The microphone signal was silent. Check the selected input device and try again.");
-  }
-  // SpeechSuper rejects quiet but otherwise valid WAV files. Normalize the
-  // captured PCM before encoding while preserving headroom to prevent clipping.
-  const gain = 0.85 / peak;
-  const outputLength = Math.ceil((inputLength * targetRate) / sourceRate);
-  const pcm = new Int16Array(outputLength);
-  for (let index = 0; index < outputLength; index += 1) {
-    const sourceIndex = Math.min(Math.floor((index * sourceRate) / targetRate), inputLength - 1);
-    const sample = Math.max(-1, Math.min(1, (input[sourceIndex] ?? 0) * gain));
-    pcm[index] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
-  }
-
-  const wav = new ArrayBuffer(44 + pcm.byteLength);
-  const view = new DataView(wav);
-    const write = (offset: number, value: string) => {
-      for (let index = 0; index < value.length; index += 1) {
-        view.setUint8(offset + index, value.charCodeAt(index));
-      }
-    };
-    write(0, "RIFF");
-    view.setUint32(4, 36 + pcm.byteLength, true);
-    write(8, "WAVE");
-    write(12, "fmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, 1, true);
-    view.setUint32(24, targetRate, true);
-    view.setUint32(28, targetRate * 2, true);
-    view.setUint16(32, 2, true);
-    view.setUint16(34, 16, true);
-    write(36, "data");
-    view.setUint32(40, pcm.byteLength, true);
-    new Int16Array(wav, 44).set(pcm);
-  return new Blob([wav], { type: "audio/wav" });
-}
 
 function toneGlyph(tone: number | null) {
   return tone === 1 ? "→" : tone === 2 ? "↗" : tone === 3 ? "∨" : tone === 4 ? "↘" : "—";
@@ -118,11 +46,7 @@ export default function ToneTestClient() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [showRaw, setShowRaw] = useState(false);
-  const stream = useRef<MediaStream | null>(null);
-  const audioContext = useRef<AudioContext | null>(null);
-  const source = useRef<MediaStreamAudioSourceNode | null>(null);
-  const processor = useRef<ScriptProcessorNode | null>(null);
-  const pcmChunks = useRef<Float32Array[]>([]);
+  const recorder = useRef<PcmRecorderHandle | null>(null);
   const maxSeconds = mode === "word" ? 20 : 90;
   const normalized = useMemo(
     () => (result ? normalizeSpeechSuperResult(result) : null),
@@ -146,8 +70,7 @@ export default function ToneTestClient() {
   }, [maxSeconds, recording, seconds]);
 
   useEffect(() => () => {
-    stream.current?.getTracks().forEach((track) => track.stop());
-    void audioContext.current?.close();
+    if (recorder.current) abortPcmRecording(recorder.current);
   }, []);
 
   const startRecording = async () => {
@@ -156,27 +79,7 @@ export default function ToneTestClient() {
     setAudio(null);
     setSeconds(0);
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          autoGainControl: true,
-          noiseSuppression: true,
-          echoCancellation: false,
-        },
-      });
-      stream.current = mediaStream;
-      const context = new AudioContext();
-      const mediaSource = context.createMediaStreamSource(mediaStream);
-      const scriptProcessor = context.createScriptProcessor(4096, 1, 1);
-      pcmChunks.current = [];
-      scriptProcessor.onaudioprocess = (event) => {
-        pcmChunks.current.push(new Float32Array(event.inputBuffer.getChannelData(0)));
-      };
-      mediaSource.connect(scriptProcessor);
-      scriptProcessor.connect(context.destination);
-      audioContext.current = context;
-      source.current = mediaSource;
-      processor.current = scriptProcessor;
-      await context.resume();
+      recorder.current = await startPcmRecording();
       setRecording(true);
     } catch (cause) {
       console.error("Unable to start recording:", cause);
@@ -185,24 +88,15 @@ export default function ToneTestClient() {
   };
 
   const stopRecording = () => {
-    const context = audioContext.current;
-    const mediaStream = stream.current;
-    processor.current?.disconnect();
-    source.current?.disconnect();
-    processor.current = null;
-    source.current = null;
-    if (context) {
+    if (recorder.current) {
       try {
-        setAudio(pcmToWav(pcmChunks.current, context.sampleRate));
+        setAudio(stopPcmRecording(recorder.current));
       } catch (cause) {
         console.error("Unable to prepare WAV recording:", cause);
         setError(cause instanceof Error ? cause.message : "Unable to prepare the recording.");
       }
-      void context.close();
+      recorder.current = null;
     }
-    audioContext.current = null;
-    mediaStream?.getTracks().forEach((track) => track.stop());
-    stream.current = null;
     setRecording(false);
   };
 
@@ -237,9 +131,9 @@ export default function ToneTestClient() {
     }
   };
 
-  const band = overallScore === null ? null : overallScore >= 80 ? "strong" : overallScore >= 60 ? "close" : "rough";
+  const band = bandForScore(overallScore);
   const feedback = band && result
-    ? FEEDBACK[band][JSON.stringify(result).length % FEEDBACK[band].length]
+    ? pickEncouragement(band, JSON.stringify(result).length)
     : null;
 
   return (
