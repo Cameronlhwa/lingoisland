@@ -2318,7 +2318,7 @@ export default function TopicIslandDetailPage() {
                                       <span className="font-medium">
                                         Smart Quiz Active:
                                       </span>{" "}
-                                      Prioritizing words you haven't seen
+                                      Prioritizing words you haven&apos;t seen
                                       recently (
                                       {words.length - recentlyQuizzedIds.size}{" "}
                                       fresh words available).{" "}
@@ -2587,7 +2587,7 @@ export default function TopicIslandDetailPage() {
                                       }
                                       className="flex-1 rounded-lg border-2 border-red-500 bg-white px-6 py-3 text-base font-medium text-red-700 transition-colors hover:bg-red-50"
                                     >
-                                      I didn't know it
+                                      I didn&apos;t know it
                                     </button>
                                     <button
                                       onClick={() => handleFlashcardGrade(true)}
@@ -2993,7 +2993,7 @@ export default function TopicIslandDetailPage() {
                     </p>
 
                     <p className="mb-4 text-gray-600 leading-relaxed">
-                      You just quizzed {quizWords.length} words — that's enough
+                      You just quizzed {quizWords.length} words — that&apos;s enough
                       to start improving 华华 the capybara&apos;s life.
                     </p>
 

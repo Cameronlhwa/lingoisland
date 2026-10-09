@@ -66,17 +66,17 @@ export default function FeatureFlagExample() {
         {/* Show different content based on variant */}
         {variant === 'test-a' && (
           <div className="mt-2 p-2 bg-blue-50 border-l-4 border-blue-500">
-            🔵 You're seeing Test Variant A
+            🔵 You&apos;re seeing Test Variant A
           </div>
         )}
         {variant === 'test-b' && (
           <div className="mt-2 p-2 bg-purple-50 border-l-4 border-purple-500">
-            🟣 You're seeing Test Variant B
+            🟣 You&apos;re seeing Test Variant B
           </div>
         )}
         {(!variant || variant === 'control') && (
           <div className="mt-2 p-2 bg-gray-50 border-l-4 border-gray-500">
-            ⚪️ You're seeing the Control group
+            ⚪️ You&apos;re seeing the Control group
           </div>
         )}
       </div>

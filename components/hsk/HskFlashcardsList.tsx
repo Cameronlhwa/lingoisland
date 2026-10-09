@@ -352,7 +352,7 @@ export default function HskFlashcardsListPage() {
                     >
                       <X className="h-3.5 w-3.5" aria-hidden />
                     </button>
-                    华华's island grows with every card you review <strong>today</strong> —
+                    华华&apos;s island grows with every card you review <strong>today</strong> —
                     10 reviews per stage, 5 stages total. It resets each day, so showing up
                     daily is what keeps it growing.
                   </div>

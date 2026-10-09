@@ -962,7 +962,7 @@ export default function AccountModal({
                   <div className="flex items-center gap-2">
                     <span className="text-3xl">✓</span>
                     <h2 className="text-2xl font-semibold text-gray-900">
-                      You're Pro!
+                      You&apos;re Pro!
                     </h2>
                   </div>
                   <p className="mt-2 text-sm text-gray-700">
@@ -1073,7 +1073,7 @@ export default function AccountModal({
                           <p className="mt-1.5 text-xs text-amber-700">
                             Your Pro access expires on{" "}
                             <span className="font-semibold">{renewalDate}</span>
-                            . After that, you'll be downgraded to Free.
+                            . After that, you&apos;ll be downgraded to Free.
                           </p>
                         </div>
                       ) : (

@@ -2,7 +2,7 @@
 
 import type { DictionaryEntry } from "cc-cedict";
 import cedict from "cc-cedict";
-import { Segment, useDefault, type SegmentToken } from "segmentit";
+import { Segment, useDefault as initializeSegment, type SegmentToken } from "segmentit";
 
 const ZH_RE = /[\u4e00-\u9fff\u3400-\u4dbf]/;
 const isChinese = (s: string) => ZH_RE.test(s);
@@ -176,7 +176,7 @@ let _mods: Mods | null = null;
 function getMods(): Mods {
   if (_mods) return _mods;
 
-  const segmenter = useDefault(new Segment());
+  const segmenter = initializeSegment(new Segment());
   segmenter.loadDict(_CUSTOM_DICT);
 
   _mods = {

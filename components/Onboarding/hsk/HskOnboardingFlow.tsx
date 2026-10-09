@@ -481,7 +481,7 @@ export default function HskOnboardingFlow() {
               }}
             >
               <span className="font-medium" style={{ color: NAVY }}>
-                No, I'm just learning casually
+                No, I&apos;m just learning casually
               </span>
             </button>
           </div>

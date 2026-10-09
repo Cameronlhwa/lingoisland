@@ -7,10 +7,8 @@ import { getIslandReadiness } from '@/lib/islands/readiness'
  * GET /api/topic-islands/[id]
  * Get island with words and sentences
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {
@@ -208,10 +206,8 @@ export async function GET(
  * PATCH /api/topic-islands/[id]
  * Update island properties (e.g., topic name)
  */
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {
@@ -264,10 +260,8 @@ export async function PATCH(
  * Delete an island and all associated words/sentences
  * CASCADE delete in database handles related records automatically
  */
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

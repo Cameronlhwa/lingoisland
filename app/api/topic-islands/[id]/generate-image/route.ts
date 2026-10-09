@@ -10,10 +10,8 @@ import { generateIslandImage } from '@/lib/nanobanana/generate-island-image'
  * All islands now use pre-generated library images (cover_key).
  * This route is kept for legacy support and manual generation if needed.
  */
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

@@ -5,10 +5,8 @@ import { NextResponse } from 'next/server'
  * GET /api/quiz-islands/[id]/cards
  * Get all cards for a quiz island
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {
@@ -91,10 +89,8 @@ export async function GET(
  * POST /api/quiz-islands/[id]/cards
  * Add a card to a quiz island
  */
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

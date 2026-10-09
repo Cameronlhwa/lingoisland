@@ -14,7 +14,8 @@ function isYesterday(dateStr: string, today: string) {
   return diffDays === 1;
 }
 
-export async function POST(_request: Request, { params }: { params: { id: string } }) {
+export async function POST(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const supabase = await createClient();
   const {
     data: { user },

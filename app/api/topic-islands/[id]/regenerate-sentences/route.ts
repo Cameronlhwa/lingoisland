@@ -16,10 +16,8 @@ interface Word {
  * Checks for words missing example sentences and regenerates them.
  * This is a safety net for when sentence generation fails during island creation.
  */
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const islandId = params.id
 
   const supabase = await createClient()
