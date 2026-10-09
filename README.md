@@ -60,12 +60,6 @@ npm run test:learn-level
 npm run build
 ```
 
-Development and production builds use Webpack to preserve the browser-specific
-`segmentit` alias in `next.config.js`. Tailwind's theme is defined in
-`app/globals.css` and compiled with `@tailwindcss/postcss`. React Compiler
-diagnostics are reported as lint warnings while compiler adoption is pending;
-Hooks correctness rules remain errors.
-
 ## Project Structure
 
 ```

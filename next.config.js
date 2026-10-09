@@ -1,6 +1,4 @@
 /** @type {import('next').NextConfig} */
-const path = require("path");
-
 const nextConfig = {
   images: {
     formats: ['image/webp'],
@@ -8,18 +6,10 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
   },
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        segmentit: path.resolve(
-          __dirname,
-          "node_modules/segmentit/dist/esm/segmentit.js",
-        ),
-      };
-      config.resolve.aliasFields = ["import", "module", "main"];
-    }
-    return config;
+  turbopack: {
+    resolveAlias: {
+      segmentit: { browser: 'segmentit/dist/esm/segmentit.js' },
+    },
   },
   async redirects() {
     return [
