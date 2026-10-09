@@ -4,9 +4,9 @@ Lingo Island is a Mandarin learning product for A2–B2 learners, focused on voc
 
 ## Tech Stack
 
-- Next.js 14 (App Router)
+- Next.js 16 (App Router), React 19
 - TypeScript
-- Tailwind CSS
+- Tailwind CSS 4
 - Supabase (Postgres + Auth)
 - Google OAuth
 
@@ -15,6 +15,8 @@ Lingo Island is a Mandarin learning product for A2–B2 learners, focused on voc
 Project guides and implementation notes are in [docs/](./docs/).
 
 ### 1. Install Dependencies
+
+Use Node.js 24, as specified in `package.json`.
 
 ```bash
 npm install
@@ -47,7 +49,22 @@ In your Supabase dashboard, go to SQL Editor and run the contents of `supabase/s
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+5. Open [http://localhost:3002](http://localhost:3002) in your browser.
+
+### Verify Changes
+
+```bash
+npm run typecheck
+npm run lint
+npm run test:learn-level
+npm run build
+```
+
+Development and production builds use Webpack to preserve the browser-specific
+`segmentit` alias in `next.config.js`. Tailwind's theme is defined in
+`app/globals.css` and compiled with `@tailwindcss/postcss`. React Compiler
+diagnostics are reported as lint warnings while compiler adoption is pending;
+Hooks correctness rules remain errors.
 
 ## Project Structure
 
