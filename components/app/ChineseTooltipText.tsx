@@ -145,7 +145,7 @@ export default function ChineseTooltipText({
               onMouseEnter={(e) => handleEnter(e, seg)}
               onMouseLeave={handleLeave}
               style={{ display: "inline" }}
-              className="cursor-help rounded transition-colors hover:bg-blue-50 hover:text-blue-800"
+              className="cursor-help rounded-sm transition-colors hover:bg-blue-50 hover:text-blue-800"
             >
               {convertText(seg.w)}
             </span>
@@ -188,7 +188,7 @@ export default function ChineseTooltipText({
 
                 {/* POS badge */}
                 {activePOS && (
-                  <span className="mb-1.5 inline-block rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
+                  <span className="mb-1.5 inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
                     {activePOS}
                   </span>
                 )}

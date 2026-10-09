@@ -6,10 +6,8 @@ import { denyWithoutProductAccess } from '@/lib/product-access'
  * GET /api/hsk/flashcard-decks/[id]
  * Get a single HSK flashcard deck with card count.
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {
@@ -61,10 +59,8 @@ export async function GET(
  * PATCH /api/hsk/flashcard-decks/[id]
  * Rename an HSK flashcard deck.
  */
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

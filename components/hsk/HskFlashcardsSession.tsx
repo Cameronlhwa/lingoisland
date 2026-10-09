@@ -164,7 +164,7 @@ export default function HskFlashcardsSession({
   if (cards.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-xs">
           <p className="mb-6 text-gray-600">No cards to review right now!</p>
           <button
             onClick={() => router.push(deckPath)}
@@ -202,7 +202,7 @@ export default function HskFlashcardsSession({
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-12 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-12 shadow-xs">
           <div className="mb-8 text-center">
             <div className="mb-4 flex items-center justify-center gap-3">
               <div className="text-4xl font-bold text-gray-900">

@@ -6,10 +6,8 @@ import { NextResponse } from 'next/server'
  * Get cards with their mastery level for progress view
  * Optional tier filter: easy, good, hard, relearning, new
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

@@ -5,10 +5,8 @@ import { NextResponse } from 'next/server'
  * PATCH /api/story/[id]
  * Update story properties (e.g., title)
  */
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

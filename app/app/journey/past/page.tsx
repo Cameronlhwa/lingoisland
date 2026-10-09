@@ -110,7 +110,7 @@ function JourneyTicket({ journey }: { journey: CompletedJourney }) {
       tabIndex={0}
       onClick={() => router.push(`/app/journey/${journey.id}`)}
       onKeyDown={(e) => e.key === "Enter" && router.push(`/app/journey/${journey.id}`)}
-      className="group relative flex cursor-pointer overflow-visible rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
+      className="group relative flex cursor-pointer overflow-visible rounded-2xl border border-gray-200 bg-white shadow-xs transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
     >
       <div
         className="w-1.5 shrink-0 rounded-l-2xl"
@@ -118,8 +118,8 @@ function JourneyTicket({ journey }: { journey: CompletedJourney }) {
       />
 
       <div className="relative flex min-w-0 flex-1 flex-col gap-1.5 overflow-hidden border-r-2 border-dashed border-gray-200 px-4 py-4 pl-[17px]">
-        <div className="absolute -right-[9px] -top-[9px] z-[2] h-[17px] w-[17px] rounded-full bg-white" />
-        <div className="absolute -bottom-[9px] -right-[9px] z-[2] h-[17px] w-[17px] rounded-full bg-white" />
+        <div className="absolute right-[-9px] top-[-9px] z-2 h-[17px] w-[17px] rounded-full bg-white" />
+        <div className="absolute bottom-[-9px] right-[-9px] z-2 h-[17px] w-[17px] rounded-full bg-white" />
 
         <div className="flex items-center gap-1">
           <MapPin size={11} style={{ color: accent }} />
@@ -290,7 +290,7 @@ export default function MyJourneysPage() {
             <button
               type="button"
               onClick={() => router.push("/app/journey")}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-600 shadow-xs transition-colors hover:bg-gray-50"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               {t("Back to Journey")}
@@ -298,7 +298,7 @@ export default function MyJourneysPage() {
             <button
               type="button"
               onClick={() => router.push("/app/journey/create")}
-              className="flex items-center justify-center gap-1.5 rounded-xl bg-[#1a2332] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#2d3a4d]"
+              className="flex items-center justify-center gap-1.5 rounded-xl bg-[#1a2332] px-5 py-3 text-sm font-bold text-white shadow-xs transition-colors hover:bg-[#2d3a4d]"
             >
               <Plus className="h-3.5 w-3.5" />
               {t("New Journey")}
@@ -317,7 +317,7 @@ export default function MyJourneysPage() {
               placeholder={t("Search journeys…")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-60 rounded-xl border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-teal-400 focus:outline-none"
+              className="w-60 rounded-xl border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-teal-400 focus:outline-hidden"
             />
           </div>
 

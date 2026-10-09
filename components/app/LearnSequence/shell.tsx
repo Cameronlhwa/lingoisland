@@ -35,7 +35,7 @@ export function LearnSequenceCard({
 
 export function LearnEyebrow({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
       {children}
     </p>
   );
@@ -52,8 +52,8 @@ export function HskAppChip({
     <span
       className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-bold ${
         active
-          ? "border-transparent bg-[var(--lingo-navy)] text-white"
-          : "border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] text-[var(--lingo-navy)]"
+          ? "border-transparent bg-(--lingo-navy) text-white"
+          : "border-(--lingo-accent-border) bg-(--lingo-sky-pale) text-(--lingo-navy)"
       }`}
     >
       {children}

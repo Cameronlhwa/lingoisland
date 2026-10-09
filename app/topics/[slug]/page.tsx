@@ -9,13 +9,14 @@ import {
 } from "@/data/topic-page-content";
 import { TopicPageCTAs } from "./TopicPageCTAs";
 
-type Props = { params: { slug: string } };
+type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
   return Array.from(PRIORITY_TOPIC_SLUGS).map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const slug = params.slug;
   const topicName = SLUG_TO_TOPIC.get(slug);
   const content = getTopicPageContent(slug);
@@ -46,7 +47,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function TopicSlugPage({ params }: Props) {
+export default async function TopicSlugPage(props: Props) {
+  const params = await props.params;
   const slug = params.slug;
   const topicName = SLUG_TO_TOPIC.get(slug);
   const content = getTopicPageContent(slug);

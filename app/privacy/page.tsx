@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
         <article className="mx-auto max-w-3xl px-6 py-12 md:px-12 md:py-16">
           <Link
             href="/"
-            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 rounded"
+            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 focus:outline-hidden focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 rounded-sm"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
             Back to home
           </Link>
 
-          <div className="rounded-2xl bg-white/90 px-6 py-8 shadow-md backdrop-blur-sm md:bg-white/85 md:px-10 md:py-10">
+          <div className="rounded-2xl bg-white/90 px-6 py-8 shadow-md backdrop-blur-xs md:bg-white/85 md:px-10 md:py-10">
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900 md:text-4xl">Privacy Policy</h1>
             <p className="mt-2 text-sm text-gray-500">Last Updated: {LAST_UPDATED}</p>
 

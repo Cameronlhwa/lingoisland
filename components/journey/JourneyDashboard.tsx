@@ -97,22 +97,22 @@ export function JourneyDashboard({
             <button
               type="button"
               onClick={backLink.onClick}
-              className="mb-2 text-xs font-semibold text-[var(--lingo-text-muted)] transition-colors hover:text-[var(--lingo-navy)]"
+              className="mb-2 text-xs font-semibold text-(--lingo-text-muted) transition-colors hover:text-(--lingo-navy)"
             >
               ← {backLink.label}
             </button>
           ) : null}
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-(--lingo-blue)">
             {eyebrow}
           </p>
-          <h1 className="lingo-display mt-1 max-w-xl text-[34px] font-bold leading-tight text-[var(--lingo-navy)] sm:text-[40px]">
+          <h1 className="lingo-display mt-1 max-w-xl text-[34px] font-bold leading-tight text-(--lingo-navy) sm:text-[40px]">
             {convertText(title)}
           </h1>
-          <p className="mt-2 text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-2 text-sm text-(--lingo-text-muted)">
             {completedPlannedWords} / {plannedWords} {t("planned words")}
           </p>
           {goal ? (
-            <p className="mt-1 max-w-xl text-sm text-[var(--lingo-text-muted)]">
+            <p className="mt-1 max-w-xl text-sm text-(--lingo-text-muted)">
               {t("Your goal:")} {convertText(goal)}
             </p>
           ) : null}
@@ -133,7 +133,7 @@ export function JourneyDashboard({
           <div className="flex min-w-0 flex-col justify-between">
             <div>
               <div className="mb-2.5 flex items-center justify-between gap-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-(--lingo-blue)">
                   {t("Your progress")}
                 </p>
                 {journeyComplete ? (
@@ -148,7 +148,7 @@ export function JourneyDashboard({
                   style={{ width: `${progressPct}%`, background: "var(--lingo-teal)" }}
                 />
               </div>
-              <p className="text-sm font-semibold text-[var(--lingo-navy)]">
+              <p className="text-sm font-semibold text-(--lingo-navy)">
                 {completedPlannedWords}/{plannedWords} {t("planned words")}
               </p>
             </div>
@@ -173,14 +173,14 @@ export function JourneyDashboard({
 
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">
+          <h2 className="lingo-display text-xl font-bold text-(--lingo-navy)">
             {t("Your Learning Roadmap")}
           </h2>
-          <p className="mt-1 max-w-xl text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-1 max-w-xl text-sm text-(--lingo-text-muted)">
             {t("Follow the path step by step. Complete each island to keep moving forward.")}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-[var(--lingo-text-muted)]">
+        <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-(--lingo-text-muted)">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--lingo-teal)" }} />
             {t("Completed")}
@@ -212,7 +212,7 @@ export function JourneyDashboard({
       </section>
 
       {toast ? (
-        <div className="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-[var(--lingo-navy)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg">
+        <div className="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-(--lingo-navy) px-4 py-2.5 text-sm font-semibold text-white shadow-lg">
           {toast}
         </div>
       ) : null}
@@ -243,9 +243,9 @@ function HeroStat({
         >
           {icon}
         </span>
-        <p className="text-xl font-black leading-none text-[var(--lingo-navy)]">{value}</p>
+        <p className="text-xl font-black leading-none text-(--lingo-navy)">{value}</p>
       </div>
-      <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--lingo-text-muted)]">
+      <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em] text-(--lingo-text-muted)">
         {label}
       </p>
     </div>
@@ -270,10 +270,10 @@ function CurrentCheckpointCard({
         className="rounded-[22px] bg-white p-5"
         style={{ border: "1px solid var(--lingo-border)", boxShadow: "var(--lingo-shadow-card)" }}
       >
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-(--lingo-blue)">
           {t("Journey completed")}
         </p>
-        <p className="mt-2 text-lg font-bold text-[var(--lingo-navy)]">
+        <p className="mt-2 text-lg font-bold text-(--lingo-navy)">
           {completed ? t("Journey completed") : t("Up next")}
         </p>
       </div>
@@ -298,11 +298,11 @@ function CurrentCheckpointCard({
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-orange-600">
         {currentTypeLabel(node, t)}
       </p>
-      <h3 className="mt-2 text-lg font-bold leading-tight text-[var(--lingo-navy)]">
+      <h3 className="mt-2 text-lg font-bold leading-tight text-(--lingo-navy)">
         {convertText(node.name)}
       </h3>
       {detail ? (
-        <p className="mt-2 text-sm leading-relaxed text-[var(--lingo-text-muted)]">{detail}</p>
+        <p className="mt-2 text-sm leading-relaxed text-(--lingo-text-muted)">{detail}</p>
       ) : null}
       <button
         type="button"

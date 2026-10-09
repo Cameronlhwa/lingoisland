@@ -228,7 +228,7 @@ export default function AddAllWordsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
       onClick={onClose}
     >
       <div
@@ -260,7 +260,7 @@ export default function AddAllWordsModal({
                 type="checkbox"
                 checked={allUnlockedSelected}
                 onChange={toggleAll}
-                className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-200"
+                className="h-4 w-4 rounded-sm border-gray-300 text-gray-900 focus:ring-gray-200"
               />
               Select all unlocked words ({unlockedWords.length})
             </label>
@@ -280,7 +280,7 @@ export default function AddAllWordsModal({
                   type="checkbox"
                   checked={selectedWords.has(word.id)}
                   onChange={() => toggleWord(word.id)}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-200"
+                  className="mt-1 h-4 w-4 rounded-sm border-gray-300 text-gray-900 focus:ring-gray-200"
                 />
                 <div className="flex-1">
                   <div className="text-base font-semibold text-gray-900">
@@ -309,7 +309,7 @@ export default function AddAllWordsModal({
                     <input
                       type="checkbox"
                       disabled
-                      className="mt-1 h-4 w-4 rounded border-gray-300 cursor-not-allowed"
+                      className="mt-1 h-4 w-4 rounded-sm border-gray-300 cursor-not-allowed"
                     />
                     <div className="flex-1">
                       <div className="text-base font-semibold text-gray-600">
@@ -341,7 +341,7 @@ export default function AddAllWordsModal({
                   value={newQuizIslandName}
                   onChange={(e) => setNewQuizIslandName(e.target.value)}
                   placeholder="e.g., Basic Vocabulary"
-                  className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                   autoFocus
                 />
               </div>
@@ -374,7 +374,7 @@ export default function AddAllWordsModal({
                 <select
                   value={selectedQuizIslandId}
                   onChange={(e) => setSelectedQuizIslandId(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                 >
                   {quizIslands.length === 0 ? (
                     <option value="">No quiz islands yet</option>

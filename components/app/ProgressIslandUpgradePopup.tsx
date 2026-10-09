@@ -70,7 +70,7 @@ export default function ProgressIslandUpgradePopup({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="progress-island-upgrade-title"
@@ -92,7 +92,7 @@ export default function ProgressIslandUpgradePopup({
         >
           {convertText(t("Stage"))} {stage} — {convertText(t("华华 upgraded the island!"))}
         </p>
-        <div className="relative mt-4 h-40 overflow-hidden rounded-xl bg-[var(--lingo-sky-pale)]">
+        <div className="relative mt-4 h-40 overflow-hidden rounded-xl bg-(--lingo-sky-pale)">
           <Image
             src={islandSrc}
             alt={`华华's upgraded Progress Island — Stage ${stage}`}
@@ -105,7 +105,7 @@ export default function ProgressIslandUpgradePopup({
           ref={buttonRef}
           type="button"
           onClick={onClose}
-          className="mt-4 w-full rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+          className="mt-4 w-full rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-hidden focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
         >
           {convertText(t("Keep practicing"))}
         </button>

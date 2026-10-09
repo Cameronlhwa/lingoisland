@@ -6,10 +6,8 @@ import { denyWithoutProductAccess } from '@/lib/product-access'
  * GET /api/hsk/flashcard-decks/[id]/cards
  * Get all cards for an HSK flashcard deck.
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {
@@ -78,10 +76,8 @@ export async function GET(
  * POST /api/hsk/flashcard-decks/[id]/cards
  * Add a card to an HSK flashcard deck.
  */
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

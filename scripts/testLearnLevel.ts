@@ -1,7 +1,7 @@
 import {
   isBeginnerLearnLevel,
   resolveLearnLevel,
-  useExerciseChatForIsland,
+  useExerciseChatForIsland as shouldUseExerciseChat,
 } from "../components/app/LearnSequence/levels";
 
 function assert(condition: boolean, message: string) {
@@ -26,15 +26,15 @@ assert(
   "B1 island + A1 profile → easier sentence tier",
 );
 assert(
-  !useExerciseChatForIsland("B1"),
+  !shouldUseExerciseChat("B1"),
   "B1 island uses typed chat regardless of profile",
 );
 assert(
-  useExerciseChatForIsland("A2"),
+  shouldUseExerciseChat("A2"),
   "A2 island uses exercise chat",
 );
 assert(
-  useExerciseChatForIsland("A0"),
+  shouldUseExerciseChat("A0"),
   "A0 island uses exercise chat",
 );
 

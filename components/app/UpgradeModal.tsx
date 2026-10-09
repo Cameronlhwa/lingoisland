@@ -260,7 +260,7 @@ export default function UpgradeModal({ open, onClose, feature }: UpgradeModalPro
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center bg-black/50 p-4 pt-8 backdrop-blur-sm md:items-center md:pt-4"
+      className="fixed inset-0 z-100 flex items-start justify-center bg-black/50 p-4 pt-8 backdrop-blur-xs md:items-center md:pt-4"
       onClick={onClose}
     >
       <div

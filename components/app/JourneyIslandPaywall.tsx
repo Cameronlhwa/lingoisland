@@ -94,7 +94,7 @@ export default function JourneyIslandPaywall({
           {/* Projection card */}
           <div className="mt-4 rounded-xl bg-white/5 px-4 py-3">
             <div className="flex items-start gap-2">
-              <Zap size={14} className="mt-0.5 flex-shrink-0 text-teal-400" />
+              <Zap size={14} className="mt-0.5 shrink-0 text-teal-400" />
               <p className="text-sm leading-snug text-gray-200">
                 At your pace, you&apos;ll know{" "}
                 <strong className="text-white">all {totalWords} words</strong>{" "}
@@ -118,7 +118,7 @@ export default function JourneyIslandPaywall({
                   key={`story-${item.order}`}
                   className="flex items-center gap-2.5 rounded-lg bg-amber-500/10 px-3 py-2"
                 >
-                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-amber-500/30">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-500/30">
                     <BookOpen size={11} className="text-amber-400" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -129,7 +129,7 @@ export default function JourneyIslandPaywall({
                       <p className="text-[10px] text-amber-400">{item.hint}</p>
                     )}
                   </div>
-                  <span className="flex-shrink-0 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-400">
+                  <span className="shrink-0 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-400">
                     Story
                   </span>
                 </li>
@@ -138,7 +138,7 @@ export default function JourneyIslandPaywall({
                   key={`island-${item.order}`}
                   className="flex items-center gap-2.5 rounded-lg bg-white/5 px-3 py-2"
                 >
-                  <Lock size={12} className="flex-shrink-0 text-gray-500" />
+                  <Lock size={12} className="shrink-0 text-gray-500" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-gray-300">
                       {item.name}
@@ -165,7 +165,7 @@ export default function JourneyIslandPaywall({
           <ul className="mt-5 space-y-3.5">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <li key={title} className="flex items-start gap-3">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gray-900">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-900">
                   <Icon size={14} className="text-white" />
                 </div>
                 <div>

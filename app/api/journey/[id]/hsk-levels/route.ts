@@ -10,10 +10,8 @@ export const runtime = "nodejs";
  * words they teach — until that exists this just returns an empty map,
  * which is a safe no-op for the map UI.
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } },
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient();
     const {

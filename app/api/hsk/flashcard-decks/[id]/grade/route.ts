@@ -9,10 +9,8 @@ import { denyWithoutProductAccess } from '@/lib/product-access'
  * (generic SRS infrastructure) but keeps its own ownership check and
  * response shaping independent of /api/quiz-islands/[id]/grade.
  */
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

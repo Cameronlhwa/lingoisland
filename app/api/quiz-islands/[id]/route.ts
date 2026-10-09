@@ -5,10 +5,8 @@ import { NextResponse } from 'next/server'
  * GET /api/quiz-islands/[id]
  * Get a single quiz island with card count
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {
@@ -65,10 +63,8 @@ export async function GET(
  * PATCH /api/quiz-islands/[id]
  * Update quiz island properties (e.g., name)
  */
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

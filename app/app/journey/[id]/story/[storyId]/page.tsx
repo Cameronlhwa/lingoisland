@@ -1,15 +1,14 @@
 import { redirect } from "next/navigation";
 
-export default async function JourneyStoryPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string; storyId: string }>;
-  searchParams?: Promise<{ journeyNodeId?: string }>;
-}) {
-  const { id, storyId } = await params;
-  const resolvedSearch = searchParams ? await searchParams : undefined;
-  const journeyNodeId = resolvedSearch?.journeyNodeId;
+export default async function JourneyStoryPage(
+  props: {
+    params: Promise<{ id: string; storyId: string }>;
+    searchParams?: Promise<{ journeyNodeId?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const { id, storyId } = await props.params;
+  const journeyNodeId = searchParams?.journeyNodeId;
   const query = new URLSearchParams({ journeyId: id });
   if (journeyNodeId) {
     query.set("journeyNodeId", journeyNodeId);

@@ -62,10 +62,10 @@ function Chip({
 }) {
   const className =
     tone === "solid"
-      ? "bg-[var(--lingo-navy)] text-white border-transparent"
+      ? "bg-(--lingo-navy) text-white border-transparent"
       : tone === "accent"
-        ? "bg-[var(--lingo-sky-pale)] text-[var(--lingo-navy)] border-[var(--lingo-accent-border)]"
-        : "bg-white text-[var(--lingo-navy)] border-[var(--lingo-accent-border)]";
+        ? "bg-(--lingo-sky-pale) text-(--lingo-navy) border-(--lingo-accent-border)"
+        : "bg-white text-(--lingo-navy) border-(--lingo-accent-border)";
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${className}`}
@@ -103,7 +103,7 @@ function DashCardShell({
 
 function CardArt({ src, alt }: { src: string; alt: string }) {
   return (
-    <div className="relative h-[200px] overflow-hidden bg-[var(--lingo-sky-pale)] sm:h-[220px]">
+    <div className="relative h-[200px] overflow-hidden bg-(--lingo-sky-pale) sm:h-[220px]">
       <Image
         src={src}
         alt={alt}
@@ -145,7 +145,7 @@ function CapybaraCard({
 
   return (
     <DashCardShell id="progress-island-card">
-      <div className="flex h-[200px] items-center justify-center bg-[var(--lingo-sky-pale)] px-2 sm:h-[220px]">
+      <div className="flex h-[200px] items-center justify-center bg-(--lingo-sky-pale) px-2 sm:h-[220px]">
         {ready ? (
           <div className="island-bobble relative h-full w-full">
             <Image
@@ -161,21 +161,21 @@ function CapybaraCard({
         )}
       </div>
       <div className="flex flex-1 flex-col p-5 sm:p-6">
-        <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--lingo-sky-pale)] text-[var(--lingo-blue)]">
+        <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-(--lingo-sky-pale) text-(--lingo-blue)">
           <Layers className="h-5 w-5" aria-hidden />
         </span>
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
           华华&apos;s Island
         </p>
         {!ready ? (
           <div className="mt-3 flex flex-1 flex-col">
-            <div className="h-6 w-40 animate-pulse rounded bg-[var(--lingo-sky-pale)]" />
-            <div className="mt-3 h-1.5 w-full animate-pulse rounded-full bg-[var(--lingo-sky-pale)]" />
+            <div className="h-6 w-40 animate-pulse rounded-sm bg-(--lingo-sky-pale)" />
+            <div className="mt-3 h-1.5 w-full animate-pulse rounded-full bg-(--lingo-sky-pale)" />
             {status === "error" && (
               <button
                 type="button"
                 onClick={onRetry}
-                className="mt-4 text-left text-sm font-bold text-[var(--lingo-blue)]"
+                className="mt-4 text-left text-sm font-bold text-(--lingo-blue)"
               >
                 Retry
               </button>
@@ -183,23 +183,23 @@ function CapybaraCard({
           </div>
         ) : (
           <>
-        <h3 className="lingo-display mt-1.5 text-lg text-[var(--lingo-navy)]">
+        <h3 className="lingo-display mt-1.5 text-lg text-(--lingo-navy)">
           Stage {safeStage} · {stageName}
         </h3>
-        <p className="mt-1.5 text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+        <p className="mt-1.5 text-sm leading-relaxed text-(--lingo-text-muted)">
           {isComplete
             ? "Island complete — keep reviewing to stay sharp."
             : `Currently: ${stageEmoji} ${stageName}`}
         </p>
         <div className="mt-4">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--lingo-sky-pale)]">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-(--lingo-sky-pale)">
             <div
-              className="h-full rounded-full bg-[var(--lingo-navy)] transition-all duration-500"
+              className="h-full rounded-full bg-(--lingo-navy) transition-all duration-500"
               style={{ width: `${stageProgress}%` }}
             />
           </div>
           {!isComplete && (
-            <p className="mt-2 text-xs text-[var(--lingo-text-muted)]">
+            <p className="mt-2 text-xs text-(--lingo-text-muted)">
               {reviewsUntilNext} more card{reviewsUntilNext !== 1 ? "s" : ""} to
               Stage {safeStage + 1}
             </p>
@@ -207,7 +207,7 @@ function CapybaraCard({
         </div>
         <Link
           href="/app/quiz"
-          className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]"
+          className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-bold text-(--lingo-blue) transition-colors group-hover:text-(--lingo-navy)"
         >
           Review cards <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
@@ -235,16 +235,16 @@ function HomeDailyStoryCard({
       <DashCardShell>
         <CardArt src="/home/capybara-reading-island.png" alt="" />
         <div className="flex flex-1 flex-col p-5 sm:p-6">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
             {convertText(t("Daily Story"))}
           </p>
-          <div className="mt-3 h-6 w-48 animate-pulse rounded bg-[var(--lingo-sky-pale)]" />
-          <div className="mt-3 h-12 w-full animate-pulse rounded bg-[var(--lingo-sky-pale)]" />
+          <div className="mt-3 h-6 w-48 animate-pulse rounded-sm bg-(--lingo-sky-pale)" />
+          <div className="mt-3 h-12 w-full animate-pulse rounded-sm bg-(--lingo-sky-pale)" />
           {status === "error" && (
             <button
               type="button"
               onClick={onRetry}
-              className="mt-4 text-left text-sm font-bold text-[var(--lingo-blue)]"
+              className="mt-4 text-left text-sm font-bold text-(--lingo-blue)"
             >
               Retry
             </button>
@@ -263,20 +263,20 @@ function HomeDailyStoryCard({
             alt="华华 reading on a floating island"
           />
           <div className="flex flex-1 flex-col p-5 sm:p-6">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
               {convertText(t("Daily Story"))}
             </p>
-            <h3 className="lingo-display mt-1.5 text-lg text-[var(--lingo-navy)]">
+            <h3 className="lingo-display mt-1.5 text-lg text-(--lingo-navy)">
               {convertText(t("Click me to read your daily story!"))}
             </h3>
-            <p className="mt-1.5 flex-1 text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+            <p className="mt-1.5 flex-1 text-sm leading-relaxed text-(--lingo-text-muted)">
               {convertText(
                 t(
                   "Today's story weaves in words you've recently learned so you can recall them in a short reading."
                 )
               )}
             </p>
-            <span className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]">
+            <span className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-bold text-(--lingo-blue) transition-colors group-hover:text-(--lingo-navy)">
               {convertText(t("Read story"))}{" "}
               <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </span>
@@ -306,34 +306,34 @@ function HomeDailyStoryCard({
       />
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
             {convertText(t("Daily Story · Today"))}
           </p>
           {level && (
-            <span className="rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--lingo-navy)]">
+            <span className="rounded-full border border-(--lingo-accent-border) bg-(--lingo-sky-pale) px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-(--lingo-navy)">
               {hskLabelForCefr(level)}
             </span>
           )}
-          <span className="rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-2 py-0.5 text-[10px] font-semibold text-[var(--lingo-text-muted)]">
+          <span className="rounded-full border border-(--lingo-accent-border) bg-(--lingo-sky-pale) px-2 py-0.5 text-[10px] font-semibold text-(--lingo-text-muted)">
             ~{readMins} min
           </span>
         </div>
-        <h3 className="lingo-display line-clamp-2 text-lg text-[var(--lingo-navy)]">
+        <h3 className="lingo-display line-clamp-2 text-lg text-(--lingo-navy)">
           {title ?? "今日故事"}
         </h3>
         {titleEn && (
-          <p className="mt-1 line-clamp-1 text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-1 line-clamp-1 text-sm text-(--lingo-text-muted)">
             {titleEn}
           </p>
         )}
         {excerpt && (
-          <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+          <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-(--lingo-text-muted)">
             {excerpt}
           </p>
         )}
         <Link
           href={storyId ? `/app/story/${storyId}` : "/app/story/daily"}
-          className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]"
+          className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-bold text-(--lingo-blue) transition-colors group-hover:text-(--lingo-navy)"
         >
           {convertText(t("Read story"))}{" "}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -351,25 +351,25 @@ function CreateIslandDashCard() {
         alt="华华 exploring a new floating island"
       />
       <div className="flex flex-1 flex-col p-5 sm:p-6">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
           Topic Islands
         </p>
-        <h3 className="lingo-display mt-1.5 text-lg text-[var(--lingo-navy)]">
+        <h3 className="lingo-display mt-1.5 text-lg text-(--lingo-navy)">
           Create a specialized island
         </h3>
-        <p className="mt-1.5 flex-1 text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+        <p className="mt-1.5 flex-1 text-sm leading-relaxed text-(--lingo-text-muted)">
           Pick any topic and get vocab + examples tailored to your level.
         </p>
         <div className="mt-auto flex flex-col gap-2 pt-5">
           <Link
             href="/app/topic-islands?create=1"
-            className="inline-flex items-center gap-1 text-sm font-bold text-[var(--lingo-blue)] transition-colors hover:text-[var(--lingo-navy)]"
+            className="inline-flex items-center gap-1 text-sm font-bold text-(--lingo-blue) transition-colors hover:text-(--lingo-navy)"
           >
             Create island <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
           <Link
             href="/app/browse-topics"
-            className="text-sm font-semibold text-[var(--lingo-text-muted)] transition-colors hover:text-[var(--lingo-navy)]"
+            className="text-sm font-semibold text-(--lingo-text-muted) transition-colors hover:text-(--lingo-navy)"
           >
             Browse topics →
           </Link>
@@ -383,7 +383,7 @@ function CreateIslandDashCard() {
 
 function ChipSkeleton() {
   return (
-    <span className="inline-flex h-[30px] w-28 animate-pulse rounded-full bg-[var(--lingo-sky-pale)]" />
+    <span className="inline-flex h-[30px] w-28 animate-pulse rounded-full bg-(--lingo-sky-pale)" />
   );
 }
 
@@ -392,7 +392,7 @@ function RetryChip({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center rounded-full border border-[var(--lingo-accent-border)] bg-white px-3 py-1.5 text-xs font-bold text-[var(--lingo-blue)]"
+      className="inline-flex items-center rounded-full border border-(--lingo-accent-border) bg-white px-3 py-1.5 text-xs font-bold text-(--lingo-blue)"
     >
       Retry
     </button>
@@ -556,17 +556,17 @@ export default function HomeDashboard({
       <div className="mx-auto max-w-6xl">
         <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="lingo-display text-[30px] leading-tight text-[var(--lingo-navy)] sm:text-[34px]">
+            <h1 className="lingo-display text-[30px] leading-tight text-(--lingo-navy) sm:text-[34px]">
               {timeGreeting}, {dashboard.firstName}
             </h1>
             {huahuaReady ? (
-              <p className="mt-1.5 text-[15px] text-[var(--lingo-text-muted)]">
+              <p className="mt-1.5 text-[15px] text-(--lingo-text-muted)">
                 {reviewsUntilNext > 0
                   ? `${reviewsUntilNext} more card${reviewsUntilNext !== 1 ? "s" : ""} and 华华 hits Stage ${safeStage + 1}.`
                   : "华华's island is thriving — keep it up."}
               </p>
             ) : dashboard.huahuaStatus === "error" ? null : (
-              <div className="mt-2 h-5 w-72 max-w-full animate-pulse rounded bg-[var(--lingo-sky-pale)]" />
+              <div className="mt-2 h-5 w-72 max-w-full animate-pulse rounded-sm bg-(--lingo-sky-pale)" />
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2 pb-1">

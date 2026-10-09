@@ -63,10 +63,8 @@ function interleaveByWord(queue: QueueCard[]): QueueCard[] {
  * GET /api/quiz-islands/[id]/queue
  * Get cards for review (due cards + new cards)
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

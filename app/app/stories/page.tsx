@@ -49,19 +49,19 @@ export default async function StoriesPage() {
     <div className="mx-auto max-w-[1200px] px-4 py-8 md:px-6">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-(--lingo-blue)">
             <T k="Stories" />
           </p>
-          <h1 className="lingo-display mt-1 max-w-xl text-[34px] font-bold leading-tight text-[var(--lingo-navy)] sm:text-[40px]">
+          <h1 className="lingo-display mt-1 max-w-xl text-[34px] font-bold leading-tight text-(--lingo-navy) sm:text-[40px]">
             <T k="Stories" />
           </h1>
-          <p className="mt-2 max-w-lg text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+          <p className="mt-2 max-w-lg text-sm leading-relaxed text-(--lingo-text-muted)">
             <T k="Real stories. Real progress. A more confident you." />
           </p>
         </div>
         <Link
           href="/app/stories/new"
-          className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-[var(--lingo-navy)] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[var(--lingo-navy-soft)]"
+          className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-(--lingo-navy) px-5 py-3 text-sm font-bold text-white shadow-xs transition-colors hover:bg-(--lingo-navy-soft)"
         >
           <span aria-hidden>+</span>
           <T k="Create New Story" />
@@ -73,7 +73,7 @@ export default async function StoriesPage() {
       </div>
 
       <section>
-        <h2 className="lingo-display mb-3.5 text-xl font-bold text-[var(--lingo-navy)]">
+        <h2 className="lingo-display mb-3.5 text-xl font-bold text-(--lingo-navy)">
           <T k="All stories" />
         </h2>
         <StoriesList stories={stories} />

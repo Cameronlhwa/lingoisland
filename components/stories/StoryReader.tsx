@@ -371,7 +371,7 @@ export default function StoryReader({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+            <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-xs">
               <div className="mb-6">
                 <div className="mb-3 flex items-center gap-3 text-sm text-gray-600">
                   <span className="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
@@ -393,7 +393,7 @@ export default function StoryReader({
                           handleCancelEditTitle();
                         }
                       }}
-                      className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-3xl font-bold text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-3xl font-bold text-gray-900 focus:border-gray-500 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                       autoFocus
                       disabled={savingTitle}
                     />
@@ -590,7 +590,7 @@ export default function StoryReader({
                   {targetWords.map((word) => (
                     <div
                       key={word.id}
-                      className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4"
+                      className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-xs sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -619,7 +619,7 @@ export default function StoryReader({
                               english: word.english,
                             })
                           }
-                          className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+                          className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs transition-all hover:border-gray-300 hover:shadow-md"
                           title="Ask 华华 about this word"
                         >
                           <img 
@@ -632,7 +632,7 @@ export default function StoryReader({
                         <button
                           onClick={() => handleAddToQuizClick(word.id)}
                           disabled={addedItems.has(`word-${word.id}`)}
-                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
+                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500"
                         >
                           {convertText(
                             t(addedItems.has(`word-${word.id}`) ? "✓ In quiz" : "Add to quiz"),
@@ -646,7 +646,7 @@ export default function StoryReader({
             </div>
 
             {showAddToQuizModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
                 <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
                   <h3 className="mb-2 text-xl font-semibold text-gray-900">
                     {convertText(t("Add to Quiz"))}
@@ -666,7 +666,7 @@ export default function StoryReader({
                           value={newQuizIslandName}
                           onChange={(e) => setNewQuizIslandName(e.target.value)}
                           placeholder={convertText(t("e.g., Basic Vocabulary"))}
-                          className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                          className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                           autoFocus
                         />
                         <p className="mt-1 text-xs text-gray-500">
@@ -706,7 +706,7 @@ export default function StoryReader({
                           onChange={(e) =>
                             setSelectedQuizIslandId(e.target.value)
                           }
-                          className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                          className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                         >
                           {quizIslands.length === 0 ? (
                             <option value="">{convertText(t("No quiz islands yet"))}</option>

@@ -30,7 +30,7 @@ export function TopicPageCTAs({
   };
 
   return (
-    <div className="rounded-xl border-2 border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-xl border-2 border-gray-200 bg-white p-6 shadow-xs">
       <p className="mb-4 text-gray-700">
         Ready to learn this vocabulary with level-tuned sentences and a daily
         review loop? Start your Topic Island and we&apos;ll generate words and

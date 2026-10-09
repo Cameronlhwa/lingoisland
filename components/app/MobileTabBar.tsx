@@ -42,7 +42,7 @@ export default function MobileTabBar({
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-[48] border-t border-gray-200 bg-white md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-48 border-t border-gray-200 bg-white md:hidden"
       style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
       aria-label="Main navigation"
     >

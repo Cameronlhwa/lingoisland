@@ -142,23 +142,23 @@ export default function ToneTestClient() {
     >
       <div className="mx-auto max-w-3xl">
         <header className="mb-8 sm:mb-10">
-          <p className="mb-3 inline-flex rounded-full border border-[#2176AE]/15 bg-white/75 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#2176AE] shadow-sm">
+          <p className="mb-3 inline-flex rounded-full border border-[#2176AE]/15 bg-white/75 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#2176AE] shadow-xs">
             LingoIsland Lab · Internal tools
           </p>
-          <h1 className="lingo-display text-3xl text-[var(--lingo-navy)] sm:text-[40px]">
+          <h1 className="lingo-display text-3xl text-(--lingo-navy) sm:text-[40px]">
             Tone & pronunciation test
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--lingo-text-muted)] sm:text-base">
+          <p className="mt-2 text-sm leading-relaxed text-(--lingo-text-muted) sm:text-base">
             Practice Mandarin pronunciation with LingoIsland.
           </p>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-(--lingo-text-muted)">
             Write a word or sentence in Chinese characters, then record and submit.
             You&apos;ll see overall pronunciation, tone, fluency, and per-character scores after
             LingoIsland finishes analyzing your audio.
           </p>
         </header>
 
-      <div className="mb-6 inline-flex rounded-2xl border border-[var(--lingo-accent-border)] bg-white/70 p-1.5 shadow-sm">
+      <div className="mb-6 inline-flex rounded-2xl border border-(--lingo-accent-border) bg-white/70 p-1.5 shadow-xs">
         {(["word", "sentence"] as const).map((option) => (
           <button
             key={option}
@@ -167,8 +167,8 @@ export default function ToneTestClient() {
             onClick={() => { setMode(option); setAudio(null); setResult(null); }}
             className={`rounded-xl px-5 py-2.5 text-sm font-bold transition ${
               mode === option
-                ? "bg-[var(--lingo-navy)] text-white shadow-sm"
-                : "text-[var(--lingo-text-muted)] hover:bg-white hover:text-[var(--lingo-navy)]"
+                ? "bg-(--lingo-navy) text-white shadow-xs"
+                : "text-(--lingo-text-muted) hover:bg-white hover:text-(--lingo-navy)"
             }`}
           >
             {option === "word" ? "Word" : "Sentence"}
@@ -181,27 +181,27 @@ export default function ToneTestClient() {
         style={{ borderColor: "var(--lingo-accent-border)", boxShadow: "var(--lingo-shadow-card)" }}
       >
         <div className="mb-5 flex items-center gap-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--lingo-accent-tint)] text-sm font-bold text-[var(--lingo-blue)]">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-(--lingo-accent-tint) text-sm font-bold text-(--lingo-blue)">
             1
           </span>
           <div>
-            <p className="text-sm font-bold text-[var(--lingo-navy)]">Set your reference</p>
-            <p className="text-xs text-[var(--lingo-text-muted)]">Use Simplified or Traditional Hanzi.</p>
+            <p className="text-sm font-bold text-(--lingo-navy)">Set your reference</p>
+            <p className="text-xs text-(--lingo-text-muted)">Use Simplified or Traditional Hanzi.</p>
           </div>
         </div>
-        <label htmlFor="reference-text" className="mb-2 block text-sm font-semibold text-[var(--lingo-text)]">
+        <label htmlFor="reference-text" className="mb-2 block text-sm font-semibold text-(--lingo-text)">
           {mode === "word" ? "Reference Hanzi" : "Reference sentence (Hanzi)"}
         </label>
         {referenceText && (
           <div
             aria-label="Pinyin guide"
-            className="mb-2 flex min-h-8 flex-wrap items-end gap-x-1 rounded-xl bg-[var(--lingo-sky-pale)] px-4 py-1.5 text-center"
+            className="mb-2 flex min-h-8 flex-wrap items-end gap-x-1 rounded-xl bg-(--lingo-sky-pale) px-4 py-1.5 text-center"
           >
             {referenceCharacters.map(({ hanzi, pinyin: pronunciation }, index) => (
-              <ruby key={`${hanzi}-${index}`} className="text-lg leading-tight text-[var(--lingo-navy)]">
+              <ruby key={`${hanzi}-${index}`} className="text-lg leading-tight text-(--lingo-navy)">
                 {hanzi}
                 {pronunciation && (
-                  <rt className="pb-0.5 text-[10px] font-semibold text-[var(--lingo-blue)]">
+                  <rt className="pb-0.5 text-[10px] font-semibold text-(--lingo-blue)">
                     {pronunciation}
                   </rt>
                 )}
@@ -215,16 +215,16 @@ export default function ToneTestClient() {
           onChange={(event) => setReferenceText(event.target.value)}
           disabled={recording || submitting}
           placeholder={mode === "word" ? "例如：你好" : "例如：今天天气很好。"}
-          className="w-full rounded-2xl border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-4 py-3 text-lg text-[var(--lingo-navy)] placeholder:text-[var(--lingo-text-muted)] focus:border-[var(--lingo-blue)] focus:outline-none disabled:bg-gray-50"
+          className="w-full rounded-2xl border border-(--lingo-accent-border) bg-(--lingo-sky-pale) px-4 py-3 text-lg text-(--lingo-navy) placeholder:text-(--lingo-text-muted) focus:border-(--lingo-blue) focus:outline-hidden disabled:bg-gray-50"
         />
-        <div className="mt-7 border-t border-[var(--lingo-accent-border)] pt-5">
+        <div className="mt-7 border-t border-(--lingo-accent-border) pt-5">
           <div className="mb-3 flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--lingo-accent-tint)] text-sm font-bold text-[var(--lingo-blue)]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-(--lingo-accent-tint) text-sm font-bold text-(--lingo-blue)">
               2
             </span>
             <div>
-              <p className="text-sm font-bold text-[var(--lingo-navy)]">Record your voice</p>
-              <p className="text-xs text-[var(--lingo-text-muted)]">
+              <p className="text-sm font-bold text-(--lingo-navy)">Record your voice</p>
+              <p className="text-xs text-(--lingo-text-muted)">
                 Speak clearly at a normal volume, then stop when you&apos;re done. You can re-record
                 before sending. Up to {maxSeconds} seconds.
               </p>
@@ -232,16 +232,16 @@ export default function ToneTestClient() {
           </div>
         <div className="flex flex-wrap items-center gap-3">
           {recording ? (
-            <button type="button" onClick={stopRecording} className="rounded-2xl bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-red-700">
+            <button type="button" onClick={stopRecording} className="rounded-2xl bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-xs transition hover:bg-red-700">
               Stop recording
             </button>
           ) : (
-            <button type="button" onClick={startRecording} disabled={submitting} className="rounded-2xl bg-[var(--lingo-navy)] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 disabled:opacity-60">
+            <button type="button" onClick={startRecording} disabled={submitting} className="rounded-2xl bg-(--lingo-navy) px-5 py-3 text-sm font-bold text-white shadow-xs transition hover:-translate-y-0.5 disabled:opacity-60">
               {audio ? "Record again" : "Start recording"}
             </button>
           )}
           {recording && <span className="flex items-center gap-2 text-sm font-semibold text-red-700"><span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />Recording {seconds}s / {maxSeconds}s</span>}
-          {!recording && audio && <span className="text-sm font-medium text-[var(--lingo-text-muted)]">Recording ready ({seconds}s).</span>}
+          {!recording && audio && <span className="text-sm font-medium text-(--lingo-text-muted)">Recording ready ({seconds}s).</span>}
         </div>
         {audio && !recording && (
           <div className="mt-5">
@@ -249,12 +249,12 @@ export default function ToneTestClient() {
               type="button"
               onClick={submit}
               disabled={submitting}
-              className="rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 disabled:opacity-60"
+              className="rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-xs transition hover:-translate-y-0.5 disabled:opacity-60"
               style={{ background: "var(--lingo-accent-gradient)" }}
             >
               {submitting ? "Scoring…" : "Submit for scoring"}
             </button>
-            <p className="mt-2 text-xs text-[var(--lingo-text-muted)]">
+            <p className="mt-2 text-xs text-(--lingo-text-muted)">
               We&apos;ll send the WAV recording securely for scoring and show the detailed result here.
             </p>
           </div>
@@ -264,17 +264,17 @@ export default function ToneTestClient() {
       </section>
 
       {result && (
-        <section className="mt-6 rounded-[28px] border border-[var(--lingo-accent-border)] bg-white p-5 shadow-sm sm:p-7">
+        <section className="mt-6 rounded-[28px] border border-(--lingo-accent-border) bg-white p-5 shadow-xs sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">LingoIsland feedback</p>
-              <h2 className="lingo-display mt-1 text-2xl text-[var(--lingo-navy)]">Results</h2>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">LingoIsland feedback</p>
+              <h2 className="lingo-display mt-1 text-2xl text-(--lingo-navy)">Results</h2>
             </div>
             <span className={`rounded-full border px-3 py-1 text-sm font-bold ${statusForScore(overallScore)}`}>
               Overall: {overallScore === null ? "No score" : Math.round(overallScore)}
             </span>
           </div>
-          {feedback && <p className="mt-4 rounded-2xl bg-[var(--lingo-sky-pale)] px-4 py-3 text-sm font-medium text-[var(--lingo-text)]">{feedback}</p>}
+          {feedback && <p className="mt-4 rounded-2xl bg-(--lingo-sky-pale) px-4 py-3 text-sm font-medium text-(--lingo-text)">{feedback}</p>}
           {normalized && (
             <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {(
@@ -287,8 +287,8 @@ export default function ToneTestClient() {
               ).map(([label, score]) => {
                 return (
                   <div key={String(label)} className={`rounded-2xl border p-3 ${statusForScore(score)}`}>
-                    <p className="text-xs font-semibold text-[var(--lingo-text-muted)]">{String(label)}</p>
-                    <p className="lingo-display mt-1 text-xl text-[var(--lingo-navy)]">
+                    <p className="text-xs font-semibold text-(--lingo-text-muted)">{String(label)}</p>
+                    <p className="lingo-display mt-1 text-xl text-(--lingo-navy)">
                       {score === null ? "—" : Math.round(score)}
                     </p>
                   </div>
@@ -302,17 +302,17 @@ export default function ToneTestClient() {
                 <div key={`${character.hanzi}-${index}`} className={`rounded-2xl border p-4 ${statusForScore(character.score)}`}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-baseline gap-2">
-                      <span className="lingo-display text-2xl text-[var(--lingo-navy)]">{character.hanzi}</span>
-                      {character.pinyin && <span className="text-sm text-[var(--lingo-text-muted)]">{character.pinyin}</span>}
+                      <span className="lingo-display text-2xl text-(--lingo-navy)">{character.hanzi}</span>
+                      {character.pinyin && <span className="text-sm text-(--lingo-text-muted)">{character.pinyin}</span>}
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm text-[var(--lingo-text)]">
+                      <span className="text-sm text-(--lingo-text)">
                         target tone {toneGlyph(character.targetTone)} {character.targetTone ?? "—"}
                         {character.sandhiApplied && character.citationTone != null
                           ? ` (sandhi from ${character.citationTone})`
                           : ""}
                       </span>
-                      <span className="text-sm font-bold text-[var(--lingo-navy)]">tone {character.score === null ? "—" : Math.round(character.score)}</span>
+                      <span className="text-sm font-bold text-(--lingo-navy)">tone {character.score === null ? "—" : Math.round(character.score)}</span>
                     </div>
                   </div>
                   {character.phonemes.length > 0 && (
@@ -331,7 +331,7 @@ export default function ToneTestClient() {
               ))}
             </div>
           ) : <p className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">No per-character tone data was detected. Inspect the raw response below.</p>}
-          <button type="button" onClick={() => setShowRaw((value) => !value)} className="mt-5 text-sm font-bold text-[var(--lingo-blue)] hover:text-[var(--lingo-navy)]">
+          <button type="button" onClick={() => setShowRaw((value) => !value)} className="mt-5 text-sm font-bold text-(--lingo-blue) hover:text-(--lingo-navy)">
             {showRaw ? "Hide raw response" : "Show raw response"}
           </button>
           {showRaw && <pre className="mt-3 max-h-96 overflow-auto rounded-xl bg-gray-950 p-4 text-xs leading-relaxed text-gray-100">{JSON.stringify(result, null, 2)}</pre>}

@@ -236,13 +236,13 @@ export default function DiagnosticFlow({
             priority
           />
         </div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-blue)">
           {passLabel === "remeasure" ? "Progress check" : "Pronunciation check"}
         </p>
-        <h1 className="lingo-display mt-2 text-3xl font-bold text-[var(--lingo-navy)]">
+        <h1 className="lingo-display mt-2 text-3xl font-bold text-(--lingo-navy)">
           {passLabel === "remeasure" ? "Let's see how you've improved" : "Let's hear how you sound"}
         </h1>
-        <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-(--lingo-text-muted)">
           {passLabel === "remeasure"
             ? "You'll read a few sentences similar to your first check. No hints — just speak naturally."
             : "Read a few sentences out loud. We'll use them to figure out which sounds to focus on. About 2 minutes."}
@@ -264,7 +264,7 @@ export default function DiagnosticFlow({
         <button
           type="button"
           onClick={() => router.push("/app/pronunciation")}
-          className="mt-3 text-sm font-semibold text-[var(--lingo-text-muted)]"
+          className="mt-3 text-sm font-semibold text-(--lingo-text-muted)"
         >
           Back
         </button>
@@ -278,14 +278,14 @@ export default function DiagnosticFlow({
         <div className="relative mb-4 h-32 w-32 overflow-hidden rounded-3xl">
           <Image src="/pronunciation/huahua-listening.png" alt="" fill className="object-cover" />
         </div>
-        <p className="text-sm font-semibold text-[var(--lingo-navy)]">Putting together your pronunciation profile…</p>
+        <p className="text-sm font-semibold text-(--lingo-navy)">Putting together your pronunciation profile…</p>
       </div>
     );
   }
 
   if (!current) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-[var(--lingo-text-muted)]">
+      <div className="flex min-h-[40vh] items-center justify-center text-(--lingo-text-muted)">
         Nothing left to record.
       </div>
     );
@@ -294,7 +294,7 @@ export default function DiagnosticFlow({
   return (
     <div className="mx-auto max-w-[720px] px-4 py-8 md:px-6">
       <div className="mb-5 flex items-center justify-between">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--lingo-text-muted)]">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-(--lingo-text-muted)">
           {passLabel === "remeasure" ? "Progress check" : "Pronunciation check"} · {itemIndex + 1} of {items.length}
         </p>
         <button
@@ -306,7 +306,7 @@ export default function DiagnosticFlow({
             }
             router.push("/app/pronunciation");
           }}
-          className="text-xs font-bold text-[var(--lingo-text-muted)]"
+          className="text-xs font-bold text-(--lingo-text-muted)"
         >
           {leaveArmed ? "Leave anyway" : "Exit"}
         </button>
@@ -316,7 +316,7 @@ export default function DiagnosticFlow({
           You&apos;ll lose this attempt progress on this device view — your recorded sentences are saved and you can resume later.
         </p>
       )}
-      <div className="mb-4 h-2 overflow-hidden rounded-full bg-[var(--lingo-sky-pale)]">
+      <div className="mb-4 h-2 overflow-hidden rounded-full bg-(--lingo-sky-pale)">
         <div
           className="h-full rounded-full transition-all"
           style={{
@@ -330,22 +330,22 @@ export default function DiagnosticFlow({
         className="rounded-[32px] border bg-white p-6 sm:p-9"
         style={{ borderColor: "var(--lingo-accent-border)", boxShadow: "var(--lingo-shadow-card)" }}
       >
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-(--lingo-blue)">
           Read this sentence out loud
         </p>
-        <p className="lingo-display mt-5 text-center text-3xl font-bold leading-snug text-[var(--lingo-navy)] sm:text-4xl">
+        <p className="lingo-display mt-5 text-center text-3xl font-bold leading-snug text-(--lingo-navy) sm:text-4xl">
           {current.hanzi}
         </p>
         {!hidden && (
           <div className="mt-3 text-center">
-            <p className="text-base text-[var(--lingo-text-muted)]">{current.pinyin}</p>
-            <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">{current.english}</p>
+            <p className="text-base text-(--lingo-text-muted)">{current.pinyin}</p>
+            <p className="mt-1 text-sm text-(--lingo-text-muted)">{current.english}</p>
           </div>
         )}
         <button
           type="button"
           onClick={() => setHidden((h) => !h)}
-          className="mx-auto mt-3 flex items-center gap-1.5 text-xs font-bold text-[var(--lingo-text-muted)]"
+          className="mx-auto mt-3 flex items-center gap-1.5 text-xs font-bold text-(--lingo-text-muted)"
         >
           {hidden ? <Eye size={14} /> : <EyeOff size={14} />}
           {hidden ? "Show help" : "Hide pinyin & translation"}
@@ -360,7 +360,7 @@ export default function DiagnosticFlow({
               >
                 <span className="h-3 w-3 animate-pulse rounded-full bg-white" />
               </div>
-              <p className="text-sm text-[var(--lingo-text-muted)]">Got it…</p>
+              <p className="text-sm text-(--lingo-text-muted)">Got it…</p>
             </>
           ) : recording ? (
             <>
@@ -383,7 +383,7 @@ export default function DiagnosticFlow({
               >
                 <Mic size={28} />
               </button>
-              <p className="text-sm font-bold text-[var(--lingo-navy)]">Tap to record</p>
+              <p className="text-sm font-bold text-(--lingo-navy)">Tap to record</p>
             </>
           )}
         </div>

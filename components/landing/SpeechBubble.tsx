@@ -19,11 +19,11 @@ export default function SpeechBubble({ label, className = "" }: SpeechBubbleProp
       </span>
       {/* Tail pointing down (Topic Islands style) */}
       <div
-        className="absolute left-1/2 -bottom-3 -translate-x-1/2 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[12px] border-t-black"
+        className="absolute left-1/2 -bottom-3 -translate-x-1/2 w-0 h-0 border-l-12 border-l-transparent border-r-12 border-r-transparent border-t-12 border-t-black"
         aria-hidden
       />
       <div
-        className="absolute left-1/2 -bottom-[9px] -translate-x-1/2 w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-t-[9px] border-t-white"
+        className="absolute left-1/2 bottom-[-9px] -translate-x-1/2 w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-t-[9px] border-t-white"
         aria-hidden
       />
     </div>

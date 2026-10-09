@@ -301,7 +301,7 @@ export default function FounderPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
               transition={{ duration: 0.45, delay: 0.08 }}
-              className="order-first block overflow-hidden no-underline lg:order-none"
+              className="order-first block overflow-hidden no-underline lg:order-0"
               style={{
                 borderRadius: 24,
                 border: "1px solid rgba(72,150,175,0.12)",
@@ -310,7 +310,7 @@ export default function FounderPage() {
               }}
               aria-label="Watch Cameron Lim on YouTube"
             >
-              <div className="relative aspect-video bg-[var(--lingo-sky-soft)]">
+              <div className="relative aspect-video bg-(--lingo-sky-soft)">
                 <Image
                   src={YOUTUBE_THUMBNAIL}
                   alt="Cameron Lim YouTube channel"

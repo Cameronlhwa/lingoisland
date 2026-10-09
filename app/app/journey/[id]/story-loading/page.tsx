@@ -73,7 +73,7 @@ export default function StoryLoadingPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-6">
-      <div className="w-full max-w-sm rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center shadow-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center shadow-xs">
         <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-600">
           {t("Story Checkpoint")}
         </p>

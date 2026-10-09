@@ -98,7 +98,7 @@ export default function TopicsHubPage() {
                     <li key={slug} data-topic-name={name} data-topic-slug={slug}>
                       <Link
                         href={href}
-                        className="group flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50"
+                        className="group flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-xs transition-colors hover:border-gray-400 hover:bg-gray-50"
                         data-topics-link
                         data-source="hub"
                       >

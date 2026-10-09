@@ -33,7 +33,7 @@ export default function HuahuaChatCard({
     <button
       type="button"
       onClick={handleClick}
-      className="w-full rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+      className="w-full rounded-xl border border-gray-200 bg-white p-5 text-left shadow-xs transition-all hover:border-gray-300 hover:shadow-md"
     >
       <div className="flex items-center gap-4">
         <HuahuaAvatar className="h-14 w-14" />

@@ -73,8 +73,8 @@ export default function DeepDivePage() {
   if (!row) {
     return (
       <div className="mx-auto max-w-lg px-4 py-10 text-center">
-        <p className="text-[var(--lingo-text-muted)]">{convertText(t("That sound isn't on your list anymore."))}</p>
-        <Link href="/app/pronunciation/review" className="mt-4 inline-block text-sm font-bold text-[var(--lingo-blue)]">
+        <p className="text-(--lingo-text-muted)">{convertText(t("That sound isn't on your list anymore."))}</p>
+        <Link href="/app/pronunciation/review" className="mt-4 inline-block text-sm font-bold text-(--lingo-blue)">
           {convertText(t("Back to your sounds"))}
         </Link>
       </div>
@@ -86,28 +86,28 @@ export default function DeepDivePage() {
       <button
         type="button"
         onClick={() => router.push(from)}
-        className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--lingo-text-muted)]"
+        className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-(--lingo-text-muted)"
       >
         <ArrowLeft size={13} /> {convertText(t("Back"))}
       </button>
 
       <div className="mb-6 flex items-start gap-4">
-        <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl">
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl">
           <Image src="/pronunciation/huahua-coaching.png" alt="" fill className="object-cover" />
         </div>
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">{convertText(t("Deep dive"))}</p>
-          <h1 className="lingo-display mt-1 text-3xl font-bold text-[var(--lingo-navy)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-blue)">{convertText(t("Deep dive"))}</p>
+          <h1 className="lingo-display mt-1 text-3xl font-bold text-(--lingo-navy)">
             {convertText(weakSoundLabel(row.syllable, row.pinyin, row.target_tone))}
           </h1>
           <div className="mt-2 flex items-center gap-2">
-            <span className="lingo-display text-2xl font-bold text-[var(--lingo-navy)]">{convertText(row.syllable)}</span>
+            <span className="lingo-display text-2xl font-bold text-(--lingo-navy)">{convertText(row.syllable)}</span>
             <SpeakerButton text={row.syllable} type="word" size="sm" />
           </div>
         </div>
       </div>
 
-      <div className="mb-5 inline-flex rounded-full bg-[var(--lingo-sky-pale)] p-1">
+      <div className="mb-5 inline-flex rounded-full bg-(--lingo-sky-pale) p-1">
         {(
           [
             ["guide", t("Visual guide")],
@@ -120,7 +120,7 @@ export default function DeepDivePage() {
             type="button"
             onClick={() => setTab(id)}
             className={`rounded-full px-4 py-1.5 text-xs font-bold ${
-              tab === id ? "bg-white text-[var(--lingo-navy)] shadow-sm" : "text-[var(--lingo-text-muted)]"
+              tab === id ? "bg-white text-(--lingo-navy) shadow-xs" : "text-(--lingo-text-muted)"
             }`}
           >
             {convertText(label)}
@@ -134,10 +134,10 @@ export default function DeepDivePage() {
       >
         {tab === "guide" && (
           <>
-            <h2 className="text-sm font-bold text-[var(--lingo-navy)]">{guide?.title ?? convertText(t("Mouth position"))}</h2>
-            <p className="mt-2 text-sm text-[var(--lingo-text)]">{guide?.shortTip ?? "Focus on a clear tone shape."}</p>
+            <h2 className="text-sm font-bold text-(--lingo-navy)">{guide?.title ?? convertText(t("Mouth position"))}</h2>
+            <p className="mt-2 text-sm text-(--lingo-text)">{guide?.shortTip ?? "Focus on a clear tone shape."}</p>
             <div className="mt-5 flex justify-center">
-              <svg viewBox="0 0 200 120" className="h-28 w-48 text-[var(--lingo-blue)]">
+              <svg viewBox="0 0 200 120" className="h-28 w-48 text-(--lingo-blue)">
                 <ellipse cx="100" cy="70" rx="70" ry="40" fill="var(--lingo-sky-pale)" stroke="currentColor" strokeWidth="2" />
                 <path d="M40 70 Q100 30 160 70" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 <circle cx="100" cy="55" r="8" fill="currentColor" opacity="0.35" />
@@ -146,7 +146,7 @@ export default function DeepDivePage() {
                 </text>
               </svg>
             </div>
-            <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-[var(--lingo-text)]">
+            <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-(--lingo-text)">
               {(guide?.steps ?? ["Listen to the model", "Imitate slowly", "Put it back in a word"]).map((step) => (
                 <li key={step}>{step}</li>
               ))}
@@ -156,24 +156,24 @@ export default function DeepDivePage() {
 
         {tab === "tips" && (
           <>
-            <h2 className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(t("Tips & tricks"))}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-[var(--lingo-text)]">
+            <h2 className="text-sm font-bold text-(--lingo-navy)">{convertText(t("Tips & tricks"))}</h2>
+            <p className="mt-3 text-sm leading-relaxed text-(--lingo-text)">
               {guide?.shortTip ?? "Give the tone a clear shape — length and pitch matter more than volume."}
             </p>
             {guide?.commonMistake && (
-              <div className="mt-4 rounded-2xl bg-[var(--lingo-sky-pale)] p-4 text-sm text-[var(--lingo-navy)]">
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">{convertText(t("Common slip"))}</p>
+              <div className="mt-4 rounded-2xl bg-(--lingo-sky-pale) p-4 text-sm text-(--lingo-navy)">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-(--lingo-blue)">{convertText(t("Common slip"))}</p>
                 <p className="mt-1">{guide.commonMistake}</p>
               </div>
             )}
             {guide?.earContrast && (
               <div className="mt-4 rounded-2xl border p-4" style={{ borderColor: "var(--lingo-border)" }}>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">{convertText(t("Ear warm-up"))}</p>
-                <p className="mt-1 text-sm text-[var(--lingo-text)]">{guide.earContrast.prompt}</p>
-                <p className="mt-2 text-sm font-semibold text-[var(--lingo-navy)]">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-(--lingo-blue)">{convertText(t("Ear warm-up"))}</p>
+                <p className="mt-1 text-sm text-(--lingo-text)">{guide.earContrast.prompt}</p>
+                <p className="mt-2 text-sm font-semibold text-(--lingo-navy)">
                   {convertText(t("Contrast"))}: {guide.earContrast.a} vs {guide.earContrast.b}
                 </p>
-                <p className="mt-1 text-xs text-[var(--lingo-text-muted)]">
+                <p className="mt-1 text-xs text-(--lingo-text-muted)">
                   Play the model for {row.syllable}, then say both contrasts out loud before recording.
                 </p>
               </div>
@@ -183,8 +183,8 @@ export default function DeepDivePage() {
 
         {tab === "challenge" && (
           <>
-            <h2 className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(t("Practice this sound"))}</h2>
-            <p className="mt-2 text-sm text-[var(--lingo-text-muted)]">
+            <h2 className="text-sm font-bold text-(--lingo-navy)">{convertText(t("Practice this sound"))}</h2>
+            <p className="mt-2 text-sm text-(--lingo-text-muted)">
               We&apos;ll build a short word + sentence session around {convertText(row.syllable)}
               {row.example_sentence ? `, using contexts like “${convertText(row.example_sentence)}”.` : "."}
             </p>

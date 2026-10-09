@@ -33,7 +33,7 @@ export default function OnboardingNudgeCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.2 }}
-      className="relative overflow-hidden rounded-lg border-2 border-gray-800 bg-gray-900 backdrop-blur-sm p-5 shadow-lg"
+      className="relative overflow-hidden rounded-lg border-2 border-gray-800 bg-gray-900 backdrop-blur-xs p-5 shadow-lg"
     >
         <button
           type="button"
@@ -56,7 +56,7 @@ export default function OnboardingNudgeCard({
           </svg>
         </button>
         <div className="flex items-start gap-3 pr-10">
-          <div className="flex-shrink-0 mt-0.5">
+          <div className="shrink-0 mt-0.5">
             <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -69,7 +69,7 @@ export default function OnboardingNudgeCard({
             <div className="mt-4">
               <Link
                 href={nudge.ctaHref}
-                className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 transition-all hover:bg-gray-100 shadow-sm hover:shadow-md"
+                className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 transition-all hover:bg-gray-100 shadow-xs hover:shadow-md"
                 onClick={handleCtaClick}
               >
                 {nudge.cta}

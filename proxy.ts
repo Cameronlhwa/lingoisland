@@ -14,7 +14,7 @@ function isProtectedHskApi(pathname: string): boolean {
   return false
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
   
   // Redirect www to non-www

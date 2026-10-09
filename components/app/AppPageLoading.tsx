@@ -11,7 +11,7 @@ export default function AppPageLoading({
       aria-live="polite"
       className={`flex w-full flex-1 items-center justify-center px-4 py-16 min-h-[calc(100svh-4rem)] md:min-h-screen ${className}`}
     >
-      <div className="flex items-center gap-3 text-sm text-[var(--lingo-text-muted,#6b7280)]">
+      <div className="flex items-center gap-3 text-sm text-(--lingo-text-muted,#6b7280)">
         <svg
           className="h-5 w-5 animate-spin text-gray-400"
           xmlns="http://www.w3.org/2000/svg"

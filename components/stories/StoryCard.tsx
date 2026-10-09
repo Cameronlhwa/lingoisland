@@ -59,21 +59,21 @@ export default function StoryCard({ story }: { story: StorySummary }) {
       </div>
       <div className="px-0.5 pt-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-[var(--lingo-navy)]">
+          <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-(--lingo-navy)">
             {convertText(story.title)}
           </h3>
           <ChevronRight
             size={16}
-            className="mt-0.5 shrink-0 text-[var(--lingo-blue)] transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none"
+            className="mt-0.5 shrink-0 text-(--lingo-blue) transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none"
             aria-hidden
           />
         </div>
         {story.story_zh ? (
-          <p className="mt-1 line-clamp-1 text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-1 line-clamp-1 text-sm text-(--lingo-text-muted)">
             {convertText(story.story_zh)}
           </p>
         ) : null}
-        <p className="mt-1.5 truncate text-[12px] text-[var(--lingo-text-muted)]">
+        <p className="mt-1.5 truncate text-[12px] text-(--lingo-text-muted)">
           {[hskLabelForCefr(story.level), dateLabel, getTimeLabel(story.story_zh, t("min"))]
             .filter(Boolean)
             .join(" · ")}

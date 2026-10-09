@@ -153,20 +153,20 @@ export default function BrowseTopicsPage() {
   return (
     <div className="mx-auto max-w-[1120px] px-4 py-8 md:px-6">
       <div className="mb-7">
-        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-(--lingo-blue)">
           {t("Explore & Learn")}
         </p>
-        <h1 className="lingo-display mt-1 max-w-2xl text-3xl font-bold text-[var(--lingo-navy)] sm:text-4xl">
+        <h1 className="lingo-display mt-1 max-w-2xl text-3xl font-bold text-(--lingo-navy) sm:text-4xl">
           {t("What do you want to talk about today?")}
         </h1>
-        <p className="mt-2 max-w-lg text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+        <p className="mt-2 max-w-lg text-sm leading-relaxed text-(--lingo-text-muted)">
           {t("Find topics that match your interests, or discover something new.")}
         </p>
       </div>
 
       <div className="relative mb-5">
         <Search
-          className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--lingo-text-muted)]"
+          className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-(--lingo-text-muted)"
           aria-hidden
         />
         <input
@@ -176,7 +176,7 @@ export default function BrowseTopicsPage() {
             setVisibleCount(40);
           }}
           placeholder={t("Search topics, tags, or categories…")}
-          className="w-full rounded-2xl border bg-white py-3 pl-11 pr-4 text-sm text-[var(--lingo-text)] placeholder:text-[var(--lingo-text-muted)] focus:border-[var(--lingo-blue)] focus:outline-none"
+          className="w-full rounded-2xl border bg-white py-3 pl-11 pr-4 text-sm text-(--lingo-text) placeholder:text-(--lingo-text-muted) focus:border-(--lingo-blue) focus:outline-hidden"
           style={{
             borderColor: "var(--lingo-border)",
             boxShadow: "var(--lingo-shadow-card)",
@@ -197,8 +197,8 @@ export default function BrowseTopicsPage() {
               }}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                 active
-                  ? "bg-[var(--lingo-navy)] text-white"
-                  : "border bg-white text-[var(--lingo-navy)] hover:bg-[var(--lingo-sky-pale)]"
+                  ? "bg-(--lingo-navy) text-white"
+                  : "border bg-white text-(--lingo-navy) hover:bg-(--lingo-sky-pale)"
               }`}
               style={active ? undefined : { borderColor: "var(--lingo-border)" }}
             >
@@ -211,7 +211,7 @@ export default function BrowseTopicsPage() {
       {featuredTopics.length > 0 && selectedCategory === "All" && !search.trim() && (
         <section className="mb-10">
           <div className="mb-4 flex items-center gap-2">
-            <h2 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">
+            <h2 className="lingo-display text-xl font-bold text-(--lingo-navy)">
               {t("Trending this week")}
             </h2>
             <span
@@ -242,7 +242,7 @@ export default function BrowseTopicsPage() {
       )}
 
       <section>
-        <h2 className="lingo-display mb-4 text-xl font-bold text-[var(--lingo-navy)]">
+        <h2 className="lingo-display mb-4 text-xl font-bold text-(--lingo-navy)">
           {selectedCategory !== "All" || search.trim() ? t("Results") : t("All topics")}
         </h2>
 
@@ -254,7 +254,7 @@ export default function BrowseTopicsPage() {
               boxShadow: "var(--lingo-shadow-card)",
             }}
           >
-            <p className="text-sm text-[var(--lingo-text-muted)]">
+            <p className="text-sm text-(--lingo-text-muted)">
               {t("No topics found. Try adjusting your filters.")}
             </p>
           </div>
@@ -278,7 +278,7 @@ export default function BrowseTopicsPage() {
                 <button
                   type="button"
                   onClick={() => setVisibleCount((prev) => prev + 40)}
-                  className="rounded-2xl bg-[var(--lingo-navy)] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[var(--lingo-navy-soft)]"
+                  className="rounded-2xl bg-(--lingo-navy) px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-(--lingo-navy-soft)"
                 >
                   {t("Load more")} ({allTopics.length - visibleCount} {t("remaining")})
                 </button>
@@ -339,7 +339,7 @@ function TopicCard({
         boxShadow: "var(--lingo-shadow-card)",
       }}
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-[var(--lingo-sky-pale)]">
+      <div className="relative aspect-16/10 overflow-hidden bg-(--lingo-sky-pale)">
         <div className="relative h-full w-full px-3 py-2 transition-transform duration-300 group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100">
           <Image
             src={topicArt(topic.id, topic.category)}
@@ -364,24 +364,24 @@ function TopicCard({
       </div>
 
       <div className="flex flex-1 flex-col px-5 py-4">
-        <h3 className="line-clamp-2 text-base font-bold leading-snug text-[var(--lingo-navy)]">
+        <h3 className="line-clamp-2 text-base font-bold leading-snug text-(--lingo-navy)">
           {displayTitle}
         </h3>
         {displaySubtitle && (
-          <p className="mt-1 line-clamp-1 text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-1 line-clamp-1 text-sm text-(--lingo-text-muted)">
             {displaySubtitle}
           </p>
         )}
 
         <div className="mt-3 flex flex-wrap gap-1.5">
           <span
-            className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-[var(--lingo-navy)]"
+            className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-(--lingo-navy)"
             style={{ background: "var(--lingo-sky-pale)" }}
           >
             {t(topic.category)}
           </span>
           <span
-            className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-[var(--lingo-navy)]"
+            className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-(--lingo-navy)"
             style={{ background: "var(--lingo-sky-pale)" }}
           >
             {hskLabelForCefr(topic.level)}
@@ -389,7 +389,7 @@ function TopicCard({
           {topic.tags.slice(0, 2).map((tag) => (
             <span
               key={tag}
-              className="rounded-full border px-2.5 py-1 text-[11px] font-semibold text-[var(--lingo-text-muted)]"
+              className="rounded-full border px-2.5 py-1 text-[11px] font-semibold text-(--lingo-text-muted)"
               style={{ borderColor: "var(--lingo-border)" }}
             >
               {tag}
@@ -402,7 +402,7 @@ function TopicCard({
             {topic.starter_prompts.slice(0, 3).map((prompt, idx) => (
               <li
                 key={idx}
-                className="line-clamp-2 text-sm leading-relaxed text-[var(--lingo-text)]"
+                className="line-clamp-2 text-sm leading-relaxed text-(--lingo-text)"
               >
                 {prompt}
               </li>
@@ -414,14 +414,14 @@ function TopicCard({
           <button
             type="button"
             onClick={() => onSelect(topic)}
-            className="flex-1 rounded-2xl bg-[var(--lingo-navy)] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--lingo-navy-soft)]"
+            className="flex-1 rounded-2xl bg-(--lingo-navy) px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-(--lingo-navy-soft)"
           >
             {t("Start learning")}
           </button>
           <button
             type="button"
             onClick={() => onPreview(topic)}
-            className="rounded-2xl border bg-white px-4 py-2.5 text-sm font-bold text-[var(--lingo-navy)] transition-colors hover:bg-[var(--lingo-sky-pale)]"
+            className="rounded-2xl border bg-white px-4 py-2.5 text-sm font-bold text-(--lingo-navy) transition-colors hover:bg-(--lingo-sky-pale)"
             style={{ borderColor: "var(--lingo-border)" }}
           >
             {t("Preview")}
@@ -451,7 +451,7 @@ function PreviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs"
       onClick={onClose}
     >
       <div
@@ -463,17 +463,17 @@ function PreviewModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4">
-          <h2 className="lingo-display text-2xl font-bold text-[var(--lingo-navy)]">
+          <h2 className="lingo-display text-2xl font-bold text-(--lingo-navy)">
             {displayTitle}
           </h2>
           {displaySubtitle && (
-            <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">{displaySubtitle}</p>
+            <p className="mt-1 text-sm text-(--lingo-text-muted)">{displaySubtitle}</p>
           )}
         </div>
 
         <div className="mb-4 flex flex-wrap gap-2">
           <span
-            className="rounded-full px-3 py-1.5 text-sm font-semibold text-[var(--lingo-navy)]"
+            className="rounded-full px-3 py-1.5 text-sm font-semibold text-(--lingo-navy)"
             style={{ background: "var(--lingo-sky-pale)" }}
           >
             {t(topic.category)}
@@ -481,7 +481,7 @@ function PreviewModal({
           {topic.tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-full border px-3 py-1.5 text-sm font-semibold text-[var(--lingo-text-muted)]"
+              className="rounded-full border px-3 py-1.5 text-sm font-semibold text-(--lingo-text-muted)"
               style={{ borderColor: "var(--lingo-border)" }}
             >
               {tag}
@@ -494,7 +494,7 @@ function PreviewModal({
             {topic.starter_prompts.map((prompt, idx) => (
               <li
                 key={idx}
-                className="rounded-xl border bg-[var(--lingo-sky-pale)] p-3 text-sm text-[var(--lingo-text)]"
+                className="rounded-xl border bg-(--lingo-sky-pale) p-3 text-sm text-(--lingo-text)"
                 style={{ borderColor: "var(--lingo-border)" }}
               >
                 {prompt}
@@ -507,7 +507,7 @@ function PreviewModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-2xl border bg-white px-4 py-2.5 text-sm font-bold text-[var(--lingo-navy)] hover:bg-[var(--lingo-sky-pale)]"
+            className="flex-1 rounded-2xl border bg-white px-4 py-2.5 text-sm font-bold text-(--lingo-navy) hover:bg-(--lingo-sky-pale)"
             style={{ borderColor: "var(--lingo-border)" }}
           >
             {t("Close")}
@@ -515,7 +515,7 @@ function PreviewModal({
           <button
             type="button"
             onClick={() => onSelect(topic)}
-            className="flex-1 rounded-2xl bg-[var(--lingo-navy)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[var(--lingo-navy-soft)]"
+            className="flex-1 rounded-2xl bg-(--lingo-navy) px-4 py-2.5 text-sm font-bold text-white hover:bg-(--lingo-navy-soft)"
           >
             {t("Start learning")}
           </button>
@@ -544,7 +544,7 @@ function PathChoiceModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs"
       onClick={onClose}
     >
       <div
@@ -556,13 +556,13 @@ function PathChoiceModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-6">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-(--lingo-blue)">
             {t("How do you want to learn?")}
           </p>
-          <h2 className="lingo-display mt-1 text-2xl font-bold text-[var(--lingo-navy)]">
+          <h2 className="lingo-display mt-1 text-2xl font-bold text-(--lingo-navy)">
             {displayTitle}
           </h2>
-          <p className="mt-2 text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-2 text-sm text-(--lingo-text-muted)">
             {t("Choose a single focused lesson, or a multi-island learning path.")}
           </p>
         </div>
@@ -571,7 +571,7 @@ function PathChoiceModal({
           <button
             type="button"
             onClick={() => onCreateIsland(topic)}
-            className="flex items-start gap-4 rounded-2xl border bg-white p-4 text-left transition-colors hover:bg-[var(--lingo-sky-pale)]"
+            className="flex items-start gap-4 rounded-2xl border bg-white p-4 text-left transition-colors hover:bg-(--lingo-sky-pale)"
             style={{ borderColor: "var(--lingo-border)" }}
           >
             <div
@@ -581,8 +581,8 @@ function PathChoiceModal({
               <Layers className="h-5 w-5" aria-hidden />
             </div>
             <div>
-              <p className="text-base font-bold text-[var(--lingo-navy)]">{t("Singular Island")}</p>
-              <p className="mt-0.5 text-sm text-[var(--lingo-text-muted)]">
+              <p className="text-base font-bold text-(--lingo-navy)">{t("Singular Island")}</p>
+              <p className="mt-0.5 text-sm text-(--lingo-text-muted)">
                 {t("One topic lesson with vocab + examples. Quick and focused.")}
               </p>
             </div>
@@ -591,7 +591,7 @@ function PathChoiceModal({
           <button
             type="button"
             onClick={() => onCreateJourney(topic)}
-            className="flex items-start gap-4 rounded-2xl border bg-white p-4 text-left transition-colors hover:bg-[var(--lingo-sky-pale)]"
+            className="flex items-start gap-4 rounded-2xl border bg-white p-4 text-left transition-colors hover:bg-(--lingo-sky-pale)"
             style={{ borderColor: "var(--lingo-border)" }}
           >
             <div
@@ -601,8 +601,8 @@ function PathChoiceModal({
               <Map className="h-5 w-5" aria-hidden />
             </div>
             <div>
-              <p className="text-base font-bold text-[var(--lingo-navy)]">{t("Complete Journey")}</p>
-              <p className="mt-0.5 text-sm text-[var(--lingo-text-muted)]">
+              <p className="text-base font-bold text-(--lingo-navy)">{t("Complete Journey")}</p>
+              <p className="mt-0.5 text-sm text-(--lingo-text-muted)">
                 {t("A full path of islands and story checkpoints around this topic.")}
               </p>
             </div>
@@ -612,7 +612,7 @@ function PathChoiceModal({
         <button
           type="button"
           onClick={onClose}
-          className="mt-5 w-full rounded-2xl border bg-white px-4 py-2.5 text-sm font-bold text-[var(--lingo-navy)] hover:bg-[var(--lingo-sky-pale)]"
+          className="mt-5 w-full rounded-2xl border bg-white px-4 py-2.5 text-sm font-bold text-(--lingo-navy) hover:bg-(--lingo-sky-pale)"
           style={{ borderColor: "var(--lingo-border)" }}
         >
           {t("Close")}

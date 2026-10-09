@@ -5,10 +5,8 @@ import { NextResponse } from 'next/server'
  * GET /api/decks/[deckId]/cards
  * List all cards in a deck
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { deckId: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ deckId: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {
@@ -65,10 +63,8 @@ export async function GET(
  * POST /api/decks/[deckId]/cards
  * Create a new manual card
  */
-export async function POST(
-  request: Request,
-  { params }: { params: { deckId: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ deckId: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

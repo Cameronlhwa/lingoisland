@@ -1055,7 +1055,7 @@ export default function JourneyOnboardingFlow({
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder={topicPlaceholder}
-            className="w-full rounded-lg border px-4 py-3 text-base shadow-sm focus:outline-none"
+            className="w-full rounded-lg border px-4 py-3 text-base shadow-xs focus:outline-hidden"
             style={{
               borderColor: CARD_BORDER,
               color: NAVY,

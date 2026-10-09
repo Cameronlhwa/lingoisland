@@ -12,10 +12,8 @@ import { getIslandReadiness, REQUIRED_SENTENCE_TIERS } from '@/lib/islands/readi
  * POST /api/topic-islands/[id]/generate-batch
  * Generate a batch of words for a topic island
  */
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const islandId = params.id
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null
   let userId: string | null = null

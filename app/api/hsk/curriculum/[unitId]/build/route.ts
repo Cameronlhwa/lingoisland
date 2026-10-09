@@ -12,10 +12,8 @@ export const runtime = "nodejs";
  * vocab + story checkpoints). Called when the learner opens the next unit.
  * Only the current (first non-completed) unit may be built.
  */
-export async function POST(
-  _request: Request,
-  { params }: { params: { unitId: string } },
-) {
+export async function POST(_request: Request, props: { params: Promise<{ unitId: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient();
     const {

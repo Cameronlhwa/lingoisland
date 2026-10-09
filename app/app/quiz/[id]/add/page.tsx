@@ -168,7 +168,7 @@ export default function AddCardsPage() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Main Form */}
           <div className="lg:col-span-2">
-            <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-xs">
               <h2 className="mb-6 text-xl font-semibold text-gray-900">
                 {t("Add cards")}
               </h2>
@@ -185,7 +185,7 @@ export default function AddCardsPage() {
                     value={chinese}
                     onChange={(e) => setChinese(e.target.value)}
                     placeholder="你好"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-base transition-colors focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-base transition-colors focus:border-gray-900 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                     required
                   />
                 </div>
@@ -200,7 +200,7 @@ export default function AddCardsPage() {
                     value={english}
                     onChange={(e) => setEnglish(e.target.value)}
                     placeholder="Hello"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-base transition-colors focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-base transition-colors focus:border-gray-900 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                   />
                   {!english.trim() && (
                     <p className="mt-1 text-xs text-gray-500">
@@ -220,7 +220,7 @@ export default function AddCardsPage() {
                         type="checkbox"
                         checked={autoPinyin}
                         onChange={(e) => setAutoPinyin(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                        className="h-4 w-4 rounded-sm border-gray-300 text-gray-900 focus:ring-gray-900"
                       />
                       <span>{t("Auto pinyin")}</span>
                     </label>
@@ -231,7 +231,7 @@ export default function AddCardsPage() {
                     onChange={(e) => setPinyin(e.target.value)}
                     disabled={autoPinyin}
                     placeholder={autoPinyin ? t("Auto-generated") : "nǐ hǎo"}
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-base transition-colors focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-base transition-colors focus:border-gray-900 focus:outline-hidden focus:ring-2 focus:ring-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
 
@@ -242,7 +242,7 @@ export default function AddCardsPage() {
                       type="checkbox"
                       checked={createReverse}
                       onChange={(e) => setCreateReverse(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                      className="h-4 w-4 rounded-sm border-gray-300 text-gray-900 focus:ring-gray-900"
                     />
                     <span className="text-sm font-medium text-gray-900">
                       {t("Also create reverse card (English → Chinese)")}
@@ -266,7 +266,7 @@ export default function AddCardsPage() {
 
           {/* Right Sidebar */}
           <div className="lg:col-span-1">
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-xs">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
                 {t("Quick info")}
               </h3>

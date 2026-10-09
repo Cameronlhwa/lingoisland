@@ -87,7 +87,7 @@ export default function Footer({
                 fontWeight: 600,
                 transition: "color 0.15s",
               }}
-              className="hover:text-[var(--lingo-navy)]"
+              className="hover:text-(--lingo-navy)"
             >
               {link.label}
             </Link>

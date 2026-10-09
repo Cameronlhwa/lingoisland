@@ -51,7 +51,7 @@ export default function ExampleIslandsMap() {
                 <div className="mb-0 transition-shadow duration-200">
                   <SpeechBubble label={island.title} />
                 </div>
-                <div className="relative h-56 w-80 transition-transform duration-250 ease-out will-change-transform group-hover:scale-[1.03] md:h-72 md:w-[28rem]">
+                <div className="relative h-56 w-80 transition-transform duration-250 ease-out will-change-transform group-hover:scale-[1.03] md:h-72 md:w-md">
                   <Image
                     src={island.image}
                     alt={island.title}

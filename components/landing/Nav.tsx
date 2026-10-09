@@ -88,7 +88,7 @@ export default function Nav() {
                 paddingBottom: 4,
               }}
             >
-              <span className="transition-colors duration-150 group-hover:text-[var(--lingo-teal)]">
+              <span className="transition-colors duration-150 group-hover:text-(--lingo-teal)">
                 {link.label}
               </span>
               <span
@@ -113,7 +113,7 @@ export default function Nav() {
               textDecoration: "none",
               transition: "transform 0.15s, color 0.15s",
             }}
-            className="hover:-translate-y-px hover:text-[var(--lingo-teal)]"
+            className="hover:-translate-y-px hover:text-(--lingo-teal)"
           >
             Sign in
           </Link>
@@ -170,7 +170,7 @@ export default function Nav() {
                   borderRadius: 12,
                   transition: "background 0.15s, color 0.15s",
                 }}
-                className="hover:bg-[rgba(89,198,222,0.1)] hover:text-[var(--lingo-teal)]"
+                className="hover:bg-[rgba(89,198,222,0.1)] hover:text-(--lingo-teal)"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {link.label}

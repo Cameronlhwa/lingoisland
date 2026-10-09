@@ -100,7 +100,7 @@ export default function ActivityCalendar() {
   const activeDays = activityData.filter((a) => a.count > 0).length;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-xs">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-gray-900">{t("Activity Calendar")}</h3>
@@ -191,11 +191,11 @@ export default function ActivityCalendar() {
         <div className="flex items-center gap-2 text-[10px] text-gray-600">
           <span>{t("Less")}</span>
           <div className="flex gap-0.5">
-            <div className="h-2 w-2 rounded bg-gray-100"></div>
-            <div className="h-2 w-2 rounded bg-gray-300"></div>
-            <div className="h-2 w-2 rounded bg-gray-500"></div>
-            <div className="h-2 w-2 rounded bg-gray-700"></div>
-            <div className="h-2 w-2 rounded bg-gray-900"></div>
+            <div className="h-2 w-2 rounded-sm bg-gray-100"></div>
+            <div className="h-2 w-2 rounded-sm bg-gray-300"></div>
+            <div className="h-2 w-2 rounded-sm bg-gray-500"></div>
+            <div className="h-2 w-2 rounded-sm bg-gray-700"></div>
+            <div className="h-2 w-2 rounded-sm bg-gray-900"></div>
           </div>
           <span>{t("More")}</span>
         </div>

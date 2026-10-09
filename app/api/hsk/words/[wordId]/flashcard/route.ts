@@ -6,10 +6,8 @@ import { denyWithoutProductAccess } from "@/lib/product-access";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { wordId: string } },
-) {
+export async function POST(request: Request, props: { params: Promise<{ wordId: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient();
     const {

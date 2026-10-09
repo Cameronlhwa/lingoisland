@@ -125,7 +125,7 @@ function PricingContent() {
             return (
               <section
                 key={product}
-                className={`rounded-3xl border bg-white p-6 shadow-sm sm:p-8 ${
+                className={`rounded-3xl border bg-white p-6 shadow-xs sm:p-8 ${
                   emphasized
                     ? "border-cyan-500 ring-2 ring-cyan-100"
                     : "border-slate-200"

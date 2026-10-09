@@ -76,7 +76,7 @@ export default function HskPathSetupModal({
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center overflow-y-auto px-4 py-10"
+      className="fixed inset-0 z-300 flex items-center justify-center overflow-y-auto px-4 py-10"
       style={{ background: "rgba(7,30,46,0.55)", backdropFilter: "blur(3px)" }}
     >
       <div className={card} style={{ boxShadow: HSK_CARD_SHADOW }}>
@@ -139,7 +139,7 @@ export default function HskPathSetupModal({
             <div className="mt-5 max-h-[48vh] space-y-5 overflow-y-auto pr-1">
               {interestCategories.map((category) => (
                 <section key={category.label}>
-                  <h3 className="text-xs font-bold uppercase tracking-[0.1em]" style={{ color: MUTED }}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: MUTED }}>
                     {category.label}
                   </h3>
                   <div className="mt-2 flex flex-wrap gap-2.5">

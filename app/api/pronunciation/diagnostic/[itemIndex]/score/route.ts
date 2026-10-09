@@ -11,10 +11,8 @@ export const dynamic = "force-dynamic";
 const MAX_AUDIO_BYTES = 15 * 1024 * 1024;
 const SILENT_SCORE_THRESHOLD = 15;
 
-export async function POST(
-  request: Request,
-  { params }: { params: { itemIndex: string } },
-) {
+export async function POST(request: Request, props: { params: Promise<{ itemIndex: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient();
     const {

@@ -8,10 +8,8 @@ import { canMarkWordKnown, incrementMarkKnownCount, getEntitlements } from '@/li
  * Mark a word as known and replace it with a new one
  * Free users: 1 per month, Pro users: unlimited
  */
-export async function POST(
-  request: Request,
-  { params }: { params: { wordId: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ wordId: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient()
     const {

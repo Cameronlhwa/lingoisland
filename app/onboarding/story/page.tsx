@@ -281,7 +281,7 @@ export default function OnboardingStoryPage() {
                     setLevel(group.base);
                     setStep(2);
                   }}
-                  className="flex w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition-all hover:border-gray-900 hover:bg-gray-50"
+                  className="flex w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-xs transition-all hover:border-gray-900 hover:bg-gray-50"
                 >
                   <h2 className="text-base font-semibold text-gray-900">
                     {group.label} (HSK {group.hsk})
@@ -312,7 +312,7 @@ export default function OnboardingStoryPage() {
               onChange={(e) => setTopic(e.target.value)}
               rows={4}
               placeholder="Describe the vibe, setting, or scenario..."
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base focus:border-gray-900 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base focus:border-gray-900 focus:outline-hidden"
             />
             <button
               type="button"
@@ -353,7 +353,7 @@ export default function OnboardingStoryPage() {
                     }
                   }}
                   placeholder="Type hanzi, pinyin, or English..."
-                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-gray-900 focus:outline-none"
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-gray-900 focus:outline-hidden"
                 />
                 <button
                   type="button"
@@ -402,7 +402,7 @@ export default function OnboardingStoryPage() {
                   max={500}
                   value={lengthChars}
                   onChange={(e) => setLengthChars(Number(e.target.value))}
-                  className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+                  className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-900 focus:outline-hidden"
                 />
                 <input
                   type="range"
@@ -469,7 +469,7 @@ export default function OnboardingStoryPage() {
                   required
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base text-gray-900 shadow-xs focus:border-gray-900 focus:outline-hidden"
                   placeholder="you@example.com"
                 />
               </div>
@@ -490,7 +490,7 @@ export default function OnboardingStoryPage() {
                     minLength={6}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-base text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-base text-gray-900 shadow-xs focus:border-gray-900 focus:outline-hidden"
                     placeholder="••••••••"
                   />
                   <button

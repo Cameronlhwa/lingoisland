@@ -12,10 +12,8 @@ function normalizeLevel(raw: string | null | undefined) {
   return trimmed.length > 0 ? trimmed : "B1";
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } },
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const supabase = await createClient();
     const {

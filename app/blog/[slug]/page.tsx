@@ -13,13 +13,14 @@ import { getAllBlogSlugs, getBlogPost, getRelatedPosts } from "@/lib/blog/posts"
 import type { BlogSlug } from "@/lib/blog/types";
 import { getCanonicalUrl } from "@/lib/utils/site-url";
 
-type Props = { params: { slug: string } };
+type Props = { params: Promise<{ slug: string }> };
 
 export function generateStaticParams() {
   return getAllBlogSlugs().map((slug) => ({ slug }));
 }
 
-export function generateMetadata({ params }: Props): Metadata {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const post = getBlogPost(params.slug);
   if (!post) {
     return { title: "Not found" };
@@ -52,7 +53,8 @@ const islandLabel: Partial<Record<BlogSlug, string>> = {
   "zodiac-signs-in-chinese": "Zodiac",
 };
 
-export default function BlogArticlePage({ params }: Props) {
+export default async function BlogArticlePage(props: Props) {
+  const params = await props.params;
   const post = getBlogPost(params.slug);
   if (!post) notFound();
 

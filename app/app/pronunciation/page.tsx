@@ -108,9 +108,9 @@ function WeakSoundPracticeModal({
             <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "#92400e" }}>
               {convertText(t("Focused practice"))}
             </p>
-            <h2 className="lingo-display mt-0.5 text-lg text-[var(--lingo-navy)]">{convertText(t("Choose sounds to practice"))}</h2>
+            <h2 className="lingo-display mt-0.5 text-lg text-(--lingo-navy)">{convertText(t("Choose sounds to practice"))}</h2>
           </div>
-          <button type="button" onClick={onCancel} className="rounded-full p-1.5 text-[var(--lingo-text-muted)] hover:bg-[var(--lingo-sky-pale)]">
+          <button type="button" onClick={onCancel} className="rounded-full p-1.5 text-(--lingo-text-muted) hover:bg-(--lingo-sky-pale)">
             <X size={16} />
           </button>
         </div>
@@ -125,7 +125,7 @@ function WeakSoundPracticeModal({
                   type="button"
                   onClick={() => onToggle(w.id)}
                   className={`flex items-center justify-between gap-3 rounded-2xl border-2 p-3 text-left transition ${
-                    selected ? "border-[var(--lingo-blue)]" : "border-transparent"
+                    selected ? "border-(--lingo-blue)" : "border-transparent"
                   }`}
                   style={{ background: selected ? "var(--lingo-sky-pale)" : "#f8fafb" }}
                 >
@@ -137,10 +137,10 @@ function WeakSoundPracticeModal({
                       {convertText(w.syllable)}
                     </span>
                     <div>
-                      <p className="text-sm font-bold text-[var(--lingo-navy)]">
+                      <p className="text-sm font-bold text-(--lingo-navy)">
                         {w.pinyin ?? convertText(w.syllable)} {toneGlyph(w.target_tone)}
                       </p>
-                      <p className="text-xs text-[var(--lingo-text-muted)]">
+                      <p className="text-xs text-(--lingo-text-muted)">
                         {w.consecutive_good > 0
                           ? `${w.consecutive_good} ${convertText(t("good in a row"))}`
                           : `${convertText(t("Missed"))} ${w.times_wrong}×`}
@@ -149,7 +149,7 @@ function WeakSoundPracticeModal({
                   </div>
                   <span
                     className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                      selected ? "border-[var(--lingo-blue)] bg-[var(--lingo-blue)] text-white" : "border-gray-300"
+                      selected ? "border-(--lingo-blue) bg-(--lingo-blue) text-white" : "border-gray-300"
                     }`}
                   >
                     {selected ? "✓" : ""}
@@ -183,7 +183,7 @@ function SoftTrend({ points }: { points: TrendPoint[] }) {
   const { convertText } = useCharacterSet();
   if (points.length < 2) {
     return (
-      <p className="py-6 text-sm text-[var(--lingo-text-muted)]">
+      <p className="py-6 text-sm text-(--lingo-text-muted)">
         {convertText(t("Your progress will appear here after a few practice sessions."))}
       </p>
     );
@@ -217,7 +217,7 @@ function SoftTrend({ points }: { points: TrendPoint[] }) {
           <circle key={i} cx={p.x} cy={p.y} r={i === coords.length - 1 ? 5 : 3} fill="var(--lingo-teal)" stroke="#fff" strokeWidth="2" />
         ))}
       </svg>
-      <div className="flex justify-between text-xs text-[var(--lingo-text-muted)]">
+      <div className="flex justify-between text-xs text-(--lingo-text-muted)">
         <span>{convertText(t("First"))} · {Math.round(first.score)}</span>
         <span>{convertText(t("Latest"))} · {Math.round(last.score)}</span>
       </div>
@@ -353,12 +353,12 @@ export default function PronunciationHubPage() {
     <div className="mx-auto max-w-[1120px] px-4 py-8 md:px-6">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">{convertText(t("Pronunciation"))}</p>
-          <h1 className="lingo-display mt-1 max-w-xl text-3xl font-bold text-[var(--lingo-navy)] sm:text-4xl">{convertText(headline)}</h1>
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-(--lingo-blue)">{convertText(t("Pronunciation"))}</p>
+          <h1 className="lingo-display mt-1 max-w-xl text-3xl font-bold text-(--lingo-navy) sm:text-4xl">{convertText(headline)}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           {!!profile?.streak_count && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--lingo-navy)] px-3 py-1.5 text-xs font-bold text-white">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-(--lingo-navy) px-3 py-1.5 text-xs font-bold text-white">
               <Flame size={13} className="text-amber-400" /> {profile.streak_count}{convertText(t("-day streak"))}
             </span>
           )}
@@ -394,7 +394,7 @@ export default function PronunciationHubPage() {
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <Link
                   href="/app/pronunciation/diagnostic"
-                  className="inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-bold text-[var(--lingo-navy)] shadow-sm"
+                  className="inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-bold text-(--lingo-navy) shadow-xs"
                 >
                   {convertText(t(baseline?.partialDay1 ? "Continue check →" : "Start pronunciation check →"))}
                 </Link>
@@ -419,7 +419,7 @@ export default function PronunciationHubPage() {
                 type="button"
                 disabled={starting === "general"}
                 onClick={() => void startPractice("general")}
-                className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-bold text-[var(--lingo-navy)] shadow-sm disabled:opacity-60"
+                className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-bold text-(--lingo-navy) shadow-xs disabled:opacity-60"
               >
                 {convertText(t(starting === "general" ? "Preparing" : "Practice a little more →"))}
               </button>
@@ -452,7 +452,7 @@ export default function PronunciationHubPage() {
                         type="button"
                         onClick={() => void changeDailyMinutes(m)}
                         className={`rounded-xl px-3 py-2 text-xs font-bold ${
-                          m === dailyMinutes ? "bg-[var(--lingo-navy)] text-white" : "text-[var(--lingo-navy)] hover:bg-[var(--lingo-sky-pale)]"
+                          m === dailyMinutes ? "bg-(--lingo-navy) text-white" : "text-(--lingo-navy) hover:bg-(--lingo-sky-pale)"
                         }`}
                       >
                         {m} {convertText(t("min"))}
@@ -465,7 +465,7 @@ export default function PronunciationHubPage() {
                 type="button"
                 disabled={starting === "general"}
                 onClick={() => void startPractice("general")}
-                className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-bold text-[var(--lingo-navy)] shadow-sm disabled:opacity-60"
+                className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-bold text-(--lingo-navy) shadow-xs disabled:opacity-60"
               >
                 {convertText(t(starting === "general" ? "Preparing" : "Start today's practice →"))}
               </button>
@@ -518,8 +518,8 @@ export default function PronunciationHubPage() {
           <div className="relative z-10 flex h-full min-h-[200px] w-full flex-col justify-center p-5 sm:min-h-[176px] sm:w-[58%] sm:p-6">
             {topWeak.length > 0 ? (
               <>
-                <h3 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">{convertText(t("Work on your weaknesses"))}</h3>
-                <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">{convertText(t("You've been struggling most with:"))}</p>
+                <h3 className="lingo-display text-xl font-bold text-(--lingo-navy)">{convertText(t("Work on your weaknesses"))}</h3>
+                <p className="mt-1 text-sm text-(--lingo-text-muted)">{convertText(t("You've been struggling most with:"))}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {topWeak.slice(0, 3).map((w) => {
                     const tier = scoreTier(w.last_score);
@@ -535,7 +535,7 @@ export default function PronunciationHubPage() {
                     );
                   })}
                 </div>
-                <p className="mt-3 text-sm text-[var(--lingo-text)]">
+                <p className="mt-3 text-sm text-(--lingo-text)">
                   {convertText(t("We'll build a short session around the sounds that need the most attention."))}
                 </p>
                 <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -543,26 +543,26 @@ export default function PronunciationHubPage() {
                     type="button"
                     disabled={starting === "focus"}
                     onClick={() => void startPractice("focus")}
-                    className="rounded-2xl bg-[var(--lingo-navy)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+                    className="rounded-2xl bg-(--lingo-navy) px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
                   >
                     {convertText(t(starting === "focus" ? "Preparing" : "Practice weak sounds →"))}
                   </button>
-                  <button type="button" onClick={openFocusModal} className="text-sm font-semibold text-[var(--lingo-blue)]">
+                  <button type="button" onClick={openFocusModal} className="text-sm font-semibold text-(--lingo-blue)">
                     {convertText(t("Choose sounds"))}
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <h3 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">{convertText(t("Find your weak spots"))}</h3>
-                <p className="mt-2 text-sm text-[var(--lingo-text-muted)]">
+                <h3 className="lingo-display text-xl font-bold text-(--lingo-navy)">{convertText(t("Find your weak spots"))}</h3>
+                <p className="mt-2 text-sm text-(--lingo-text-muted)">
                   {convertText(t("Practice a few sentences and Huahua will learn which sounds need more attention."))}
                 </p>
                 <button
                   type="button"
                   disabled={starting === "general"}
                   onClick={() => void startPractice("general")}
-                  className="mt-5 w-fit rounded-2xl bg-[var(--lingo-navy)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+                  className="mt-5 w-fit rounded-2xl bg-(--lingo-navy) px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
                 >
                   {convertText(t("Start practice →"))}
                 </button>
@@ -592,47 +592,47 @@ export default function PronunciationHubPage() {
           <div className="relative z-10 flex h-full min-h-[200px] w-full flex-col justify-center p-5 sm:min-h-[176px] sm:w-[58%] sm:p-6">
             {baseline?.partialRemeasure ? (
               <>
-                <h3 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">{convertText(t("Progress check in progress"))}</h3>
-                <p className="mt-2 text-sm text-[var(--lingo-text-muted)]">
+                <h3 className="lingo-display text-xl font-bold text-(--lingo-navy)">{convertText(t("Progress check in progress"))}</h3>
+                <p className="mt-2 text-sm text-(--lingo-text-muted)">
                   {baseline.remeasureCount}/{baseline.remeasureTotal} {convertText(t("sentences"))} {convertText(t("done"))}
                 </p>
                 <Link
                   href="/app/pronunciation/remeasure"
-                  className="mt-5 inline-flex w-fit rounded-2xl bg-[var(--lingo-navy)] px-4 py-2.5 text-sm font-bold text-white"
+                  className="mt-5 inline-flex w-fit rounded-2xl bg-(--lingo-navy) px-4 py-2.5 text-sm font-bold text-white"
                 >
                   {convertText(t("Continue check →"))}
                 </Link>
               </>
             ) : baseline?.completed ? (
               <>
-                <h3 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">{convertText(t("Check your progress"))}</h3>
-                <p className="mt-2 text-sm text-[var(--lingo-text)]">
+                <h3 className="lingo-display text-xl font-bold text-(--lingo-navy)">{convertText(t("Check your progress"))}</h3>
+                <p className="mt-2 text-sm text-(--lingo-text)">
                   {baseline.score != null && (
-                    <span className="mr-3 font-semibold text-[var(--lingo-navy)]">{convertText(t("Last check:"))} {Math.round(baseline.score)}</span>
+                    <span className="mr-3 font-semibold text-(--lingo-navy)">{convertText(t("Last check:"))} {Math.round(baseline.score)}</span>
                   )}
                   {typeof profile?.overall_score === "number" && (
-                    <span className="font-semibold text-[var(--lingo-navy)]">
+                    <span className="font-semibold text-(--lingo-navy)">
                       {convertText(t("Practice score:"))} {Math.round(profile.overall_score)}
                     </span>
                   )}
                 </p>
-                <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">{convertText(t("See how your pronunciation has changed."))}</p>
+                <p className="mt-1 text-sm text-(--lingo-text-muted)">{convertText(t("See how your pronunciation has changed."))}</p>
                 <Link
                   href="/app/pronunciation/remeasure"
-                  className="mt-5 inline-flex w-fit rounded-2xl bg-[var(--lingo-navy)] px-4 py-2.5 text-sm font-bold text-white"
+                  className="mt-5 inline-flex w-fit rounded-2xl bg-(--lingo-navy) px-4 py-2.5 text-sm font-bold text-white"
                 >
                   {convertText(t(baseline.progressCheckSuggested ? "Take a progress check →" : "Remeasure anytime →"))}
                 </Link>
               </>
             ) : (
               <>
-                <h3 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">{convertText(t("Create your pronunciation baseline"))}</h3>
-                <p className="mt-2 text-sm text-[var(--lingo-text-muted)]">
+                <h3 className="lingo-display text-xl font-bold text-(--lingo-navy)">{convertText(t("Create your pronunciation baseline"))}</h3>
+                <p className="mt-2 text-sm text-(--lingo-text-muted)">
                   {convertText(t("A quick check gives us a starting point so we can show you exactly how you improve."))}
                 </p>
                 <Link
                   href="/app/pronunciation/diagnostic"
-                  className="mt-5 inline-flex w-fit rounded-2xl bg-[var(--lingo-navy)] px-4 py-2.5 text-sm font-bold text-white"
+                  className="mt-5 inline-flex w-fit rounded-2xl bg-(--lingo-navy) px-4 py-2.5 text-sm font-bold text-white"
                 >
                   {convertText(t("Take the 2-minute check →"))}
                 </Link>
@@ -644,20 +644,20 @@ export default function PronunciationHubPage() {
 
       {/* Your pronunciation */}
       <section className="mb-8">
-        <h2 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">{convertText(t("Your pronunciation"))}</h2>
+        <h2 className="lingo-display text-xl font-bold text-(--lingo-navy)">{convertText(t("Your pronunciation"))}</h2>
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
           <div
             className="rounded-[28px] border bg-white p-6"
             style={{ borderColor: "var(--lingo-border)", boxShadow: "var(--lingo-shadow-card)" }}
           >
-            <h3 className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(t("You're getting clearer"))}</h3>
+            <h3 className="text-sm font-bold text-(--lingo-navy)">{convertText(t("You're getting clearer"))}</h3>
             {typeof profile?.overall_score === "number" ? (
               <div className="mt-3 flex flex-wrap items-end gap-3">
                 {baseline?.score != null && (
-                  <span className="text-2xl font-bold text-[var(--lingo-text-muted)]">{Math.round(baseline.score)}</span>
+                  <span className="text-2xl font-bold text-(--lingo-text-muted)">{Math.round(baseline.score)}</span>
                 )}
-                {baseline?.score != null && <span className="pb-1 text-[var(--lingo-text-muted)]">→</span>}
-                <span className="lingo-display text-4xl font-bold text-[var(--lingo-navy)]">
+                {baseline?.score != null && <span className="pb-1 text-(--lingo-text-muted)">→</span>}
+                <span className="lingo-display text-4xl font-bold text-(--lingo-navy)">
                   {Math.round(profile.overall_score)}
                 </span>
                 {baselineDelta != null && baselineDelta !== 0 && (
@@ -673,14 +673,14 @@ export default function PronunciationHubPage() {
                   </span>
                 )}
                 {baselineDelta == null && trendDelta != null && trendDelta !== 0 && (
-                  <span className="mb-1 text-xs font-semibold text-[var(--lingo-text-muted)]">
+                  <span className="mb-1 text-xs font-semibold text-(--lingo-text-muted)">
                     {trendDelta > 0 ? "+" : ""}
                     {trendDelta} {convertText(t("across recent sessions"))}
                   </span>
                 )}
               </div>
             ) : (
-              <p className="mt-3 text-sm text-[var(--lingo-text-muted)]">
+              <p className="mt-3 text-sm text-(--lingo-text-muted)">
                 {convertText(t("Complete a check or a practice session to see your score here."))}
               </p>
             )}
@@ -693,11 +693,11 @@ export default function PronunciationHubPage() {
             className="rounded-[28px] border bg-white p-6"
             style={{ borderColor: "var(--lingo-border)", boxShadow: "var(--lingo-shadow-card)" }}
           >
-            <h3 className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(t("This week's practice"))}</h3>
+            <h3 className="text-sm font-bold text-(--lingo-navy)">{convertText(t("This week's practice"))}</h3>
             <div className="mt-4 flex justify-between gap-1">
               {(stats?.weeklyActivity ?? []).map((day, i) => (
                 <div key={day.date} className="flex flex-1 flex-col items-center gap-2">
-                  <span className="text-[10px] font-bold text-[var(--lingo-text-muted)]">{convertText(t(WEEKDAY_KEYS[i]))}</span>
+                  <span className="text-[10px] font-bold text-(--lingo-text-muted)">{convertText(t(WEEKDAY_KEYS[i]))}</span>
                   <span
                     className="h-8 w-8 rounded-full"
                     style={{
@@ -708,9 +708,9 @@ export default function PronunciationHubPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-5 text-sm text-[var(--lingo-text-muted)]">
-              <span className="font-bold text-[var(--lingo-navy)]">{weekSessions}</span> {convertText(t("days"))} ·{" "}
-              <span className="font-bold text-[var(--lingo-navy)]">{stats?.totals.sentences ?? 0}</span> {convertText(t("sentences all-time"))}
+            <p className="mt-5 text-sm text-(--lingo-text-muted)">
+              <span className="font-bold text-(--lingo-navy)">{weekSessions}</span> {convertText(t("days"))} ·{" "}
+              <span className="font-bold text-(--lingo-navy)">{stats?.totals.sentences ?? 0}</span> {convertText(t("sentences all-time"))}
             </p>
           </div>
         </div>
@@ -720,18 +720,18 @@ export default function PronunciationHubPage() {
       <section className="mb-8">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">{convertText(t("Sounds we're working on"))}</h2>
-            <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">
+            <h2 className="lingo-display text-xl font-bold text-(--lingo-navy)">{convertText(t("Sounds we're working on"))}</h2>
+            <p className="mt-1 text-sm text-(--lingo-text-muted)">
               {convertText(t("These are the sounds Huahua is paying extra attention to."))}
             </p>
           </div>
-          <Link href="/app/pronunciation/review" className="text-sm font-bold text-[var(--lingo-blue)]">
+          <Link href="/app/pronunciation/review" className="text-sm font-bold text-(--lingo-blue)">
             {convertText(t("See all weak sounds →"))}
           </Link>
         </div>
         {topWeak.length === 0 ? (
           <div
-            className="rounded-[24px] border bg-white px-6 py-8 text-center text-sm text-[var(--lingo-text-muted)]"
+            className="rounded-[24px] border bg-white px-6 py-8 text-center text-sm text-(--lingo-text-muted)"
             style={{ borderColor: "var(--lingo-border)" }}
           >
             {convertText(t("Nothing flagged yet — keep practicing and patterns will show up here."))}
@@ -757,7 +757,7 @@ export default function PronunciationHubPage() {
                       {convertText(w.syllable)}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-[var(--lingo-navy)]">
+                      <p className="truncate text-sm font-bold text-(--lingo-navy)">
                         {convertText(weakSoundLabel(w.syllable, w.pinyin, w.target_tone))}
                       </p>
                       <p className="text-xs font-semibold" style={{ color: improving ? "#0f766e" : "#92400e" }}>
@@ -765,7 +765,7 @@ export default function PronunciationHubPage() {
                       </p>
                     </div>
                   </div>
-                  <p className="mt-3 text-xs text-[var(--lingo-text-muted)]">
+                  <p className="mt-3 text-xs text-(--lingo-text-muted)">
                     {w.consecutive_good > 0
                       ? `${w.consecutive_good} ${convertText(t(w.consecutive_good === 1 ? "good attempt in a row" : "good attempts in a row"))}`
                       : `${convertText(t("Missed"))} ${w.times_wrong} ${convertText(t("of"))} ${w.times_seen}`}
@@ -779,32 +779,32 @@ export default function PronunciationHubPage() {
 
       {/* Recent */}
       <section>
-        <h2 className="lingo-display text-lg font-bold text-[var(--lingo-navy)]">{convertText(t("Recent practice"))}</h2>
+        <h2 className="lingo-display text-lg font-bold text-(--lingo-navy)">{convertText(t("Recent practice"))}</h2>
         {(stats?.history.length ?? 0) === 0 ? (
-          <p className="mt-3 text-sm text-[var(--lingo-text-muted)]">{convertText(t("No sessions yet."))}</p>
+          <p className="mt-3 text-sm text-(--lingo-text-muted)">{convertText(t("No sessions yet."))}</p>
         ) : (
           <div className="mt-3 divide-y rounded-[22px] border bg-white" style={{ borderColor: "var(--lingo-border)" }}>
             {stats!.history.map((item) => (
               <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
                 <div>
-                  <p className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(sourceLabel(item.source, t))}</p>
-                  <p className="text-xs text-[var(--lingo-text-muted)]">
+                  <p className="text-sm font-bold text-(--lingo-navy)">{convertText(sourceLabel(item.source, t))}</p>
+                  <p className="text-xs text-(--lingo-text-muted)">
                     {convertText(formatDay(item.completedAt, t))} · {item.itemCount} {convertText(t("sentences"))}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="lingo-display text-lg font-bold text-[var(--lingo-navy)]">
+                  <span className="lingo-display text-lg font-bold text-(--lingo-navy)">
                     {item.avgScore == null ? "—" : Math.round(item.avgScore)}
                   </span>
-                  <ChevronRight size={16} className="text-[var(--lingo-text-muted)]" />
+                  <ChevronRight size={16} className="text-(--lingo-text-muted)" />
                 </div>
               </div>
             ))}
           </div>
         )}
-        <p className="mt-4 text-center text-xs text-[var(--lingo-text-muted)]">
+        <p className="mt-4 text-center text-xs text-(--lingo-text-muted)">
           {convertText(t("Topics come from your"))}{" "}
-          <Link href="/app/journey" className="font-semibold text-[var(--lingo-blue)]">
+          <Link href="/app/journey" className="font-semibold text-(--lingo-blue)">
             {convertText(t("Journeys"))}
           </Link>
           .

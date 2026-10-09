@@ -285,7 +285,7 @@ export default function OnboardingCheckoutAuth({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#071E2E]/50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-[#071E2E]/50 p-4 backdrop-blur-xs">
       <div
         className="w-full max-w-md rounded-[22px] border border-[#C2DCF0] bg-white p-6 shadow-xl sm:p-7"
         style={{ boxShadow: "0 20px 48px -20px rgba(7,30,46,0.45)" }}
@@ -333,7 +333,7 @@ export default function OnboardingCheckoutAuth({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="w-full rounded-xl border border-[#C2DCF0] px-4 py-3 text-sm text-[#071E2E] focus:border-[#2176AE] focus:outline-none"
+            className="w-full rounded-xl border border-[#C2DCF0] px-4 py-3 text-sm text-[#071E2E] focus:border-[#2176AE] focus:outline-hidden"
           />
           <input
             type="password"
@@ -343,7 +343,7 @@ export default function OnboardingCheckoutAuth({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (6+ characters)"
-            className="w-full rounded-xl border border-[#C2DCF0] px-4 py-3 text-sm text-[#071E2E] focus:border-[#2176AE] focus:outline-none"
+            className="w-full rounded-xl border border-[#C2DCF0] px-4 py-3 text-sm text-[#071E2E] focus:border-[#2176AE] focus:outline-hidden"
           />
           {errorMessage ? (
             <p className="text-sm text-red-600">{errorMessage}</p>

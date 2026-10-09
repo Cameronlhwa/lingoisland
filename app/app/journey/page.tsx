@@ -388,10 +388,10 @@ export default function JourneyPage() {
       <div className="flex min-h-screen items-center justify-center px-6">
         <div className="max-w-[520px] text-center">
           <p className="mb-4 text-5xl">🗺️</p>
-          <h2 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">
+          <h2 className="lingo-display text-xl font-bold text-(--lingo-navy)">
             {isHskApp ? t(HSK_APP_LABELS.journey.title) : t("Start your first Journey")}
           </h2>
-          <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+          <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-(--lingo-text-muted)">
             {isHskApp
               ? t(HSK_APP_LABELS.journey.description)
               : t("Pick a topic. Get a personalised 5-island path with stories woven in to lock in the words.")}
@@ -399,7 +399,7 @@ export default function JourneyPage() {
           <button
             type="button"
             onClick={() => router.push(`${appBase}/journey/create`)}
-            className="mt-6 rounded-2xl bg-[var(--lingo-navy)] px-7 py-3 text-sm font-bold text-white transition-colors hover:bg-[var(--lingo-navy-soft)]"
+            className="mt-6 rounded-2xl bg-(--lingo-navy) px-7 py-3 text-sm font-bold text-white transition-colors hover:bg-(--lingo-navy-soft)"
           >
             {isHskApp ? t("Build your path →") : t("Create a Journey →")}
           </button>
@@ -423,7 +423,7 @@ export default function JourneyPage() {
           <button
             type="button"
             onClick={() => router.push(`${appBase}/journey/past`)}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--lingo-navy)] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[var(--lingo-navy-soft)]"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-(--lingo-navy) px-5 py-3 text-sm font-bold text-white shadow-xs transition-colors hover:bg-(--lingo-navy-soft)"
           >
             <Clock className="h-3.5 w-3.5" />
             {t("My Journeys")}
@@ -431,7 +431,7 @@ export default function JourneyPage() {
           <button
             type="button"
             onClick={() => router.push(`${appBase}/journey/create`)}
-            className="inline-flex items-center justify-center gap-1.5 rounded-2xl border bg-white px-4 py-3 text-sm font-semibold text-[var(--lingo-navy)] shadow-sm transition-colors hover:bg-[var(--lingo-sky-pale)]"
+            className="inline-flex items-center justify-center gap-1.5 rounded-2xl border bg-white px-4 py-3 text-sm font-semibold text-(--lingo-navy) shadow-xs transition-colors hover:bg-(--lingo-sky-pale)"
             style={{ borderColor: "var(--lingo-border)" }}
           >
             <Plus className="h-3.5 w-3.5" />

@@ -481,7 +481,7 @@ export default function HskOnboardingFlow() {
               }}
             >
               <span className="font-medium" style={{ color: NAVY }}>
-                No, I'm just learning casually
+                No, I&apos;m just learning casually
               </span>
             </button>
           </div>
@@ -676,7 +676,7 @@ export default function HskOnboardingFlow() {
             {getHskInterestCategories(targetLevel).map((category) => (
               <section key={category.label}>
                 <h3
-                  className="text-xs font-bold uppercase tracking-[0.1em]"
+                  className="text-xs font-bold uppercase tracking-widest"
                   style={{ color: "#5A7A90" }}
                 >
                   {category.label}

@@ -199,7 +199,7 @@ export default function HskFlashcardsManage({ deckId }: { deckId: string }) {
         </div>
 
         {cards.length === 0 ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-xs">
             <p className="text-gray-600">
               {directionFilter === "all"
                 ? "No cards in this deck yet."
@@ -211,7 +211,7 @@ export default function HskFlashcardsManage({ deckId }: { deckId: string }) {
             {cards.map((card) => (
               <div
                 key={card.id}
-                className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+                className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-xs transition-all hover:border-gray-300 hover:shadow-md"
               >
                 <div className="flex-1">
                   <div className="mb-1 text-sm font-semibold text-gray-900">
@@ -246,7 +246,7 @@ export default function HskFlashcardsManage({ deckId }: { deckId: string }) {
         )}
 
         {showDeleteModal && cardToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
             <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
               <h3 className="mb-4 text-xl font-semibold text-gray-900">
                 Delete this card?

@@ -226,7 +226,7 @@ export default function HskFlashcardsListPage() {
   return (
     <div className="mx-auto min-h-screen max-w-6xl p-4 md:p-8">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className={`text-2xl md:text-3xl ${isHskApp ? "lingo-display text-[var(--lingo-navy)]" : "font-bold text-gray-900"}`}>
+        <h1 className={`text-2xl md:text-3xl ${isHskApp ? "lingo-display text-(--lingo-navy)" : "font-bold text-gray-900"}`}>
           {isHskApp ? t(HSK_APP_LABELS.flashcards.title) : t("Flashcards")}
         </h1>
         <button
@@ -352,7 +352,7 @@ export default function HskFlashcardsListPage() {
                     >
                       <X className="h-3.5 w-3.5" aria-hidden />
                     </button>
-                    华华's island grows with every card you review <strong>today</strong> —
+                    华华&apos;s island grows with every card you review <strong>today</strong> —
                     10 reviews per stage, 5 stages total. It resets each day, so showing up
                     daily is what keeps it growing.
                   </div>
@@ -391,7 +391,7 @@ export default function HskFlashcardsListPage() {
           {decks.map((deck) => (
             <div
               key={deck.id}
-              className="group relative rounded-2xl border border-[#dbe7ee] bg-white p-5 transition-all hover:border-[#7c93a3] hover:shadow-sm"
+              className="group relative rounded-2xl border border-[#dbe7ee] bg-white p-5 transition-all hover:border-[#7c93a3] hover:shadow-xs"
             >
               <Link href={hskFlashcardsDeck(basePath, deck.id)} className="block">
                 <h3 className="mb-2 text-base font-bold text-[#1a2332]">
@@ -419,7 +419,7 @@ export default function HskFlashcardsListPage() {
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[#dbe7ee] bg-white p-5 shadow-xl md:p-8">
             <h2 className="mb-6 text-2xl font-bold text-[#1a2332]">{t("Create Deck")}</h2>
             <form onSubmit={handleCreate}>
@@ -430,7 +430,7 @@ export default function HskFlashcardsListPage() {
                   value={newDeckName}
                   onChange={(e) => setNewDeckName(e.target.value)}
                   placeholder="e.g., HSK 3 Vocabulary"
-                  className="w-full rounded-lg border border-[#dbe7ee] bg-white px-4 py-2 focus:border-[#1a2332] focus:outline-none"
+                  className="w-full rounded-lg border border-[#dbe7ee] bg-white px-4 py-2 focus:border-[#1a2332] focus:outline-hidden"
                   required
                   autoFocus
                 />
