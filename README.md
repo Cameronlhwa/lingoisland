@@ -60,6 +60,18 @@ npm run test:learn-level
 npm run build
 ```
 
+### Dependency Updates
+
+Dependabot checks npm dependencies every Monday at 9:00 AM Toronto time using
+`.github/dependabot.yml`. Next.js/React and Tailwind packages are updated in
+separate framework groups, including major upgrades. Other minor/patch updates
+are grouped by production and development dependencies; other major upgrades
+get individual PRs. Review and run the verification commands above before merging.
+
+Version updates start once this configuration is merged into the repository's
+default branch. Dependabot alerts and automatic security updates are managed
+separately in GitHub's repository security settings.
+
 ## Project Structure
 
 ```
