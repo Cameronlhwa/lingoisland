@@ -60,14 +60,14 @@ function PracticeWordStrip({ words }: { words: LearnWord[] }) {
 
   return (
     <div className="mb-4">
-      <p className="mb-2.5 text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+      <p className="mb-2.5 text-center text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
         Words to practice
       </p>
       <div className="flex flex-wrap justify-center gap-2">
         {words.map((w) => (
           <div key={w.id} className="group relative">
             <div
-              className="cursor-default rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-3.5 py-1.5 text-sm font-bold text-[var(--lingo-navy)] transition-colors group-hover:bg-white"
+              className="cursor-default rounded-full border border-(--lingo-accent-border) bg-(--lingo-sky-pale) px-3.5 py-1.5 text-sm font-bold text-(--lingo-navy) transition-colors group-hover:bg-white"
             >
               {convertText(w.hanzi)}
             </div>
@@ -75,7 +75,7 @@ function PracticeWordStrip({ words }: { words: LearnWord[] }) {
               className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-lg border border-[#C2DCF0] bg-white px-3 py-2 text-center opacity-0 shadow-md transition-opacity group-hover:opacity-100"
               style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
             >
-              <p className="text-xs font-medium text-[var(--lingo-text-muted)]">{w.pinyin}</p>
+              <p className="text-xs font-medium text-(--lingo-text-muted)">{w.pinyin}</p>
               <p className="mt-0.5 text-xs italic text-[#8AABBF]">{w.english}</p>
             </div>
           </div>
@@ -105,7 +105,7 @@ function ChatBubble({
       className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
         message.role === "user"
           ? "text-white"
-          : "bg-white text-[var(--lingo-navy)]"
+          : "bg-white text-(--lingo-navy)"
       }`}
       style={{
         fontFamily: "'DM Sans', system-ui, sans-serif",
@@ -321,7 +321,7 @@ function LearnChatB1Plus({
                 className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b px-4 py-2.5 last:border-b-0"
                 style={{ borderColor: LINGO_ACCENT_BORDER }}
               >
-                <span className="lingo-display text-sm font-medium text-[var(--lingo-navy)]">
+                <span className="lingo-display text-sm font-medium text-(--lingo-navy)">
                   {convertText(w.hanzi)}
                 </span>
                 <span
@@ -424,7 +424,7 @@ function LearnChatB1Plus({
           }}
           disabled={loading || sending}
           placeholder="Type your message…"
-          className="flex-1 px-4 py-2.5 text-sm text-[var(--lingo-navy)] focus:outline-none focus:ring-2 disabled:opacity-50"
+          className="flex-1 px-4 py-2.5 text-sm text-(--lingo-navy) focus:outline-hidden focus:ring-2 disabled:opacity-50"
           style={{
             fontFamily: "'DM Sans', system-ui, sans-serif",
             borderRadius: 18,

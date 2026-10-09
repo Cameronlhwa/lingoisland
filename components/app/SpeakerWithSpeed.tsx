@@ -105,7 +105,7 @@ export default function SpeakerWithSpeed({
         <ul
           role="listbox"
           aria-label="Audio speed options"
-          className="absolute left-0 top-full z-20 mt-1 min-w-[5.5rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+          className="absolute left-0 top-full z-20 mt-1 min-w-22 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
         >
           {SPEED_OPTIONS.map((option) => (
             <li key={option} role="option" aria-selected={rate === option}>

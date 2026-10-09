@@ -38,7 +38,7 @@ export default function CapybaraStrip({
   return (
     <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-100 bg-amber-50 p-3">
       {/* Stage island image */}
-      <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-amber-200 bg-sky-50">
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-amber-200 bg-sky-50">
         <Image
           src={islandSrc}
           alt={`华华's island — Stage ${safeStage}: ${STAGE_LABELS[safeStage]}`}
@@ -73,7 +73,7 @@ export default function CapybaraStrip({
                 style={{ width: `${stageProgress}%` }}
               />
             </div>
-            <span className="flex-shrink-0 text-xs tabular-nums text-gray-400">
+            <span className="shrink-0 text-xs tabular-nums text-gray-400">
               {totalReviews - prevThreshold} / {stageRange}
             </span>
           </div>
@@ -84,7 +84,7 @@ export default function CapybaraStrip({
 
       {/* Right label */}
       {!isComplete ? (
-        <p className="hidden flex-shrink-0 text-xs font-medium text-amber-700 sm:block">
+        <p className="hidden shrink-0 text-xs font-medium text-amber-700 sm:block">
           {reviewsUntilNext} more {reviewsUntilNext === 1 ? "review" : "reviews"} →
         </p>
       ) : null}

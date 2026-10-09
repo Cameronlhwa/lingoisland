@@ -134,7 +134,7 @@ export default function QuizIslandDetailPage() {
                     handleCancelEditName();
                   }
                 }}
-                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-3xl font-bold text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-3xl font-bold text-gray-900 focus:border-gray-500 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                 autoFocus
                 disabled={savingName}
               />
@@ -175,7 +175,7 @@ export default function QuizIslandDetailPage() {
 
         {/* Empty State */}
         {!hasCards ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-xs">
             <p className="mb-6 text-gray-600">
               {convertText(t("This quiz island is empty. Add cards to start practicing."))}
             </p>
@@ -189,7 +189,7 @@ export default function QuizIslandDetailPage() {
         ) : (
           /* Actions */
           <div className="space-y-6">
-            <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-xs">
               <h2 className="mb-6 text-xl font-semibold text-gray-900">
                 {convertText(t("Ready to practice?"))}
               </h2>

@@ -179,14 +179,14 @@ export default function TopicIslandLoadingPage() {
           {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+              className="rounded-xl border border-gray-200 bg-white p-4 shadow-xs"
               style={{ opacity: 1 - i * 0.12 }}
             >
               <div className="mb-3 flex items-start justify-between gap-4">
                 <div className="flex-1 space-y-2">
-                  <div className="h-8 w-24 animate-pulse rounded bg-gray-200" />
-                  <div className="h-4 w-32 animate-pulse rounded bg-gray-100" />
-                  <div className="h-4 w-28 animate-pulse rounded bg-gray-100" />
+                  <div className="h-8 w-24 animate-pulse rounded-sm bg-gray-200" />
+                  <div className="h-4 w-32 animate-pulse rounded-sm bg-gray-100" />
+                  <div className="h-4 w-28 animate-pulse rounded-sm bg-gray-100" />
                 </div>
                 <div className="flex gap-2">
                   <div className="h-8 w-24 animate-pulse rounded-lg bg-gray-100" />
@@ -194,9 +194,9 @@ export default function TopicIslandLoadingPage() {
                 </div>
               </div>
               <div className="border-t border-gray-100 pt-3 space-y-2">
-                <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
-                <div className="h-3 w-2/3 animate-pulse rounded bg-gray-100" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+                <div className="h-4 w-3/4 animate-pulse rounded-sm bg-gray-100" />
+                <div className="h-3 w-2/3 animate-pulse rounded-sm bg-gray-100" />
+                <div className="h-3 w-1/2 animate-pulse rounded-sm bg-gray-100" />
               </div>
             </div>
           ))}

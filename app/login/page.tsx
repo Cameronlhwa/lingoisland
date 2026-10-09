@@ -268,7 +268,7 @@ function LoginPageContent() {
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base text-gray-900 shadow-xs focus:border-gray-900 focus:outline-hidden"
               placeholder="you@example.com"
             />
           </div>
@@ -289,7 +289,7 @@ function LoginPageContent() {
                 minLength={6}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-base text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-base text-gray-900 shadow-xs focus:border-gray-900 focus:outline-hidden"
                 placeholder="••••••••"
               />
               <button

@@ -44,7 +44,7 @@ export function BlogRelatedArticles({ posts }: { posts: BlogPost[] }) {
           <Link
             key={p.slug}
             href={`/blog/${p.slug}`}
-            className="group flex h-full flex-col rounded-xl border border-[#2176AE]/12 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2176AE]/25 hover:shadow-md"
+            className="group flex h-full flex-col rounded-xl border border-[#2176AE]/12 bg-white/80 p-5 shadow-xs transition hover:-translate-y-0.5 hover:border-[#2176AE]/25 hover:shadow-md"
             style={{ color: "#071E2E", textDecoration: "none" }}
           >
             <span

@@ -27,12 +27,12 @@ export default function StoriesList({ stories }: { stories: StorySummary[] }) {
             sizes="200px"
           />
         </div>
-        <p className="text-sm text-[var(--lingo-text-muted)]">
+        <p className="text-sm text-(--lingo-text-muted)">
           {convertText(t("No stories yet. Create a custom story or generate today's story."))}
         </p>
         <Link
           href="/app/stories/new"
-          className="mt-5 inline-flex items-center justify-center rounded-2xl bg-[var(--lingo-navy)] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[var(--lingo-navy-soft)]"
+          className="mt-5 inline-flex items-center justify-center rounded-2xl bg-(--lingo-navy) px-5 py-3 text-sm font-bold text-white shadow-xs transition-colors hover:bg-(--lingo-navy-soft)"
         >
           {convertText(t("Create New Story"))}
         </Link>

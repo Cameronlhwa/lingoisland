@@ -39,7 +39,7 @@ export default function SentenceBreakdownTable({
         {tokens.map((token, i) => (
           <div
             key={`${token.hanzi}-${i}`}
-            className={`flex min-w-[3.25rem] flex-col items-center gap-1 text-center ${
+            className={`flex min-w-13 flex-col items-center gap-1 text-center ${
               i > 0 ? "border-l border-[#2176AE]/15 pl-3" : ""
             }`}
           >

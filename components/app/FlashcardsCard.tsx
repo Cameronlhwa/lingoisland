@@ -10,7 +10,7 @@ export default function FlashcardsCard({
   const showDue = typeof dueCount === "number" && dueCount > 0;
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xs">
       <div className="flex flex-col gap-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Flashcards</h2>

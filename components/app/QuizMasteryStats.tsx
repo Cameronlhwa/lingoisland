@@ -103,7 +103,7 @@ export function QuizMasteryStats({
   }, [stats]);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-xs">
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Your progress</h2>
         <p className="mt-1 text-sm text-gray-600">Cards by mastery level</p>

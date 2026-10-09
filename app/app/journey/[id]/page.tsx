@@ -301,11 +301,11 @@ export default function JourneyDetailPage() {
       <div className="flex min-h-screen items-center justify-center px-6">
         <div className="text-center">
           <p className="mb-4 text-4xl">🗺️</p>
-          <p className="text-[var(--lingo-text-muted)]">{t("Journey not found.")}</p>
+          <p className="text-(--lingo-text-muted)">{t("Journey not found.")}</p>
           <button
             type="button"
             onClick={() => router.push("/app/journey/past")}
-            className="mt-4 rounded-2xl bg-[var(--lingo-navy)] px-5 py-2.5 text-sm font-bold text-white"
+            className="mt-4 rounded-2xl bg-(--lingo-navy) px-5 py-2.5 text-sm font-bold text-white"
           >
             {t("Back to My Journeys")}
           </button>
@@ -344,7 +344,7 @@ export default function JourneyDetailPage() {
           <button
             type="button"
             onClick={() => router.push("/app/journey/create")}
-            className="inline-flex items-center justify-center rounded-2xl border bg-white px-4 py-2.5 text-sm font-semibold text-[var(--lingo-navy)] shadow-sm transition-colors hover:bg-[var(--lingo-sky-pale)]"
+            className="inline-flex items-center justify-center rounded-2xl border bg-white px-4 py-2.5 text-sm font-semibold text-(--lingo-navy) shadow-xs transition-colors hover:bg-(--lingo-sky-pale)"
             style={{ borderColor: "var(--lingo-border)" }}
           >
             {t("New Journey")}

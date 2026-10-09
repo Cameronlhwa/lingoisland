@@ -306,7 +306,7 @@ export default function StoryWizard() {
           </div>
         )}
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-xs">
           {step === 1 && (
             <div>
               <h2 className="mb-4 text-2xl font-bold text-gray-900">
@@ -320,7 +320,7 @@ export default function StoryWizard() {
                 {LEVEL_GROUPS.map((group) => (
                   <div
                     key={group.base}
-                    className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between"
+                    className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-xs md:flex-row md:items-center md:justify-between"
                   >
                     <div className="max-w-sm">
                       <h3 className="text-base font-semibold text-gray-900">
@@ -364,7 +364,7 @@ export default function StoryWizard() {
                   onChange={(e) => setTopic(e.target.value)}
                   rows={4}
                   placeholder={convertText(t("Describe the vibe, setting, or scenario..."))}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm focus:border-gray-900 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm focus:border-gray-900 focus:outline-hidden"
                 />
               </div>
               <button
@@ -463,7 +463,7 @@ export default function StoryWizard() {
                       }
                     }}
                     placeholder={convertText(t("Type hanzi, pinyin, or English..."))}
-                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-gray-900 focus:outline-none"
+                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-gray-900 focus:outline-hidden"
                   />
                   <button
                     type="button"

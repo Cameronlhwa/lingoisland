@@ -70,7 +70,7 @@ function HighlightedSentence({
     return (
       <ChineseTooltipText
         text={displaySentence}
-        className={`text-xl font-medium text-[var(--lingo-navy)] md:text-[26px] ${className}`}
+        className={`text-xl font-medium text-(--lingo-navy) md:text-[26px] ${className}`}
       />
     );
   }
@@ -81,12 +81,12 @@ function HighlightedSentence({
 
   return (
     <span
-      className={`lingo-display text-xl font-medium text-[var(--lingo-navy)] md:text-[26px] ${className}`}
+      className={`lingo-display text-xl font-medium text-(--lingo-navy) md:text-[26px] ${className}`}
     >
       {before ? (
         <ChineseTooltipText text={before} className="inline" />
       ) : null}
-      <span className="font-medium text-[var(--lingo-blue)]">
+      <span className="font-medium text-(--lingo-blue)">
         <ChineseTooltipText text={target} className="inline" />
       </span>
       {after ? <ChineseTooltipText text={after} className="inline" /> : null}
@@ -106,8 +106,8 @@ function HighlightedPinyin({
   const normalizedTarget = targetPinyin.trim();
   const idx = sentencePinyin.indexOf(normalizedTarget);
   const sizeClass = isA0
-    ? "text-center text-xl font-semibold text-[var(--lingo-blue)] md:text-[22px]"
-    : "text-center text-sm text-[var(--lingo-text-muted)] md:text-sm";
+    ? "text-center text-xl font-semibold text-(--lingo-blue) md:text-[22px]"
+    : "text-center text-sm text-(--lingo-text-muted) md:text-sm";
 
   if (idx === -1) {
     return (
@@ -128,13 +128,13 @@ function HighlightedPinyin({
     <p
       className={
         isA0
-          ? "text-center text-xl font-semibold text-[var(--lingo-text-muted)] md:text-[22px]"
-          : "text-center text-sm text-[var(--lingo-text-muted)]"
+          ? "text-center text-xl font-semibold text-(--lingo-text-muted) md:text-[22px]"
+          : "text-center text-sm text-(--lingo-text-muted)"
       }
       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
     >
       {before}
-      <span className="font-semibold text-[var(--lingo-blue)]">{target}</span>
+      <span className="font-semibold text-(--lingo-blue)">{target}</span>
       {after}
     </p>
   );
@@ -168,7 +168,7 @@ function BreakdownTable({
   if (!tokens) {
     return (
       <p
-        className="text-center text-sm text-[var(--lingo-text-muted)]"
+        className="text-center text-sm text-(--lingo-text-muted)"
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         Loading breakdown…
@@ -274,14 +274,14 @@ function WordSlideContent({
   return (
     <div className="text-center">
       {typeof word.hsk_level === "number" ? (
-        <div className="mb-3 inline-flex items-center rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-3 py-1.5 text-xs font-bold text-[var(--lingo-navy)]">
+        <div className="mb-3 inline-flex items-center rounded-full border border-(--lingo-accent-border) bg-(--lingo-sky-pale) px-3 py-1.5 text-xs font-bold text-(--lingo-navy)">
           {word.hsk_level === 7 ? "HSK 7-9" : `HSK ${word.hsk_level}`}
         </div>
       ) : null}
       {isA0 ? (
         <>
           <div
-            className="mb-2 font-semibold text-[var(--lingo-blue)] md:mb-3"
+            className="mb-2 font-semibold text-(--lingo-blue) md:mb-3"
             style={{
               fontFamily: "'DM Sans', system-ui, sans-serif",
               fontSize: pinyinSize,
@@ -290,7 +290,7 @@ function WordSlideContent({
             {word.pinyin}
           </div>
           <div
-            className="lingo-display font-bold text-[var(--lingo-navy)]"
+            className="lingo-display font-bold text-(--lingo-navy)"
             style={{
               fontSize: compact ? "28px" : "36px",
               marginBottom: compact ? "12px" : "16px",
@@ -302,7 +302,7 @@ function WordSlideContent({
       ) : (
         <>
           <div
-            className="lingo-display font-bold text-[var(--lingo-navy)]"
+            className="lingo-display font-bold text-(--lingo-navy)"
             style={{
               fontSize: hanziSize,
               marginBottom: compact ? "12px" : "16px",
@@ -313,8 +313,8 @@ function WordSlideContent({
           <div
             className={`mb-2 md:mb-3 ${
               beginner
-                ? "text-xl font-semibold text-[var(--lingo-blue)] md:text-[22px]"
-                : "text-lg text-[var(--lingo-text-muted)] md:text-lg"
+                ? "text-xl font-semibold text-(--lingo-blue) md:text-[22px]"
+                : "text-lg text-(--lingo-text-muted) md:text-lg"
             }`}
             style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
           >
@@ -323,7 +323,7 @@ function WordSlideContent({
         </>
       )}
       <div
-        className="mb-6 text-[15px] text-[var(--lingo-text-muted)] md:mb-8"
+        className="mb-6 text-[15px] text-(--lingo-text-muted) md:mb-8"
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         {word.english}
@@ -381,7 +381,7 @@ function BeginnerSentenceContent({
         </>
       )}
       <p
-        className="mt-1 text-sm text-[var(--lingo-text-muted)]"
+        className="mt-1 text-sm text-(--lingo-text-muted)"
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         {sentence.english}
@@ -390,11 +390,11 @@ function BeginnerSentenceContent({
         <SpeakerWithSpeed text={sentence.hanzi} type="sentence" size="md" />
       </div>
       <div
-        className="my-5 border-t border-[var(--lingo-accent-border)] md:my-5"
+        className="my-5 border-t border-(--lingo-accent-border) md:my-5"
         style={{ borderTopWidth: "0.5px" }}
       />
       <p
-        className="mb-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]"
+        className="mb-4 text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)"
       >
         Word by word
       </p>
@@ -421,17 +421,17 @@ function StandardSentenceContent({
         <HighlightedSentence
           sentenceHanzi={sentence.hanzi}
           targetHanzi={word.hanzi}
-          className="!text-xl md:!text-[20px]"
+          className="text-xl! md:text-[20px]!"
         />
       </div>
       <p
-        className="mt-2 text-[13px] text-[var(--lingo-text-muted)]"
+        className="mt-2 text-[13px] text-(--lingo-text-muted)"
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         {sentence.pinyin}
       </p>
       <p
-        className="mt-1 text-[13px] text-[var(--lingo-text-muted)]"
+        className="mt-1 text-[13px] text-(--lingo-text-muted)"
         style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         {sentence.english}
@@ -517,7 +517,7 @@ export default function LearnSlideshow({
         if (!sentence) {
           return (
             <p
-              className="text-center text-sm text-[var(--lingo-text-muted)]"
+              className="text-center text-sm text-(--lingo-text-muted)"
               style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
             >
               Example sentence loading…
@@ -547,12 +547,12 @@ export default function LearnSlideshow({
       <div>
         <WordSlideContent word={word} beginner={false} compact={compact} />
         {sentence ? (
-          <div className="mt-8 border-t border-[var(--lingo-accent-border)] pt-8">
+          <div className="mt-8 border-t border-(--lingo-accent-border) pt-8">
             <StandardSentenceContent word={word} sentence={sentence} />
           </div>
         ) : (
           <p
-            className="mt-6 text-center text-sm text-[var(--lingo-text-muted)]"
+            className="mt-6 text-center text-sm text-(--lingo-text-muted)"
             style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
           >
             Example sentence loading…

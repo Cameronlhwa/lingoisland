@@ -143,7 +143,7 @@ export default function PrepareIslandLessonPage() {
               startedGeneration.current = false;
               void startOrResume();
             }}
-            className="mt-5 rounded-xl bg-[var(--lingo-navy)] px-5 py-3 text-sm font-bold text-white"
+            className="mt-5 rounded-xl bg-(--lingo-navy) px-5 py-3 text-sm font-bold text-white"
           >
             {t("Retry preparation")}
           </button>

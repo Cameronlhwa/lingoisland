@@ -76,7 +76,7 @@ export function TopicsHubClient({ children }: { children: React.ReactNode }) {
     <div ref={containerRef}>
       <form
         onSubmit={handleTopicSubmit}
-        className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+        className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-xs"
       >
         <p className="mb-3 text-sm font-medium text-gray-700">
           Already have a topic in mind? Type in below and get started!
@@ -86,7 +86,7 @@ export function TopicsHubClient({ children }: { children: React.ReactNode }) {
           value={topicInput}
           onChange={(e) => setTopicInput(e.target.value)}
           placeholder="e.g. ordering at a restaurant, small talk..."
-          className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+          className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-hidden"
           aria-label="Your topic"
         />
         <button

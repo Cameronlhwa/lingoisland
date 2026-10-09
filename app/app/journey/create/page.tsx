@@ -114,7 +114,7 @@ export default function JourneyCreatePage() {
               onKeyDown={(e) => e.key === "Enter" && !loading && handleCreate()}
               placeholder={t("e.g. Coffee shop conversations, K-pop, Business emails…")}
               disabled={loading}
-              className="w-full rounded-xl border border-[#c8dce6] bg-white px-4 py-3 text-sm font-medium text-[#1a2332] placeholder-[#b5cdd8] outline-none transition focus:border-[#4a9fc4] focus:ring-2 focus:ring-[#4a9fc4]/20 disabled:opacity-60"
+              className="w-full rounded-xl border border-[#c8dce6] bg-white px-4 py-3 text-sm font-medium text-[#1a2332] placeholder-[#b5cdd8] outline-hidden transition focus:border-[#4a9fc4] focus:ring-2 focus:ring-[#4a9fc4]/20 disabled:opacity-60"
             />
           </div>
 

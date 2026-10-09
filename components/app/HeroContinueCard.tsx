@@ -31,7 +31,7 @@ export default function HeroContinueCard({
     <div
       className={`${cardBaseClass} ${cardHoverClass} group relative overflow-hidden p-5 md:p-8`}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/70 via-white to-white opacity-80 transition-opacity group-hover:opacity-100" />
+      <div className="absolute inset-0 bg-linear-to-br from-blue-50/70 via-white to-white opacity-80 transition-opacity group-hover:opacity-100" />
       <div className="relative flex flex-col gap-3 md:gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-semibold text-gray-900">

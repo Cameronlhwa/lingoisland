@@ -73,7 +73,7 @@ function CreateIslandButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-2xl bg-[var(--lingo-navy)] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[var(--lingo-navy-soft)] ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-2xl bg-(--lingo-navy) px-5 py-3 text-sm font-bold text-white shadow-xs transition-colors hover:bg-(--lingo-navy-soft) ${className}`}
     >
       <Plus size={16} aria-hidden />
       {label}
@@ -112,7 +112,7 @@ function IslandCard({
         boxShadow: "var(--lingo-shadow-card)",
       }}
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-[var(--lingo-sky-pale)] px-4 py-3">
+      <div className="relative aspect-16/10 overflow-hidden bg-(--lingo-sky-pale) px-4 py-3">
         <div className="relative h-full w-full transition-transform duration-300 ease-out will-change-transform group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100">
           <Image
             src={imageSrc}
@@ -139,16 +139,16 @@ function IslandCard({
       </div>
       <div className="flex items-start justify-between gap-3 px-5 py-4">
         <div className="min-w-0">
-          <h3 className="line-clamp-2 text-base font-bold leading-snug text-[var(--lingo-navy)]">
+          <h3 className="line-clamp-2 text-base font-bold leading-snug text-(--lingo-navy)">
             {topic}
           </h3>
-          <p className="mt-1 truncate text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-1 truncate text-sm text-(--lingo-text-muted)">
             {[levelLabel, wordMeta].filter(Boolean).join(" · ")}
           </p>
         </div>
         <ChevronRight
           size={18}
-          className="mt-0.5 shrink-0 text-[var(--lingo-blue)] transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+          className="mt-0.5 shrink-0 text-(--lingo-blue) transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
           aria-hidden
         />
       </div>
@@ -368,13 +368,13 @@ export default function TopicIslandsPage() {
     <div className="mx-auto max-w-[1120px] px-4 py-8 md:px-6">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-(--lingo-blue)">
             {t("My Islands")}
           </p>
-          <h1 className="lingo-display mt-1 max-w-xl text-3xl font-bold text-[var(--lingo-navy)] sm:text-4xl">
+          <h1 className="lingo-display mt-1 max-w-xl text-3xl font-bold text-(--lingo-navy) sm:text-4xl">
             {t("Your Islands")}
           </h1>
-          <p className="mt-2 max-w-lg text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+          <p className="mt-2 max-w-lg text-sm leading-relaxed text-(--lingo-text-muted)">
             {t("Keep exploring new topics and build your confidence step by step.")}
           </p>
         </div>
@@ -404,10 +404,10 @@ export default function TopicIslandsPage() {
                   <stat.icon size={16} aria-hidden />
                 </span>
                 <div>
-                  <p className="lingo-display text-2xl font-bold leading-none text-[var(--lingo-navy)]">
+                  <p className="lingo-display text-2xl font-bold leading-none text-(--lingo-navy)">
                     {stat.value}
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-[var(--lingo-text-muted)]">
+                  <p className="mt-1 text-xs font-semibold text-(--lingo-text-muted)">
                     {stat.label}
                   </p>
                 </div>
@@ -434,10 +434,10 @@ export default function TopicIslandsPage() {
               sizes="260px"
             />
           </div>
-          <h2 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">
+          <h2 className="lingo-display text-xl font-bold text-(--lingo-navy)">
             {t("Create your first island")}
           </h2>
-          <p className="mt-2 max-w-sm text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-2 max-w-sm text-sm text-(--lingo-text-muted)">
             {t("Pick a topic you care about and we'll build vocabulary and native example sentences around it.")}
           </p>
           <CreateIslandButton
@@ -448,7 +448,7 @@ export default function TopicIslandsPage() {
         </div>
       ) : (
         <section>
-          <h2 className="lingo-display mb-4 text-xl font-bold text-[var(--lingo-navy)]">
+          <h2 className="lingo-display mb-4 text-xl font-bold text-(--lingo-navy)">
             {t("Your islands")}
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -465,7 +465,7 @@ export default function TopicIslandsPage() {
       )}
 
       {showCreateModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
             <div
               className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[24px] border bg-white p-5 md:p-8"
               style={{
@@ -473,12 +473,12 @@ export default function TopicIslandsPage() {
                 boxShadow: "var(--lingo-shadow-card)",
               }}
             >
-              <h2 className="lingo-display mb-6 text-2xl font-bold text-[var(--lingo-navy)]">
+              <h2 className="lingo-display mb-6 text-2xl font-bold text-(--lingo-navy)">
                 {t("Create Topic Island")}
               </h2>
               <form onSubmit={handleCreate}>
                 <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium text-[var(--lingo-navy)]">
+                  <label className="mb-2 block text-sm font-medium text-(--lingo-navy)">
                     {t("Topic")}
                   </label>
                   <input
@@ -489,14 +489,14 @@ export default function TopicIslandsPage() {
                       setFormData((prev) => ({ ...prev, topic }));
                     }}
                     placeholder={t("e.g., Cooking, Travel, Business")}
-                    className="w-full rounded-xl border bg-white px-4 py-2.5 text-[var(--lingo-text)] focus:border-[var(--lingo-blue)] focus:outline-none"
+                    className="w-full rounded-xl border bg-white px-4 py-2.5 text-(--lingo-text) focus:border-(--lingo-blue) focus:outline-hidden"
                     style={{ borderColor: "var(--lingo-border)" }}
                     required
                   />
                 </div>
 
                 <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium text-[var(--lingo-navy)]">
+                  <label className="mb-2 block text-sm font-medium text-(--lingo-navy)">
                     {t("Level")}
                   </label>
                   <select
@@ -505,7 +505,7 @@ export default function TopicIslandsPage() {
                       const level = e.target.value;
                       setFormData((prev) => ({ ...prev, level }));
                     }}
-                    className="w-full rounded-xl border bg-white px-4 py-2.5 text-[var(--lingo-text)] focus:border-[var(--lingo-blue)] focus:outline-none"
+                    className="w-full rounded-xl border bg-white px-4 py-2.5 text-(--lingo-text) focus:border-(--lingo-blue) focus:outline-hidden"
                     style={{ borderColor: "var(--lingo-border)" }}
                   >
                     {PROFILE_LEVEL_OPTIONS.map((opt) => (
@@ -517,7 +517,7 @@ export default function TopicIslandsPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium text-[var(--lingo-navy)]">
+                  <label className="mb-2 block text-sm font-medium text-(--lingo-navy)">
                     {t("Word Count:")} {formData.wordTarget}
                   </label>
                   <input
@@ -531,17 +531,17 @@ export default function TopicIslandsPage() {
                     }}
                     className="w-full"
                   />
-                  <div className="mt-1 flex justify-between text-xs text-[var(--lingo-text-muted)]">
+                  <div className="mt-1 flex justify-between text-xs text-(--lingo-text-muted)">
                     <span>10</span>
                     <span>20</span>
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium text-[var(--lingo-navy)]">
+                  <label className="mb-2 block text-sm font-medium text-(--lingo-navy)">
                     {t("Example sentences")}
                   </label>
-                  <p className="mb-3 text-xs text-[var(--lingo-text-muted)]">
+                  <p className="mb-3 text-xs text-(--lingo-text-muted)">
                     {t("Choose the tone for the example sentences on this island.")}
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -559,8 +559,8 @@ export default function TopicIslandsPage() {
                           }
                           className={`rounded-xl border px-3 py-3 text-left transition-colors ${
                             active
-                              ? "bg-[var(--lingo-navy)] text-white"
-                              : "bg-white text-[var(--lingo-navy)] hover:bg-[var(--lingo-sky-pale)]"
+                              ? "bg-(--lingo-navy) text-white"
+                              : "bg-white text-(--lingo-navy) hover:bg-(--lingo-sky-pale)"
                           }`}
                           style={{
                             borderColor: active
@@ -573,7 +573,7 @@ export default function TopicIslandsPage() {
                           </span>
                           <span
                             className={`mt-1 block text-xs ${
-                              active ? "text-white/70" : "text-[var(--lingo-text-muted)]"
+                              active ? "text-white/70" : "text-(--lingo-text-muted)"
                             }`}
                           >
                             {t(option.description)}
@@ -587,10 +587,10 @@ export default function TopicIslandsPage() {
                 <div className="mb-4">
                   <div className="mb-3 flex items-center justify-between">
                     <div>
-                      <label className="block text-sm font-medium text-[var(--lingo-navy)]">
+                      <label className="block text-sm font-medium text-(--lingo-navy)">
                         {t("Include new grammar pattern teaching?")}
                       </label>
-                      <p className="mt-1 text-xs text-[var(--lingo-text-muted)]">
+                      <p className="mt-1 text-xs text-(--lingo-text-muted)">
                         {t("Learn new native grammar structures that are useful for your desired topic.")}
                       </p>
                     </div>
@@ -602,9 +602,9 @@ export default function TopicIslandsPage() {
                           wantsGrammar: !prev.wantsGrammar,
                         }))
                       }
-                      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
                         formData.wantsGrammar
-                          ? "bg-[var(--lingo-navy)]"
+                          ? "bg-(--lingo-navy)"
                           : "bg-gray-300"
                       }`}
                     >
@@ -620,7 +620,7 @@ export default function TopicIslandsPage() {
 
                   {formData.wantsGrammar && (
                     <div className="mt-2">
-                      <p className="mb-2 text-sm font-medium text-[var(--lingo-navy)]">
+                      <p className="mb-2 text-sm font-medium text-(--lingo-navy)">
                         {t("How many grammar patterns to teach?")}
                       </p>
                       <div className="flex gap-2">
@@ -636,8 +636,8 @@ export default function TopicIslandsPage() {
                             }
                             className={`flex-1 rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
                               formData.grammarTarget === count
-                                ? "bg-[var(--lingo-navy)] text-white"
-                                : "bg-white text-[var(--lingo-navy)] hover:bg-[var(--lingo-sky-pale)]"
+                                ? "bg-(--lingo-navy) text-white"
+                                : "bg-white text-(--lingo-navy) hover:bg-(--lingo-sky-pale)"
                             }`}
                             style={{
                               borderColor:
@@ -656,15 +656,15 @@ export default function TopicIslandsPage() {
 
                 {islands.length > 0 && (
                   <div
-                    className="mb-6 rounded-xl border bg-[var(--lingo-sky-pale)] p-4"
+                    className="mb-6 rounded-xl border bg-(--lingo-sky-pale) p-4"
                     style={{ borderColor: "var(--lingo-border)" }}
                   >
                     <div className="mb-3 flex items-start justify-between">
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-[var(--lingo-navy)]">
+                        <label className="block text-sm font-medium text-(--lingo-navy)">
                           {t("Include review vocabulary?")}
                         </label>
-                        <p className="mt-1 text-xs text-[var(--lingo-text-muted)]">
+                        <p className="mt-1 text-xs text-(--lingo-text-muted)">
                           {t("Example sentences will use words from your other islands along with the new words for reinforcement.")}
                         </p>
                       </div>
@@ -677,9 +677,9 @@ export default function TopicIslandsPage() {
                             selectedReviewIslands: [],
                           }))
                         }
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
                           formData.includeReviewVocab
-                            ? "bg-[var(--lingo-navy)]"
+                            ? "bg-(--lingo-navy)"
                             : "bg-gray-300"
                         }`}
                       >
@@ -707,8 +707,8 @@ export default function TopicIslandsPage() {
                             }
                             className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
                               formData.reviewVocabMode === "random"
-                                ? "bg-[var(--lingo-navy)] text-white"
-                                : "bg-white text-[var(--lingo-navy)]"
+                                ? "bg-(--lingo-navy) text-white"
+                                : "bg-white text-(--lingo-navy)"
                             }`}
                             style={{
                               borderColor:
@@ -729,8 +729,8 @@ export default function TopicIslandsPage() {
                             }
                             className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
                               formData.reviewVocabMode === "select"
-                                ? "bg-[var(--lingo-navy)] text-white"
-                                : "bg-white text-[var(--lingo-navy)]"
+                                ? "bg-(--lingo-navy) text-white"
+                                : "bg-white text-(--lingo-navy)"
                             }`}
                             style={{
                               borderColor:
@@ -746,14 +746,14 @@ export default function TopicIslandsPage() {
                         {formData.reviewVocabMode === "select" && (
                           <div className="max-h-40 space-y-2 overflow-y-auto rounded-xl border bg-white p-3" style={{ borderColor: "var(--lingo-border)" }}>
                             {islands.length === 0 ? (
-                              <p className="text-xs text-[var(--lingo-text-muted)]">
+                              <p className="text-xs text-(--lingo-text-muted)">
                                 {t("No other islands available")}
                               </p>
                             ) : (
                               islands.map((island) => (
                                 <label
                                   key={island.id}
-                                  className="flex cursor-pointer items-center gap-2 rounded-lg p-1.5 hover:bg-[var(--lingo-sky-pale)]"
+                                  className="flex cursor-pointer items-center gap-2 rounded-lg p-1.5 hover:bg-(--lingo-sky-pale)"
                                 >
                                   <input
                                     type="checkbox"
@@ -779,12 +779,12 @@ export default function TopicIslandsPage() {
                                         }));
                                       }
                                     }}
-                                    className="h-4 w-4 rounded border-gray-300 text-[var(--lingo-navy)] focus:ring-2 focus:ring-[var(--lingo-blue)]"
+                                    className="h-4 w-4 rounded-sm border-gray-300 text-(--lingo-navy) focus:ring-2 focus:ring-(--lingo-blue)"
                                   />
-                                  <span className="flex-1 text-sm text-[var(--lingo-navy)]">
+                                  <span className="flex-1 text-sm text-(--lingo-navy)">
                                     {convertText(island.topic)}
                                   </span>
-                                  <span className="text-xs text-[var(--lingo-text-muted)]">
+                                  <span className="text-xs text-(--lingo-text-muted)">
                                     {hskLabelForCefr(island.level)}
                                   </span>
                                 </label>
@@ -794,7 +794,7 @@ export default function TopicIslandsPage() {
                         )}
 
                         {formData.reviewVocabMode === "random" && (
-                          <p className="text-xs text-[var(--lingo-text-muted)]">
+                          <p className="text-xs text-(--lingo-text-muted)">
                             {t("Words will be randomly selected from all your other islands.")}
                           </p>
                         )}
@@ -807,7 +807,7 @@ export default function TopicIslandsPage() {
                   <button
                     type="button"
                     onClick={closeCreateModal}
-                    className="flex-1 rounded-2xl border bg-white px-4 py-2.5 text-sm font-semibold text-[var(--lingo-navy)] transition-colors hover:bg-[var(--lingo-sky-pale)]"
+                    className="flex-1 rounded-2xl border bg-white px-4 py-2.5 text-sm font-semibold text-(--lingo-navy) transition-colors hover:bg-(--lingo-sky-pale)"
                     style={{ borderColor: "var(--lingo-border)" }}
                     disabled={creating}
                   >
@@ -815,7 +815,7 @@ export default function TopicIslandsPage() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-2xl bg-[var(--lingo-navy)] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--lingo-navy-soft)] disabled:opacity-60"
+                    className="flex-1 rounded-2xl bg-(--lingo-navy) px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-(--lingo-navy-soft) disabled:opacity-60"
                     disabled={creating}
                   >
                     {creating ? t("Creating...") : t("Create")}

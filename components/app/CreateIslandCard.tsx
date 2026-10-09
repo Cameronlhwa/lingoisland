@@ -43,14 +43,14 @@ export default function CreateIslandCard({
           <button
             type="button"
             onClick={onCreate}
-            className="inline-flex w-fit items-center gap-2 rounded-lg bg-[#0B1B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0f2744] focus:outline-none focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2"
+            className="inline-flex w-fit items-center gap-2 rounded-lg bg-[#0B1B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0f2744] focus:outline-hidden focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2"
           >
             {t("Create Topic Island →")}
           </button>
           <Link
             href="/app/browse-topics"
             onClick={onBrowse}
-            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-[#0B1B3A]/85 transition-colors hover:text-[#0B1B3A] hover:underline focus:outline-none focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 rounded"
+            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-[#0B1B3A]/85 transition-colors hover:text-[#0B1B3A] hover:underline focus:outline-hidden focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 rounded-sm"
           >
             <svg
               viewBox="0 0 24 24"

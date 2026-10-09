@@ -50,24 +50,24 @@ export default function JourneyHero({
         className="mb-5 rounded-2xl bg-white p-6 sm:p-7"
         style={{ border: HSK_CARD_BORDER, boxShadow: HSK_CARD_SHADOW }}
       >
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
           Active journey
         </p>
         {status === "loading" ? (
           <div className="mt-3 space-y-3">
-            <div className="h-8 w-56 animate-pulse rounded-lg bg-[var(--lingo-sky-pale)]" />
-            <div className="h-4 w-72 max-w-full animate-pulse rounded bg-[var(--lingo-sky-pale)]" />
-            <div className="h-10 w-full animate-pulse rounded-full bg-[var(--lingo-sky-pale)]" />
+            <div className="h-8 w-56 animate-pulse rounded-lg bg-(--lingo-sky-pale)" />
+            <div className="h-4 w-72 max-w-full animate-pulse rounded-sm bg-(--lingo-sky-pale)" />
+            <div className="h-10 w-full animate-pulse rounded-full bg-(--lingo-sky-pale)" />
           </div>
         ) : (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-[var(--lingo-text-muted)]">
+            <p className="text-sm text-(--lingo-text-muted)">
               Couldn&apos;t load your journey.
             </p>
             <button
               type="button"
               onClick={onRetry}
-              className="text-sm font-bold text-[var(--lingo-blue)]"
+              className="text-sm font-bold text-(--lingo-blue)"
             >
               Retry
             </button>
@@ -86,13 +86,13 @@ export default function JourneyHero({
           boxShadow: HSK_CARD_SHADOW,
         }}
       >
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
           Active journey
         </p>
-        <h2 className="lingo-display mt-2 text-2xl text-[var(--lingo-navy)]">
+        <h2 className="lingo-display mt-2 text-2xl text-(--lingo-navy)">
           Start your first journey
         </h2>
-        <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-(--lingo-text-muted)">
           Pick a topic and get a personalized 5-island path with stories woven
           in to lock in the words.
         </p>
@@ -133,21 +133,21 @@ export default function JourneyHero({
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
             Active journey
           </p>
-          <h2 className="lingo-display mt-1.5 text-2xl text-[var(--lingo-navy)] sm:text-[28px]">
+          <h2 className="lingo-display mt-1.5 text-2xl text-(--lingo-navy) sm:text-[28px]">
             {journey.topic}
           </h2>
-          <p className="mt-1.5 text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-1.5 text-sm text-(--lingo-text-muted)">
             5 islands · 2 stories · {totalWords} words
           </p>
         </div>
         <div className="text-right">
-          <p className="lingo-display text-3xl leading-none text-[var(--lingo-navy)]">
+          <p className="lingo-display text-3xl leading-none text-(--lingo-navy)">
             {wordsLearned}
           </p>
-          <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-1 text-sm text-(--lingo-text-muted)">
             of {totalWords} words
           </p>
         </div>
@@ -182,11 +182,11 @@ export default function JourneyHero({
         className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t pt-4"
         style={{ borderColor: "var(--lingo-accent-border)" }}
       >
-        <p className="text-sm text-[var(--lingo-text-muted)]">
+        <p className="text-sm text-(--lingo-text-muted)">
           {currentNode ? (
             <>
               Up next:{" "}
-              <span className="font-semibold text-[var(--lingo-navy)]">
+              <span className="font-semibold text-(--lingo-navy)">
                 {currentNode.name}
               </span>
               {currentNode.node_type === "story" ? (
@@ -199,7 +199,7 @@ export default function JourneyHero({
             "Journey complete"
           )}
         </p>
-        <span className="inline-flex items-center gap-1 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]">
+        <span className="inline-flex items-center gap-1 text-sm font-bold text-(--lingo-blue) transition-colors group-hover:text-(--lingo-navy)">
           View journey <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </span>
       </div>

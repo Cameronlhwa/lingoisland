@@ -36,7 +36,7 @@ export function JourneyPostCard({ journey }: { journey: CompletedJourney }) {
             </h3>
           </div>
           {/* Stamp — slightly rotated, straightens on hover */}
-          <div className="flex-shrink-0 border-2 border-teal-400 rounded-xl px-2 py-1 rotate-3 group-hover:rotate-0 transition-transform duration-200">
+          <div className="shrink-0 border-2 border-teal-400 rounded-xl px-2 py-1 rotate-3 group-hover:rotate-0 transition-transform duration-200">
             <div className="flex items-center gap-1">
               <Check size={9} className="text-teal-500" strokeWidth={3} />
               <span className="text-[9px] font-black text-teal-500 uppercase tracking-wide">Done</span>

@@ -63,14 +63,14 @@ function FeatureCard({
         e.currentTarget.style.boxShadow = HSK_CARD_SHADOW;
       }}
     >
-      <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--lingo-sky-pale)] text-[var(--lingo-blue)]">
+      <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-(--lingo-sky-pale) text-(--lingo-blue)">
         <Icon className="h-5 w-5" aria-hidden />
       </span>
-      <h3 className="lingo-display text-lg text-[var(--lingo-navy)]">{title}</h3>
-      <p className="mt-1.5 flex-1 text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+      <h3 className="lingo-display text-lg text-(--lingo-navy)">{title}</h3>
+      <p className="mt-1.5 flex-1 text-sm leading-relaxed text-(--lingo-text-muted)">
         {description}
       </p>
-      <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]">
+      <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-(--lingo-blue) transition-colors group-hover:text-(--lingo-navy)">
         {cta} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
       </span>
     </button>
@@ -111,13 +111,13 @@ function JourneyCard({
           boxShadow: HSK_CARD_SHADOW,
         }}
       >
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
           Active journey
         </p>
-        <h2 className="lingo-display mt-2 text-2xl text-[var(--lingo-navy)]">
+        <h2 className="lingo-display mt-2 text-2xl text-(--lingo-navy)">
           Start your first journey
         </h2>
-        <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-(--lingo-text-muted)">
           Pick a topic and get a personalized 5-island path with stories woven
           in to lock in the words.
         </p>
@@ -158,21 +158,21 @@ function JourneyCard({
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)">
             Active journey
           </p>
-          <h2 className="lingo-display mt-1.5 text-2xl text-[var(--lingo-navy)] sm:text-[28px]">
+          <h2 className="lingo-display mt-1.5 text-2xl text-(--lingo-navy) sm:text-[28px]">
             {journey.topic}
           </h2>
-          <p className="mt-1.5 text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-1.5 text-sm text-(--lingo-text-muted)">
             5 islands · 2 stories · {totalWords} words
           </p>
         </div>
         <div className="text-right">
-          <p className="lingo-display text-3xl leading-none text-[var(--lingo-navy)]">
+          <p className="lingo-display text-3xl leading-none text-(--lingo-navy)">
             {wordsLearned}
           </p>
-          <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-1 text-sm text-(--lingo-text-muted)">
             of {totalWords} words
           </p>
         </div>
@@ -207,11 +207,11 @@ function JourneyCard({
         className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t pt-4"
         style={{ borderColor: "var(--lingo-accent-border)" }}
       >
-        <p className="text-sm text-[var(--lingo-text-muted)]">
+        <p className="text-sm text-(--lingo-text-muted)">
           {currentNode ? (
             <>
               Up next:{" "}
-              <span className="font-semibold text-[var(--lingo-navy)]">
+              <span className="font-semibold text-(--lingo-navy)">
                 {currentNode.name}
               </span>
             </>
@@ -219,7 +219,7 @@ function JourneyCard({
             "Journey complete"
           )}
         </p>
-        <span className="inline-flex items-center gap-1 text-sm font-bold text-[var(--lingo-blue)] transition-colors group-hover:text-[var(--lingo-navy)]">
+        <span className="inline-flex items-center gap-1 text-sm font-bold text-(--lingo-blue) transition-colors group-hover:text-(--lingo-navy)">
           View journey <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </span>
       </div>
@@ -343,27 +343,27 @@ export default function HskHomeDashboard({
       <div className="mx-auto max-w-6xl">
         <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="lingo-display text-[30px] leading-tight text-[var(--lingo-navy)] sm:text-[34px]">
+            <h1 className="lingo-display text-[30px] leading-tight text-(--lingo-navy) sm:text-[34px]">
               Home
             </h1>
-            <p className="mt-1.5 text-[15px] text-[var(--lingo-text-muted)]">
+            <p className="mt-1.5 text-[15px] text-(--lingo-text-muted)">
               Your personalized HSK path, practice, and review — in one place.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 pb-1">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-3 py-1.5 text-xs font-bold text-[var(--lingo-navy)]">
-              <Star className="h-3.5 w-3.5 text-[var(--lingo-blue)]" aria-hidden />
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-(--lingo-accent-border) bg-(--lingo-sky-pale) px-3 py-1.5 text-xs font-bold text-(--lingo-navy)">
+              <Star className="h-3.5 w-3.5 text-(--lingo-blue)" aria-hidden />
               {hskCurrentLevel != null ? formatHskLevel(hskCurrentLevel) : "?"}
               {" → "}
               {hskTargetLevel != null ? formatHskLevel(hskTargetLevel) : "?"}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--lingo-accent-border)] bg-white px-3 py-1.5 text-xs font-bold text-[var(--lingo-navy)]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-(--lingo-accent-border) bg-white px-3 py-1.5 text-xs font-bold text-(--lingo-navy)">
               <Flame className="h-3.5 w-3.5 text-orange-500" aria-hidden />
               {streakDays} day streak
             </span>
             {daysToTest != null && daysToTest >= 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--lingo-accent-border)] bg-white px-3 py-1.5 text-xs font-bold text-[var(--lingo-navy)]">
-                <Calendar className="h-3.5 w-3.5 text-[var(--lingo-blue)]" aria-hidden />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-(--lingo-accent-border) bg-white px-3 py-1.5 text-xs font-bold text-(--lingo-navy)">
+                <Calendar className="h-3.5 w-3.5 text-(--lingo-blue)" aria-hidden />
                 {daysToTest} days to test
               </span>
             )}

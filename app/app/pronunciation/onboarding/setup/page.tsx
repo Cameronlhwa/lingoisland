@@ -37,22 +37,22 @@ export default function PronunciationSetupPage() {
   return (
     <div className="mx-auto max-w-lg px-4 py-10 md:px-6">
       <div
-        className="rounded-[28px] border border-[var(--lingo-accent-border)] bg-white p-6 shadow-sm sm:p-8"
+        className="rounded-[28px] border border-(--lingo-accent-border) bg-white p-6 shadow-xs sm:p-8"
         style={{ boxShadow: "var(--lingo-shadow-card)" }}
       >
         <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-3xl">
           <Image src="/pronunciation/huahua-speaking.png" alt="" fill className="object-cover" />
         </div>
-        <h1 className="lingo-display text-center text-xl font-bold text-[var(--lingo-navy)]">
+        <h1 className="lingo-display text-center text-xl font-bold text-(--lingo-navy)">
           {convertText(t("Pronunciation practice"))}
         </h1>
-        <p className="mt-2 text-center text-sm text-[var(--lingo-text-muted)]">
+        <p className="mt-2 text-center text-sm text-(--lingo-text-muted)">
           {convertText(t("Start with a quick check so we know what to focus on — or jump straight into today's practice."))}
         </p>
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
         <Link
           href="/app/pronunciation/diagnostic"
-          className="mt-6 flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold text-white shadow-sm"
+          className="mt-6 flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold text-white shadow-xs"
           style={{ background: "var(--lingo-accent-gradient)" }}
         >
           {convertText(t("Take the 2-minute check →"))}
@@ -61,7 +61,7 @@ export default function PronunciationSetupPage() {
           type="button"
           disabled={starting}
           onClick={() => void startPractice()}
-          className="mt-3 w-full rounded-2xl border border-[var(--lingo-accent-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--lingo-navy)] disabled:opacity-60"
+          className="mt-3 w-full rounded-2xl border border-(--lingo-accent-border) bg-white px-4 py-3 text-sm font-bold text-(--lingo-navy) disabled:opacity-60"
         >
           {convertText(t(starting ? "Preparing your session…" : "Skip — start practicing"))}
         </button>

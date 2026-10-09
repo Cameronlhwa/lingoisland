@@ -37,7 +37,7 @@ export default function FeatureFlagExample() {
       <h2 className="text-2xl font-bold">Feature Flag Examples</h2>
       
       {/* Example 1: Simple on/off flag */}
-      <div className="bg-white p-4 rounded">
+      <div className="bg-white p-4 rounded-sm">
         <h3 className="font-semibold mb-2">Simple Feature Toggle</h3>
         <p className="text-sm text-gray-600 mb-2">
           Flag: <code className="bg-gray-100 px-1">example-feature-flag</code>
@@ -54,7 +54,7 @@ export default function FeatureFlagExample() {
       </div>
 
       {/* Example 2: A/B test variants */}
-      <div className="bg-white p-4 rounded">
+      <div className="bg-white p-4 rounded-sm">
         <h3 className="font-semibold mb-2">A/B Test Variant</h3>
         <p className="text-sm text-gray-600 mb-2">
           Flag: <code className="bg-gray-100 px-1">example-ab-test</code>
@@ -82,7 +82,7 @@ export default function FeatureFlagExample() {
       </div>
 
       {/* Example 3: Button with A/B test */}
-      <div className="bg-white p-4 rounded">
+      <div className="bg-white p-4 rounded-sm">
         <h3 className="font-semibold mb-2">A/B Test Button</h3>
         <p className="text-sm text-gray-600 mb-3">
           Different button styles based on variant
@@ -91,14 +91,14 @@ export default function FeatureFlagExample() {
         {variant === 'test-a' ? (
           <button
             onClick={() => captureEvent('example_button_clicked', { variant: 'test-a' })}
-            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all"
+            className="px-6 py-3 bg-linear-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all"
           >
             🚀 Get Started (Variant A)
           </button>
         ) : variant === 'test-b' ? (
           <button
             onClick={() => captureEvent('example_button_clicked', { variant: 'test-b' })}
-            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg"
+            className="px-6 py-3 bg-linear-to-r from-purple-500 to-purple-600 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg"
           >
             ⭐️ Try Now - Free! (Variant B)
           </button>
@@ -113,7 +113,7 @@ export default function FeatureFlagExample() {
       </div>
 
       {/* Instructions */}
-      <div className="bg-blue-50 border border-blue-200 p-4 rounded">
+      <div className="bg-blue-50 border border-blue-200 p-4 rounded-sm">
         <h3 className="font-semibold text-blue-900 mb-2">📝 How to Test</h3>
         <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
           <li>Go to <a href="https://us.i.posthog.com/feature_flags" target="_blank" rel="noopener noreferrer" className="underline">PostHog Feature Flags</a></li>

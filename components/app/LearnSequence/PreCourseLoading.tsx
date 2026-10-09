@@ -24,10 +24,10 @@ export default function PreCourseLoading({
   const { convertText } = useCharacterSet();
   return (
     <div className="hsk-app-theme lingo-body flex min-h-screen flex-col bg-white">
-      <header className="border-b border-[var(--lingo-accent-border)]">
+      <header className="border-b border-(--lingo-accent-border)">
         <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6">
           <LearnEyebrow>{t("Getting started")}</LearnEyebrow>
-          <h1 className="lingo-display mt-1.5 text-[30px] leading-tight text-[var(--lingo-navy)] sm:text-[34px]">
+          <h1 className="lingo-display mt-1.5 text-[30px] leading-tight text-(--lingo-navy) sm:text-[34px]">
             {t("Preparing your lesson")}
           </h1>
         </div>
@@ -38,14 +38,14 @@ export default function PreCourseLoading({
           <div className="mb-4 flex justify-center">
             <HuahuaAvatar className="h-14 w-14" />
           </div>
-          <h2 className="lingo-display mb-2 text-xl text-[var(--lingo-navy)]">
+          <h2 className="lingo-display mb-2 text-xl text-(--lingo-navy)">
             {convertText(topic)}
           </h2>
-          <div className="mb-2 flex justify-between text-xs font-medium text-[var(--lingo-text-muted)]">
+          <div className="mb-2 flex justify-between text-xs font-medium text-(--lingo-text-muted)">
             <span>{t("Building your island")}</span>
             <span>{progressLabel}</span>
           </div>
-          <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-[var(--lingo-sky)]">
+          <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-(--lingo-sky)">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -56,7 +56,7 @@ export default function PreCourseLoading({
             />
           </div>
 
-          <p className="text-sm text-[var(--lingo-text-muted)]">
+          <p className="text-sm text-(--lingo-text-muted)">
             {t("华华 is picking words and example sentences for you…")}
           </p>
         </LearnSequenceCard>

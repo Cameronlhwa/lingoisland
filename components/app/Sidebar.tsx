@@ -156,7 +156,7 @@ export default function Sidebar({
               onClick={() => switchSide("islands")}
               className={`rounded-md px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-colors ${
                 !isHskSide
-                  ? "bg-white text-gray-900 shadow-sm"
+                  ? "bg-white text-gray-900 shadow-xs"
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -169,7 +169,7 @@ export default function Sidebar({
               onClick={() => switchSide("hsk")}
               className={`rounded-md px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-colors ${
                 isHskSide
-                  ? "bg-white text-teal-800 shadow-sm"
+                  ? "bg-white text-teal-800 shadow-xs"
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -277,12 +277,12 @@ export default function Sidebar({
                             : "border-gray-200 bg-white py-1.5 text-xs text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                     >
-                      <div className={entry.blur ? "blur-sm select-none" : ""}>
+                      <div className={entry.blur ? "blur-xs select-none" : ""}>
                         {convertText(entry.hanzi)}
                       </div>
                       {entry.english && (
                         <div
-                          className={`truncate text-[10px] ${entry.blur ? "blur-sm select-none" : "text-gray-500"}`}
+                          className={`truncate text-[10px] ${entry.blur ? "blur-xs select-none" : "text-gray-500"}`}
                         >
                           {entry.english}
                         </div>

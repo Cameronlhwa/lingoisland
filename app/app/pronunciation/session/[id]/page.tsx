@@ -219,11 +219,11 @@ export default function PronunciationSessionPage() {
   if (loadError || (!current && phase !== "complete")) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-[var(--lingo-text-muted)]">{loadError ?? convertText(t("This practice session is empty."))}</p>
+        <p className="text-(--lingo-text-muted)">{loadError ?? convertText(t("This practice session is empty."))}</p>
         <button
           type="button"
           onClick={() => router.push("/app/pronunciation")}
-          className="rounded-xl bg-[var(--lingo-navy)] px-5 py-2.5 text-sm font-bold text-white"
+          className="rounded-xl bg-(--lingo-navy) px-5 py-2.5 text-sm font-bold text-white"
         >
           {convertText(t("Back to Pronunciation"))}
         </button>
@@ -237,22 +237,22 @@ export default function PronunciationSessionPage() {
         <div className="relative mb-4 h-40 w-40 overflow-hidden rounded-3xl">
           <Image src="/pronunciation/huahua-celebrating.png" alt="" fill className="object-cover" />
         </div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">{convertText(t("Session complete"))}</p>
-        <h1 className="lingo-display mt-2 text-3xl font-bold text-[var(--lingo-navy)]">{convertText(t("Practice complete!"))}</h1>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-blue)">{convertText(t("Session complete"))}</p>
+        <h1 className="lingo-display mt-2 text-3xl font-bold text-(--lingo-navy)">{convertText(t("Practice complete!"))}</h1>
         <div className="mt-6 flex gap-6">
           <div>
-            <p className="lingo-display text-4xl font-bold text-[var(--lingo-navy)]">
+            <p className="lingo-display text-4xl font-bold text-(--lingo-navy)">
               {sessionSummary.avgScore == null ? "—" : Math.round(sessionSummary.avgScore)}
             </p>
-            <p className="text-xs font-semibold text-[var(--lingo-text-muted)]">{convertText(t("Today's score"))}</p>
+            <p className="text-xs font-semibold text-(--lingo-text-muted)">{convertText(t("Today's score"))}</p>
           </div>
           <div>
-            <p className="lingo-display text-4xl font-bold text-[var(--lingo-navy)]">{sessionSummary.sentenceCount}</p>
-            <p className="text-xs font-semibold text-[var(--lingo-text-muted)]">{convertText(t("sentences"))}</p>
+            <p className="lingo-display text-4xl font-bold text-(--lingo-navy)">{sessionSummary.sentenceCount}</p>
+            <p className="text-xs font-semibold text-(--lingo-text-muted)">{convertText(t("sentences"))}</p>
           </div>
         </div>
         {sessionSummary.topWeak && (
-          <p className="mt-5 max-w-sm text-sm text-[var(--lingo-text)]">
+          <p className="mt-5 max-w-sm text-sm text-(--lingo-text)">
             Keep working on <span className="font-bold">{sessionSummary.topWeak}</span> — we&apos;ll weave it into future practice.
           </p>
         )}
@@ -269,13 +269,13 @@ export default function PronunciationSessionPage() {
             <button
               type="button"
               onClick={() => router.push("/app/pronunciation")}
-              className="w-full rounded-2xl border border-[var(--lingo-accent-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--lingo-navy)]"
+              className="w-full rounded-2xl border border-(--lingo-accent-border) bg-white px-4 py-3 text-sm font-bold text-(--lingo-navy)"
             >
               {convertText(t("Practice weak sounds"))}
             </button>
           )}
         </div>
-        {finishing && <p className="mt-3 text-xs text-[var(--lingo-text-muted)]">{convertText(t("Saving your progress…"))}</p>}
+        {finishing && <p className="mt-3 text-xs text-(--lingo-text-muted)">{convertText(t("Saving your progress…"))}</p>}
       </div>
     );
   }
@@ -288,7 +288,7 @@ export default function PronunciationSessionPage() {
         background: recordError.kind === "rate_limit" ? "#fdf3e3" : "#fdecea",
       }}
     >
-      <p className="text-sm font-bold text-[var(--lingo-navy)]">
+      <p className="text-sm font-bold text-(--lingo-navy)">
         {recordError.kind === "mic"
           ? "Microphone access needed"
           : recordError.kind === "silent"
@@ -299,7 +299,7 @@ export default function PronunciationSessionPage() {
                 ? "Couldn't reach the scoring service"
                 : "We couldn't score that one"}
       </p>
-      <p className="mt-1 text-sm text-[var(--lingo-text)]">
+      <p className="mt-1 text-sm text-(--lingo-text)">
         {recordError.kind === "mic"
           ? "Allow microphone access in your browser settings, then try again."
           : recordError.kind === "silent"
@@ -318,7 +318,7 @@ export default function PronunciationSessionPage() {
               setRetryBlob(recordError.audioBlob ?? null);
               setRecordError(null);
             }}
-            className="rounded-xl bg-[var(--lingo-navy)] px-3 py-2 text-xs font-bold text-white"
+            className="rounded-xl bg-(--lingo-navy) px-3 py-2 text-xs font-bold text-white"
           >
             {convertText(t("Retry scoring"))}
           </button>
@@ -327,7 +327,7 @@ export default function PronunciationSessionPage() {
           <button
             type="button"
             onClick={() => setRecordError(null)}
-            className="rounded-xl border border-[var(--lingo-accent-border)] bg-white px-3 py-2 text-xs font-bold text-[var(--lingo-navy)]"
+            className="rounded-xl border border-(--lingo-accent-border) bg-white px-3 py-2 text-xs font-bold text-(--lingo-navy)"
           >
             {convertText(t("Try again"))}
           </button>
@@ -346,12 +346,12 @@ export default function PronunciationSessionPage() {
 
       <div className="mb-5">
         <div className="mb-2 flex items-center justify-between gap-3">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--lingo-text-muted)]">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-(--lingo-text-muted)">
             {convertText(t("Sentence"))} {itemIndex + 1} {convertText(t("of"))} {items.length}
           </p>
-          <p className="text-[10px] font-bold tracking-[0.16em] text-[var(--lingo-blue)]">{convertText(stageLabel(phase, t))}</p>
+          <p className="text-[10px] font-bold tracking-[0.16em] text-(--lingo-blue)">{convertText(stageLabel(phase, t))}</p>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-[var(--lingo-sky-pale)]">
+        <div className="h-2 overflow-hidden rounded-full bg-(--lingo-sky-pale)">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{ width: `${progressPct}%`, background: "var(--lingo-accent-gradient)" }}
@@ -360,7 +360,7 @@ export default function PronunciationSessionPage() {
       </div>
 
       <div
-        className="rounded-[32px] border border-[var(--lingo-accent-border)] bg-white p-6 sm:p-9"
+        className="rounded-[32px] border border-(--lingo-accent-border) bg-white p-6 sm:p-9"
         style={{ boxShadow: "var(--lingo-shadow-card)" }}
       >
         {phase === "sound-tip" && current.focusSyllable && (
@@ -370,19 +370,19 @@ export default function PronunciationSessionPage() {
                 <Image src="/pronunciation/huahua-coaching.png" alt="" fill className="object-cover" />
               </div>
             </div>
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">{convertText(t("Listen first"))}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-(--lingo-blue)">{convertText(t("Listen first"))}</p>
             <div className="mt-4 flex items-center justify-center gap-3">
-              <span className="lingo-display text-5xl font-bold text-[var(--lingo-navy)]">{convertText(current.focusSyllable)}</span>
+              <span className="lingo-display text-5xl font-bold text-(--lingo-navy)">{convertText(current.focusSyllable)}</span>
               <SpeakerButton text={current.focusSyllable} type="word" size="md" />
             </div>
-            <p className="mt-2 text-center text-sm text-[var(--lingo-text-muted)]">
+            <p className="mt-2 text-center text-sm text-(--lingo-text-muted)">
               {current.focusPinyin}
               {current.focusTone != null && <span className="ml-1">{toneGlyph(current.focusTone)}</span>}
             </p>
             {toneShapeTip(current.focusTone ?? null) && (
               <div className="mt-5 flex items-start gap-2.5 rounded-2xl p-4" style={{ background: "var(--lingo-sky-pale)" }}>
-                <Lightbulb size={16} className="mt-0.5 flex-shrink-0 text-[var(--lingo-blue)]" />
-                <p className="text-sm leading-relaxed text-[var(--lingo-navy)]">
+                <Lightbulb size={16} className="mt-0.5 shrink-0 text-(--lingo-blue)" />
+                <p className="text-sm leading-relaxed text-(--lingo-navy)">
                   {toneShapeTip(current.focusTone ?? null)}
                 </p>
               </div>
@@ -400,23 +400,23 @@ export default function PronunciationSessionPage() {
 
         {phase === "word-before" && (
           <>
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">{convertText(t("Say the word"))}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-(--lingo-blue)">{convertText(t("Say the word"))}</p>
             <div className="mt-5 flex items-center justify-center gap-3">
-              <span className="lingo-display text-5xl font-bold text-[var(--lingo-navy)] sm:text-6xl">
+              <span className="lingo-display text-5xl font-bold text-(--lingo-navy) sm:text-6xl">
                 {convertText(current.wordHanzi)}
               </span>
               <SpeakerWithSpeed text={current.wordHanzi} type="word" size="md" />
             </div>
             {!hidden && (
               <div className="mt-3 text-center">
-                <p className="text-base text-[var(--lingo-text-muted)]">{current.wordPinyin}</p>
-                <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">{current.wordEnglish}</p>
+                <p className="text-base text-(--lingo-text-muted)">{current.wordPinyin}</p>
+                <p className="mt-1 text-sm text-(--lingo-text-muted)">{current.wordEnglish}</p>
               </div>
             )}
             <button
               type="button"
               onClick={() => setHidden((h) => !h)}
-              className="mx-auto mt-3 flex items-center gap-1.5 text-xs font-bold text-[var(--lingo-text-muted)]"
+              className="mx-auto mt-3 flex items-center gap-1.5 text-xs font-bold text-(--lingo-text-muted)"
             >
               {hidden ? <Eye size={14} /> : <EyeOff size={14} />}
               {convertText(t(hidden ? "Show pinyin & translation" : "Hide pinyin & translation"))}
@@ -463,12 +463,12 @@ export default function PronunciationSessionPage() {
 
         {phase === "sentence-before" && (
           <>
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">{convertText(t("Now say the sentence"))}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-(--lingo-blue)">{convertText(t("Now say the sentence"))}</p>
             <div className="mt-5 flex flex-wrap items-center justify-center gap-x-0.5 gap-y-1">
               {Array.from(current.sentenceHanzi).map((char, index) => {
                 if (!/[\u4e00-\u9fff\u3400-\u4dbfA-Za-z]/.test(char)) {
                   return (
-                    <span key={index} className="text-3xl font-semibold text-[var(--lingo-navy)]">
+                    <span key={index} className="text-3xl font-semibold text-(--lingo-navy)">
                       {convertText(char)}
                     </span>
                   );
@@ -479,7 +479,7 @@ export default function PronunciationSessionPage() {
                     text={char}
                     type="word"
                     size="sm"
-                    className="!h-auto !w-auto !rounded-lg !border-transparent !bg-transparent !px-0.5 !py-0.5 !text-3xl !font-semibold !text-[var(--lingo-navy)] hover:!bg-[var(--lingo-sky-pale)] hover:!border-transparent"
+                    className="h-auto! w-auto! rounded-lg! border-transparent! bg-transparent! px-0.5! py-0.5! text-3xl! font-semibold! text-(--lingo-navy)! hover:bg-(--lingo-sky-pale)! hover:border-transparent!"
                     label={convertText(char)}
                   />
                 );
@@ -487,8 +487,8 @@ export default function PronunciationSessionPage() {
             </div>
             {!hidden && (
               <div className="mt-3 text-center">
-                <p className="text-base text-[var(--lingo-text-muted)]">{current.sentencePinyin}</p>
-                <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">{current.sentenceEnglish}</p>
+                <p className="text-base text-(--lingo-text-muted)">{current.sentencePinyin}</p>
+                <p className="mt-1 text-sm text-(--lingo-text-muted)">{current.sentenceEnglish}</p>
               </div>
             )}
             <div className="mt-4 flex items-center justify-center gap-3">
@@ -496,7 +496,7 @@ export default function PronunciationSessionPage() {
               <button
                 type="button"
                 onClick={() => setHidden((h) => !h)}
-                className="flex items-center gap-1.5 text-xs font-bold text-[var(--lingo-text-muted)]"
+                className="flex items-center gap-1.5 text-xs font-bold text-(--lingo-text-muted)"
               >
                 {hidden ? <Eye size={14} /> : <EyeOff size={14} />}
                 {convertText(t(hidden ? "Show" : "Hide"))}
@@ -559,17 +559,17 @@ export default function PronunciationSessionPage() {
                 <Image src="/pronunciation/huahua-coaching.png" alt="" fill className="object-cover" />
               </div>
             </div>
-            <p className="text-center text-xs font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">
+            <p className="text-center text-xs font-bold uppercase tracking-[0.12em] text-(--lingo-blue)">
               {convertText(t("Let's fix one sound"))}
             </p>
             <div className="mt-4 flex items-center justify-center gap-3">
-              <span className="lingo-display text-5xl font-bold text-[var(--lingo-navy)]">
+              <span className="lingo-display text-5xl font-bold text-(--lingo-navy)">
                 {convertText(isolateTarget.practiceText)}
               </span>
               <SpeakerButton text={isolateTarget.practiceText} type="word" size="md" />
             </div>
             {(isolateTarget.practicePinyin || isolateTarget.pinyin) && (
-              <p className="mt-2 text-center text-sm text-[var(--lingo-text-muted)]">
+              <p className="mt-2 text-center text-sm text-(--lingo-text-muted)">
                 {isolateTarget.practicePinyin ?? isolateTarget.pinyin} {toneGlyph(isolateTarget.targetTone)}
               </p>
             )}
@@ -577,7 +577,7 @@ export default function PronunciationSessionPage() {
               isolateTarget.pinyin &&
               isolateTarget.citationPinyin &&
               isolateTarget.pinyin !== isolateTarget.citationPinyin && (
-                <p className="mt-2 text-center text-xs text-[var(--lingo-text-muted)]">
+                <p className="mt-2 text-center text-xs text-(--lingo-text-muted)">
                   {isolateTarget.hanzi} is spoken as {isolateTarget.pinyin} here — not{" "}
                   {isolateTarget.citationPinyin}.
                 </p>
@@ -590,7 +590,7 @@ export default function PronunciationSessionPage() {
               const tip = toneShapeTip(isolateTarget.targetTone);
               if (!guide && !tip) return null;
               return (
-                <ol className="mx-auto mt-5 max-w-md list-decimal space-y-2 rounded-2xl p-4 pl-8 text-sm text-[var(--lingo-text)]" style={{ background: "var(--lingo-sky-pale)" }}>
+                <ol className="mx-auto mt-5 max-w-md list-decimal space-y-2 rounded-2xl p-4 pl-8 text-sm text-(--lingo-text)" style={{ background: "var(--lingo-sky-pale)" }}>
                   {(guide?.steps ?? [tip!]).map((step) => (
                     <li key={step}>{step}</li>
                   ))}
@@ -620,7 +620,7 @@ export default function PronunciationSessionPage() {
             <button
               type="button"
               onClick={() => setPhase("sentence-before")}
-              className="mx-auto mt-5 block text-xs font-bold text-[var(--lingo-blue)]"
+              className="mx-auto mt-5 block text-xs font-bold text-(--lingo-blue)"
             >
               {convertText(t("Try the whole sentence again"))}
             </button>

@@ -62,7 +62,7 @@ function IslandArtwork({
     <span
       className={`relative block transition-[filter] duration-200 ease-out motion-reduce:transition-none ${
         lift
-          ? "motion-safe:group-hover:[filter:var(--island-hover-filter)] motion-safe:group-focus-visible:[filter:var(--island-hover-filter)]"
+          ? "motion-safe:group-hover:filter-(--island-hover-filter) motion-safe:group-focus-visible:filter-(--island-hover-filter)"
           : ""
       }`}
       style={{ width, height, filter, ["--island-hover-filter" as string]: hoverFilter }}
@@ -130,14 +130,14 @@ function Nameplate({
         </span>
       ) : null}
       <span
-        className={`block font-bold leading-[1.15] text-[var(--lingo-navy)] ${
+        className={`block font-bold leading-[1.15] text-(--lingo-navy) ${
           tone ? "truncate text-[10px]" : "line-clamp-2 text-[12px]"
         }`}
       >
         {title}
       </span>
       {meta ? (
-        <span className="mt-0.5 block truncate text-[10px] font-medium leading-tight text-[var(--lingo-text-muted)]">
+        <span className="mt-0.5 block truncate text-[10px] font-medium leading-tight text-(--lingo-text-muted)">
           {meta}
         </span>
       ) : null}
@@ -147,13 +147,13 @@ function Nameplate({
 
 function StepBadge({ step, completed, current }: { step: number; completed: boolean; current: boolean }) {
   const tone = completed
-    ? "bg-[var(--lingo-teal)] text-white"
+    ? "bg-(--lingo-teal) text-white"
     : current
       ? "bg-orange-500 text-white"
-      : "border border-[rgba(15,47,67,0.14)] bg-white text-[var(--lingo-navy)]";
+      : "border border-[rgba(15,47,67,0.14)] bg-white text-(--lingo-navy)";
   return (
     <span
-      className={`absolute left-0.5 top-0.5 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none shadow-sm ${tone}`}
+      className={`absolute left-0.5 top-0.5 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none shadow-xs ${tone}`}
     >
       {step}
     </span>
@@ -195,7 +195,7 @@ function MapNodeButton({
       onClick={() => {
         if (clickable) onActivate(node);
       }}
-      className="group absolute rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--lingo-navy)] enabled:cursor-pointer disabled:cursor-default enabled:hover:!z-[24] focus-visible:!z-[24]"
+      className="group absolute rounded-2xl outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-(--lingo-navy) enabled:cursor-pointer disabled:cursor-default enabled:hover:z-24! focus-visible:z-24!"
       style={{
         left: placement.anchorX * scale,
         top: placement.anchorY * scale,
@@ -208,7 +208,7 @@ function MapNodeButton({
       <span
         className={`relative block origin-bottom transition-transform duration-200 ease-out motion-reduce:transition-none ${
           clickable
-            ? "motion-safe:group-hover:[transform:translateY(-4px)_scale(1.03)] motion-safe:group-focus-visible:[transform:translateY(-4px)_scale(1.03)]"
+            ? "motion-safe:group-hover:transform-[translateY(-4px)_scale(1.03)] motion-safe:group-focus-visible:transform-[translateY(-4px)_scale(1.03)]"
             : ""
         }`}
       >
@@ -242,12 +242,12 @@ function MapNodeButton({
 
         <StepBadge step={placement.step} completed={node.completed} current={node.current} />
         {hskLevel && illustrated ? (
-          <span className="absolute left-0.5 top-6 z-10 rounded-full bg-blue-600 px-1.5 py-0.5 text-[8px] font-bold text-white shadow-sm">
+          <span className="absolute left-0.5 top-6 z-10 rounded-full bg-blue-600 px-1.5 py-0.5 text-[8px] font-bold text-white shadow-xs">
             HSK {hskLevel}
           </span>
         ) : null}
         {illustrated && node.current ? (
-          <span className="absolute right-0.5 top-0.5 z-10 rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow">
+          <span className="absolute right-0.5 top-0.5 z-10 rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">
             {t("Current")}
           </span>
         ) : null}
@@ -256,7 +256,7 @@ function MapNodeButton({
         ) : null}
         {node.completed ? (
           <span
-            className={`absolute z-10 flex items-center justify-center rounded-full bg-[var(--lingo-teal)] text-white shadow ${
+            className={`absolute z-10 flex items-center justify-center rounded-full bg-(--lingo-teal) text-white shadow ${
               illustrated ? "right-0.5 top-0.5 h-5 w-5" : "right-0 top-0 h-3.5 w-3.5"
             }`}
           >
@@ -265,7 +265,7 @@ function MapNodeButton({
         ) : null}
         {lockedLook ? (
           <span
-            className={`absolute z-10 flex items-center justify-center rounded-full bg-white/95 text-[var(--lingo-navy)] shadow ${
+            className={`absolute z-10 flex items-center justify-center rounded-full bg-white/95 text-(--lingo-navy) shadow ${
               illustrated ? "right-0.5 top-0.5 h-5 w-5" : "right-0 top-0 h-3.5 w-3.5"
             }`}
           >

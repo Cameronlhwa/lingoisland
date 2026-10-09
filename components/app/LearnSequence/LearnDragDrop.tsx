@@ -144,7 +144,7 @@ export default function LearnDragDrop({
     return (
       <div className="flex justify-center">
         <LearnSequenceCard className="max-w-md text-center">
-          <p className="lingo-display text-2xl text-[var(--lingo-navy)]">
+          <p className="lingo-display text-2xl text-(--lingo-navy)">
             Perfect! 🎉
           </p>
           <PrimaryButton className="mt-8 w-full" onClick={onComplete}>
@@ -157,7 +157,7 @@ export default function LearnDragDrop({
 
   return (
     <LearnSequenceCard>
-      <h2 className="lingo-display mb-2 text-center text-xl text-[var(--lingo-navy)] sm:text-2xl">
+      <h2 className="lingo-display mb-2 text-center text-xl text-(--lingo-navy) sm:text-2xl">
         Match the pairs
       </h2>
       <p
@@ -176,7 +176,7 @@ export default function LearnDragDrop({
       <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="space-y-3">
           <h3
-            className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]"
+            className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)"
             style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
           >
             English
@@ -249,7 +249,7 @@ export default function LearnDragDrop({
 
         <div className="space-y-3">
           <h3
-            className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]"
+            className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-teal)"
             style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
           >
             {isA0 ? "Pinyin" : "Chinese"}
@@ -297,7 +297,7 @@ export default function LearnDragDrop({
                 <div className="flex min-w-0 flex-1 items-baseline gap-2">
                   {isA0 ? (
                     <span
-                      className="text-2xl font-semibold text-[var(--lingo-blue)] md:text-[28px]"
+                      className="text-2xl font-semibold text-(--lingo-blue) md:text-[28px]"
                       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
                     >
                       {word.pinyin}
@@ -305,12 +305,12 @@ export default function LearnDragDrop({
                   ) : (
                     <>
                       <span
-                        className="lingo-display text-lg font-medium text-[var(--lingo-navy)]"
+                        className="lingo-display text-lg font-medium text-(--lingo-navy)"
                       >
                         {convertText(word.hanzi)}
                       </span>
                       <span
-                        className="truncate text-sm text-[var(--lingo-text-muted)]"
+                        className="truncate text-sm text-(--lingo-text-muted)"
                         style={{
                           fontFamily: "'DM Sans', system-ui, sans-serif",
                         }}
@@ -335,11 +335,11 @@ export default function LearnDragDrop({
                           clearMatchForEnglish(dropMatches[word.hanzi]);
                         }
                       }}
-                      className={`text-sm text-[var(--lingo-text-muted)] ${
+                      className={`text-sm text-(--lingo-text-muted) ${
                         !useTapMode && !checked
-                          ? "cursor-grab rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-2 py-0.5 active:cursor-grabbing"
+                          ? "cursor-grab rounded-full border border-(--lingo-accent-border) bg-(--lingo-sky-pale) px-2 py-0.5 active:cursor-grabbing"
                           : useTapMode && !checked
-                            ? "cursor-pointer rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-2 py-0.5"
+                            ? "cursor-pointer rounded-full border border-(--lingo-accent-border) bg-(--lingo-sky-pale) px-2 py-0.5"
                             : ""
                       }`}
                       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}

@@ -56,7 +56,7 @@ export default function BuildUnitPage() {
       <div className="animate-bounce" aria-hidden>
         <AppLogo size="md" />
       </div>
-      <h1 className="lingo-display mt-6 text-2xl text-[var(--lingo-navy)]">
+      <h1 className="lingo-display mt-6 text-2xl text-(--lingo-navy)">
         {t("Building your unit…")}
       </h1>
       <ul className="mt-6 w-full max-w-sm space-y-2 text-left">
@@ -83,7 +83,7 @@ export default function BuildUnitPage() {
               setError(null);
               router.refresh();
             }}
-            className="mt-3 rounded-lg bg-[var(--lingo-navy)] px-5 py-2.5 text-sm font-bold text-white"
+            className="mt-3 rounded-lg bg-(--lingo-navy) px-5 py-2.5 text-sm font-bold text-white"
           >
             {t("Try again")}
           </button>

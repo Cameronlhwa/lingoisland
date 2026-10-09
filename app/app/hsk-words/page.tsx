@@ -171,11 +171,11 @@ export default function HskWordsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 md:px-8">
       <h1
-        className={`mb-1 text-2xl text-gray-900 ${isHskApp ? "lingo-display text-[30px] text-[var(--lingo-navy)] sm:text-[34px]" : "font-black"}`}
+        className={`mb-1 text-2xl text-gray-900 ${isHskApp ? "lingo-display text-[30px] text-(--lingo-navy) sm:text-[34px]" : "font-black"}`}
       >
         {pageTitle}
       </h1>
-      <p className={`mb-6 text-sm ${isHskApp ? "text-[var(--lingo-text-muted)]" : "text-gray-400"}`}>
+      <p className={`mb-6 text-sm ${isHskApp ? "text-(--lingo-text-muted)" : "text-gray-400"}`}>
         {pageDescription}
       </p>
 
@@ -229,7 +229,7 @@ export default function HskWordsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={convertText(t("Search hanzi, pinyin, or English…"))}
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-hidden"
         />
       </div>
 
@@ -302,7 +302,7 @@ function WordDetailModal({ word, onClose }: { word: HskWord; onClose: () => void
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-200 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
       <div

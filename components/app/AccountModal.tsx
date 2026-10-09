@@ -613,7 +613,7 @@ export default function AccountModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 p-4"
       role="button"
       tabIndex={0}
       onClick={onClose}
@@ -647,7 +647,7 @@ export default function AccountModal({
             onClick={() => setActiveTab("subscription")}
             className={`rounded-full px-4 py-1.5 transition ${
               activeTab === "subscription"
-                ? "bg-white text-gray-900 shadow-sm"
+                ? "bg-white text-gray-900 shadow-xs"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -657,7 +657,7 @@ export default function AccountModal({
             onClick={() => setActiveTab("profile")}
             className={`rounded-full px-4 py-1.5 transition ${
               activeTab === "profile"
-                ? "bg-white text-gray-900 shadow-sm"
+                ? "bg-white text-gray-900 shadow-xs"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -699,7 +699,7 @@ export default function AccountModal({
                     disabled={nameSaving}
                     placeholder="Your name"
                     autoComplete="name"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors focus:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
                   />
                 </div>
                 <div className="text-sm text-gray-600">
@@ -723,7 +723,7 @@ export default function AccountModal({
                   value={cefrLevel}
                   onChange={(e) => handleLevelChange(e.target.value)}
                   disabled={levelLoading}
-                  className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors focus:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
                 >
                   {PROFILE_LEVEL_OPTIONS.map((opt) => (
                     <option key={opt.cefr} value={opt.cefr}>
@@ -943,7 +943,7 @@ export default function AccountModal({
             {entitlements && hasAnyProAccess(entitlements.plan) ? (
               // Pro user - show success/confirmation design
               <div
-                className="relative min-h-[360px] overflow-hidden rounded-2xl border border-emerald-200 p-7 text-gray-900 shadow-sm"
+                className="relative min-h-[360px] overflow-hidden rounded-2xl border border-emerald-200 p-7 text-gray-900 shadow-xs"
                 style={{
                   background: "linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)",
                 }}
@@ -968,7 +968,7 @@ export default function AccountModal({
                   <p className="mt-2 text-sm text-gray-700">
                     You have full access to all LingoIsland features.
                   </p>
-                  <div className="mt-7 rounded-2xl border border-gray-200 bg-white/80 p-5 text-sm shadow-lg backdrop-blur-sm">
+                  <div className="mt-7 rounded-2xl border border-gray-200 bg-white/80 p-5 text-sm shadow-lg backdrop-blur-xs">
                     <p className="font-semibold text-gray-900">
                       Your Pro Benefits
                     </p>
@@ -988,7 +988,7 @@ export default function AccountModal({
             ) : (
               // Free user - show upgrade prompt
               <div
-                className="relative min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 p-7 text-gray-900 shadow-sm"
+                className="relative min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 p-7 text-gray-900 shadow-xs"
                 style={{
                   background: "linear-gradient(to bottom, #EAF6FF 0%, #CFEFFF 50%, #B7E5FF 100%)",
                 }}
@@ -1010,7 +1010,7 @@ export default function AccountModal({
                   <p className="mt-2 text-sm text-gray-700">
                     Unlock unlimited stories, decks, and focused practice.
                   </p>
-                  <div className="mt-7 rounded-2xl border border-gray-200 bg-white/80 p-5 text-sm shadow-lg backdrop-blur-sm">
+                  <div className="mt-7 rounded-2xl border border-gray-200 bg-white/80 p-5 text-sm shadow-lg backdrop-blur-xs">
                     <p className="font-semibold text-gray-900">
                       What you get
                     </p>
@@ -1209,7 +1209,7 @@ export default function AccountModal({
       </div>
 
       {cancelOpen ? (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-110 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -1250,7 +1250,7 @@ export default function AccountModal({
                   value={details}
                   onChange={(event) => setDetails(event.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-gray-400 focus:outline-hidden"
                   placeholder="Optional"
                 />
               </div>

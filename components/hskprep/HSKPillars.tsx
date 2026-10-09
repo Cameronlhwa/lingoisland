@@ -103,7 +103,7 @@ function PillarCard({
       {showCapybara && (
         <CapybaraPeek
           width={105}
-          className="hidden sm:block max-md:!w-[88px] max-md:!-top-[28px] max-md:!right-3"
+          className="hidden sm:block max-md:w-[88px]! max-md:top-[-28px]! max-md:right-3!"
           style={{ top: -34, right: 18 }}
         />
       )}

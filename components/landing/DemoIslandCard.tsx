@@ -115,7 +115,7 @@ export default function DemoIslandCard() {
               onClick={() => setLevel(item)}
               className={`rounded-full px-3 py-1 font-medium transition-all ${
                 level === item
-                  ? "bg-white text-gray-900 shadow-sm"
+                  ? "bg-white text-gray-900 shadow-xs"
                   : "text-gray-400 hover:text-white"
               }`}
             >
@@ -155,7 +155,7 @@ export default function DemoIslandCard() {
                 <div className="mt-2">
                   <p className="text-sm text-gray-300">
                     {before}
-                    <span className="rounded bg-gray-700 px-1 text-white">
+                    <span className="rounded-sm bg-gray-700 px-1 text-white">
                       {word.highlight}
                     </span>
                     {after ?? ""}

@@ -47,19 +47,19 @@ export default function LearnSequence({
   }, []);
 
   const overlay = (
-    <div className="hsk-app-theme lingo-body fixed inset-0 z-[100] overflow-y-auto bg-white">
-      <header className="sticky top-0 z-10 border-b border-[var(--lingo-accent-border)] bg-white/95 backdrop-blur-sm">
+    <div className="hsk-app-theme lingo-body fixed inset-0 z-100 overflow-y-auto bg-white">
+      <header className="sticky top-0 z-10 border-b border-(--lingo-accent-border) bg-white/95 backdrop-blur-xs">
         <div className="mx-auto flex max-w-3xl items-end justify-between gap-4 px-4 py-5 sm:px-6">
           <div>
             <LearnEyebrow>{t("Getting started")}</LearnEyebrow>
-            <h1 className="lingo-display mt-1.5 text-[30px] leading-tight text-[var(--lingo-navy)] sm:text-[34px]">
+            <h1 className="lingo-display mt-1.5 text-[30px] leading-tight text-(--lingo-navy) sm:text-[34px]">
               {t("Step")} {stepIndex + 1} {t("of")} 3 — {t(STEP_LABELS[step])}
             </h1>
           </div>
           <button
             type="button"
             onClick={onComplete}
-            className="mb-1 shrink-0 text-sm font-bold text-[var(--lingo-blue)] underline-offset-2 hover:text-[var(--lingo-navy)] hover:underline"
+            className="mb-1 shrink-0 text-sm font-bold text-(--lingo-blue) underline-offset-2 hover:text-(--lingo-navy) hover:underline"
           >
             {t("Skip for now")}
           </button>

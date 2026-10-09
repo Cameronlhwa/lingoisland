@@ -48,7 +48,7 @@ export default function PronunciationFeedback({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-start gap-4">
-        <div className="relative hidden h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl sm:block">
+        <div className="relative hidden h-20 w-20 shrink-0 overflow-hidden rounded-2xl sm:block">
           <Image
             src={isStrong ? "/pronunciation/huahua-celebrating.png" : "/pronunciation/huahua-coaching.png"}
             alt=""
@@ -57,16 +57,16 @@ export default function PronunciationFeedback({
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-blue)">
             {mode === "sentence" ? "Sentence" : mode === "isolate" ? "Sound check" : "Word"}
           </p>
-          <h2 className="lingo-display mt-1 text-2xl font-bold text-[var(--lingo-navy)]">
+          <h2 className="lingo-display mt-1 text-2xl font-bold text-(--lingo-navy)">
             {feedbackHeadline(band)}
           </h2>
-          <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">{encouragement}</p>
+          <p className="mt-1 text-sm text-(--lingo-text-muted)">{encouragement}</p>
         </div>
         <div
-          className="lingo-display flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl text-lg font-bold"
+          className="lingo-display flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold"
           style={scoreTierStyle(result.overallScore)}
         >
           {result.overallScore === null ? "—" : Math.round(result.overallScore)}
@@ -99,27 +99,27 @@ export default function PronunciationFeedback({
           className="rounded-[22px] border p-4"
           style={{ borderColor: "var(--lingo-border)", background: "var(--lingo-sky-pale)" }}
         >
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-(--lingo-blue)">
             Focus on this
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-3">
-            <span className="lingo-display text-3xl font-bold text-[var(--lingo-navy)]">{focus.practiceText}</span>
+            <span className="lingo-display text-3xl font-bold text-(--lingo-navy)">{focus.practiceText}</span>
             <div>
-              <p className="text-sm font-semibold text-[var(--lingo-navy)]">
+              <p className="text-sm font-semibold text-(--lingo-navy)">
                 {focus.practicePinyin ?? focus.pinyin ?? focus.hanzi}
                 {focus.targetTone != null && (
-                  <span className="ml-1.5 text-[var(--lingo-text-muted)]">
+                  <span className="ml-1.5 text-(--lingo-text-muted)">
                     {toneGlyph(focus.targetTone)} {toneName(focus.targetTone)}
                   </span>
                 )}
               </p>
               {focus.sandhiApplied && focus.pinyin && focus.citationPinyin && focus.pinyin !== focus.citationPinyin && (
-                <p className="mt-1 text-xs text-[var(--lingo-text-muted)]">
+                <p className="mt-1 text-xs text-(--lingo-text-muted)">
                   {focus.hanzi} is spoken as {focus.pinyin} here — not {focus.citationPinyin}.
                 </p>
               )}
               {(tip || guide?.shortTip) && (
-                <p className="mt-1 max-w-md text-sm leading-relaxed text-[var(--lingo-text)]">
+                <p className="mt-1 max-w-md text-sm leading-relaxed text-(--lingo-text)">
                   {tip ?? guide?.shortTip}
                 </p>
               )}
@@ -127,7 +127,7 @@ export default function PronunciationFeedback({
             <SpeakerButton text={focus.practiceText} type="word" size="md" />
           </div>
           {guide?.commonMistake && (
-            <p className="mt-3 text-xs text-[var(--lingo-text-muted)]">
+            <p className="mt-3 text-xs text-(--lingo-text-muted)">
               Common slip: {guide.commonMistake}
             </p>
           )}
@@ -139,7 +139,7 @@ export default function PronunciationFeedback({
           <button
             type="button"
             onClick={() => new Audio(recordedAudioUrl).play()}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--lingo-accent-border)] bg-white px-3.5 py-2.5 text-xs font-bold text-[var(--lingo-navy)]"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-(--lingo-accent-border) bg-white px-3.5 py-2.5 text-xs font-bold text-(--lingo-navy)"
           >
             <Volume2 size={14} /> Listen back
           </button>
@@ -147,7 +147,7 @@ export default function PronunciationFeedback({
         <button
           type="button"
           onClick={onRetry}
-          className="rounded-xl border border-[var(--lingo-accent-border)] bg-white px-3.5 py-2.5 text-xs font-bold text-[var(--lingo-navy)]"
+          className="rounded-xl border border-(--lingo-accent-border) bg-white px-3.5 py-2.5 text-xs font-bold text-(--lingo-navy)"
         >
           Try again
         </button>
@@ -155,7 +155,7 @@ export default function PronunciationFeedback({
           <button
             type="button"
             onClick={() => onIsolateSyllable(focus)}
-            className="rounded-xl bg-[var(--lingo-navy)] px-3.5 py-2.5 text-xs font-bold text-white"
+            className="rounded-xl bg-(--lingo-navy) px-3.5 py-2.5 text-xs font-bold text-white"
           >
             Practice {focus.practiceText}
           </button>
@@ -165,7 +165,7 @@ export default function PronunciationFeedback({
       <button
         type="button"
         onClick={onContinue}
-        className="w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white shadow-sm"
+        className="w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white shadow-xs"
         style={{ background: "var(--lingo-accent-gradient)" }}
       >
         {continueLabel}

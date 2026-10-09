@@ -75,26 +75,26 @@ export default function DailyStoryCard({
       >
         <div className="relative z-10 flex flex-col sm:min-h-[252px] sm:flex-row">
           <div className="flex w-full flex-col justify-center px-6 py-8 sm:max-w-[54%] sm:px-10 sm:py-10">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-(--lingo-blue)">
               {convertText(t("Today's story"))}
             </p>
             {story ? (
               <>
-                <h2 className="lingo-display mt-2 text-2xl font-bold text-[var(--lingo-navy)] md:text-[30px]">
+                <h2 className="lingo-display mt-2 text-2xl font-bold text-(--lingo-navy) md:text-[30px]">
                   {convertText(story.title)}
                 </h2>
-                <p className="mt-2 line-clamp-2 max-w-md text-sm leading-relaxed text-[var(--lingo-text-muted)] md:text-base">
+                <p className="mt-2 line-clamp-2 max-w-md text-sm leading-relaxed text-(--lingo-text-muted) md:text-base">
                   {convertText(story.story_zh)}
                 </p>
               </>
             ) : (
               <>
-                <h2 className="lingo-display mt-2 text-2xl font-bold text-[var(--lingo-navy)] md:text-[30px]">
+                <h2 className="lingo-display mt-2 text-2xl font-bold text-(--lingo-navy) md:text-[30px]">
                   {loading
                     ? convertText(t("Generating..."))
                     : convertText(t("Today's story is on the way."))}
                 </h2>
-                <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--lingo-text-muted)] md:text-base">
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-(--lingo-text-muted) md:text-base">
                   {convertText(t("Review words you've been learning in a short story built for today."))}
                 </p>
               </>
@@ -102,7 +102,7 @@ export default function DailyStoryCard({
             <Link
               href={href}
               onClick={onRead}
-              className="mt-6 inline-flex w-fit rounded-2xl bg-[var(--lingo-blue)] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[var(--lingo-blue-bright)]"
+              className="mt-6 inline-flex w-fit rounded-2xl bg-(--lingo-blue) px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-colors hover:bg-(--lingo-blue-bright)"
             >
               {convertText(t("Read"))}
             </Link>

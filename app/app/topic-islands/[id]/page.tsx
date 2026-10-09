@@ -366,7 +366,7 @@ export default function TopicIslandDetailPage() {
         </svg>
       </button>
       <div className="flex items-start gap-3 pr-10">
-        <div className="mt-0.5 flex-shrink-0">
+        <div className="mt-0.5 shrink-0">
           <svg
             className="h-6 w-6 text-white"
             fill="none"
@@ -1332,7 +1332,7 @@ export default function TopicIslandDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {journeyContext?.order === 1 ? (
-        <div className="sticky top-16 z-20 hidden items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:top-0 md:flex md:px-8">
+        <div className="sticky top-16 z-20 hidden items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm md:top-0 md:flex md:px-8">
           <AppLogo size="sm" />
           <span className="rounded-full bg-teal-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
             Get 80% on a quiz to achieve the next island in the journey!
@@ -1381,7 +1381,7 @@ export default function TopicIslandDetailPage() {
                           handleCancelEditTitle();
                         }
                       }}
-                      className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-4xl font-bold tracking-tight text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-4xl font-bold tracking-tight text-gray-900 focus:border-gray-500 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                       autoFocus
                       disabled={savingTitle}
                     />
@@ -1422,7 +1422,7 @@ export default function TopicIslandDetailPage() {
                   {island.status === "ready" && words.length > 0 && (
                     <button
                       onClick={() => setShowAddAllWordsModal(true)}
-                      className="rounded-lg border border-gray-900 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 shadow-sm"
+                      className="rounded-lg border border-gray-900 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 shadow-xs"
                     >
                       Add all words to quiz
                     </button>
@@ -1450,7 +1450,7 @@ export default function TopicIslandDetailPage() {
 
               {/* Grammar Focus - Sleek Design */}
               {grammarFocus.length > 0 && (
-                <div className="mb-10 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="mb-10 rounded-xl border border-gray-200 bg-white p-6 shadow-xs">
                   <div className="mb-5">
                     <h2 className="text-xl font-semibold text-gray-900">
                       Grammar Focus
@@ -1568,7 +1568,7 @@ export default function TopicIslandDetailPage() {
 
               {/* Error Message */}
               {island.status === "error" && (
-                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-6 shadow-sm">
+                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-6 shadow-xs">
                   <div className="mb-4">
                     <p className="mb-2 text-base font-medium text-red-900">
                       Error generating words
@@ -1648,7 +1648,7 @@ export default function TopicIslandDetailPage() {
                               english: word.english,
                             });
                           }}
-                          className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+                          className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs transition-all hover:border-gray-300 hover:shadow-md"
                           title="Ask 华华 about this word"
                         >
                           <img
@@ -1664,7 +1664,7 @@ export default function TopicIslandDetailPage() {
                             handleAddToQuizClick("word", word.id);
                           }}
                           disabled={addedItems.has(`word-${word.id}`)}
-                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
+                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs transition-all hover:border-gray-300 hover:shadow-md disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
                         >
                           {addedItems.has(`word-${word.id}`)
                             ? "✓ In quiz"
@@ -1676,7 +1676,7 @@ export default function TopicIslandDetailPage() {
                             handleMarkKnown(word.id);
                           }}
                           disabled={markingKnown === word.id}
-                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs transition-all hover:border-gray-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {markingKnown === word.id
                             ? "Updating..."
@@ -1690,7 +1690,7 @@ export default function TopicIslandDetailPage() {
                         key={anchorId}
                         id={anchorId}
                         data-word-anchor="true"
-                        className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+                        className="rounded-xl border border-gray-200 bg-white p-6 shadow-xs"
                       >
                         {/* Word content */}
                         <div className="mb-6">
@@ -1821,7 +1821,7 @@ export default function TopicIslandDetailPage() {
                                       disabled={addedItems.has(
                                         `sentence-${sentence.id}`,
                                       )}
-                                      className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                                      className="ml-4 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-xs transition-all hover:border-gray-300 hover:shadow-md disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                                     >
                                       {addedItems.has(`sentence-${sentence.id}`)
                                         ? "✓ In quiz"
@@ -1843,7 +1843,7 @@ export default function TopicIslandDetailPage() {
                   {false && (
                     <div className="relative mt-8">
                       <div
-                        className="pointer-events-none select-none space-y-4 blur-sm"
+                        className="pointer-events-none select-none space-y-4 blur-xs"
                         aria-hidden
                       >
                         {[
@@ -1866,7 +1866,7 @@ export default function TopicIslandDetailPage() {
                         ].map((fake) => (
                           <div
                             key={fake.hanzi}
-                            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+                            className="rounded-xl border border-gray-200 bg-white p-4 shadow-xs"
                           >
                             <div className="mb-3 flex items-start justify-between gap-4">
                               <div className="flex-1">
@@ -1935,7 +1935,7 @@ export default function TopicIslandDetailPage() {
                   )}
                 </div>
               ) : island.status === "generating" ? (
-                <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
+                <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-12 text-center shadow-xs">
                   <div className="flex flex-col items-center gap-4">
                     <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
                     <p className="text-gray-700">
@@ -1944,7 +1944,7 @@ export default function TopicIslandDetailPage() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
+                <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-12 text-center shadow-xs">
                   <div className="flex flex-col items-center gap-3 text-gray-500">
                     <svg
                       className="h-6 w-6 animate-spin text-gray-400"
@@ -1980,7 +1980,7 @@ export default function TopicIslandDetailPage() {
               quizMode === null &&
               !showQuizResults ? (
                 <div className="mt-10 space-y-10">
-                  <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+                  <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-xs">
                     <div className="mb-5 flex justify-center" aria-hidden>
                       <BsCardChecklist className="h-12 w-12 text-[#121926]" />
                     </div>
@@ -2030,7 +2030,7 @@ export default function TopicIslandDetailPage() {
                     words.length >= 5
                       ? "mt-6"
                       : "mt-10"
-                  } rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden`}
+                  } rounded-xl border border-gray-200 bg-white shadow-xs overflow-hidden`}
                 >
                   {!showOnboardingIslandBottom && (
                     <div className="flex border-b border-gray-200">
@@ -2205,7 +2205,7 @@ export default function TopicIslandDetailPage() {
                             <select
                               value={addWordsLevel}
                               onChange={(e) => setAddWordsLevel(e.target.value)}
-                              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                             >
                               {PROFILE_LEVEL_OPTIONS.map((opt) => (
                                 <option key={opt.cefr} value={opt.cefr}>
@@ -2226,7 +2226,7 @@ export default function TopicIslandDetailPage() {
                                 setSuggestionsInput(e.target.value)
                               }
                               placeholder="Describe the type of words you want (optional)"
-                              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                             />
                             {alreadyInIslandSuggestions.length > 0 && (
                               <p className="mt-2 text-xs text-gray-500">
@@ -2243,7 +2243,7 @@ export default function TopicIslandDetailPage() {
                                 onChange={(e) =>
                                   setRecycleOldWords(e.target.checked)
                                 }
-                                className="h-4 w-4 rounded border-gray-300 text-gray-900 accent-gray-900 focus:ring-gray-200"
+                                className="h-4 w-4 rounded-sm border-gray-300 text-gray-900 accent-gray-900 focus:ring-gray-200"
                               />
                               Recycle existing words from this island into the
                               sentence examples of the new words
@@ -2372,12 +2372,12 @@ export default function TopicIslandDetailPage() {
                                           disabled={isLocked}
                                           tabIndex={isLocked ? -1 : 0}
                                           aria-disabled={isLocked}
-                                          className={`h-4 w-4 rounded border-gray-300 text-gray-900 accent-gray-900 focus:ring-gray-200 disabled:opacity-50 ${isLocked ? "pointer-events-none" : ""}`}
+                                          className={`h-4 w-4 rounded-sm border-gray-300 text-gray-900 accent-gray-900 focus:ring-gray-200 disabled:opacity-50 ${isLocked ? "pointer-events-none" : ""}`}
                                         />
                                         <div
                                           className={`flex-1 flex items-center gap-2 ${
                                             isLocked
-                                              ? "blur-sm select-none"
+                                              ? "blur-xs select-none"
                                               : ""
                                           }`}
                                         >
@@ -2960,7 +2960,7 @@ export default function TopicIslandDetailPage() {
               {/* Capybara teaser popup — shown once per session to anonymous users after a 5-word quiz */}
               {showCapybaraTeaser && (
                 <div
-                  className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+                  className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
                   onClick={() => setShowCapybaraTeaser(false)}
                 >
                   <div
@@ -3022,7 +3022,7 @@ export default function TopicIslandDetailPage() {
 
               {/* Add to Quiz Modal */}
               {showAddToQuizModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
                   <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
                     <h3 className="mb-2 text-xl font-semibold text-gray-900">
                       Add to Quiz
@@ -3047,7 +3047,7 @@ export default function TopicIslandDetailPage() {
                               setNewQuizIslandName(e.target.value)
                             }
                             placeholder="e.g., Basic Vocabulary"
-                            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                             autoFocus
                           />
                           <p className="mt-1 text-xs text-gray-500">
@@ -3092,7 +3092,7 @@ export default function TopicIslandDetailPage() {
                             onChange={(e) =>
                               setSelectedQuizIslandId(e.target.value)
                             }
-                            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm transition-colors focus:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
                           >
                             {quizIslands.length === 0 ? (
                               <option value="">No quiz islands yet</option>

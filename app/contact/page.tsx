@@ -37,7 +37,7 @@ export default function ContactPage() {
         <div className="mx-auto max-w-3xl px-6 py-12 md:px-12 md:py-16">
           <Link
             href="/"
-            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 rounded"
+            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 focus:outline-hidden focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 rounded-sm"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -45,7 +45,7 @@ export default function ContactPage() {
             Back to home
           </Link>
 
-          <div className="rounded-2xl bg-white/90 px-6 py-8 shadow-md backdrop-blur-sm md:bg-white/85 md:px-10 md:py-10">
+          <div className="rounded-2xl bg-white/90 px-6 py-8 shadow-md backdrop-blur-xs md:bg-white/85 md:px-10 md:py-10">
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900 md:text-4xl">Contact Us</h1>
             <p className="mt-3 text-[15px] text-gray-600 leading-relaxed">
               Have a question, feedback, or need help? We&apos;d love to hear from you. Fill out the form below or
@@ -99,7 +99,7 @@ export default function ContactPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
-                    className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-[#0B1B3A] focus:outline-none focus:ring-2 focus:ring-[#0B1B3A]/20"
+                    className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-xs transition focus:border-[#0B1B3A] focus:outline-hidden focus:ring-2 focus:ring-[#0B1B3A]/20"
                   />
                 </div>
                 <div>
@@ -113,7 +113,7 @@ export default function ContactPage() {
                     value={userEmail}
                     onChange={(e) => setUserEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-[#0B1B3A] focus:outline-none focus:ring-2 focus:ring-[#0B1B3A]/20"
+                    className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-xs transition focus:border-[#0B1B3A] focus:outline-hidden focus:ring-2 focus:ring-[#0B1B3A]/20"
                   />
                 </div>
               </div>
@@ -128,7 +128,7 @@ export default function ContactPage() {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="What is this about?"
-                  className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-[#0B1B3A] focus:outline-none focus:ring-2 focus:ring-[#0B1B3A]/20"
+                  className="mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-xs transition focus:border-[#0B1B3A] focus:outline-hidden focus:ring-2 focus:ring-[#0B1B3A]/20"
                 />
               </div>
 
@@ -143,7 +143,7 @@ export default function ContactPage() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Tell us how we can help..."
-                  className="mt-1.5 block w-full resize-none rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-[#0B1B3A] focus:outline-none focus:ring-2 focus:ring-[#0B1B3A]/20"
+                  className="mt-1.5 block w-full resize-none rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-xs transition focus:border-[#0B1B3A] focus:outline-hidden focus:ring-2 focus:ring-[#0B1B3A]/20"
                 />
               </div>
 
@@ -156,7 +156,7 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#0B1B3A] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#162d5c] focus:outline-none focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#0B1B3A] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-[#162d5c] focus:outline-hidden focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 disabled:opacity-60"
               >
                 Send Message
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

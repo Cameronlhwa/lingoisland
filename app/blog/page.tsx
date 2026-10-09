@@ -66,7 +66,7 @@ export default function BlogIndexPage() {
           <Link
             key={post.slug}
             href={`/blog/${post.slug}`}
-            className="group flex h-full flex-col rounded-2xl border border-[#2176AE]/12 bg-white/85 p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2176AE]/25 hover:shadow-md"
+            className="group flex h-full flex-col rounded-2xl border border-[#2176AE]/12 bg-white/85 p-6 shadow-xs transition hover:-translate-y-0.5 hover:border-[#2176AE]/25 hover:shadow-md"
             style={{ textDecoration: "none", color: "#071E2E" }}
           >
             <span

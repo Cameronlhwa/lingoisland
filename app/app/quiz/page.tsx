@@ -153,22 +153,22 @@ export default function QuizIslandsPage() {
     <div className="mx-auto max-w-[1120px] px-4 py-8 md:px-6">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-(--lingo-blue)">
             {convertText(t("Quiz"))}
           </p>
-          <h1 className="lingo-display mt-1 max-w-xl text-3xl font-bold text-[var(--lingo-navy)] sm:text-4xl">
+          <h1 className="lingo-display mt-1 max-w-xl text-3xl font-bold text-(--lingo-navy) sm:text-4xl">
             {convertText(t("Small quizzes."))}
             <br />
             {convertText(t("Big progress."))}
           </h1>
-          <p className="mt-2 max-w-lg text-sm leading-relaxed text-[var(--lingo-text-muted)]">
+          <p className="mt-2 max-w-lg text-sm leading-relaxed text-(--lingo-text-muted)">
             {convertText(t("Practice vocabulary from your islands and saved words."))}
           </p>
         </div>
         <button
           type="button"
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-[var(--lingo-navy)] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[var(--lingo-navy-soft)]"
+          className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-(--lingo-navy) px-5 py-3 text-sm font-bold text-white shadow-xs transition-colors hover:bg-(--lingo-navy-soft)"
         >
           <Plus size={16} aria-hidden />
           {convertText(t("Create Quiz Island"))}
@@ -183,16 +183,16 @@ export default function QuizIslandsPage() {
             boxShadow: "var(--lingo-shadow-card)",
           }}
         >
-          <h2 className="lingo-display text-xl font-bold text-[var(--lingo-navy)]">
+          <h2 className="lingo-display text-xl font-bold text-(--lingo-navy)">
             {convertText(t("Create your first quiz"))}
           </h2>
-          <p className="mt-2 max-w-sm text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-2 max-w-sm text-sm text-(--lingo-text-muted)">
             {convertText(t("Create your first quiz island to start practicing."))}
           </p>
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="mt-6 inline-flex items-center justify-center gap-1.5 rounded-2xl bg-[var(--lingo-navy)] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[var(--lingo-navy-soft)]"
+            className="mt-6 inline-flex items-center justify-center gap-1.5 rounded-2xl bg-(--lingo-navy) px-5 py-3 text-sm font-bold text-white shadow-xs transition-colors hover:bg-(--lingo-navy-soft)"
           >
             <Plus size={16} aria-hidden />
             {convertText(t("Create Quiz Island"))}
@@ -200,7 +200,7 @@ export default function QuizIslandsPage() {
         </div>
       ) : (
         <section>
-          <h2 className="lingo-display mb-4 text-xl font-bold text-[var(--lingo-navy)]">
+          <h2 className="lingo-display mb-4 text-xl font-bold text-(--lingo-navy)">
             {convertText(t("Your quiz decks"))}
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -226,17 +226,17 @@ export default function QuizIslandsPage() {
                       <Icon size={18} aria-hidden />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <h3 className="line-clamp-2 pr-6 text-base font-bold leading-snug text-[var(--lingo-navy)]">
+                      <h3 className="line-clamp-2 pr-6 text-base font-bold leading-snug text-(--lingo-navy)">
                         {convertText(island.name)}
                       </h3>
-                      <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">
+                      <p className="mt-1 text-sm text-(--lingo-text-muted)">
                         {convertText(t("Chinese"))} · {island.card_count}{" "}
                         {convertText(t(island.card_count !== 1 ? "cards" : "card"))}
                       </p>
                     </div>
                     <ChevronRight
                       size={18}
-                      className="mt-0.5 shrink-0 text-[var(--lingo-blue)] transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none"
+                      className="mt-0.5 shrink-0 text-(--lingo-blue) transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none"
                       aria-hidden
                     />
                   </Link>
@@ -248,7 +248,7 @@ export default function QuizIslandsPage() {
                       handleDelete(island.id);
                     }}
                     disabled={deletingIslandId === island.id}
-                    className="absolute right-3 top-3 rounded-full px-2 py-1 text-xs font-semibold text-[var(--lingo-text-muted)] opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100 disabled:opacity-50"
+                    className="absolute right-3 top-3 rounded-full px-2 py-1 text-xs font-semibold text-(--lingo-text-muted) opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100 disabled:opacity-50"
                     title={convertText(t("Delete island"))}
                   >
                     {deletingIslandId === island.id ? convertText(t("Deleting...")) : "×"}
@@ -261,7 +261,7 @@ export default function QuizIslandsPage() {
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
           <div
             className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[24px] border bg-white p-5 md:p-8"
             style={{
@@ -269,12 +269,12 @@ export default function QuizIslandsPage() {
               boxShadow: "var(--lingo-shadow-card)",
             }}
           >
-            <h2 className="lingo-display mb-6 text-2xl font-bold text-[var(--lingo-navy)]">
+            <h2 className="lingo-display mb-6 text-2xl font-bold text-(--lingo-navy)">
               {convertText(t("Create Quiz Island"))}
             </h2>
             <form onSubmit={handleCreate}>
               <div className="mb-6">
-                <label className="mb-2 block text-sm font-medium text-[var(--lingo-navy)]">
+                <label className="mb-2 block text-sm font-medium text-(--lingo-navy)">
                   {convertText(t("Name"))}
                 </label>
                 <input
@@ -282,12 +282,12 @@ export default function QuizIslandsPage() {
                   value={newIslandName}
                   onChange={(e) => setNewIslandName(e.target.value)}
                   placeholder={convertText(t("e.g., Basic Vocabulary"))}
-                  className="w-full rounded-xl border bg-white px-4 py-2.5 text-[var(--lingo-text)] focus:border-[var(--lingo-blue)] focus:outline-none"
+                  className="w-full rounded-xl border bg-white px-4 py-2.5 text-(--lingo-text) focus:border-(--lingo-blue) focus:outline-hidden"
                   style={{ borderColor: "var(--lingo-border)" }}
                   required
                   autoFocus
                 />
-                <p className="mt-1 text-xs text-[var(--lingo-text-muted)]">
+                <p className="mt-1 text-xs text-(--lingo-text-muted)">
                   {convertText(t("Quiz islands are for Chinese practice only"))}
                 </p>
               </div>
@@ -298,7 +298,7 @@ export default function QuizIslandsPage() {
                     setShowCreateModal(false);
                     setNewIslandName("");
                   }}
-                  className="flex-1 rounded-2xl border bg-white px-4 py-2.5 text-sm font-semibold text-[var(--lingo-navy)] transition-colors hover:bg-[var(--lingo-sky-pale)]"
+                  className="flex-1 rounded-2xl border bg-white px-4 py-2.5 text-sm font-semibold text-(--lingo-navy) transition-colors hover:bg-(--lingo-sky-pale)"
                   style={{ borderColor: "var(--lingo-border)" }}
                   disabled={creating}
                 >
@@ -307,7 +307,7 @@ export default function QuizIslandsPage() {
                 <button
                   type="submit"
                   disabled={creating || !newIslandName.trim()}
-                  className="flex-1 rounded-2xl bg-[var(--lingo-navy)] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--lingo-navy-soft)] disabled:opacity-50"
+                  className="flex-1 rounded-2xl bg-(--lingo-navy) px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-(--lingo-navy-soft) disabled:opacity-50"
                 >
                   {creating ? convertText(t("Creating...")) : convertText(t("Create"))}
                 </button>

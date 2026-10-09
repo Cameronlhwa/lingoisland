@@ -182,7 +182,7 @@ export default function RecordButton({
           <span className="absolute inset-0 animate-ping rounded-full bg-sky-300/40" />
           <span className="h-3.5 w-3.5 animate-pulse rounded-full bg-white" />
         </div>
-        <p className="text-sm font-semibold text-[var(--lingo-text-muted)]">Checking your pronunciation…</p>
+        <p className="text-sm font-semibold text-(--lingo-text-muted)">Checking your pronunciation…</p>
       </div>
     );
   }
@@ -219,7 +219,7 @@ export default function RecordButton({
       >
         <Mic size={28} />
       </button>
-      <p className="text-sm font-bold text-[var(--lingo-navy)]">Tap to record</p>
+      <p className="text-sm font-bold text-(--lingo-navy)">Tap to record</p>
     </div>
   );
 }

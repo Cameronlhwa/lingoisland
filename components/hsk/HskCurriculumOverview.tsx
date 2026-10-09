@@ -96,10 +96,10 @@ export default function HskCurriculumOverview({
     return (
       <div className="mx-auto max-w-md px-6 py-16 text-center">
         <p className="mb-3 text-4xl">🧭</p>
-        <h2 className="lingo-display text-2xl text-[var(--lingo-navy)]">
+        <h2 className="lingo-display text-2xl text-(--lingo-navy)">
           Your HSK path isn&apos;t set up yet
         </h2>
-        <p className="mt-2 text-sm text-[var(--lingo-text-muted)]">
+        <p className="mt-2 text-sm text-(--lingo-text-muted)">
           {error ?? "Answer a few quick questions and we'll build your first unit."}
         </p>
       </div>
@@ -112,13 +112,13 @@ export default function HskCurriculumOverview({
     <div className="min-h-screen bg-white px-4 py-6 md:px-8 md:py-8">
       <div className="mx-auto w-full max-w-3xl">
         <header className="mb-6">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-teal)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-(--lingo-teal)">
             Your curriculum
           </p>
-          <h1 className="lingo-display mt-1 text-3xl text-[var(--lingo-navy)]">
+          <h1 className="lingo-display mt-1 text-3xl text-(--lingo-navy)">
             My HSK Path
           </h1>
-          <p className="mt-1.5 text-sm text-[var(--lingo-text-muted)]">
+          <p className="mt-1.5 text-sm text-(--lingo-text-muted)">
             {c.current_level_label ?? formatHskLevel(c.current_milestone_level)}
             <span className="mx-1.5 opacity-40">→</span>
             {c.target_level_label ?? formatHskLevel(c.target_level)}
@@ -169,29 +169,29 @@ export default function HskCurriculumOverview({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-text-muted)]">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-(--lingo-text-muted)">
                           Unit {unit.unit_number}
                         </span>
-                        <span className="rounded-full bg-[var(--lingo-sky-pale)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--lingo-blue)]">
+                        <span className="rounded-full bg-(--lingo-sky-pale) px-1.5 py-0.5 text-[10px] font-bold text-(--lingo-blue)">
                           {formatHskLevel(unit.milestone_level)}
                         </span>
                         {unit.interest_tag && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[var(--lingo-text-muted)]">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-(--lingo-text-muted)">
                             <Sparkles className="h-3 w-3" />
                             {unit.interest_tag}
                           </span>
                         )}
                       </div>
-                      <h3 className="mt-0.5 text-[15px] font-bold text-[var(--lingo-navy)]">
+                      <h3 className="mt-0.5 text-[15px] font-bold text-(--lingo-navy)">
                         {unit.title}
                       </h3>
                       {unit.title_zh && (
-                        <p className="text-xs text-[var(--lingo-text-muted)]">
+                        <p className="text-xs text-(--lingo-text-muted)">
                           {unit.title_zh}
                         </p>
                       )}
                       {locked ? (
-                        <p className="mt-1.5 text-xs text-[var(--lingo-text-muted)]">
+                        <p className="mt-1.5 text-xs text-(--lingo-text-muted)">
                           Built when you get here · ~45 words
                         </p>
                       ) : (

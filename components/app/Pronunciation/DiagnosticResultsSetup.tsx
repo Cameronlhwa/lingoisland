@@ -46,7 +46,7 @@ function ScoreRing({ score }: { score: number | null }) {
           style={{ transition: "stroke-dashoffset 900ms ease" }}
         />
       </svg>
-      <span className="lingo-display absolute inset-0 flex items-center justify-center text-[32px] font-bold text-[var(--lingo-navy)]">
+      <span className="lingo-display absolute inset-0 flex items-center justify-center text-[32px] font-bold text-(--lingo-navy)">
         {score == null ? "—" : Math.round(score)}
       </span>
     </div>
@@ -88,10 +88,10 @@ function StepCard({
       >
         <div className="grid grid-cols-1 items-center gap-4 p-5 md:grid-cols-[minmax(0,280px)_minmax(0,1fr)] md:gap-4 md:py-5 md:pl-5 md:pr-6">
           <div className="relative z-10 flex min-w-0 flex-col justify-center">
-            <h2 className="text-[17px] font-bold leading-snug text-[var(--lingo-navy)]">{title}</h2>
-            <p className="mt-1 text-[13px] leading-relaxed text-[var(--lingo-text-muted)]">{copy}</p>
+            <h2 className="text-[17px] font-bold leading-snug text-(--lingo-navy)">{title}</h2>
+            <p className="mt-1 text-[13px] leading-relaxed text-(--lingo-text-muted)">{copy}</p>
             {extra ? (
-              <p className="mt-0.5 text-[12px] text-[var(--lingo-text-muted)]">{extra}</p>
+              <p className="mt-0.5 text-[12px] text-(--lingo-text-muted)">{extra}</p>
             ) : null}
             <Image
               src={imageSrc}
@@ -141,19 +141,19 @@ export default function DiagnosticResultsSetup({
   return (
     <div className="mx-auto w-full max-w-[920px] px-4 py-10 md:px-6 md:py-12">
       <div className="text-center">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--lingo-blue)">
           Your profile
         </p>
-        <h1 className="lingo-display mt-2 text-[28px] font-bold text-[var(--lingo-navy)] md:text-[32px]">
+        <h1 className="lingo-display mt-2 text-[28px] font-bold text-(--lingo-navy) md:text-[32px]">
           Your pronunciation profile
         </h1>
         <div className="mt-5">
           <ScoreRing score={overallScore} />
         </div>
-        <p className="mt-3 text-sm font-semibold text-[var(--lingo-navy)]">
+        <p className="mt-3 text-sm font-semibold text-(--lingo-navy)">
           You already have a solid base.
         </p>
-        <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">
+        <p className="mt-1 text-sm text-(--lingo-text-muted)">
           We&apos;ll personalize practice around these sounds.
         </p>
       </div>
@@ -172,7 +172,7 @@ export default function DiagnosticResultsSetup({
             imageSrc="/pronunciation/pronunciation-step-target.png"
           >
             {weaknesses.length === 0 ? (
-              <p className="text-sm text-[var(--lingo-text-muted)]">
+              <p className="text-sm text-(--lingo-text-muted)">
                 Looking solid overall — daily practice will keep you sharp.
               </p>
             ) : (
@@ -180,12 +180,12 @@ export default function DiagnosticResultsSetup({
                 {weaknesses.map((tag) => (
                   <li
                     key={tag.tag}
-                    className="flex h-11 items-center justify-between rounded-xl bg-[var(--lingo-sky-pale)] px-3.5"
+                    className="flex h-11 items-center justify-between rounded-xl bg-(--lingo-sky-pale) px-3.5"
                   >
-                    <span className="truncate pr-3 text-sm font-bold text-[var(--lingo-navy)]">
+                    <span className="truncate pr-3 text-sm font-bold text-(--lingo-navy)">
                       {tag.label}
                     </span>
-                    <span className="text-sm font-semibold tabular-nums text-[var(--lingo-text-muted)]">
+                    <span className="text-sm font-semibold tabular-nums text-(--lingo-text-muted)">
                       {Math.round(tag.score)}
                     </span>
                   </li>
@@ -211,8 +211,8 @@ export default function DiagnosticResultsSetup({
                     onClick={() => setMinutes(option)}
                     className={`h-12 rounded-xl text-sm font-bold transition-colors ${
                       selected
-                        ? "bg-[var(--lingo-navy)] text-white"
-                        : "bg-[var(--lingo-sky-pale)] text-[var(--lingo-navy)] hover:bg-[#d7f1f7]"
+                        ? "bg-(--lingo-navy) text-white"
+                        : "bg-(--lingo-sky-pale) text-(--lingo-navy) hover:bg-[#d7f1f7]"
                     }`}
                   >
                     {option} min
@@ -238,7 +238,7 @@ export default function DiagnosticResultsSetup({
               >
                 {saving ? "Starting…" : "Build my personalized practice →"}
               </button>
-              <p className="mt-2 text-center text-[12px] text-[var(--lingo-text-muted)]">
+              <p className="mt-2 text-center text-[12px] text-(--lingo-text-muted)">
                 You can always adjust your goals in settings.
               </p>
             </div>

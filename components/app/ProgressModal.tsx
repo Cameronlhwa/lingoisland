@@ -118,7 +118,7 @@ export default function ProgressModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs"
       onClick={onClose}
     >
       <div
@@ -186,7 +186,7 @@ export default function ProgressModal({
               placeholder="Search cards..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-gray-500 focus:outline-hidden focus:ring-2 focus:ring-gray-200"
             />
           </div>
         </div>
@@ -243,7 +243,7 @@ export default function ProgressModal({
                 return (
                   <div
                     key={card.id}
-                    className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+                    className="rounded-lg border border-gray-200 bg-white p-4 shadow-xs transition-all hover:border-gray-300 hover:shadow-md"
                   >
                     <div className="mb-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
