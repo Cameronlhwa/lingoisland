@@ -127,7 +127,7 @@ export default function WeakSoundsReviewPage() {
 
       <div className="relative mb-6 h-44 overflow-hidden rounded-[28px] sm:h-52">
         <Image
-          src="/animation-photos/pronunciation-weak-spots.png"
+          src="/pronunciation/pronunciation-weak-spots.png"
           alt=""
           fill
           priority

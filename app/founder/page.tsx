@@ -16,8 +16,8 @@ import { Users, Play } from "lucide-react";
 
 const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@cameronlim";
 const YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=Iwvsh9bs_Nc";
-const FOUNDER_IMAGE = "/Cameron Lim Profile Photo.jpg";
-const YOUTUBE_THUMBNAIL = "/Youtube Thumbnail.png";
+const FOUNDER_IMAGE = "/founder/cameron-lim-profile.jpg";
+const YOUTUBE_THUMBNAIL = "/founder/youtube-thumbnail.png";
 
 const CARD_SHADOW = "0 14px 40px rgba(44,105,128,0.08), 0 2px 8px rgba(44,105,128,0.05)";
 const SECTION_BG =

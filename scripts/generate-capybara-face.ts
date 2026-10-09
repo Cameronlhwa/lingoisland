@@ -113,7 +113,7 @@ async function retryWithBackoff<T>(
 
 async function main() {
   console.log("🦫 Capybara Face Profile Picture Generator");
-  console.log("Output: public/capybara-face.png");
+  console.log("Output: public/characters/capybara-face.png");
   console.log("Model: gemini-3-pro-image-preview (Nano Banana Pro)");
   console.log();
 
@@ -128,7 +128,7 @@ async function main() {
     process.exit(1);
   }
 
-  const outputDir = path.join(process.cwd(), "public");
+  const outputDir = path.join(process.cwd(), "public", "characters");
   await mkdir(outputDir, { recursive: true });
 
   const ai = new GoogleGenAI({ apiKey });
@@ -137,7 +137,7 @@ async function main() {
     console.log("Generating capybara face icon...");
     
     // Load reference image
-    const referencePath = path.join(process.cwd(), "public", "base_cappy.png");
+    const referencePath = path.join(process.cwd(), "public", "templates", "base-cappy.png");
     const referenceBuffer = await readFile(referencePath);
     const referenceBase64 = referenceBuffer.toString("base64");
     
@@ -175,7 +175,7 @@ async function main() {
     throw new Error("No image in response");
   } catch (error) {
     console.error("❌ Generation failed:", error instanceof Error ? error.message : String(error));
-    console.log("TODO: Add a placeholder PNG at public/capybara-face.png");
+    console.log("TODO: Add a placeholder PNG at public/characters/capybara-face.png");
     process.exit(1);
   }
 }

@@ -93,7 +93,7 @@ export default function DeepDivePage() {
 
       <div className="mb-6 flex items-start gap-4">
         <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl">
-          <Image src="/animation-photos/huahua-coaching.png" alt="" fill className="object-cover" />
+          <Image src="/pronunciation/huahua-coaching.png" alt="" fill className="object-cover" />
         </div>
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">{convertText(t("Deep dive"))}</p>

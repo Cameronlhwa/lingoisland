@@ -76,7 +76,7 @@ export default function RemeasurePage() {
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="text-center">
           <div className="relative mx-auto mb-4 h-36 w-36 overflow-hidden rounded-3xl">
-            <Image src="/animation-photos/milestone-pronunciation.png" alt="" fill className="object-cover" />
+            <Image src="/pronunciation/milestone-pronunciation.png" alt="" fill className="object-cover" />
           </div>
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">{convertText(t("Progress check"))}</p>
           <h1 className="lingo-display mt-2 text-3xl font-bold text-[var(--lingo-navy)]">{convertText(t("Look how you've improved"))}</h1>

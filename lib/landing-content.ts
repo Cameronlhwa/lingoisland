@@ -257,7 +257,7 @@ export const LANDING_TESTIMONIAL = {
   quote:
     "As someone who could barely hold a Mandarin conversation a year ago, I reached conversational fluency in just six months with LingoIsland, because I could finally learn around topics I actually cared about, not whatever chapter a textbook said was next.",
   name: "Cameron Lim",
-  image: "/Cameron Lim Profile Photo.jpg",
+  image: "/founder/cameron-lim-profile.jpg",
 };
 
 export const LEARNER_BULLETS = [

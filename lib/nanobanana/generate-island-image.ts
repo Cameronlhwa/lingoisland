@@ -128,7 +128,7 @@ export async function generateIslandImage({
   const model = process.env.NANO_BANANA_MODEL || DEFAULT_MODEL
   const trimmedTopic = topic.trim()
   const resolvedPath =
-    baseImagePath || path.join(process.cwd(), 'public', 'blank_island.png')
+    baseImagePath || path.join(process.cwd(), 'public', 'templates', 'blank-island.png')
 
   const baseImage = await readFile(resolvedPath)
   const baseImageBase64 = baseImage.toString('base64')

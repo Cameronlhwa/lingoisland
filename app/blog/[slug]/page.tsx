@@ -102,14 +102,14 @@ export default function BlogArticlePage({ params }: Props) {
         </p>
 
         <div className="mt-8">
-          <ArticleHero src={`/blog/images/${post.slug}-hero.jpg`} alt={post.title} />
+          <ArticleHero src={`/blog/${post.slug}-hero.jpg`} alt={post.title} />
         </div>
 
         <BlogMarkdown markdown={before} />
 
         <BlogCallout {...post.midCallout}>
           {midIsland && topic ? (
-            <IslandScreenshot src={`/blog/images/${post.slug}-island.jpg`} topic={topic} />
+            <IslandScreenshot src={`/blog/${post.slug}-island.jpg`} topic={topic} />
           ) : null}
         </BlogCallout>
 

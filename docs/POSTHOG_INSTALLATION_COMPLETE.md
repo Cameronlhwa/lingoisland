@@ -26,7 +26,7 @@ PostHog analytics has been successfully integrated into your Lingo Island app!
    - Custom `useAnalytics()` hook for easy client-side tracking
    - Provides `captureEvent()`, `identify()`, and `reset()` methods
 
-5. **`/POSTHOG_SETUP.md`**
+5. **`/docs/POSTHOG_SETUP.md`**
    - Complete documentation with examples
    - Event naming conventions
    - Usage patterns for client and server
@@ -135,8 +135,8 @@ Consider adding tracking for:
 
 - **PostHog Dashboard**: https://us.i.posthog.com
 - **Session Recordings**: https://us.i.posthog.com/recordings
-- **Documentation**: See `/POSTHOG_SETUP.md`
-- **Session Replay Guide**: See `/POSTHOG_SESSION_REPLAY.md`
+- **Documentation**: See `/docs/POSTHOG_SETUP.md`
+- **Session Replay Guide**: See `/docs/POSTHOG_SESSION_REPLAY.md`
 - **PostHog Docs**: https://posthog.com/docs/libraries/next-js
 
 ## Next Steps

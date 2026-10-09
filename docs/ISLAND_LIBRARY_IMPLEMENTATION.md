@@ -153,7 +153,7 @@ import { coverUrlFromKey } from '@/lib/islandLibrary'
 // In your UI component
 const imageSrc = island.cover_key 
   ? coverUrlFromKey(island.cover_key)  // ✅ Use library image
-  : island.image_url || '/blank_island.png'  // Fallback for legacy
+  : island.image_url || '/templates/blank-island.png'  // Fallback for legacy
 ```
 
 ### Getting a Random Key
@@ -268,7 +268,7 @@ curl -X POST http://localhost:3002/api/topic-islands/[ISLAND_ID]/generate-image 
 ### Generation fails
 
 1. Check API key is valid
-2. Verify `public/blank_island.png` exists
+2. Verify `public/templates/blank-island.png` exists
 3. Check rate limits (add longer delays if needed)
 4. Review error messages for blocked content
 

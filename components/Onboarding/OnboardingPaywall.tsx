@@ -280,7 +280,7 @@ export default function OnboardingPaywall({
               style={{ borderColor: "rgba(33,118,174,0.12)" }}
             >
               <Image
-                src="/Cameron Lim Profile Photo.jpg"
+                src="/founder/cameron-lim-profile.jpg"
                 alt="Cameron Lim"
                 width={42}
                 height={42}

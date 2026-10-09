@@ -235,7 +235,7 @@ export default function PronunciationSessionPage() {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-4 py-10 text-center">
         <div className="relative mb-4 h-40 w-40 overflow-hidden rounded-3xl">
-          <Image src="/animation-photos/huahua-celebrating.png" alt="" fill className="object-cover" />
+          <Image src="/pronunciation/huahua-celebrating.png" alt="" fill className="object-cover" />
         </div>
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">{convertText(t("Session complete"))}</p>
         <h1 className="lingo-display mt-2 text-3xl font-bold text-[var(--lingo-navy)]">{convertText(t("Practice complete!"))}</h1>
@@ -367,7 +367,7 @@ export default function PronunciationSessionPage() {
           <>
             <div className="mb-4 flex justify-center">
               <div className="relative h-24 w-24 overflow-hidden rounded-2xl">
-                <Image src="/animation-photos/huahua-coaching.png" alt="" fill className="object-cover" />
+                <Image src="/pronunciation/huahua-coaching.png" alt="" fill className="object-cover" />
               </div>
             </div>
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">{convertText(t("Listen first"))}</p>
@@ -556,7 +556,7 @@ export default function PronunciationSessionPage() {
           <>
             <div className="mb-2 flex justify-center">
               <div className="relative h-20 w-20 overflow-hidden rounded-2xl">
-                <Image src="/animation-photos/huahua-coaching.png" alt="" fill className="object-cover" />
+                <Image src="/pronunciation/huahua-coaching.png" alt="" fill className="object-cover" />
               </div>
             </div>
             <p className="text-center text-xs font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">

@@ -58,7 +58,7 @@ export function CapybaraPeek({
 }) {
   return (
     <img
-      src="/capybara-peek-notch.png"
+      src="/characters/capybara-peek-notch.png"
       alt=""
       aria-hidden
       width={width}

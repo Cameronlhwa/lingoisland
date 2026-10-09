@@ -12,6 +12,8 @@ Lingo Island is a Mandarin learning product for A2–B2 learners, focused on voc
 
 ## Getting Started
 
+Project guides and implementation notes are in [docs/](./docs/).
+
 ### 1. Install Dependencies
 
 ```bash
@@ -84,4 +86,3 @@ npm run dev
 ## Customization
 
 All components are in `/components/landing/` and can be easily edited. The brand name "Island Mandarin" is used as a placeholder throughout and can be changed via search and replace.
-

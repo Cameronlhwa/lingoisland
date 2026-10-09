@@ -984,7 +984,7 @@ export default function JourneyOnboardingFlow({
           {progressDash(5)}
           <div className="mt-6 text-center">
             <img
-              src="/capybara-waving.png"
+              src="/characters/capybara-waving.png"
               alt=""
               className="mx-auto h-20 w-20 rounded-full object-cover"
               aria-hidden

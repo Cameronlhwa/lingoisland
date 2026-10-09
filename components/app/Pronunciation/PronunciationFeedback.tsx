@@ -50,7 +50,7 @@ export default function PronunciationFeedback({
       <div className="flex items-start gap-4">
         <div className="relative hidden h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl sm:block">
           <Image
-            src={isStrong ? "/animation-photos/huahua-celebrating.png" : "/animation-photos/huahua-coaching.png"}
+            src={isStrong ? "/pronunciation/huahua-celebrating.png" : "/pronunciation/huahua-coaching.png"}
             alt=""
             fill
             className="object-cover"

@@ -31,12 +31,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.png", sizes: "48x48", type: "image/png" },
-      { url: "/favicon.png", sizes: "96x96", type: "image/png" },
-      { url: "/favicon.png", sizes: "192x192", type: "image/png" },
-      { url: "/favicon.png", sizes: "512x512", type: "image/png" },
+      { url: "/brand/favicon.png", sizes: "48x48", type: "image/png" },
+      { url: "/brand/favicon.png", sizes: "96x96", type: "image/png" },
+      { url: "/brand/favicon.png", sizes: "192x192", type: "image/png" },
+      { url: "/brand/favicon.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: "/favicon.png",
+    apple: "/brand/favicon.png",
   },
   openGraph: {
     title: {
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/logo.png",
+        url: "/brand/logo.png",
         width: 1200,
         height: 1200,
         alt: "Lingo Island Logo",
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     },
     description:
       "Mandarin vocabulary by topic with real-life example sentences, daily stories, and spaced repetition review.",
-    images: ["/logo.png"],
+    images: ["/brand/logo.png"],
   },
 };
 

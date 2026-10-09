@@ -1,6 +1,6 @@
 # Landing example islands
 
-Placeholder images are copied from `blank_island.png`. To generate themed example islands (Hospital, AI, Cafe), run:
+Placeholder images are copied from `public/templates/blank-island.png`. To generate themed example islands (Hospital, AI, Cafe), run:
 
 ```bash
 npm run gen:landing-examples

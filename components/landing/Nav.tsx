@@ -52,7 +52,7 @@ export default function Nav() {
         <Link href="/" className="flex items-center gap-2.5">
           <div className="flex size-10 items-center justify-center overflow-hidden rounded-xl">
             <Image
-              src="/logo.png"
+              src="/brand/logo.png"
               alt="LingoIsland Logo"
               width={60}
               height={60}

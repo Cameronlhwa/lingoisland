@@ -5,7 +5,7 @@ import Image from "next/image";
 import { FOUNDER_STRIP } from "@/lib/landing-content";
 import { motion, useReducedMotion } from "framer-motion";
 
-const FOUNDER_IMAGE = "/Cameron Lim Profile Photo.jpg";
+const FOUNDER_IMAGE = "/founder/cameron-lim-profile.jpg";
 
 export default function FounderStrip() {
   const prefersReducedMotion = useReducedMotion();

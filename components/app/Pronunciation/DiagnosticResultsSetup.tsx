@@ -169,7 +169,7 @@ export default function DiagnosticResultsSetup({
             step={1}
             title="Here's what to work on"
             copy="These are the areas to focus on. We'll build them into your daily practice."
-            imageSrc="/animation-photos/pronunciation-step-target.png"
+            imageSrc="/pronunciation/pronunciation-step-target.png"
           >
             {weaknesses.length === 0 ? (
               <p className="text-sm text-[var(--lingo-text-muted)]">
@@ -199,7 +199,7 @@ export default function DiagnosticResultsSetup({
             title="Choose your daily practice time"
             copy="A little practice each day goes a long way."
             extra="You can always change this later."
-            imageSrc="/animation-photos/pronunciation-step-clock.png"
+            imageSrc="/pronunciation/pronunciation-step-clock.png"
           >
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {DAILY_MINUTES_OPTIONS.map((option) => {
@@ -226,7 +226,7 @@ export default function DiagnosticResultsSetup({
             step={3}
             title="Start personalized practice"
             copy="Let's turn your insights into real improvement!"
-            imageSrc="/animation-photos/pronunciation-step-sprout.png"
+            imageSrc="/pronunciation/pronunciation-step-sprout.png"
           >
             <div className="w-full max-w-[400px] md:ml-10">
               <button

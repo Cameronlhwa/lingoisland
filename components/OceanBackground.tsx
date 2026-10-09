@@ -3,7 +3,7 @@
 import { motion, useReducedMotion, useScroll, useTransform, useSpring, type MotionValue } from "framer-motion";
 import { useMemo } from "react";
 
-// Navy color matching the island outline style from base_cappy.png and blank_island.png
+// Navy color matching the island outline style from the template images in public/templates/
 // Matches the clean line-art stroke used in the island illustrations
 const NAVY = "#0B1B3A";
 

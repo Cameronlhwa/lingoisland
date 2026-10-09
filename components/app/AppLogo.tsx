@@ -23,7 +23,7 @@ export default function AppLogo({
     <>
       {showMark && (
         <Image
-          src="/logo.png"
+          src="/brand/logo.png"
           alt="Lingo Island Logo"
           width={px}
           height={px}

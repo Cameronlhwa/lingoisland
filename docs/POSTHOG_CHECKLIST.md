@@ -62,10 +62,10 @@ NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 - `/components/PostHogPageView.tsx`
 - `/lib/posthog/server.ts`
 - `/lib/posthog/client.ts`
-- `/POSTHOG_SETUP.md`
-- `/POSTHOG_EXAMPLES.md`
-- `/POSTHOG_INSTALLATION_COMPLETE.md`
-- `/POSTHOG_CHECKLIST.md` (this file)
+- `/docs/POSTHOG_SETUP.md`
+- `/docs/POSTHOG_EXAMPLES.md`
+- `/docs/POSTHOG_INSTALLATION_COMPLETE.md`
+- `/docs/POSTHOG_CHECKLIST.md` (this file)
 
 ### Modified Files
 - `/app/layout.tsx` - Added PostHog provider and page view tracking

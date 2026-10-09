@@ -31,7 +31,7 @@ Removed the "Sync from Stripe" button and related code - we want webhooks to wor
 
 ### Step 1: Fix Your Current Account Manually
 
-Run the SQL in `fix_my_subscription.sql`:
+Run the SQL in `scripts/fix_my_subscription.sql`:
 
 ```sql
 UPDATE public.profiles
@@ -92,7 +92,7 @@ Wait for Vercel deployment (2-3 minutes).
 ## Files Changed:
 
 - ✅ `app/api/stripe/webhook/route.ts` - Better error handling
-- ✅ `fix_my_subscription.sql` - Manual fix for your account
+- ✅ `scripts/fix_my_subscription.sql` - Manual fix for your account
 
 ## Files Reverted (No longer included):
 

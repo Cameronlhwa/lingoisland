@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const HUAHUA_AVATAR = "/capybara-profile.png";
+const HUAHUA_AVATAR = "/characters/capybara-profile.png";
 
 export default function HuahuaAvatar({
   className = "h-9 w-9",

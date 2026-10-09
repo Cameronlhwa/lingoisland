@@ -79,7 +79,7 @@ This assigns random cover images to islands that don't have one yet.
 
 **Generation failing?**
 - Verify `NANO_BANANA_API_KEY` is set in `.env.local`
-- Check that `public/blank_island.png` exists
+- Check that `public/templates/blank-island.png` exists
 
 **Need help?**
 See the full implementation guide: `ISLAND_LIBRARY_IMPLEMENTATION.md`

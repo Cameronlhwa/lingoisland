@@ -137,7 +137,7 @@ export default function ProofDemo() {
                 style={{ width: "100%", height: "100%", display: "block" }}
                 aria-label="Demo video showing topic island creation"
               >
-                <source src="/Recording of Lingoisland2.mov" type="video/mp4" />
+                <source src="/demos/lingoisland-demo.mov" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>

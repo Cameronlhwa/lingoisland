@@ -44,7 +44,7 @@ export default function Footer({
             }}
           >
             <Image
-              src="/logo.png"
+              src="/brand/logo.png"
               alt="LingoIsland Logo"
               width={28}
               height={28}

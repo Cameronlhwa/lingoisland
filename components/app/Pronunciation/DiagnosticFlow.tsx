@@ -227,8 +227,8 @@ export default function DiagnosticFlow({
           <Image
             src={
               passLabel === "remeasure"
-                ? "/animation-photos/milestone-pronunciation.png"
-                : "/animation-photos/hero-pronunciation-island.png"
+                ? "/pronunciation/milestone-pronunciation.png"
+                : "/pronunciation/hero-pronunciation-island.png"
             }
             alt=""
             fill
@@ -276,7 +276,7 @@ export default function DiagnosticFlow({
     return (
       <div className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center px-4 text-center">
         <div className="relative mb-4 h-32 w-32 overflow-hidden rounded-3xl">
-          <Image src="/animation-photos/huahua-listening.png" alt="" fill className="object-cover" />
+          <Image src="/pronunciation/huahua-listening.png" alt="" fill className="object-cover" />
         </div>
         <p className="text-sm font-semibold text-[var(--lingo-navy)]">Putting together your pronunciation profile…</p>
       </div>

@@ -42,7 +42,7 @@ Use this checklist to verify the implementation is complete and working.
 
 ### Prerequisites
 - [ ] Set `NANO_BANANA_API_KEY` in `.env.local` (or alternative key)
-- [ ] Verified `public/blank_island.png` exists
+- [ ] Verified `public/templates/blank-island.png` exists
 
 ### Generation
 - [ ] Run `npm run gen:island-library`

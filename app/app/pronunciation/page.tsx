@@ -477,10 +477,10 @@ export default function PronunciationHubPage() {
           <Image
             src={
               needsBaseline
-                ? "/animation-photos/pronunciation-check-hero.png"
+                ? "/pronunciation/pronunciation-check-hero.png"
                 : practicedToday
-                  ? "/animation-photos/huahua-celebrating.png"
-                  : "/animation-photos/pronunciation-check-hero.png"
+                  ? "/pronunciation/huahua-celebrating.png"
+                  : "/pronunciation/pronunciation-check-hero.png"
             }
             alt=""
             fill
@@ -502,7 +502,7 @@ export default function PronunciationHubPage() {
           style={{ borderColor: "var(--lingo-border)", boxShadow: "var(--lingo-shadow-card)" }}
         >
           <Image
-            src="/animation-photos/pronunciation-weak-spots-wide.jpg"
+            src="/pronunciation/pronunciation-weak-spots-wide.jpg"
             alt=""
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
@@ -576,7 +576,7 @@ export default function PronunciationHubPage() {
           style={{ borderColor: "var(--lingo-border)", boxShadow: "var(--lingo-shadow-card)" }}
         >
           <Image
-            src="/animation-photos/pronunciation-progress-wide.jpg"
+            src="/pronunciation/pronunciation-progress-wide.jpg"
             alt=""
             fill
             sizes="(max-width: 768px) 100vw, 50vw"

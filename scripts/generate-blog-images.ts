@@ -287,7 +287,7 @@ async function main() {
     }
   }
 
-  const outDir = path.join(process.cwd(), "public", "blog", "images");
+  const outDir = path.join(process.cwd(), "public", "blog");
   await mkdir(outDir, { recursive: true });
 
   console.log("LingoIsland blog image generator (Nano Banana / Gemini image)\n");

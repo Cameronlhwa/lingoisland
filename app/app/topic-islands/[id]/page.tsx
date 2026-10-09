@@ -1652,7 +1652,7 @@ export default function TopicIslandDetailPage() {
                           title="Ask 华华 about this word"
                         >
                           <img
-                            src="/capybara-face.png"
+                            src="/characters/capybara-face.png"
                             alt="Huáhuá"
                             className="h-5 w-5 rounded-full"
                           />

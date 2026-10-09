@@ -202,7 +202,7 @@ async function main() {
   await mkdir(outputDir, { recursive: true });
   console.log(`✅ Output directory: ${outputDir}`);
 
-  const basePath = path.join(process.cwd(), "public", "blank_island.png");
+  const basePath = path.join(process.cwd(), "public", "templates", "blank-island.png");
   const baseImage = await readFile(basePath);
   const baseImageBase64 = baseImage.toString("base64");
   console.log(`✅ Loaded base image: ${basePath}`);

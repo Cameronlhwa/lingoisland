@@ -82,7 +82,7 @@ export const HSK_TESTIMONIAL = {
   quote:
     "As someone who could barely form Mandarin sentences a year ago, I reached conversational fluency in just six months with LingoIsland. It made HSK prep feel personalized and interesting instead of grinding through rigid textbook units.",
   name: "Cameron Lim",
-  image: "/Cameron Lim Profile Photo.jpg",
+  image: "/founder/cameron-lim-profile.jpg",
 };
 
 export const HSK_FAQ_ITEMS = [

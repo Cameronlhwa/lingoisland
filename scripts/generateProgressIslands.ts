@@ -247,7 +247,7 @@ async function main() {
   console.log()
 
   // Load base image
-  const baseImagePath = path.join(process.cwd(), 'public', 'blank_island.png')
+  const baseImagePath = path.join(process.cwd(), 'public', 'templates', 'blank-island.png')
   const baseImage = await readFile(baseImagePath)
   const baseImageBase64 = baseImage.toString('base64')
   console.log(`✅ Loaded base image: ${baseImagePath}`)

@@ -41,7 +41,7 @@ export default function PronunciationSetupPage() {
         style={{ boxShadow: "var(--lingo-shadow-card)" }}
       >
         <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-3xl">
-          <Image src="/animation-photos/huahua-speaking.png" alt="" fill className="object-cover" />
+          <Image src="/pronunciation/huahua-speaking.png" alt="" fill className="object-cover" />
         </div>
         <h1 className="lingo-display text-center text-xl font-bold text-[var(--lingo-navy)]">
           {convertText(t("Pronunciation practice"))}
