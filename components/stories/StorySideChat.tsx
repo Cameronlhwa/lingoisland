@@ -280,7 +280,7 @@ export default function StorySideChat({
                 <div
                   className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm shadow-sm ${
                     m.role === "user"
-                      ? "bg-gray-900 text-white"
+                      ? "bg-[var(--lingo-btn-bg)] text-white"
                       : "bg-gray-100 text-gray-900"
                   }`}
                 >
@@ -338,7 +338,7 @@ export default function StorySideChat({
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className="rounded-xl border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-800 disabled:opacity-50"
+            className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:opacity-90 disabled:opacity-50"
           >
             {sending ? "…" : "Send"}
           </button>

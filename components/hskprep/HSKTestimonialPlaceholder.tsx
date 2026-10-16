@@ -11,13 +11,16 @@ type TestimonialContent = {
 
 export default function HSKTestimonialPlaceholder({
   testimonial = HSK_TESTIMONIAL,
+  plain = false,
 }: {
   testimonial?: TestimonialContent;
+  /** Drop the illustrated backdrop. Homepage uses a plain cream card. */
+  plain?: boolean;
 }) {
   return (
     <section
       className="fade-section"
-      style={{ background: "#fff", padding: "40px 24px 80px" }}
+      style={{ background: "var(--lingo-section-bg, #fff)", padding: "40px 24px 80px" }}
     >
       <div
         className="hsk-testimonial-card"
@@ -28,31 +31,36 @@ export default function HSKTestimonialPlaceholder({
           margin: "0 auto",
           textAlign: "center",
           borderRadius: 24,
-          background: "#fff",
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+          background: "var(--lingo-card-bg, #fff)",
+          border: plain ? "var(--lingo-card-border, none)" : undefined,
+          boxShadow: "var(--lingo-card-shadow, 0 8px 32px rgba(0, 0, 0, 0.08))",
           padding: "40px 32px",
         }}
       >
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: "url(/hskprep/testimonial-bg.png)",
-            backgroundSize: "cover",
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "center center",
-          }}
-        />
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(180deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.74) 50%, rgba(255,255,255,0.82) 100%)",
-          }}
-        />
+        {!plain && (
+          <>
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundImage: "url(/hskprep/testimonial-bg.png)",
+                backgroundSize: "cover",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center center",
+              }}
+            />
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.74) 50%, rgba(255,255,255,0.82) 100%)",
+              }}
+            />
+          </>
+        )}
 
         <div style={{ position: "relative", zIndex: 1 }}>
           <p

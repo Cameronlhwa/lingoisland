@@ -285,7 +285,7 @@ export default function OnboardingCheckoutAuth({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#071E2E]/50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#5F3119]/50 p-4 backdrop-blur-sm">
       <div
         className="w-full max-w-md rounded-[22px] border border-[#C2DCF0] bg-white p-6 shadow-xl sm:p-7"
         style={{ boxShadow: "0 20px 48px -20px rgba(7,30,46,0.45)" }}
@@ -293,11 +293,11 @@ export default function OnboardingCheckoutAuth({
         <AppLogo
           size="sm"
           showMark={false}
-          textClassName="text-sm font-bold text-[#071E2E]"
+          textClassName="text-sm font-bold text-[#5F3119]"
         />
         <h3
-          className="mt-5 text-2xl font-bold text-[#071E2E]"
-          style={{ fontFamily: "'Lora', Georgia, serif" }}
+          className="mt-5 text-2xl font-bold text-[#5F3119]"
+          style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
         >
           Sign in to continue
         </h3>
@@ -314,7 +314,7 @@ export default function OnboardingCheckoutAuth({
           type="button"
           onClick={handleGoogle}
           disabled={linking}
-          className="mt-5 flex w-full items-center justify-center rounded-xl border border-[#C2DCF0] bg-white px-4 py-3 text-sm font-semibold text-[#071E2E] transition-colors hover:bg-[#EAF6FB] disabled:opacity-60"
+          className="mt-5 flex w-full items-center justify-center rounded-xl border border-[#C2DCF0] bg-white px-4 py-3 text-sm font-semibold text-[#5F3119] transition-colors hover:bg-[#EAF6FB] disabled:opacity-60"
         >
           {linking ? "Connecting…" : "Continue with Google"}
         </button>
@@ -333,7 +333,7 @@ export default function OnboardingCheckoutAuth({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="w-full rounded-xl border border-[#C2DCF0] px-4 py-3 text-sm text-[#071E2E] focus:border-[#2176AE] focus:outline-none"
+            className="w-full rounded-xl border border-[#C2DCF0] px-4 py-3 text-sm text-[#5F3119] focus:border-[#20674F] focus:outline-none"
           />
           <input
             type="password"
@@ -343,7 +343,7 @@ export default function OnboardingCheckoutAuth({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (6+ characters)"
-            className="w-full rounded-xl border border-[#C2DCF0] px-4 py-3 text-sm text-[#071E2E] focus:border-[#2176AE] focus:outline-none"
+            className="w-full rounded-xl border border-[#C2DCF0] px-4 py-3 text-sm text-[#5F3119] focus:border-[#20674F] focus:outline-none"
           />
           {errorMessage ? (
             <p className="text-sm text-red-600">{errorMessage}</p>
@@ -351,7 +351,7 @@ export default function OnboardingCheckoutAuth({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-[#071E2E] py-3 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:brightness-110 disabled:opacity-60"
+            className="w-full rounded-xl bg-[#5F3119] py-3 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:brightness-110 disabled:opacity-60"
           >
             {isSubmitting ? "Continuing…" : "Continue with email"}
           </button>

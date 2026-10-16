@@ -188,7 +188,7 @@ export default function HskWordsPage() {
               onClick={() => setLevel(lvl)}
               className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                 level === lvl
-                  ? "bg-gray-900 text-white"
+                  ? "bg-[var(--lingo-btn-bg)] text-white"
                   : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
               }`}
             >
@@ -342,7 +342,7 @@ function WordDetailModal({ word, onClose }: { word: HskWord; onClose: () => void
         <button
           onClick={handleAdd}
           disabled={adding || added}
-          className="w-full rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-60"
+          className="w-full rounded-full bg-[var(--lingo-btn-bg)] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
         >
           {convertText(t(added ? "In your flashcards" : adding ? "Adding…" : "Add to flashcards"))}
         </button>

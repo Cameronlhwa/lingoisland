@@ -4,11 +4,8 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import PathNode, { type JourneyNode } from "@/components/app/PathNode";
-import {
-  HSK_CARD_BORDER,
-  HSK_CARD_SHADOW,
-  HSK_CARD_SHADOW_HOVER,
-} from "@/lib/glossy-theme";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
 
 export default function JourneyHero({
   journey,
@@ -46,10 +43,7 @@ export default function JourneyHero({
 
   if (status === "loading" || status === "error") {
     return (
-      <section
-        className="mb-5 rounded-2xl bg-white p-6 sm:p-7"
-        style={{ border: HSK_CARD_BORDER, boxShadow: HSK_CARD_SHADOW }}
-      >
+      <Card className="mb-5" padded={false} hover={false} style={{ padding: "1.5rem" }}>
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
           Active journey
         </p>
@@ -73,18 +67,16 @@ export default function JourneyHero({
             </button>
           </div>
         )}
-      </section>
+      </Card>
     );
   }
 
   if (!journey) {
     return (
-      <section
-        className="mb-5 rounded-2xl bg-white p-6 sm:p-7"
-        style={{
-          border: "1px dashed var(--lingo-accent-border)",
-          boxShadow: HSK_CARD_SHADOW,
-        }}
+      <Card
+        className="mb-5"
+        hover={false}
+        style={{ borderStyle: "dashed", padding: "1.5rem" }}
       >
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-teal)]">
           Active journey
@@ -96,23 +88,18 @@ export default function JourneyHero({
           Pick a topic and get a personalized 5-island path with stories woven
           in to lock in the words.
         </p>
-        <button
-          type="button"
+        <Button
+          className="mt-5"
           onClick={() => router.push("/app/journey/create")}
-          className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
-          style={{
-            background: "var(--lingo-navy)",
-            boxShadow: "0 8px 18px -10px rgba(7,30,46,.7)",
-          }}
         >
           Create a journey <ArrowRight className="h-4 w-4" aria-hidden />
-        </button>
-      </section>
+        </Button>
+      </Card>
     );
   }
 
   return (
-    <section
+    <Card
       role="button"
       tabIndex={0}
       onClick={() => router.push("/app/journey")}
@@ -122,14 +109,8 @@ export default function JourneyHero({
           router.push("/app/journey");
         }
       }}
-      className="group mb-5 cursor-pointer rounded-2xl bg-white p-5 transition-all hover:-translate-y-0.5 sm:p-6"
-      style={{ border: HSK_CARD_BORDER, boxShadow: HSK_CARD_SHADOW }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = HSK_CARD_SHADOW_HOVER;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = HSK_CARD_SHADOW;
-      }}
+      padded={false}
+      className="group mb-5 cursor-pointer p-5 sm:p-6"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
@@ -203,6 +184,6 @@ export default function JourneyHero({
           View journey <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </span>
       </div>
-    </section>
+    </Card>
   );
 }

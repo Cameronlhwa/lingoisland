@@ -77,7 +77,7 @@ export default function JourneyIslandPaywall({
       <div className="grid lg:grid-cols-[1fr_1fr]">
 
         {/* ── Left: dark journey panel ── */}
-        <div className="bg-gray-900 px-6 py-6 text-white">
+        <div className="bg-[var(--lingo-btn-bg)] px-6 py-6 text-white">
           {/* Completion badge */}
           <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-teal-500/20 px-3 py-1 text-xs font-bold text-teal-400">
             <Check size={11} strokeWidth={3} />
@@ -165,7 +165,7 @@ export default function JourneyIslandPaywall({
           <ul className="mt-5 space-y-3.5">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <li key={title} className="flex items-start gap-3">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gray-900">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--lingo-btn-bg)]">
                   <Icon size={14} className="text-white" />
                 </div>
                 <div>
@@ -185,9 +185,9 @@ export default function JourneyIslandPaywall({
             <button
               type="button"
               onClick={() => setBilling("monthly")}
-              className={`flex-1 rounded-lg py-2 transition-colors ${
+              className={`flex-1 rounded-full py-2 transition-colors ${
                 billing === "monthly"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-[var(--lingo-btn-bg)] text-white"
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -196,9 +196,9 @@ export default function JourneyIslandPaywall({
             <button
               type="button"
               onClick={() => setBilling("yearly")}
-              className={`flex-1 rounded-lg py-2 transition-colors ${
+              className={`flex-1 rounded-full py-2 transition-colors ${
                 billing === "yearly"
-                  ? "bg-gray-900 text-white"
+                  ? "bg-[var(--lingo-btn-bg)] text-white"
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -240,7 +240,7 @@ export default function JourneyIslandPaywall({
           <button
             type="button"
             onClick={() => onSubscribe(billing)}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-4 text-sm font-black text-white transition-colors hover:bg-gray-700"
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--lingo-btn-bg)] py-4 text-sm font-black text-white transition-colors hover:opacity-90"
           >
             Unlock everything →
           </button>

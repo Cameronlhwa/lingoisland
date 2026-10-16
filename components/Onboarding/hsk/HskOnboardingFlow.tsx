@@ -23,8 +23,8 @@ import {
   HSK_BTN_SHADOW,
 } from "@/lib/glossy-theme";
 
-const NAVY = "#071E2E";
-const BLUE = "#2176AE";
+const NAVY = "#5F3119";
+const BLUE = "#20674F";
 const CARD_BORDER = "#C2DCF0";
 
 const CARD = "w-full max-w-lg rounded-3xl bg-white p-6 sm:p-8";
@@ -571,7 +571,7 @@ export default function HskOnboardingFlow() {
             <div className="mt-6">
               <h3
                 className="text-lg font-bold"
-                style={{ fontFamily: "'Lora', Georgia, serif", color: NAVY }}
+                style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif', color: NAVY }}
               >
                 {variant.headline}
               </h3>
@@ -732,7 +732,7 @@ export default function HskOnboardingFlow() {
             />
             <h2
               className="mt-5 text-xl font-bold"
-              style={{ fontFamily: "'Lora', Georgia, serif", color: NAVY }}
+              style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif', color: NAVY }}
             >
               Building your {formatHskLevel(targetLevel)} path…
             </h2>
@@ -814,7 +814,7 @@ function Heading({ children }: { children: React.ReactNode }) {
   return (
     <h2
       className="text-xl font-bold"
-      style={{ fontFamily: "'Lora', Georgia, serif", color: NAVY }}
+      style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif', color: NAVY }}
     >
       {children}
     </h2>

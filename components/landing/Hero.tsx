@@ -68,11 +68,11 @@ function Step1() {
       <div
         style={{
           background: "#F4F8FB",
-          border: "1.5px solid #2176AE",
+          border: "1.5px solid #20674F",
           borderRadius: 8,
           padding: "9px 12px",
           fontSize: 13,
-          color: "#071E2E",
+          color: "#5F3119",
           marginBottom: 10,
           display: "flex",
           alignItems: "center",
@@ -96,8 +96,8 @@ function Step1() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 4,
-                background: isActive ? "#2176AE" : "#EAF4FB",
-                border: `1px solid ${isActive ? "#2176AE" : "rgba(33,118,174,0.2)"}`,
+                background: isActive ? "#20674F" : "#EAF4FB",
+                border: `1px solid ${isActive ? "#20674F" : "rgba(33,118,174,0.2)"}`,
                 borderRadius: 12,
                 padding: "3px 9px",
                 fontSize: 10,
@@ -158,7 +158,7 @@ function Step2() {
             <svg width="10" height="10" viewBox="0 0 10 10">
               <polygon
                 points="2,2 8,5 2,8"
-                fill={i === 0 ? "#2176AE" : "#9ab0bc"}
+                fill={i === 0 ? "#20674F" : "#9ab0bc"}
               />
             </svg>
           </div>
@@ -169,7 +169,7 @@ function Step2() {
               style={{
                 fontSize: 15,
                 fontWeight: 600,
-                color: "#071E2E",
+                color: "#5F3119",
                 lineHeight: 1.2,
               }}
             >
@@ -219,7 +219,7 @@ function HoverWord({
   const [hovered, setHovered] = useState(false);
   const isPunct = !pinyin;
 
-  if (isPunct) return <span style={{ color: "#071E2E" }}>{text}</span>;
+  if (isPunct) return <span style={{ color: "#5F3119" }}>{text}</span>;
 
   return (
     <span
@@ -233,10 +233,10 @@ function HoverWord({
           borderRadius: 4,
           padding: "0 2px",
           borderBottom: "2px solid rgba(33,118,174,0.4)",
-          color: "#071E2E",
+          color: "#5F3119",
           cursor: "default",
           transition: "background 0.15s, border-color 0.15s",
-          borderBottomColor: hovered ? "#2176AE" : "rgba(33,118,174,0.4)",
+          borderBottomColor: hovered ? "#20674F" : "rgba(33,118,174,0.4)",
         }}
       >
         {text}
@@ -248,7 +248,7 @@ function HoverWord({
             bottom: "calc(100% + 7px)",
             left: "50%",
             transform: "translateX(-50%)",
-            background: "#071E2E",
+            background: "#5F3119",
             color: "#fff",
             borderRadius: 6,
             padding: "5px 10px",
@@ -284,7 +284,7 @@ function HoverWord({
               height: 0,
               borderLeft: "5px solid transparent",
               borderRight: "5px solid transparent",
-              borderTop: "5px solid #071E2E",
+              borderTop: "5px solid #5F3119",
             }}
           />
         </span>
@@ -314,7 +314,7 @@ function Step3() {
         style={{
           fontSize: 20,
           lineHeight: 1.5,
-          color: "#071E2E",
+          color: "#5F3119",
           marginBottom: 10,
         }}
       >
@@ -394,7 +394,7 @@ function Step4() {
         style={{
           fontSize: 28,
           fontWeight: 600,
-          color: "#071E2E",
+          color: "#5F3119",
           textAlign: "center",
           marginBottom: 14,
         }}
@@ -414,7 +414,7 @@ function Step4() {
                     : "#F4F8FB",
               border:
                 opt.state === "correct"
-                  ? "1px solid #2176AE"
+                  ? "1px solid #20674F"
                   : opt.state === "wrong"
                     ? "1px solid #E8705A"
                     : "1px solid rgba(0,80,120,0.1)",
@@ -423,10 +423,10 @@ function Step4() {
               fontSize: 11,
               color:
                 opt.state === "correct"
-                  ? "#2176AE"
+                  ? "#20674F"
                   : opt.state === "wrong"
                     ? "#c0442a"
-                    : "#071E2E",
+                    : "#5F3119",
               fontWeight: opt.state === "correct" ? 600 : 400,
               textAlign: "center",
               fontFamily: "'DM Sans', system-ui, sans-serif",
@@ -511,7 +511,7 @@ function HowItWorksFlow() {
                     width: 20,
                     height: 20,
                     borderRadius: "50%",
-                    background: "#2176AE",
+                    background: "#20674F",
                     color: "#fff",
                     fontSize: 10,
                     fontWeight: 700,
@@ -583,7 +583,7 @@ function HowItWorksFlow() {
                     width: 20,
                     height: 20,
                     borderRadius: "50%",
-                    background: "#2176AE",
+                    background: "#20674F",
                     color: "#fff",
                     fontSize: 10,
                     fontWeight: 700,
@@ -692,18 +692,18 @@ export default function Hero() {
         <h1
           className="hero-headline"
           style={{
-            fontFamily: "'Lora', Georgia, serif",
+            fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
             fontWeight: 600,
             fontSize: "clamp(40px, 5vw, 62px)",
             lineHeight: 1.15,
-            color: "#071E2E",
+            color: "#5F3119",
             marginBottom: 20,
           }}
         >
           Learn Mandarin You
           <br />
           <em
-            style={{ fontStyle: "italic", color: "#2176AE", fontWeight: 600 }}
+            style={{ fontStyle: "italic", color: "#20674F", fontWeight: 600 }}
           >
             Actually Need
           </em>
@@ -722,7 +722,7 @@ export default function Hero() {
           }}
         >
           Build vocabulary around{" "}
-          <strong style={{ color: "#071E2E", fontWeight: 500 }}>
+          <strong style={{ color: "#5F3119", fontWeight: 500 }}>
             topics that matter to your real life
           </strong>{" "}
           — with real sentences, audio, and review that makes it stick.
@@ -743,7 +743,7 @@ export default function Hero() {
           <Link
             href="/onboarding/journey"
             style={{
-              background: "#071E2E",
+              background: "#5F3119",
               color: "#fff",
               border: "none",
               borderRadius: "10px",
@@ -763,7 +763,7 @@ export default function Hero() {
           <Link
             href="/#demo"
             style={{
-              color: "#2176AE",
+              color: "#20674F",
               fontWeight: 500,
               fontSize: "15px",
               fontFamily: "'DM Sans', system-ui, sans-serif",

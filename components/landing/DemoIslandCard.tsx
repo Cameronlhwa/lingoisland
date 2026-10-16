@@ -96,18 +96,19 @@ export default function DemoIslandCard() {
   return (
     <motion.div
       whileHover={prefersReducedMotion ? undefined : { y: -4 }}
-      className="rounded-2xl border border-gray-900 bg-gray-900 p-6 shadow-lg"
+      className="rounded-3xl border bg-white p-6"
+      style={{ borderColor: "var(--lingo-border)", boxShadow: "var(--lingo-card-shadow)" }}
     >
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--lingo-teal)]">
             Topic Island
           </p>
-          <h3 className="text-xl font-semibold text-white">
+          <h3 className="lingo-display text-xl text-[var(--lingo-navy)]">
             Apartment hunting
           </h3>
         </div>
-        <div className="flex items-center rounded-full border border-gray-700 bg-gray-800 p-1 text-xs">
+        <div className="flex items-center rounded-full border bg-[var(--lingo-sky-pale)] p-1 text-xs" style={{ borderColor: "var(--lingo-border)" }}>
           {LEVELS.map((item) => (
             <button
               key={item}
@@ -115,8 +116,8 @@ export default function DemoIslandCard() {
               onClick={() => setLevel(item)}
               className={`rounded-full px-3 py-1 font-medium transition-all ${
                 level === item
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-white text-[var(--lingo-navy)] shadow-sm"
+                  : "text-[var(--lingo-text-muted)] hover:text-[var(--lingo-navy)]"
               }`}
             >
               {hskLabelForCefr(item)}
@@ -139,28 +140,29 @@ export default function DemoIslandCard() {
             return (
               <div
                 key={word.hanzi}
-                className="rounded-xl border border-gray-700 bg-gray-800 p-4"
+                className="rounded-2xl border bg-[var(--lingo-card-muted)] p-4"
+                style={{ borderColor: "var(--lingo-border)" }}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-lg font-semibold text-white">
+                    <p className="text-lg font-semibold text-[var(--lingo-navy)]">
                       {word.hanzi}
                     </p>
-                    <p className="text-sm text-gray-400">{word.pinyin}</p>
+                    <p className="text-sm text-[var(--lingo-text-muted)]">{word.pinyin}</p>
                   </div>
-                  <span className="text-sm font-medium text-gray-300">
+                  <span className="text-sm font-medium text-[var(--lingo-navy-soft)]">
                     {word.meaning}
                   </span>
                 </div>
                 <div className="mt-2">
-                  <p className="text-sm text-gray-300">
+                  <p className="text-sm text-[var(--lingo-text)]">
                     {before}
-                    <span className="rounded bg-gray-700 px-1 text-white">
+                    <span className="rounded bg-[var(--lingo-accent-tint)] px-1 text-[var(--lingo-navy)]">
                       {word.highlight}
                     </span>
                     {after ?? ""}
                   </p>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-[var(--lingo-text-muted)]">
                     {word.sentencePinyin}
                   </p>
                 </div>
@@ -173,7 +175,7 @@ export default function DemoIslandCard() {
       <div className="mt-6">
         <Link
           href="/onboarding/journey"
-          className="inline-block rounded-lg border border-white bg-white px-4 py-2 text-xs font-semibold text-gray-900 transition-all hover:bg-gray-100"
+          className="inline-block rounded-full bg-[var(--lingo-btn-bg)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--lingo-btn-shadow)] transition-all hover:opacity-90"
         >
           Create your own topic island!
         </Link>

@@ -363,7 +363,7 @@ export default function StoryReader({
                   <button
                     onClick={onSaveDaily}
                     disabled={savingDaily}
-                    className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                   >
                     {convertText(t(savingDaily ? "Saving..." : "Save Daily Story"))}
                   </button>
@@ -400,7 +400,7 @@ export default function StoryReader({
                     <button
                       onClick={handleSaveTitle}
                       disabled={savingTitle || !editedTitle.trim()}
-                      className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                      className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                     >
                       {convertText(t(savingTitle ? "Saving..." : "Save"))}
                     </button>
@@ -474,7 +474,7 @@ export default function StoryReader({
                     onClick={() => setShowPinyin((v) => !v)}
                     className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
                       showPinyin
-                        ? "border-gray-900 bg-gray-900 text-white"
+                        ? "border-transparent bg-[var(--lingo-btn-bg)] text-white"
                         : "border-gray-200 bg-white text-gray-700"
                     }`}
                   >
@@ -494,7 +494,7 @@ export default function StoryReader({
                     onClick={() => setShowEnglish((v) => !v)}
                     className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
                       showEnglish
-                        ? "border-gray-900 bg-gray-900 text-white"
+                        ? "border-transparent bg-[var(--lingo-btn-bg)] text-white"
                         : "border-gray-200 bg-white text-gray-700"
                     }`}
                   >
@@ -692,7 +692,7 @@ export default function StoryReader({
                           disabled={
                             creatingQuizIsland || !newQuizIslandName.trim()
                           }
-                          className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                          className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                         >
                           {convertText(t(creatingQuizIsland ? "Creating..." : "Create & Add"))}
                         </button>
@@ -745,7 +745,7 @@ export default function StoryReader({
                         <button
                           onClick={() => handleAddToQuizConfirm()}
                           disabled={addingToQuiz || !selectedQuizIslandId}
-                          className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                          className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                         >
                           {convertText(t(addingToQuiz ? "Adding..." : "Add"))}
                         </button>

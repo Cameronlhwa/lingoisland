@@ -23,16 +23,16 @@ export default function ProofDemo() {
           >
             <h2
               style={{
-                fontFamily: "'Lora', Georgia, serif",
+                fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
                 fontWeight: 600,
                 fontSize: 36,
                 lineHeight: 1.15,
-                color: "#071E2E",
+                color: "#5F3119",
                 marginBottom: 16,
               }}
             >
               See a Topic Island{" "}
-              <em style={{ fontStyle: "italic", color: "#2176AE" }}>in action</em>
+              <em style={{ fontStyle: "italic", color: "#20674F" }}>in action</em>
             </h2>
             <p
               style={{
@@ -50,7 +50,7 @@ export default function ProofDemo() {
             {/* Callout box */}
             <div
               style={{
-                borderLeft: "3px solid #2176AE",
+                borderLeft: "3px solid #20674F",
                 background: "#EAF4FB",
                 borderRadius: 12,
                 padding: "18px 20px",
@@ -60,7 +60,7 @@ export default function ProofDemo() {
               <p
                 style={{
                   fontWeight: 600,
-                  color: "#071E2E",
+                  color: "#5F3119",
                   fontSize: 14,
                   marginBottom: 6,
                   fontFamily: "'DM Sans', system-ui, sans-serif",
@@ -85,7 +85,7 @@ export default function ProofDemo() {
               <Link
                 href="/onboarding/journey"
                 style={{
-                  background: "#071E2E",
+                  background: "#5F3119",
                   color: "#fff",
                   borderRadius: 10,
                   padding: "13px 26px",
@@ -103,7 +103,7 @@ export default function ProofDemo() {
               <a
                 href="#topics"
                 style={{
-                  color: "#2176AE",
+                  color: "#20674F",
                   fontSize: 14,
                   fontWeight: 500,
                   fontFamily: "'DM Sans', system-ui, sans-serif",
@@ -122,7 +122,7 @@ export default function ProofDemo() {
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             style={{
-              background: "#071E2E",
+              background: "#5F3119",
               borderRadius: 20,
               padding: 12,
               boxShadow: "0 20px 60px rgba(7,30,46,0.25)",

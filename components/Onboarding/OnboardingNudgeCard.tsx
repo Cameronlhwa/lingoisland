@@ -33,12 +33,12 @@ export default function OnboardingNudgeCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.2 }}
-      className="relative overflow-hidden rounded-lg border-2 border-gray-800 bg-gray-900 backdrop-blur-sm p-5 shadow-lg"
+      className="relative overflow-hidden rounded-lg border-2 border-gray-800 bg-[var(--lingo-btn-bg)] backdrop-blur-sm p-5 shadow-lg"
     >
         <button
           type="button"
           onClick={onDismiss}
-          className="absolute right-3 top-3 rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+          className="absolute right-3 top-3 rounded-full p-1.5 text-gray-400 transition-colors hover:opacity-90 hover:text-white"
           aria-label="Dismiss"
         >
           <svg

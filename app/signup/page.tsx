@@ -150,19 +150,19 @@ function SignupPageContent() {
 
   if (isAnonymous === null) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-white px-6">
+      <main className="lingo-home flex min-h-screen items-center justify-center px-6">
         <div className="text-gray-600">Loading...</div>
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white px-6 py-12">
+    <main className="lingo-home flex min-h-screen items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
         {fromSidebar ? (
           <div className="mb-10 text-center">
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-gray-400">Free forever</p>
-            <h1 className="mb-3 text-4xl font-bold text-gray-900">
+            <h1 className="mb-3 lingo-display text-4xl text-[var(--lingo-navy)]">
               {featureName ? `Unlock ${featureName}` : "Try everything for free"}
             </h1>
             <p className="mb-8 text-lg text-gray-600">
@@ -180,7 +180,7 @@ function SignupPageContent() {
           </div>
         ) : (
           <div className="mb-12 text-center">
-            <h1 className="mb-4 text-4xl font-bold text-gray-900">
+            <h1 className="mb-4 lingo-display text-4xl text-[var(--lingo-navy)]">
               Create your account
             </h1>
             <p className="text-lg text-gray-600">
@@ -193,7 +193,7 @@ function SignupPageContent() {
           type="button"
           onClick={handleGoogleSignup}
           disabled={linking}
-          className="w-full rounded-lg border-2 border-gray-900 bg-gray-900 px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-gray-800 disabled:opacity-70"
+          className="w-full rounded-lg border-2 border-transparent bg-[var(--lingo-btn-bg)] px-6 py-4 text-base font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-70"
         >
           {linking ? "Redirecting…" : "Continue with Google"}
         </button>
@@ -304,7 +304,7 @@ function SignupPageContent() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-gray-900 px-6 py-4 text-base font-medium uppercase tracking-wide text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full rounded-full bg-[var(--lingo-btn-bg)] px-6 py-4 text-base font-medium uppercase tracking-wide text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? "Please wait…" : "Create account with email"}
           </button>
@@ -328,7 +328,7 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-white px-6">
+        <main className="lingo-home flex min-h-screen items-center justify-center px-6">
           <div className="text-gray-600">Loading...</div>
         </main>
       }

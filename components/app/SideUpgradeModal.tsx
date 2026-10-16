@@ -111,13 +111,13 @@ export default function SideUpgradeModal({
         <div className="px-7 pb-7 pt-8">
           <p
             className="text-[10.5px] font-bold uppercase tracking-[0.14em]"
-            style={{ color: "#2176AE" }}
+            style={{ color: "#20674F" }}
           >
             Upgrade required
           </p>
           <h2
             className="lingo-display mt-2 text-[28px] leading-none tracking-[-0.025em]"
-            style={{ color: "#071E2E" }}
+            style={{ color: "#5F3119" }}
           >
             Add {label}
           </h2>
@@ -150,7 +150,7 @@ export default function SideUpgradeModal({
               </div>
               <div
                 className="lingo-display mt-1 text-[22px] leading-none"
-                style={{ color: "#071E2E" }}
+                style={{ color: "#5F3119" }}
               >
                 {monthlyPrice}
               </div>
@@ -170,7 +170,7 @@ export default function SideUpgradeModal({
             >
               <span
                 className="absolute -top-2 right-2 rounded-full px-2 py-0.5 text-[9px] font-bold text-white"
-                style={{ background: "#2176AE", boxShadow: "0 4px 10px -4px rgba(33,118,174,0.55)" }}
+                style={{ background: "#20674F", boxShadow: "0 4px 10px -4px rgba(33,118,174,0.55)" }}
               >
                 Best value
               </span>
@@ -187,7 +187,7 @@ export default function SideUpgradeModal({
               </div>
               <div
                 className="lingo-display mt-1 text-[22px] leading-none"
-                style={{ color: "#071E2E" }}
+                style={{ color: "#5F3119" }}
               >
                 {yearlyPrice}
               </div>

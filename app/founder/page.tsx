@@ -9,7 +9,6 @@ import SectionHeader from "@/components/landing/SectionHeader";
 import PrimaryButton from "@/components/landing/PrimaryButton";
 import IconBadge from "@/components/landing/IconBadge";
 import HSKNightCTA from "@/components/hskprep/HSKNightCTA";
-import { Sparkle, FloatingCloud } from "@/components/landing/Decorations";
 import { FOUNDER_PAGE } from "@/lib/landing-content";
 import { motion, useReducedMotion } from "framer-motion";
 import { Users, Play } from "lucide-react";
@@ -31,7 +30,7 @@ export default function FounderPage() {
       <FadeSectionObserver />
       <Nav />
 
-      {/* Hero — same fantasy artwork as /hskprep */}
+      {/* Hero — same cove artwork as the landing page */}
       <section className="hero-scene" style={{ position: "relative", overflow: "hidden" }}>
         <div
           aria-hidden
@@ -39,15 +38,12 @@ export default function FounderPage() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: "url(/hskprep/hero-capybara-fantasy.png)",
+            backgroundImage: "url(/home/hero-cove.png)",
             backgroundSize: "cover",
+            backgroundPosition: "center bottom",
             backgroundRepeat: "no-repeat",
           }}
         />
-        <Sparkle style={{ top: "14%", right: "18%" }} size={16} />
-        <Sparkle style={{ top: "68%", left: "12%" }} size={12} />
-        <FloatingCloud style={{ top: "8%", left: "4%" }} width={110} floatClass="lingo-float-slow" />
-        <FloatingCloud style={{ top: "16%", right: "6%" }} width={90} floatClass="lingo-float" />
 
         <div
           style={{
@@ -476,13 +472,11 @@ export default function FounderPage() {
       </section>
 
       <HSKNightCTA
-        title={FOUNDER_PAGE.finalCta.title}
-        subtitle={FOUNDER_PAGE.finalCta.subline}
-        primary={{
-          href: FOUNDER_PAGE.finalCta.ctaPrimary.href,
-          label: FOUNDER_PAGE.finalCta.ctaPrimary.label,
-        }}
-        secondary={{ href: YOUTUBE_CHANNEL_URL, label: "Watch on YouTube" }}
+        appearance="warm"
+        title="Ready to build vocabulary you can actually use?"
+        subtitle="Create a Topic Island around what matters to you. Free to start — no credit card needed."
+        primary={{ href: "/onboarding/journey", label: "Try for free" }}
+        secondary={{ href: "/topics", label: "Explore Topics" }}
       />
 
       <Footer />

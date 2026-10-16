@@ -11,6 +11,7 @@ import Sidebar from "@/components/app/Sidebar";
 import SideUpgradeModal from "@/components/app/SideUpgradeModal";
 import MobileTabBar from "@/components/app/MobileTabBar";
 import AppLogo from "@/components/app/AppLogo";
+import Button from "@/components/ui/Button";
 import {
   OnboardingProvider,
   useOnboarding,
@@ -406,15 +407,15 @@ export default function AppLayoutClient({
           <OnboardingBootstrap />
           <ProductAccessUpgradeGate />
           {isFullscreenOnboarding ? (
-            <div className={`min-h-screen bg-white ${hskAppTheme ? "hsk-app-theme lingo-body" : ""}`}>
-              <main className="flex min-h-screen w-full flex-col bg-white">
+            <div className={`lingo-app lingo-body min-h-screen ${hskAppTheme ? "hsk-app-theme" : ""}`}>
+              <main className="flex min-h-screen w-full flex-col">
                 {children}
               </main>
             </div>
           ) : (
-            <div className="min-h-screen bg-white">
+            <div className={`lingo-app lingo-body min-h-screen ${hskAppTheme ? "hsk-app-theme" : ""}`}>
               {/* Mobile Header with Menu Button */}
-              <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 md:hidden">
+              <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between border-b bg-[var(--lingo-page-bg)] px-4 py-3 md:hidden" style={{ borderColor: "var(--lingo-border)" }}>
                 <AppLogo
                   size="sm"
                   textClassName="text-lg font-bold text-gray-900"
@@ -425,13 +426,13 @@ export default function AppLayoutClient({
                   aria-label="Toggle sidebar"
                 >
                   <span
-                    className={`h-0.5 w-6 bg-gray-900 transition-all ${sidebarOpen ? "rotate-45 translate-y-2" : ""}`}
+                    className={`h-0.5 w-6 bg-[var(--lingo-navy)] transition-all ${sidebarOpen ? "rotate-45 translate-y-2" : ""}`}
                   />
                   <span
-                    className={`h-0.5 w-6 bg-gray-900 transition-all ${sidebarOpen ? "opacity-0" : ""}`}
+                    className={`h-0.5 w-6 bg-[var(--lingo-navy)] transition-all ${sidebarOpen ? "opacity-0" : ""}`}
                   />
                   <span
-                    className={`h-0.5 w-6 bg-gray-900 transition-all ${sidebarOpen ? "-rotate-45 -translate-y-2" : ""}`}
+                    className={`h-0.5 w-6 bg-[var(--lingo-navy)] transition-all ${sidebarOpen ? "-rotate-45 -translate-y-2" : ""}`}
                   />
                 </button>
               </div>
@@ -526,21 +527,21 @@ export default function AppLayoutClient({
                 type="button"
                 onClick={handleGoogleSignup}
                 disabled={oauthLinking}
-                className="mb-3 w-full rounded-lg border border-gray-900 bg-white px-5 py-3 text-sm font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50 disabled:opacity-70"
+                className="mb-3 w-full rounded-full border bg-white px-5 py-3 text-sm font-semibold uppercase tracking-wide text-[var(--lingo-navy)] transition-colors hover:bg-[var(--lingo-sky-pale)] disabled:opacity-70"
+                style={{ borderColor: "var(--lingo-border)" }}
               >
                 {oauthLinking ? "Redirecting…" : "Sign up with Google"}
               </button>
 
-              <button
-                type="button"
+              <Button
+                className="w-full uppercase tracking-wide"
                 onClick={() => {
                   setShowSignupModal(false);
                   router.push("/signup?next=/app&from=sidebar");
                 }}
-                className="w-full rounded-lg bg-gray-900 px-5 py-3 text-sm font-medium uppercase tracking-wide text-white transition-colors hover:bg-gray-800"
               >
                 Sign up with email
-              </button>
+              </Button>
 
               <p className="mt-4 text-center text-xs text-gray-500">
                 Already have an account?{" "}

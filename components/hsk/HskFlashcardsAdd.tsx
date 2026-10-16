@@ -247,7 +247,7 @@ export default function HskFlashcardsAdd({ deckId }: { deckId: string }) {
                   <button
                     onClick={() => handleSubmit()}
                     disabled={submitting || !chinese.trim()}
-                    className="flex-1 rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    className="flex-1 rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-base font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                   >
                     {submitting ? "Adding..." : "Add card"}
                   </button>

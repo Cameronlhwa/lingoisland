@@ -120,7 +120,7 @@ function ChatBubble({
       {showExtras && showPinyin && pinyinLine && (
         <p
           className={`mt-2 text-xs leading-relaxed ${
-            message.role === "user" ? "text-white/75" : "text-[#071E2E]/60"
+            message.role === "user" ? "text-white/75" : "text-[#5F3119]/60"
           }`}
         >
           {pinyinLine}
@@ -129,7 +129,7 @@ function ChatBubble({
       {showExtras && showEnglish && (
         <p
           className={`mt-1.5 text-xs italic leading-relaxed ${
-            message.role === "user" ? "text-white/70" : "text-[#071E2E]/50"
+            message.role === "user" ? "text-white/70" : "text-[#5F3119]/50"
           }`}
         >
           {extras?.englishLoading

@@ -289,7 +289,7 @@ export default function UpgradeModal({ open, onClose, feature }: UpgradeModalPro
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-5 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-bold text-white"
+                className="mt-5 rounded-full bg-[var(--lingo-btn-bg)] px-5 py-2.5 text-sm font-bold text-white"
               >
                 Continue
               </button>

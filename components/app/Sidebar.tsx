@@ -134,14 +134,15 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-300 md:translate-x-0 ${
+      className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r bg-[var(--lingo-page-bg)] transition-transform duration-300 md:translate-x-0 ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       }`}
+      style={{ borderColor: "var(--lingo-border)" }}
     >
       <div className="flex flex-1 flex-col overflow-y-auto p-6">
         <div className="mb-8">
           {/* Hide logo on mobile since it's in the header */}
-          <div className="hidden md:block">
+          <div className="hidden justify-center md:flex">
             <AppLogo textClassName="text-xl font-bold text-gray-900" />
           </div>
           <div
@@ -208,11 +209,11 @@ export default function Sidebar({
 
             const iconClass = isActive
               ? "h-5 w-5 text-white"
-              : "h-5 w-5 text-gray-500";
+              : "h-5 w-5 text-[var(--lingo-text-muted)]";
 
             const btnClass = isActive
-              ? "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold bg-gray-900 text-white transition-colors"
-              : "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900";
+              ? "flex w-full items-center gap-2.5 rounded-full bg-[var(--lingo-btn-bg)] px-3 py-2.5 text-left text-sm font-semibold text-white shadow-[var(--lingo-btn-shadow)] transition-colors"
+              : "flex w-full items-center gap-2.5 rounded-full px-3 py-2.5 text-left text-sm font-medium text-[var(--lingo-text-muted)] transition-colors hover:bg-[var(--lingo-sky-pale)] hover:text-[var(--lingo-navy)]";
 
             if (isAnonymous) {
               return (
@@ -297,16 +298,16 @@ export default function Sidebar({
       </div>
 
       {/* Footer with settings and sign out */}
-      <div className="border-t border-gray-200 bg-white p-6">
+      <div className="border-t bg-[var(--lingo-page-bg)] p-6" style={{ borderColor: "var(--lingo-border)" }}>
         {/* Chinese Mode Toggle */}
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <span className="text-sm font-medium text-gray-700">
+        <div className="mb-4 flex items-center justify-between rounded-2xl border bg-white px-4 py-3" style={{ borderColor: "var(--lingo-border)" }}>
+          <span className="text-sm font-medium text-[var(--lingo-navy)]">
             {convertText(t("Chinese Mode"))}
           </span>
           <button
             onClick={toggleChineseMode}
             className={`relative h-6 w-11 rounded-full transition-colors ${
-              isChineseMode ? "bg-gray-900" : "bg-gray-300"
+              isChineseMode ? "bg-[var(--lingo-btn-bg)]" : "bg-[var(--lingo-sky)]"
             }`}
             aria-label="Toggle Chinese Mode"
           >
@@ -327,13 +328,15 @@ export default function Sidebar({
             setIsAccountOpen(true);
             completeNudge("customize_settings");
           }}
-          className="mb-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+          className="mb-3 w-full rounded-full border bg-white px-4 py-2 text-sm font-semibold text-[var(--lingo-navy)] transition-colors hover:bg-[var(--lingo-sky-pale)]"
+          style={{ borderColor: "var(--lingo-border)" }}
         >
           {convertText(t(isAnonymous ? "Create Account" : "Account & Settings"))}
         </button>
         <button
           onClick={handleSignOut}
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50"
+          className="w-full rounded-full border bg-white px-4 py-2 text-sm font-semibold text-[var(--lingo-text-muted)] transition-colors hover:bg-[var(--lingo-sky-pale)]"
+          style={{ borderColor: "var(--lingo-border)" }}
         >
           {convertText(t("Sign Out"))}
         </button>

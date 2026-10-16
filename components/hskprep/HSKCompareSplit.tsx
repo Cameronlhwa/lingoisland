@@ -61,7 +61,7 @@ export default function HSKCompareSplit({
       className="fade-section"
       style={{
         background:
-          "radial-gradient(circle at 90% 10%, rgba(160,224,239,0.14), transparent 30%), #FCFEFF",
+          "var(--lingo-section-bg, radial-gradient(circle at 90% 10%, rgba(160,224,239,0.14), transparent 30%), #FCFEFF)",
         padding: "120px 24px",
       }}
     >
@@ -111,7 +111,7 @@ export default function HSKCompareSplit({
           padding: 14px 16px;
           border-radius: 16px;
           border: 1px solid var(--lingo-border);
-          background: #fff;
+          background: var(--lingo-card-bg, #fff);
           transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease,
             background 200ms ease;
         }
@@ -200,7 +200,7 @@ export default function HSKCompareSplit({
           font-family: "DM Sans", system-ui, sans-serif;
         }
         .hsk-compare-row:hover .hsk-row-start {
-          background: #fff;
+          background: var(--lingo-card-bg, #fff);
           border-color: var(--lingo-accent-border);
         }
 
@@ -228,7 +228,7 @@ export default function HSKCompareSplit({
             style={{
               borderRadius: "var(--lingo-radius-card)",
               border: "1px solid var(--lingo-border)",
-              background: "#F5F8FA",
+              background: "var(--lingo-card-muted, #F5F8FA)",
               boxShadow: "var(--lingo-shadow-card)",
               padding: 28,
             }}
@@ -294,7 +294,7 @@ export default function HSKCompareSplit({
                 inset: -24,
                 borderRadius: 32,
                 background:
-                  "radial-gradient(60% 60% at 50% 40%, rgba(89,198,222,0.22), transparent 70%)",
+                  "radial-gradient(60% 60% at 50% 40%, var(--lingo-glow, rgba(89,198,222,0.22)), transparent 70%)",
                 filter: "blur(28px)",
                 zIndex: 0,
                 pointerEvents: "none",
@@ -305,7 +305,7 @@ export default function HSKCompareSplit({
                 position: "relative",
                 zIndex: 1,
                 borderRadius: "var(--lingo-radius-card)",
-                background: "#fff",
+                background: "var(--lingo-card-bg, #fff)",
                 border: "1px solid var(--lingo-border)",
                 boxShadow: "var(--lingo-shadow-card-hover)",
                 padding: 28,

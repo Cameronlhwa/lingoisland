@@ -37,7 +37,7 @@ export default function PathNode({
         ? "border-sky-400 bg-sky-400 text-white"
         : "border-teal-500 bg-teal-500 text-white"
     : current
-      ? "border-gray-900 bg-gray-900 text-white ring-2 ring-gray-300 ring-offset-1"
+      ? "border-transparent bg-[var(--lingo-btn-bg)] text-white ring-2 ring-[var(--lingo-accent-border)] ring-offset-1"
       : "border-gray-200 bg-gray-50 text-gray-300";
 
   return (

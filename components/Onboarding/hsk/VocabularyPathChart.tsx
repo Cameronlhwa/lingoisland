@@ -128,12 +128,12 @@ export default function VocabularyPathChart({
         >
           <defs>
             <linearGradient id="persStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#2176AE" />
+              <stop offset="0%" stopColor="#20674F" />
               <stop offset="100%" stopColor="#2BBBAD" />
             </linearGradient>
             <linearGradient id="persFill" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#2BBBAD" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="#2176AE" stopOpacity="0.02" />
+              <stop offset="100%" stopColor="#20674F" stopOpacity="0.02" />
             </linearGradient>
           </defs>
 
@@ -201,7 +201,7 @@ export default function VocabularyPathChart({
             Your personalized path
           </text>
 
-          <circle cx={x0} cy={yKnown} r={4.5} fill="#fff" stroke="#2176AE" strokeWidth={2.25} />
+          <circle cx={x0} cy={yKnown} r={4.5} fill="#fff" stroke="#20674F" strokeWidth={2.25} />
 
           <motion.circle
             cx={xPersGoal}

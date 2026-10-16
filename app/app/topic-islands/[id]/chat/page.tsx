@@ -60,7 +60,7 @@ export default function IslandChatPage() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-sm font-semibold text-[#2176AE]"
+          className="text-sm font-semibold text-[#20674F]"
         >
           ← {t("Back")}
         </button>
@@ -74,16 +74,16 @@ export default function IslandChatPage() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-sm font-semibold text-[#2176AE]"
+          className="text-sm font-semibold text-[#20674F]"
         >
           ← {t("Back")}
         </button>
         <div className="min-w-0">
           <h1
-            className="text-base font-semibold text-[#071E2E]"
-            style={{ fontFamily: "'Lora', Georgia, serif" }}
+            className="text-base font-semibold text-[#5F3119]"
+            style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
           >
-            {t("Chat with")} <span className="text-[#2176AE]">华华</span>
+            {t("Chat with")} <span className="text-[#20674F]">华华</span>
           </h1>
           <p className="truncate text-xs text-gray-500">{convertText(island.topic)}</p>
         </div>

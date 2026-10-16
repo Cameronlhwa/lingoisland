@@ -25,7 +25,7 @@ export default function FeatureGrid({
       className="fade-section"
       style={{
         background:
-          "radial-gradient(circle at 88% 25%, var(--lingo-accent-tint), transparent 30%), #fff",
+          "var(--lingo-section-bg, radial-gradient(circle at 88% 25%, var(--lingo-accent-tint), transparent 30%), #fff)",
         padding: "120px 24px",
       }}
     >

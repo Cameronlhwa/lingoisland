@@ -22,7 +22,7 @@ export function IslandScreenshot({ src, topic }: IslandScreenshotProps) {
       />
       <p
         className="py-2 text-center text-xs"
-        style={{ color: "#2176AE", fontFamily: "'DM Sans', system-ui, sans-serif" }}
+        style={{ color: "#20674F", fontFamily: "'DM Sans', system-ui, sans-serif" }}
       >
         A {topic} island on LingoIsland
       </p>

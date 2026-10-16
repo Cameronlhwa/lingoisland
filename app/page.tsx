@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Nunito } from "next/font/google";
 import Nav from "@/components/landing/Nav";
 import Footer from "@/components/landing/Footer";
 import FadeSectionObserver from "@/components/landing/FadeSectionObserver";
@@ -21,6 +22,13 @@ import {
   HOW_IT_WORKS_STEPS,
   FEATURE_HIGHLIGHTS,
 } from "@/lib/landing-content";
+
+const nunito = Nunito({
+  weight: ["700", "800"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-home-display",
+});
 
 const siteUrl = getSiteUrl();
 
@@ -85,23 +93,35 @@ const structuredData = {
 
 export default function Home() {
   return (
-    <main style={{ background: "#fff" }}>
+    <div className={`lingo-home ${nunito.variable}`}>
+      <main>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <FadeSectionObserver />
-      <Nav />
+      <Nav tone="home" />
       <HSKHero
+        backgroundImageUrl="/home/hero-cove.png"
+        showDecorations={false}
+        priorityImage
+        underNav
+        fadeTo="var(--lingo-page-bg)"
         title={
           <>
-            Learn Mandarin you{" "}
-            <BrushUnderline>actually need</BrushUnderline>
+            Learn Mandarin
+            <br />
+            you{" "}
+            <BrushUnderline variant="brush" color="var(--lingo-accent, #EC7D28)">
+              actually
+            </BrushUnderline>{" "}
+            need
           </>
         }
         subtitle="Topic Islands with real-life sentences, stories, and review — vocabulary that shows up in conversation, not just textbooks."
         ctaHref="/onboarding/journey"
         ctaLabel="Try for free"
+        journeyTransition
       />
       <HSKPillars
         pillars={LANDING_PILLARS}
@@ -121,19 +141,21 @@ export default function Home() {
         features={FEATURE_HIGHLIGHTS}
       />
       <TopicsGrid />
-      <HSKTestimonialPlaceholder testimonial={LANDING_TESTIMONIAL} />
+      <HSKTestimonialPlaceholder testimonial={LANDING_TESTIMONIAL} plain />
       <FAQ
         title="Frequently asked questions"
         subtitle="Clear answers about how LingoIsland helps you learn Mandarin you'll actually use."
         items={FAQ_ITEMS}
       />
       <HSKNightCTA
+        appearance="warm"
         title="Ready to build vocabulary you can actually use?"
         subtitle="Create a Topic Island around what matters to you. Free to start — no credit card needed."
         primary={{ href: "/onboarding/journey", label: "Try for free" }}
         secondary={{ href: "/topics", label: "Explore Topics" }}
       />
       <Footer />
-    </main>
+      </main>
+    </div>
   );
 }

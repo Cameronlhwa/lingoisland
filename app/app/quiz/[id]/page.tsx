@@ -141,7 +141,7 @@ export default function QuizIslandDetailPage() {
               <button
                 onClick={handleSaveName}
                 disabled={savingName || !editedName.trim()}
-                className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
               >
                 {savingName ? convertText(t("Saving...")) : convertText(t("Save"))}
               </button>
@@ -181,7 +181,7 @@ export default function QuizIslandDetailPage() {
             </p>
             <Link
               href={`/app/quiz/${quizIslandId}/add`}
-              className="inline-block rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+              className="inline-block rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-base font-medium text-white transition-colors hover:opacity-90"
             >
               {convertText(t("Add Cards"))}
             </Link>
@@ -195,7 +195,7 @@ export default function QuizIslandDetailPage() {
               </h2>
               <button
                 onClick={() => router.push(`/app/quiz/${quizIslandId}/session`)}
-                className="mb-2 w-full rounded-lg border border-gray-900 bg-gray-900 px-6 py-4 text-center text-base font-medium text-white transition-colors hover:bg-gray-800"
+                className="mb-2 w-full rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-4 text-center text-base font-medium text-white transition-colors hover:opacity-90"
               >
                 {convertText(t("Start Quiz"))}
               </button>

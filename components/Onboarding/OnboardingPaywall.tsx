@@ -114,12 +114,12 @@ export default function OnboardingPaywall({
       >
         <div className="grid grid-cols-1 min-[820px]:grid-cols-2">
           <div className="px-5 py-6 sm:px-8 sm:py-10">
-            <p className="text-[11px] font-bold" style={{ color: "#2176AE" }}>
+            <p className="text-[11px] font-bold" style={{ color: "#20674F" }}>
               Your personalized plan is ready
             </p>
             <h1
               className="lingo-display mt-3"
-              style={{ fontSize: "clamp(28px, 3.2vw, 38px)", lineHeight: 1.12, color: "#071E2E" }}
+              style={{ fontSize: "clamp(28px, 3.2vw, 38px)", lineHeight: 1.12, color: "#5F3119" }}
             >
               Get fluent faster by learning Mandarin around what you love
             </h1>
@@ -128,15 +128,15 @@ export default function OnboardingPaywall({
             </p>
             <p className="mt-6 text-[12px] leading-snug" style={{ color: "#5A7A90" }}>
               Based on:{" "}
-              <span className="font-semibold" style={{ color: "#071E2E" }}>
+              <span className="font-semibold" style={{ color: "#5F3119" }}>
                 {motivationLabel || "your goals"}
               </span>
               {" · "}
-              <span className="font-semibold" style={{ color: "#071E2E" }}>
+              <span className="font-semibold" style={{ color: "#5F3119" }}>
                 {displayJourneyTitle}
               </span>
               {" · "}
-              <span className="font-semibold" style={{ color: "#071E2E" }}>
+              <span className="font-semibold" style={{ color: "#5F3119" }}>
                 HSK Level {levelChip.replace("HSK ", "")}
               </span>
             </p>
@@ -149,12 +149,12 @@ export default function OnboardingPaywall({
                 >
                   <span
                     className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                    style={{ background: "linear-gradient(135deg, #2176AE 0%, #2BBBAD 100%)" }}
+                    style={{ background: "linear-gradient(135deg, #20674F 0%, #2BBBAD 100%)" }}
                   >
                     {String(idx + 1).padStart(2, "0")}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-bold leading-tight" style={{ color: "#071E2E" }}>
+                    <p className="truncate text-[13px] font-bold leading-tight" style={{ color: "#5F3119" }}>
                       {unit.name}
                     </p>
                     {unit.zh && (
@@ -167,18 +167,18 @@ export default function OnboardingPaywall({
               ))}
             </div>
 
-            <p className="mt-3 text-[12px] font-semibold leading-snug" style={{ color: "#2176AE" }}>
+            <p className="mt-3 text-[12px] font-semibold leading-snug" style={{ color: "#20674F" }}>
               + new lessons anytime, on any topic you choose — this never runs out
             </p>
 
-            <ul className="mt-7 space-y-3 text-[13px]" style={{ color: "#071E2E" }}>
+            <ul className="mt-7 space-y-3 text-[13px]" style={{ color: "#5F3119" }}>
               {[
                 "Real example sentences, not flashcard fragments",
                 "Short lessons that fit around your schedule",
                 "Guided conversation practice with spoken feedback",
               ].map((feature) => (
                 <li key={feature} className="flex items-start gap-3">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "#2176AE" }} />
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "#20674F" }} />
                   <span>{feature}</span>
                 </li>
               ))}
@@ -195,8 +195,8 @@ export default function OnboardingPaywall({
                 onClick={() => onBillingIntervalChange("monthly")}
                 className="flex-1 rounded-xl px-3 py-2 text-center text-[13px] font-semibold transition-all"
                 style={{
-                  border: `2px solid ${billingInterval === "monthly" ? "#2176AE" : "rgba(33,118,174,0.1)"}`,
-                  color: "#071E2E",
+                  border: `2px solid ${billingInterval === "monthly" ? "#20674F" : "rgba(33,118,174,0.1)"}`,
+                  color: "#5F3119",
                   background: "#fff",
                 }}
               >
@@ -207,8 +207,8 @@ export default function OnboardingPaywall({
                 onClick={() => onBillingIntervalChange("yearly")}
                 className="flex-1 rounded-xl px-3 py-2 text-center text-[13px] transition-all"
                 style={{
-                  border: `1px solid ${billingInterval === "yearly" ? "#2176AE" : "rgba(33,118,174,0.1)"}`,
-                  color: "#071E2E",
+                  border: `1px solid ${billingInterval === "yearly" ? "#20674F" : "rgba(33,118,174,0.1)"}`,
+                  color: "#5F3119",
                   background: billingInterval === "yearly" ? "rgba(33,118,174,0.06)" : "#fff",
                 }}
               >
@@ -216,7 +216,7 @@ export default function OnboardingPaywall({
               </button>
             </div>
             <div className="mt-5">
-              <p className="lingo-display" style={{ fontSize: 38, lineHeight: 1, color: "#071E2E" }}>
+              <p className="lingo-display" style={{ fontSize: 38, lineHeight: 1, color: "#5F3119" }}>
                 {billingInterval === "monthly" ? "$9.99" : "$6.67"}
                 <span className="ml-1 font-sans text-[14px] font-normal" style={{ color: "#5A7A90" }}>/mo</span>
               </p>
@@ -225,17 +225,17 @@ export default function OnboardingPaywall({
               </p>
             </div>
 
-            <ul className="mt-6 space-y-3 text-[13px]" style={{ color: "#071E2E" }}>
+            <ul className="mt-6 space-y-3 text-[13px]" style={{ color: "#5F3119" }}>
               {benefits.map((benefit) => (
                 <li key={benefit} className="flex items-start gap-2">
-                  <Check className="mt-0.5 shrink-0" size={16} style={{ color: "#2176AE" }} aria-hidden />
+                  <Check className="mt-0.5 shrink-0" size={16} style={{ color: "#20674F" }} aria-hidden />
                   <span>{benefit}</span>
                 </li>
               ))}
             </ul>
 
             <div className="mt-7">
-              <p className="text-[13px] font-bold" style={{ color: "#071E2E" }}>
+              <p className="text-[13px] font-bold" style={{ color: "#5F3119" }}>
                 Why this works better than learning from textbooks
               </p>
               <div className="mt-4 space-y-3 text-[11px]" style={{ color: "#5A7A90" }}>
@@ -248,7 +248,7 @@ export default function OnboardingPaywall({
                 <div>
                   <div className="mb-1 flex justify-between"><span>Learning through your interests</span><span>higher retention</span></div>
                   <div className="h-2 rounded-full" style={{ background: "#E9EEF1" }}>
-                    <div className="h-full w-[85%] rounded-full" style={{ background: "#2176AE" }} />
+                    <div className="h-full w-[85%] rounded-full" style={{ background: "#20674F" }} />
                   </div>
                 </div>
               </div>
@@ -292,7 +292,7 @@ export default function OnboardingPaywall({
                 <blockquote className="text-[11px] leading-relaxed italic" style={{ color: "#5A7A90" }}>
                   “LingoIsland transformed how I learned Mandarin by personalizing lessons around what I actually needed, not textbook scenarios like opening a bank account in China.”
                 </blockquote>
-                <p className="mt-1 text-[10px] font-bold" style={{ color: "#2176AE" }}>
+                <p className="mt-1 text-[10px] font-bold" style={{ color: "#20674F" }}>
                   — Cameron Lim
                 </p>
               </figcaption>

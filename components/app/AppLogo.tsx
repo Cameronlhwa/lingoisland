@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import HomeWordmark from "@/components/landing/HomeWordmark";
 
-const LOGO_SIZES = { sm: 40, md: 56 } as const;
+const LOGO_HEIGHT = { sm: 40, md: 52 } as const;
 
-type LogoSize = keyof typeof LOGO_SIZES;
+type LogoSize = keyof typeof LOGO_HEIGHT;
 
 export default function AppLogo({
   size = "md",
@@ -18,25 +18,15 @@ export default function AppLogo({
   href?: string;
   showMark?: boolean;
 }) {
-  const px = LOGO_SIZES[size];
-  const content = (
-    <>
-      {showMark && (
-        <Image
-          src="/brand/logo.png"
-          alt="Lingo Island Logo"
-          width={px}
-          height={px}
-          className="rounded-lg"
-        />
-      )}
-      <span className={textClassName}>
-        Lingo<span className="text-gray-500">Island</span>
-      </span>
-    </>
+  const content = showMark ? (
+    <HomeWordmark height={LOGO_HEIGHT[size]} />
+  ) : (
+    <span className={textClassName}>
+      Lingo<span className="text-gray-500">Island</span>
+    </span>
   );
 
-  const wrapperClass = "flex items-center gap-0.5";
+  const wrapperClass = "flex items-center";
 
   if (href !== undefined) {
     return (

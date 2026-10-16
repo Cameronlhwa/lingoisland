@@ -12,16 +12,16 @@ export default function SocialProof() {
           <div>
             <h2
               style={{
-                fontFamily: "'Lora', Georgia, serif",
+                fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
                 fontWeight: 600,
                 fontSize: 36,
                 lineHeight: 1.15,
-                color: "#071E2E",
+                color: "#5F3119",
                 marginBottom: 16,
               }}
             >
               Built for learners who want{" "}
-              <em style={{ fontStyle: "italic", color: "#2176AE" }}>real-life</em>{" "}
+              <em style={{ fontStyle: "italic", color: "#20674F" }}>real-life</em>{" "}
               Mandarin
             </h2>
             <p

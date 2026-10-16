@@ -31,12 +31,12 @@ import {
   type CefrLevel,
 } from "@/lib/levelBands";
 
-const NAVY = "#071E2E";
-const BLUE = "#2176AE";
+const NAVY = "#5F3119";
+const BLUE = "#20674F";
 const MUTED = "#5A7A90";
 const CARD_BORDER = "#C2DCF0";
 const FONT_BODY = "'DM Sans', system-ui, sans-serif";
-const FONT_DISPLAY = "'Lora', Georgia, serif";
+const FONT_DISPLAY = 'var(--font-home-display), Nunito, system-ui, sans-serif';
 
 const CARD = "w-full rounded-3xl bg-white p-6 sm:p-8";
 
@@ -603,7 +603,7 @@ export default function JourneyOnboardingFlow({
         aria-hidden
         className="hsk-onboarding-bg absolute inset-0"
         style={{
-          backgroundImage: "url(/hskprep/hsk-onboarding-bg.png)",
+          backgroundImage: "url(/onboarding/journey-bg.png)",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
         }}

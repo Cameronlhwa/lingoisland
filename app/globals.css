@@ -4,53 +4,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── LingoIsland design tokens (HSK landing surface) ────
-   Scoped as custom properties rather than a global override so the rest of
-   the site (blog, pricing, etc.) keeps its existing Lora/DM Sans look —
-   components opt in by referencing these vars / the .lingo-display class. */
+/* ── LingoIsland design tokens ─────────────────────────
+   Homepage palette is the site default. Components read these vars. */
 :root {
-  --lingo-navy: #0b2b3c;
-  --lingo-navy-soft: #163c50;
+  --lingo-page-bg: #FFFEFC;
+  --lingo-section-bg: #FFFEFC;
+  --lingo-navy: #5F3119;
+  --lingo-navy-soft: #7A4A30;
+  --lingo-text: #5F3119;
+  --lingo-text-muted: #7A6456;
+  --lingo-teal: #20674F;
+  --lingo-accent: #EC7D28;
+  --lingo-cream: #FFFEFC;
+  --lingo-white: #FFFFFF;
+  --lingo-border: rgba(95, 49, 25, 0.12);
 
-  --lingo-blue: #4f9fc5;
-  --lingo-blue-bright: #62b6d8;
-  --lingo-sky: #bfe7f5;
-  --lingo-sky-soft: #ddf3fa;
-  --lingo-sky-pale: #eef9fc;
-
+  --lingo-sky: #F0E2D4;
+  --lingo-sky-soft: #F7EFE6;
+  --lingo-sky-pale: #FBF6F1;
+  --lingo-blue: #20674F;
+  --lingo-blue-bright: #3D9478;
   --lingo-aqua: #8edad9;
-  --lingo-teal: #42b9b4;
-  --lingo-teal-soft: #76ceca;
+  --lingo-teal-soft: #3D9478;
 
-  --lingo-accent-start: #59C6DE;
-  --lingo-accent-end: #2176AE;
-  --lingo-accent-gradient: linear-gradient(180deg, #59C6DE 0%, #2176AE 100%);
-  --lingo-accent-gradient-glossy: linear-gradient(180deg, #59C6DE 0%, #3A9FD0 42%, #2176AE 100%);
-  --lingo-accent-shadow: 0 12px 28px rgba(33, 118, 174, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  --lingo-accent-tint: rgba(89, 198, 222, 0.12);
-  --lingo-accent-border: rgba(47, 159, 209, 0.16);
+  --lingo-accent-start: #3D9478;
+  --lingo-accent-end: #20674F;
+  --lingo-accent-gradient: linear-gradient(180deg, #2E8A6C 0%, #20674F 100%);
+  --lingo-accent-gradient-glossy: linear-gradient(180deg, #3D9478 0%, #2E8A6C 42%, #20674F 100%);
+  --lingo-accent-shadow: 0 12px 28px rgba(32, 103, 79, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --lingo-accent-tint: rgba(236, 125, 40, 0.12);
+  --lingo-accent-border: rgba(236, 125, 40, 0.28);
+  --lingo-glow: rgba(236, 125, 40, 0.16);
 
-  --lingo-cream: #fffdf8;
-  --lingo-white: #ffffff;
+  --lingo-card-bg: #FFFFFF;
+  --lingo-card-muted: #F7F1EA;
+  --lingo-card-border: 1px solid rgba(95, 49, 25, 0.1);
+  --lingo-card-shadow: 0 8px 24px rgba(95, 49, 25, 0.05);
+  --lingo-card-shadow-hover: 0 14px 32px rgba(95, 49, 25, 0.08);
+  --lingo-card-shadow-rest: 0 1px 2px rgba(95, 49, 25, 0.04);
 
-  --lingo-text: #123345;
-  --lingo-text-muted: #66869a;
-  --lingo-border: rgba(75, 145, 170, 0.15);
+  --lingo-btn-bg: #20674F;
+  --lingo-btn-radius: 999px;
+  --lingo-btn-shadow: 0 8px 18px rgba(32, 103, 79, 0.22);
+  --lingo-btn-shadow-hover: 0 12px 24px rgba(32, 103, 79, 0.28);
+  --lingo-btn-secondary-bg: #FFFFFF;
+  --lingo-btn-secondary-border: 1px solid rgba(95, 49, 25, 0.14);
+  --lingo-btn-secondary-shadow: 0 4px 12px rgba(95, 49, 25, 0.05);
+  --lingo-icon-bg: linear-gradient(180deg, #3D9478 0%, #20674F 100%);
+  --lingo-icon-shadow: 0 8px 16px rgba(32, 103, 79, 0.2);
+  --lingo-connector: rgba(95, 49, 25, 0.28);
 
   --lingo-radius-control: 14px;
-  --lingo-radius-btn: 16px;
+  --lingo-radius-btn: 999px;
   --lingo-radius-card: 24px;
   --lingo-radius-container: 32px;
 
-  --lingo-shadow-sm: 0 5px 16px rgba(75, 140, 164, 0.08);
-  --lingo-shadow-card: 0 14px 40px rgba(44, 105, 128, 0.08), 0 2px 8px rgba(44, 105, 128, 0.05);
-  --lingo-shadow-card-hover: 0 20px 48px rgba(44, 105, 128, 0.12), 0 5px 12px rgba(44, 105, 128, 0.06);
-  --lingo-shadow-btn: 0 12px 28px rgba(21, 89, 118, 0.22);
-  --lingo-shadow-btn-hover: 0 16px 34px rgba(21, 89, 118, 0.28);
+  --lingo-shadow-sm: 0 5px 16px rgba(95, 49, 25, 0.05);
+  --lingo-shadow-card: 0 10px 28px rgba(95, 49, 25, 0.06);
+  --lingo-shadow-card-hover: 0 16px 36px rgba(95, 49, 25, 0.09);
+  --lingo-shadow-btn: 0 8px 18px rgba(32, 103, 79, 0.22);
+  --lingo-shadow-btn-hover: 0 12px 24px rgba(32, 103, 79, 0.28);
 }
 
 .lingo-display {
-  font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-home-display), "Nunito", "Inter", system-ui, sans-serif;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
@@ -74,22 +91,23 @@
 
   body {
     font-family: 'DM Sans', system-ui, sans-serif;
-    background: #fff;
-    color: #071E2E;
+    background: var(--lingo-page-bg);
+    color: var(--lingo-text);
     line-height: 1.65;
   }
 
   h1, h2 {
-    font-family: 'Lora', Georgia, serif;
-    font-weight: 600;
-    color: #071E2E;
+    font-family: var(--font-home-display), "Nunito", "Inter", system-ui, sans-serif;
+    font-weight: 800;
+    color: var(--lingo-navy);
+    letter-spacing: -0.03em;
     line-height: 1.15;
   }
 
   h1 em, h2 em {
     font-style: italic;
-    color: #2176AE;
-    font-weight: 600;
+    color: var(--lingo-accent);
+    font-weight: 800;
   }
 }
 
@@ -304,6 +322,53 @@
   }
 }
 
+.home-cta-panel {
+  position: relative;
+  max-width: 1120px;
+  margin: 0 auto;
+  border-radius: 32px;
+  overflow: hidden;
+  background-image: url(/home/cta-cove.png);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  aspect-ratio: 2076 / 757;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.home-cta-copy {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  width: min(640px, 100%);
+  padding: 7% 20px 0;
+}
+
+.home-cta-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .home-cta-panel {
+    aspect-ratio: auto;
+    min-height: 520px;
+    background-position: center 42%;
+  }
+
+  .home-cta-copy {
+    padding-top: 36px;
+  }
+
+  .home-cta-spark {
+    display: none;
+  }
+}
+
 /* ── Full-bleed hero artwork positioning ─────────────── */
 
 .hero-scene-bg {
@@ -356,18 +421,102 @@
   }
 }
 
-/* ── HSK Prep app typography ────────────────────────────
-   Scoped to /hsk/app so the legacy Islands app and blog headings retain
-   their current type treatment. */
+/* ── App typography ───────────────────────────────────── */
 .hsk-app-theme h1,
 .hsk-app-theme h2,
 .hsk-app-theme h3,
-.hsk-app-theme .lingo-display {
-  font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
+.hsk-app-theme .lingo-display,
+.lingo-app h1,
+.lingo-app h2,
+.lingo-app h3,
+.lingo-app .lingo-display {
+  font-family: var(--font-home-display), "Nunito", "Inter", system-ui, sans-serif;
   letter-spacing: -0.03em;
 }
 
 .hsk-app-theme {
   font-family: 'DM Sans', system-ui, sans-serif;
   color: var(--lingo-text);
+}
+
+/* Homepage and app surfaces share the default tokens above. */
+.lingo-home,
+.lingo-app {
+  background: var(--lingo-page-bg);
+  color: var(--lingo-text);
+  min-height: 100vh;
+}
+
+.lingo-home .lingo-display {
+  font-family: var(--font-home-display), "Nunito", "Inter", system-ui, sans-serif;
+}
+
+.lingo-brush {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.lingo-brush-line {
+  position: absolute;
+  left: 5%;
+  width: 90%;
+  height: 0.16em;
+  top: calc(100% + 6px);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.hero-scene-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-home-img {
+  object-fit: cover;
+  object-position: center bottom;
+}
+
+.hero-scene-under-nav {
+  margin-top: -74px;
+}
+
+.hero-home-copy {
+  min-height: min(100vh, 63vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 236px 24px 72px;
+}
+
+@media (max-width: 1024px) {
+  .hero-home-img {
+    object-position: center 70%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-home-copy {
+    min-height: 600px;
+    padding-top: 188px;
+  }
+
+  .hero-home-img {
+    object-position: center 58%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-home-copy {
+    min-height: 540px;
+    padding: 168px 20px 48px;
+  }
+
+  .hero-home-img {
+    object-position: center 46%;
+  }
 }

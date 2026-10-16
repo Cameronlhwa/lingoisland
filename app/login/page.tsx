@@ -226,20 +226,21 @@ function LoginPageContent() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white px-6">
+    <main className="lingo-home flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-md">
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-gray-900">
+          <h1 className="lingo-display mb-4 text-4xl text-[var(--lingo-navy)]">
             Welcome to LingoIsland
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-[var(--lingo-text-muted)]">
             Sign in to start building your vocabulary
           </p>
         </div>
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full rounded-lg border border-gray-900 bg-white px-6 py-4 text-base font-medium uppercase tracking-wide text-gray-900 transition-colors hover:bg-gray-50"
+          className="w-full rounded-full border bg-white px-6 py-4 text-base font-semibold uppercase tracking-wide text-[var(--lingo-navy)] transition-colors hover:bg-[var(--lingo-sky-pale)]"
+          style={{ borderColor: "var(--lingo-border)" }}
         >
           Continue with Google
         </button>
@@ -350,7 +351,7 @@ function LoginPageContent() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-gray-900 px-6 py-4 text-base font-medium uppercase tracking-wide text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="w-full rounded-full bg-[var(--lingo-btn-bg)] px-6 py-4 text-base font-medium uppercase tracking-wide text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:bg-gray-400"
           >
             {isSubmitting
               ? "Please wait..."
@@ -367,7 +368,7 @@ function LoginPageContent() {
             setStatusMessage(null);
             setErrorMessage(null);
           }}
-          className="mt-4 w-full text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+          className="mt-4 w-full text-sm font-medium text-[var(--lingo-text-muted)] transition-colors hover:text-[var(--lingo-navy)]"
         >
           {isSignUp
             ? "Already have an account? Sign in"

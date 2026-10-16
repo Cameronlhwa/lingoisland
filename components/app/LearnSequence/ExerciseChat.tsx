@@ -428,7 +428,7 @@ function HuahuaBubble({
               style={{
                 fontSize: 18,
                 fontWeight: 600,
-                color: "#2176AE",
+                color: "#20674F",
                 lineHeight: 1.5,
                 marginBottom: 4,
                 fontFamily: "'DM Sans', system-ui, sans-serif",
@@ -439,10 +439,10 @@ function HuahuaBubble({
             <div
               style={{
                 fontSize: 16,
-                color: "#071E2E",
+                color: "#5F3119",
                 lineHeight: 1.6,
                 marginBottom: showEnglish ? 4 : 0,
-                fontFamily: "'Lora', Georgia, serif",
+                fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
               }}
             >
               {convertText(hanzi)}
@@ -453,12 +453,12 @@ function HuahuaBubble({
             <div
               style={{
                 fontSize: 17,
-                color: "#071E2E",
+                color: "#5F3119",
                 lineHeight: 1.6,
                 marginBottom:
                   displayPinyin || (showEnglish && isChinese) ? 4 : 0,
                 fontFamily: isChinese
-                  ? "'Lora', Georgia, serif"
+                  ? 'var(--font-home-display), Nunito, system-ui, sans-serif'
                   : "'DM Sans', system-ui, sans-serif",
                 whiteSpace: isChinese ? undefined : "pre-wrap",
               }}
@@ -514,7 +514,7 @@ function UserReplyBubble({
       style={{
         fontSize: isA0 ? 16 : 12,
         fontWeight: isA0 ? 600 : 400,
-        color: isA0 ? "#2176AE" : "#5A7A90",
+        color: isA0 ? "#20674F" : "#5A7A90",
         lineHeight: 1.5,
         marginBottom: isA0 ? 4 : 0,
         fontFamily: "'DM Sans', system-ui, sans-serif",
@@ -524,7 +524,7 @@ function UserReplyBubble({
         <>
           {replyPinyinParts![0]}
           {showFill ? (
-            <span style={{ color: "#2176AE" }}>{filledPinyin}</span>
+            <span style={{ color: "#20674F" }}>{filledPinyin}</span>
           ) : (
             <span
               style={{
@@ -533,7 +533,7 @@ function UserReplyBubble({
                 borderBottom: "1.5px solid #C2DCF0",
                 margin: "0 3px",
                 textAlign: "center",
-                color: "#2176AE",
+                color: "#20674F",
                 verticalAlign: "bottom",
               }}
             >
@@ -552,17 +552,17 @@ function UserReplyBubble({
     <div
       style={{
         fontSize: isA0 ? 15 : 17,
-        color: "#071E2E",
+        color: "#5F3119",
         lineHeight: 1.6,
         marginBottom: (!isA0 && (displayPinyin || showEnglish)) || (isA0 && showEnglish) ? 4 : 0,
-        fontFamily: "'Lora', Georgia, serif",
+        fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
       }}
     >
       {isTemplate ? (
         <>
           {convertText(replyHanziParts![0])}
           {showFill ? (
-            <span style={{ color: "#2176AE", fontWeight: 500 }}>
+            <span style={{ color: "#20674F", fontWeight: 500 }}>
               {convertText(filledHanzi!)}
             </span>
           ) : (
@@ -573,7 +573,7 @@ function UserReplyBubble({
                 borderBottom: "2px solid #B8D8EC",
                 margin: "0 3px",
                 textAlign: "center",
-                color: "#2176AE",
+                color: "#20674F",
                 fontWeight: 500,
                 verticalAlign: "bottom",
                 paddingBottom: 1,
@@ -1089,7 +1089,7 @@ export default function ExerciseChat({
                         style={{
                           fontWeight: 600,
                           fontSize: 16,
-                          color: isSelected ? "#fff" : "#2176AE",
+                          color: isSelected ? "#fff" : "#20674F",
                           fontFamily: "'DM Sans', system-ui, sans-serif",
                         }}
                       >
@@ -1099,7 +1099,7 @@ export default function ExerciseChat({
                         style={{
                           fontWeight: 500,
                           fontSize: 14,
-                          fontFamily: "'Lora', Georgia, serif",
+                          fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
                         }}
                       >
                         {convertText(opt.hanzi)}
@@ -1122,7 +1122,7 @@ export default function ExerciseChat({
                       <span
                         style={{
                           fontWeight: 500,
-                          fontFamily: "'Lora', Georgia, serif",
+                          fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
                         }}
                       >
                         {convertText(opt.hanzi)}
@@ -1212,7 +1212,7 @@ export default function ExerciseChat({
                 style={{
                   fontSize: 16,
                   fontWeight: 600,
-                  color: "#071E2E",
+                  color: "#5F3119",
                   marginBottom: 4,
                 }}
               >

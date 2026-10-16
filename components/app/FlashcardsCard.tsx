@@ -25,7 +25,7 @@ export default function FlashcardsCard({
         )}
         <button
           onClick={onReview}
-          className="w-fit rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+          className="w-fit rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90"
         >
           Review
         </button>

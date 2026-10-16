@@ -1039,7 +1039,7 @@ export default function AccountModal({
                     </p>
                   </div>
                   {entitlements && hasAnyProAccess(entitlements.plan) ? (
-                    <span className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white">
+                    <span className="rounded-full bg-[var(--lingo-btn-bg)] px-2.5 py-1 text-xs font-semibold text-white">
                       {entitlements.plan === "both"
                         ? "Islands + HSK"
                         : entitlements.plan === "hsk"
@@ -1139,7 +1139,7 @@ export default function AccountModal({
                           <button
                             onClick={openBillingPortal}
                             disabled={portalLoading}
-                            className="inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                            className="inline-flex w-full items-center justify-center rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
                           >
                             {portalLoading
                               ? "Opening..."
@@ -1182,7 +1182,7 @@ export default function AccountModal({
                       <button
                         onClick={() => startCheckout(selectedPlan)}
                         disabled={checkoutLoading !== null}
-                        className="mt-auto inline-flex w-full items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="mt-auto inline-flex w-full items-center justify-center rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-3 text-base font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
                       >
                         {checkoutLoading ? "Opening..." : "Upgrade Now"}
                       </button>
@@ -1296,7 +1296,7 @@ export default function AccountModal({
               <button
                 onClick={handleFeedbackSubmit}
                 disabled={feedbackLoading}
-                className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-70"
+                className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {feedbackLoading ? "Submitting..." : "Continue"}
               </button>
