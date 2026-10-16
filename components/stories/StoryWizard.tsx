@@ -294,7 +294,7 @@ export default function StoryWizard() {
               <div
                 key={s}
                 className={`h-2 w-10 rounded-full ${
-                  s <= step ? "bg-gray-900" : "bg-gray-200"
+                  s <= step ? "bg-[var(--lingo-btn-bg)]" : "bg-gray-200"
                 }`}
               />
             ))}
@@ -558,7 +558,7 @@ export default function StoryWizard() {
               type="button"
               onClick={() => setStep((prev) => Math.min(5, prev + 1))}
               disabled={!canProceed}
-              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+              className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
             >
               {convertText(t("Continue"))}
             </button>
@@ -567,7 +567,7 @@ export default function StoryWizard() {
               type="button"
               onClick={handleSubmit}
               disabled={submitting || !canProceed}
-              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+              className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
             >
               {convertText(t(submitting ? "Creating..." : "Create story"))}
             </button>

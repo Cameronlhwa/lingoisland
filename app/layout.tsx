@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
+import { Nunito } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import { TTSProvider } from "@/contexts/TTSContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { PostHogPageView } from "@/components/PostHogPageView";
+import JourneyRouteTransition from "@/components/landing/JourneyRouteTransition";
+
+const nunito = Nunito({
+  weight: ["600", "700", "800"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-home-display",
+});
 
 const GOOGLE_ADS_ID = "AW-18080739460";
 
@@ -50,10 +59,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/brand/logo.png",
-        width: 1200,
-        height: 1200,
-        alt: "Lingo Island Logo",
+        url: "/brand/wordmark.png",
+        width: 820,
+        height: 306,
+        alt: "LingoIsland",
       },
     ],
   },
@@ -65,7 +74,7 @@ export const metadata: Metadata = {
     },
     description:
       "Mandarin vocabulary by topic with real-life example sentences, daily stories, and spaced repetition review.",
-    images: ["/brand/logo.png"],
+    images: ["/brand/wordmark.png"],
   },
 };
 
@@ -75,7 +84,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={nunito.variable}>
       <head>
         {/* Google tag (gtag.js) — single installation for Google Ads. Load in head with beforeInteractive
             so Google Ads "Test installation" and Tag Assistant detect it reliably.
@@ -147,7 +156,10 @@ export default function RootLayout({
       <body className="antialiased">
         <PostHogProvider>
           <PostHogPageView />
-          <TTSProvider>{children}</TTSProvider>
+          <TTSProvider>
+            {children}
+            <JourneyRouteTransition />
+          </TTSProvider>
         </PostHogProvider>
       </body>
     </html>

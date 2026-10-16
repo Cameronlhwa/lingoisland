@@ -86,7 +86,7 @@ export default function TestimonialsCarousel() {
         style={{
           fontSize: 14,
           fontWeight: 600,
-          color: "#071E2E",
+          color: "#5F3119",
           marginBottom: 20,
           fontFamily: "'DM Sans', system-ui, sans-serif",
           textTransform: "uppercase",
@@ -107,11 +107,11 @@ export default function TestimonialsCarousel() {
           >
             <blockquote
               style={{
-                fontFamily: "'Lora', Georgia, serif",
+                fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
                 fontStyle: "italic",
                 fontSize: 16,
                 lineHeight: 1.65,
-                color: "#071E2E",
+                color: "#5F3119",
                 marginBottom: 12,
               }}
             >
@@ -165,7 +165,7 @@ export default function TestimonialsCarousel() {
                 height: 6,
                 width: index === currentIndex ? 18 : 6,
                 borderRadius: index === currentIndex ? 3 : "50%",
-                background: index === currentIndex ? "#2176AE" : "#C2D8E8",
+                background: index === currentIndex ? "#20674F" : "#C2D8E8",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.2s",

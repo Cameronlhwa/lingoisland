@@ -25,7 +25,7 @@ export default function FAQ({
       className="fade-section"
       style={{
         background:
-          "radial-gradient(circle at 12% 30%, rgba(160,224,239,0.14), transparent 30%), #FCFEFF",
+          "var(--lingo-section-bg, radial-gradient(circle at 12% 30%, rgba(160,224,239,0.14), transparent 30%), #FCFEFF)",
         padding: "120px 24px",
       }}
     >

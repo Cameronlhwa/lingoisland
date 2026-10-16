@@ -23,7 +23,7 @@ export default function TopicTile({ topic, index = 0 }: TopicTileProps) {
       }}
       whileHover={prefersReducedMotion ? undefined : { y: -4 }}
       style={{
-        background: "#fff",
+        background: "var(--lingo-card-bg, #fff)",
         borderRadius: "var(--lingo-radius-card)",
         border: "1px solid var(--lingo-border)",
         boxShadow: "var(--lingo-shadow-card)",

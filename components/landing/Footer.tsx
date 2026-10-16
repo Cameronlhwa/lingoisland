@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import { loginHrefForLanding } from "@/lib/utils/app-side";
+import HomeWordmark from "./HomeWordmark";
 
 export default function Footer({
   track = "islands",
@@ -11,10 +11,12 @@ export default function Footer({
   const signInHref = loginHrefForLanding(track === "hsk" ? "/hskprep" : "/");
   return (
     <footer
+      className="px-6 md:px-12"
       style={{
-        background: "#fff",
+        background: "var(--lingo-page-bg, #fff)",
         borderTop: "1px solid var(--lingo-border)",
-        padding: "36px 48px",
+        paddingTop: 36,
+        paddingBottom: 36,
       }}
     >
       <div
@@ -29,38 +31,8 @@ export default function Footer({
         }}
       >
         {/* Logo */}
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              overflow: "hidden",
-              background: "#fff",
-              padding: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Image
-              src="/brand/logo.png"
-              alt="LingoIsland Logo"
-              width={28}
-              height={28}
-              style={{ borderRadius: 6 }}
-            />
-          </div>
-          <span
-            style={{
-              color: "var(--lingo-navy)",
-              fontWeight: 600,
-              fontSize: 15,
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-            }}
-          >
-            LingoIsland
-          </span>
+        <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+          <HomeWordmark height={44} />
         </Link>
 
         {/* Links */}

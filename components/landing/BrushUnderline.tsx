@@ -9,11 +9,31 @@ export default function BrushUnderline({
   children,
   color = "var(--lingo-blue)",
   thickness = 4,
+  variant = "rule",
 }: {
   children: ReactNode;
   color?: string;
   thickness?: number;
+  /** Straight rule everywhere; hand-drawn stroke is opt-in for the homepage hero. */
+  variant?: "rule" | "brush";
 }) {
+  if (variant === "brush") {
+    return (
+      <span className="lingo-brush" style={{ color }}>
+        {children}
+        <svg className="lingo-brush-line" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden>
+          <path
+            d="M2 2.5 C 22 6.5, 78 6.5, 98 2.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        </svg>
+      </span>
+    );
+  }
+
   return (
     <span
       style={{

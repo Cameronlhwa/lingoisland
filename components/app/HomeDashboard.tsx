@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -14,11 +14,8 @@ import OnboardingNudgeBanner from "@/components/Onboarding/OnboardingNudgeBanner
 import { STAGE_THRESHOLDS, STAGE_NAMES, STAGE_EMOJIS } from "@/lib/huahua";
 import { useProgressIslandSrc } from "@/lib/progressIslandImage";
 import { hskLabelForCefr } from "@/lib/levelBands";
-import {
-  HSK_CARD_BORDER,
-  HSK_CARD_SHADOW,
-  HSK_CARD_SHADOW_HOVER,
-} from "@/lib/glossy-theme";
+import Card from "@/components/ui/Card";
+import Chip from "@/components/ui/Chip";
 import type { HomeCore, HomeStats, HomeStory } from "@/lib/home/loadHomeDashboard";
 import { ArrowRight, Flame, Layers } from "lucide-react";
 
@@ -53,28 +50,6 @@ async function fetchHomeStats(url: string, userId: string): Promise<HomeStats> {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Chip({
-  children,
-  tone = "default",
-}: {
-  children: ReactNode;
-  tone?: "default" | "accent" | "solid";
-}) {
-  const className =
-    tone === "solid"
-      ? "bg-[var(--lingo-navy)] text-white border-transparent"
-      : tone === "accent"
-        ? "bg-[var(--lingo-sky-pale)] text-[var(--lingo-navy)] border-[var(--lingo-accent-border)]"
-        : "bg-white text-[var(--lingo-navy)] border-[var(--lingo-accent-border)]";
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${className}`}
-    >
-      {children}
-    </span>
-  );
-}
-
 function DashCardShell({
   children,
   className = "",
@@ -85,19 +60,13 @@ function DashCardShell({
   id?: string;
 }) {
   return (
-    <div
+    <Card
       id={id}
-      className={`group flex h-full min-h-[320px] flex-col overflow-hidden rounded-2xl bg-white transition-all hover:-translate-y-0.5 ${className}`}
-      style={{ border: HSK_CARD_BORDER, boxShadow: HSK_CARD_SHADOW }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = HSK_CARD_SHADOW_HOVER;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = HSK_CARD_SHADOW;
-      }}
+      padded={false}
+      className={`group flex h-full min-h-[320px] flex-col overflow-hidden ${className}`}
     >
       {children}
-    </div>
+    </Card>
   );
 }
 
@@ -194,7 +163,7 @@ function CapybaraCard({
         <div className="mt-4">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--lingo-sky-pale)]">
             <div
-              className="h-full rounded-full bg-[var(--lingo-navy)] transition-all duration-500"
+              className="h-full rounded-full bg-[var(--lingo-btn-bg)] transition-all duration-500"
               style={{ width: `${stageProgress}%` }}
             />
           </div>
@@ -533,9 +502,12 @@ export default function HomeDashboard({
     };
   }, [mutateCore, mutateStats]);
 
-  const timeGreeting = useMemo(() => {
-    const h = new Date().getHours();
-    return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const [timeGreeting, setTimeGreeting] = useState<string | null>(null);
+  useEffect(() => {
+    const hour = new Date().getHours();
+    setTimeGreeting(
+      hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening",
+    );
   }, []);
 
   const huahuaReady = dashboard.huahuaStatus === "ready" && dashboard.huahua;
@@ -557,7 +529,8 @@ export default function HomeDashboard({
         <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="lingo-display text-[30px] leading-tight text-[var(--lingo-navy)] sm:text-[34px]">
-              {timeGreeting}, {dashboard.firstName}
+              {timeGreeting ? `${timeGreeting}, ` : ""}
+              {dashboard.firstName}
             </h1>
             {huahuaReady ? (
               <p className="mt-1.5 text-[15px] text-[var(--lingo-text-muted)]">

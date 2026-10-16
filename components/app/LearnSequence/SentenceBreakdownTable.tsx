@@ -29,7 +29,7 @@ export default function SentenceBreakdownTable({
 
   if (!tokens) {
     return (
-      <p className="text-center text-sm text-[#071E2E]/50">Loading breakdown…</p>
+      <p className="text-center text-sm text-[#5F3119]/50">Loading breakdown…</p>
     );
   }
 
@@ -40,16 +40,16 @@ export default function SentenceBreakdownTable({
           <div
             key={`${token.hanzi}-${i}`}
             className={`flex min-w-[3.25rem] flex-col items-center gap-1 text-center ${
-              i > 0 ? "border-l border-[#2176AE]/15 pl-3" : ""
+              i > 0 ? "border-l border-[#20674F]/15 pl-3" : ""
             }`}
           >
             <span
               className={`text-base leading-tight ${
                 token.isTarget
-                  ? "font-bold text-[#071E2E]"
-                  : "font-medium text-[#071E2E]/80"
+                  ? "font-bold text-[#5F3119]"
+                  : "font-medium text-[#5F3119]/80"
               }`}
-              style={{ fontFamily: "'Lora', Georgia, serif" }}
+              style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
             >
               {convertText(token.hanzi)}
             </span>
@@ -57,14 +57,14 @@ export default function SentenceBreakdownTable({
               <>
                 <span
                   className={`text-xs leading-tight ${
-                    token.isTarget ? "font-semibold text-[#2176AE]" : "text-[#071E2E]/50"
+                    token.isTarget ? "font-semibold text-[#20674F]" : "text-[#5F3119]/50"
                   }`}
                 >
                   {token.pinyin || "—"}
                 </span>
                 <span
                   className={`text-[10px] leading-tight ${
-                    token.isTarget ? "font-medium text-[#2176AE]" : "text-[#071E2E]/45"
+                    token.isTarget ? "font-medium text-[#20674F]" : "text-[#5F3119]/45"
                   }`}
                 >
                   {token.english || "—"}

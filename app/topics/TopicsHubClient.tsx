@@ -91,7 +91,7 @@ export function TopicsHubClient({ children }: { children: React.ReactNode }) {
         />
         <button
           type="submit"
-          className="inline-flex items-center rounded-lg border-2 border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+          className="inline-flex items-center rounded-lg border-2 border-transparent bg-[var(--lingo-btn-bg)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90"
         >
           Create your Topic Island →
         </button>
@@ -109,7 +109,7 @@ export function TopicsHubClient({ children }: { children: React.ReactNode }) {
               onClick={() => setCategory(cat)}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 category === cat
-                  ? "bg-gray-900 text-white"
+                  ? "bg-[var(--lingo-btn-bg)] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >

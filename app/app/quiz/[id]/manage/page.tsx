@@ -163,9 +163,9 @@ export default function ManageCardsPage() {
         <div className="mb-6 flex gap-2">
           <button
             onClick={() => setDirectionFilter("all")}
-            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
               directionFilter === "all"
-                ? "border-gray-900 bg-gray-900 text-white"
+                ? "border-transparent bg-[var(--lingo-btn-bg)] text-white"
                 : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
@@ -173,9 +173,9 @@ export default function ManageCardsPage() {
           </button>
           <button
             onClick={() => setDirectionFilter("ZH_EN")}
-            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
               directionFilter === "ZH_EN"
-                ? "border-gray-900 bg-gray-900 text-white"
+                ? "border-transparent bg-[var(--lingo-btn-bg)] text-white"
                 : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
@@ -183,9 +183,9 @@ export default function ManageCardsPage() {
           </button>
           <button
             onClick={() => setDirectionFilter("EN_ZH")}
-            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
               directionFilter === "EN_ZH"
-                ? "border-gray-900 bg-gray-900 text-white"
+                ? "border-transparent bg-[var(--lingo-btn-bg)] text-white"
                 : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >

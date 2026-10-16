@@ -256,7 +256,7 @@ export default function OnboardingStoryPage() {
             <div
               key={stepNum}
               className={`h-1 w-16 ${
-                step >= stepNum ? "bg-gray-900" : "bg-gray-200"
+                step >= stepNum ? "bg-[var(--lingo-btn-bg)]" : "bg-gray-200"
               }`}
             />
           ))}
@@ -551,7 +551,7 @@ export default function OnboardingStoryPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-lg bg-gray-900 px-6 py-4 text-base font-medium uppercase tracking-wide text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+                className="w-full rounded-full bg-[var(--lingo-btn-bg)] px-6 py-4 text-base font-medium uppercase tracking-wide text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:bg-gray-400"
               >
                 {isSubmitting
                   ? "Please wait..."
@@ -583,7 +583,7 @@ export default function OnboardingStoryPage() {
               type="button"
               onClick={() => setStep(3)}
               disabled={!canContinue}
-              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+              className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
             >
               Continue
             </button>
@@ -596,7 +596,7 @@ export default function OnboardingStoryPage() {
               type="button"
               onClick={() => setStep(4)}
               disabled={!canContinue}
-              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+              className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
             >
               Continue
             </button>

@@ -63,7 +63,7 @@ export default function FounderStrip() {
                 fontFamily: "'DM Sans', system-ui, sans-serif",
                 fontWeight: 600,
                 fontSize: 18,
-                color: "#071E2E",
+                color: "#5F3119",
                 marginBottom: 6,
               }}
             >
@@ -90,7 +90,7 @@ export default function FounderStrip() {
                     borderRadius: 20,
                     padding: "4px 14px",
                     fontSize: 12,
-                    color: "#2176AE",
+                    color: "#20674F",
                     fontWeight: 500,
                     fontFamily: "'DM Sans', system-ui, sans-serif",
                   }}
@@ -105,7 +105,7 @@ export default function FounderStrip() {
           <Link
             href={FOUNDER_STRIP.ctaHref}
             style={{
-              background: "#071E2E",
+              background: "#5F3119",
               color: "#fff",
               borderRadius: 10,
               padding: "10px 20px",

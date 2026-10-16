@@ -17,8 +17,8 @@ const PILLAR_ICONS: Record<string, IconType> = {
   stories: MdAutoStories,
 };
 
-const SHADOW = "0 14px 40px rgba(44,105,128,0.08), 0 2px 8px rgba(44,105,128,0.05)";
-const SHADOW_HOVER = "0 20px 48px rgba(44,105,128,0.12), 0 5px 12px rgba(44,105,128,0.06)";
+const SHADOW = "var(--lingo-card-shadow, 0 14px 40px rgba(44,105,128,0.08), 0 2px 8px rgba(44,105,128,0.05))";
+const SHADOW_HOVER = "var(--lingo-card-shadow-hover, 0 20px 48px rgba(44,105,128,0.12), 0 5px 12px rgba(44,105,128,0.06))";
 
 type Pillar = { title: string; body: string; icon: string };
 
@@ -43,7 +43,7 @@ export default function HSKPillars({
       style={{
         position: "relative",
         background:
-          "radial-gradient(circle at 15% 20%, rgba(160,224,239,0.16), transparent 28%), radial-gradient(circle at 85% 60%, var(--lingo-accent-tint), transparent 30%), #FCFEFF",
+          "var(--lingo-section-bg, radial-gradient(circle at 15% 20%, rgba(160,224,239,0.16), transparent 28%), radial-gradient(circle at 85% 60%, var(--lingo-accent-tint), transparent 30%), #FCFEFF)",
         padding: "120px 24px",
         overflow: "hidden",
       }}
@@ -92,8 +92,8 @@ function PillarCard({
       onHoverEnd={() => setHovered(false)}
       style={{
         position: "relative",
-        background: "rgba(255,255,255,0.92)",
-        border: "1px solid rgba(72,150,175,0.12)",
+        background: "var(--lingo-card-bg, rgba(255,255,255,0.92))",
+        border: "var(--lingo-card-border, 1px solid rgba(72,150,175,0.12))",
         borderRadius: 24,
         padding: "28px 24px",
         boxShadow: hovered ? SHADOW_HOVER : SHADOW,

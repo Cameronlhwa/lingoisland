@@ -36,7 +36,7 @@ export default function BlogIndexPage() {
         <p
           className="text-xs font-semibold uppercase tracking-wide"
           style={{
-            color: "#2176AE",
+            color: "#20674F",
             fontFamily: "'DM Sans', system-ui, sans-serif",
           }}
         >
@@ -44,14 +44,14 @@ export default function BlogIndexPage() {
         </p>
         <h1
           className="mt-3 text-3xl font-semibold leading-tight md:text-[2.35rem]"
-          style={{ color: "#071E2E", fontFamily: "'Lora', Georgia, serif" }}
+          style={{ color: "#5F3119", fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
         >
           The LingoIsland Blog
         </h1>
         <p
           className="mt-4 text-lg leading-relaxed md:text-[1.125rem]"
           style={{
-            color: "#071E2E",
+            color: "#5F3119",
             fontFamily: "'DM Sans', system-ui, sans-serif",
             opacity: 0.92,
           }}
@@ -66,14 +66,14 @@ export default function BlogIndexPage() {
           <Link
             key={post.slug}
             href={`/blog/${post.slug}`}
-            className="group flex h-full flex-col rounded-2xl border border-[#2176AE]/12 bg-white/85 p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2176AE]/25 hover:shadow-md"
-            style={{ textDecoration: "none", color: "#071E2E" }}
+            className="group flex h-full flex-col rounded-2xl border border-[#20674F]/12 bg-white/85 p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[#20674F]/25 hover:shadow-md"
+            style={{ textDecoration: "none", color: "#5F3119" }}
           >
             <span
               className="mb-3 inline-flex w-fit rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide"
               style={{
                 background: "#EAF5FB",
-                color: "#2176AE",
+                color: "#20674F",
                 fontFamily: "'DM Sans', system-ui, sans-serif",
               }}
             >
@@ -81,7 +81,7 @@ export default function BlogIndexPage() {
             </span>
             <h2
               className="text-xl font-semibold leading-snug group-hover:underline md:text-[1.35rem]"
-              style={{ fontFamily: "'Lora', Georgia, serif" }}
+              style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
             >
               {post.title}
             </h2>
@@ -97,7 +97,7 @@ export default function BlogIndexPage() {
             <div
               className="mt-auto flex items-center justify-between pt-5 text-xs font-semibold"
               style={{
-                color: "#2176AE",
+                color: "#20674F",
                 fontFamily: "'DM Sans', system-ui, sans-serif",
               }}
             >

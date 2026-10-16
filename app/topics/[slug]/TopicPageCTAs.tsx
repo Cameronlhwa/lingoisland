@@ -40,7 +40,7 @@ export function TopicPageCTAs({
         <Link
           href={onboardingHref}
           onClick={handleStartIsland}
-          className="inline-flex justify-center rounded-lg bg-gray-900 px-6 py-3 font-medium text-white transition-colors hover:bg-gray-800"
+          className="inline-flex justify-center rounded-full bg-[var(--lingo-btn-bg)] px-6 py-3 font-medium text-white transition-colors hover:opacity-90"
         >
           Start this Topic Island
         </Link>

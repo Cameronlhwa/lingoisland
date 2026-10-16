@@ -358,7 +358,7 @@ export default function AddAllWordsModal({
                 <button
                   onClick={handleCreateNewQuizIsland}
                   disabled={creatingQuizIsland || !newQuizIslandName.trim()}
-                  className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                  className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                 >
                   {creatingQuizIsland ? "Creating..." : "Create & Add"}
                 </button>
@@ -405,7 +405,7 @@ export default function AddAllWordsModal({
                   disabled={
                     loading || !selectedQuizIslandId || selectedWords.size === 0
                   }
-                  className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                  className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                 >
                   {loading
                     ? "Adding..."

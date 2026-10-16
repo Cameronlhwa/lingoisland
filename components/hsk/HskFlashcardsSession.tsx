@@ -168,7 +168,7 @@ export default function HskFlashcardsSession({
           <p className="mb-6 text-gray-600">No cards to review right now!</p>
           <button
             onClick={() => router.push(deckPath)}
-            className="inline-block rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+            className="inline-block rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-base font-medium text-white transition-colors hover:opacity-90"
           >
             Back to Deck
           </button>
@@ -229,7 +229,7 @@ export default function HskFlashcardsSession({
             <div className="text-center">
               <button
                 onClick={() => setShowAnswer(true)}
-                className="rounded-lg border border-gray-900 bg-gray-900 px-8 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+                className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-8 py-3 text-base font-medium text-white transition-colors hover:opacity-90"
               >
                 Show Answer
               </button>

@@ -80,11 +80,11 @@ export default function WhyLingoIsland() {
         >
           <h2
             style={{
-              fontFamily: "'Lora', Georgia, serif",
+              fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
               fontWeight: 600,
               fontSize: 36,
               lineHeight: 1.15,
-              color: "#071E2E",
+              color: "#5F3119",
               marginBottom: 16,
             }}
           >
@@ -131,7 +131,7 @@ export default function WhyLingoIsland() {
                 cursor: "pointer",
                 transition: "all 0.15s",
                 background: mobileView === view ? "#fff" : "transparent",
-                color: mobileView === view ? "#071E2E" : "#3a6e88",
+                color: mobileView === view ? "#5F3119" : "#3a6e88",
                 boxShadow: mobileView === view ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
               }}
             >
@@ -176,7 +176,7 @@ export default function WhyLingoIsland() {
           <Link
             href="/onboarding/journey"
             style={{
-              background: "#071E2E",
+              background: "#5F3119",
               color: "#fff",
               borderRadius: 10,
               padding: "13px 26px",
@@ -193,7 +193,7 @@ export default function WhyLingoIsland() {
           <a
             href="#demo"
             style={{
-              color: "#2176AE",
+              color: "#20674F",
               fontSize: 14,
               fontWeight: 500,
               fontFamily: "'DM Sans', system-ui, sans-serif",
@@ -246,7 +246,7 @@ function TraditionalPanel({ prefersReducedMotion }: { prefersReducedMotion: bool
         Most Mandarin Apps
       </p>
       <div style={{ borderBottom: "2px solid #e2e8f0", paddingBottom: 16, marginBottom: 20 }}>
-        <h3 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 20, fontWeight: 600, color: "#334155" }}>
+        <h3 style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif', fontSize: 20, fontWeight: 600, color: "#334155" }}>
           Appendix • Table of Contents
         </h3>
       </div>
@@ -279,7 +279,7 @@ function TraditionalPanel({ prefersReducedMotion }: { prefersReducedMotion: bool
           >
             <div style={{ display: "flex", gap: 8 }}>
               <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: "#475569" }}>{unit.unit}</span>
-              <span style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 13, color: "#64748b" }}>{unit.title}</span>
+              <span style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif', fontSize: 13, color: "#64748b" }}>{unit.title}</span>
             </div>
             <span style={{ fontFamily: "monospace", fontSize: 11, color: "#94a3b8" }}>{unit.page}</span>
           </motion.div>
@@ -341,7 +341,7 @@ function TopicPanel({
           fontWeight: 600,
           letterSpacing: "0.07em",
           textTransform: "uppercase",
-          color: "#2176AE",
+          color: "#20674F",
           marginBottom: 12,
           fontFamily: "'DM Sans', system-ui, sans-serif",
         }}
@@ -362,13 +362,13 @@ function TopicPanel({
           Type a topic...
         </label>
         <div style={{ minHeight: 28 }}>
-          <span style={{ fontSize: 16, color: "#071E2E", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+          <span style={{ fontSize: 16, color: "#5F3119", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
             {typedText}
             {isTyping && !prefersReducedMotion && (
               <motion.span
                 animate={{ opacity: [1, 0, 1] }}
                 transition={{ duration: 0.8, repeat: Infinity }}
-                style={{ display: "inline-block", width: 2, height: 18, background: "#2176AE", marginLeft: 2, verticalAlign: "middle" }}
+                style={{ display: "inline-block", width: 2, height: 18, background: "#20674F", marginLeft: 2, verticalAlign: "middle" }}
               />
             )}
           </span>
@@ -403,7 +403,7 @@ function TopicPanel({
                     >
                       <Volume2 style={{ width: 16, height: 16 }} />
                     </button>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: "#071E2E" }}>{row.hanzi}</span>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: "#5F3119" }}>{row.hanzi}</span>
                     <span style={{ fontSize: 12, color: "#7aA0b4" }}>{row.pinyin}</span>
                   </div>
                   <span style={{ fontSize: 12, color: "#7aA0b4" }}>{row.en}</span>
@@ -417,7 +417,7 @@ function TopicPanel({
                     <Volume2 style={{ width: 14, height: 14 }} />
                   </button>
                   <div>
-                    <div style={{ fontSize: 13, color: "#071E2E", lineHeight: 1.5 }}>{row.sentence}</div>
+                    <div style={{ fontSize: 13, color: "#5F3119", lineHeight: 1.5 }}>{row.sentence}</div>
                     <div style={{ fontSize: 11, color: "#7aA0b4", marginTop: 2 }}>{row.sentencePinyin}</div>
                     <div style={{ fontSize: 11, color: "#3a6e88", marginTop: 2 }}>{row.sentenceEn}</div>
                   </div>

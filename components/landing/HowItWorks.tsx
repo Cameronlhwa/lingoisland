@@ -14,8 +14,8 @@ type HowItWorksProps = {
   steps?: Step[];
 };
 
-const SHADOW = "0 14px 40px rgba(44,105,128,0.08), 0 2px 8px rgba(44,105,128,0.05)";
-const SHADOW_HOVER = "0 20px 48px rgba(44,105,128,0.12), 0 5px 12px rgba(44,105,128,0.06)";
+const SHADOW = "var(--lingo-card-shadow, 0 14px 40px rgba(44,105,128,0.08), 0 2px 8px rgba(44,105,128,0.05))";
+const SHADOW_HOVER = "var(--lingo-card-shadow-hover, 0 20px 48px rgba(44,105,128,0.12), 0 5px 12px rgba(44,105,128,0.06))";
 
 export default function HowItWorks({
   id = "how-it-works",
@@ -32,7 +32,7 @@ export default function HowItWorks({
       className="fade-section"
       style={{
         background:
-          "radial-gradient(circle at 85% 15%, rgba(160,224,239,0.16), transparent 30%), radial-gradient(circle at 10% 70%, var(--lingo-accent-tint), transparent 32%), #FCFEFF",
+          "var(--lingo-section-bg, radial-gradient(circle at 85% 15%, rgba(160,224,239,0.16), transparent 30%), radial-gradient(circle at 10% 70%, var(--lingo-accent-tint), transparent 32%), #FCFEFF)",
         padding: "120px 24px",
       }}
     >
@@ -51,8 +51,8 @@ export default function HowItWorks({
             >
               <div
                 style={{
-                  background: "rgba(255,255,255,0.92)",
-                  border: "1px solid rgba(72,150,175,0.12)",
+                  background: "var(--lingo-card-bg, rgba(255,255,255,0.92))",
+                  border: "var(--lingo-card-border, 1px solid rgba(72,150,175,0.12))",
                   borderRadius: 24,
                   padding: "28px 24px",
                   height: "100%",
@@ -125,7 +125,7 @@ export default function HowItWorks({
                     top: "50%",
                     transform: "translateY(-50%)",
                     width: 24,
-                    borderTop: "2px dashed rgba(75,145,170,0.35)",
+                    borderTop: "2px dashed var(--lingo-connector, rgba(75,145,170,0.35))",
                     zIndex: 2,
                   }}
                 />

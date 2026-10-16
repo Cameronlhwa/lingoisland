@@ -138,7 +138,7 @@ export default function DailyStoryPreviewPage() {
               </p>
               <Link
                 href="/app/topic-islands"
-                className="inline-flex items-center justify-center rounded-lg border border-gray-900 bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+                className="inline-flex items-center justify-center rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90"
               >
                 {convertText(t("Create Topic Island"))}
               </Link>

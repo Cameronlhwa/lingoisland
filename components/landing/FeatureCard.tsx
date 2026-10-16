@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import Card from "@/components/ui/Card";
 import {
   MdFormatQuote,
   MdTune,
@@ -33,9 +34,6 @@ const FEATURE_ICONS: Record<string, IconType> = {
   "Audio On Every Word": MdVolumeUp,
 };
 
-const SHADOW = "0 14px 40px rgba(44,105,128,0.08), 0 2px 8px rgba(44,105,128,0.05)";
-const SHADOW_HOVER = "0 20px 48px rgba(44,105,128,0.12), 0 5px 12px rgba(44,105,128,0.06)";
-
 type FeatureCardProps = {
   title: string;
   description: string;
@@ -47,21 +45,11 @@ export default function FeatureCard({ title, description }: FeatureCardProps) {
   const [hovered, setHovered] = useState(false);
 
   return (
-    <motion.div
-      whileHover={prefersReducedMotion ? undefined : { y: -5 }}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
-      style={{
-        borderRadius: 24,
-        background: "rgba(255,255,255,0.92)",
-        border: "1px solid rgba(72,150,175,0.12)",
-        padding: 26,
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        boxShadow: hovered ? SHADOW_HOVER : SHADOW,
-        transition: "box-shadow 0.25s ease",
-      }}
+    <Card
+      className="flex h-full flex-col"
+      style={{ height: "100%" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <div
         style={{
@@ -96,6 +84,6 @@ export default function FeatureCard({ title, description }: FeatureCardProps) {
       >
         {description}
       </p>
-    </motion.div>
+    </Card>
   );
 }

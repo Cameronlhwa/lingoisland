@@ -12,7 +12,7 @@ export default function TopicsGrid() {
       className="fade-section"
       style={{
         background:
-          "radial-gradient(circle at 12% 20%, rgba(160,224,239,0.16), transparent 32%), #F7FBFD",
+          "var(--lingo-section-bg, radial-gradient(circle at 12% 20%, rgba(160,224,239,0.16), transparent 32%), #F7FBFD)",
         padding: "120px 24px",
       }}
     >

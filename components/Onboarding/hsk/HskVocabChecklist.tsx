@@ -18,7 +18,7 @@ import type {
   ChecklistWord,
 } from "@/lib/hsk/placementChecklist";
 
-const NAVY = "#071E2E";
+const NAVY = "#5F3119";
 const MUTED = "#5A7A90";
 const BORDER = "#C2DCF0";
 
@@ -157,7 +157,7 @@ export default function HskVocabChecklist({
     <div>
       <h2
         className="text-xl font-bold"
-        style={{ fontFamily: "'Lora', Georgia, serif", color: NAVY }}
+        style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif', color: NAVY }}
       >
         {heading}
       </h2>

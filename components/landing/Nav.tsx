@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import PrimaryButton from "./PrimaryButton";
+import HomeWordmark from "./HomeWordmark";
 import { loginHrefForLanding } from "@/lib/utils/app-side";
 
 const LINKS = [
@@ -18,7 +18,8 @@ const LINKS = [
   { href: "/privacy", label: "Privacy" },
 ];
 
-export default function Nav() {
+export default function Nav({ tone = "default" }: { tone?: "default" | "home" }) {
+  const home = tone === "home";
   const pathname = usePathname();
   const signInHref = loginHrefForLanding(pathname);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -37,10 +38,22 @@ export default function Nav() {
         position: "sticky",
         top: 0,
         zIndex: 100,
-        background: scrolled ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.7)",
+        background: home
+          ? scrolled
+            ? "rgba(255,254,252,0.92)"
+            : "transparent"
+          : scrolled
+            ? "rgba(255,255,255,0.9)"
+            : "rgba(255,255,255,0.7)",
         backdropFilter: scrolled ? "blur(16px)" : "none",
         WebkitBackdropFilter: scrolled ? "blur(16px)" : "none",
-        boxShadow: scrolled ? "0 8px 30px rgba(33,95,120,0.07)" : "none",
+        boxShadow: home
+          ? scrolled
+            ? "0 8px 30px rgba(95, 49, 25, 0.06)"
+            : "none"
+          : scrolled
+            ? "0 8px 30px rgba(33,95,120,0.07)"
+            : "none",
         transition: "background 0.25s ease, box-shadow 0.25s ease",
       }}
     >
@@ -49,37 +62,19 @@ export default function Nav() {
         style={{ height: 74 }}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex size-10 items-center justify-center overflow-hidden rounded-xl">
-            <Image
-              src="/brand/logo.png"
-              alt="LingoIsland Logo"
-              width={60}
-              height={60}
-              className="rounded-xl"
-            />
-          </div>
-          <span
-            className="lingo-display"
-            style={{
-              fontWeight: 700,
-              color: "var(--lingo-navy)",
-              fontSize: "17px",
-            }}
-          >
-            LingoIsland
-          </span>
+        <Link href="/" className="flex shrink-0 items-center" style={{ textDecoration: "none" }}>
+          <HomeWordmark height={56} />
         </Link>
 
         {/* Desktop Nav Links */}
-        <div className="hidden items-center gap-8 md:flex">
+        <div className={home ? "hidden items-center gap-3 xl:gap-6 lg:flex" : "hidden items-center gap-8 md:flex"}>
           {LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="group relative"
+              className="group relative whitespace-nowrap"
               style={{
-                fontSize: "13.5px",
+                fontSize: home ? "13px" : "13.5px",
                 color: "var(--lingo-text-muted)",
                 fontFamily: "'DM Sans', system-ui, sans-serif",
                 fontWeight: 600,
@@ -101,23 +96,23 @@ export default function Nav() {
         </div>
 
         {/* Desktop CTAs */}
-        <div className="hidden items-center gap-4 md:flex">
+        <div className={home ? "hidden shrink-0 items-center gap-3 lg:flex" : "hidden items-center gap-4 md:flex"}>
           <Link
             href={signInHref}
             style={{
               fontSize: "13.5px",
-              color: "var(--lingo-navy)",
+              color: home ? "var(--lingo-teal)" : "var(--lingo-navy)",
               fontFamily: "'DM Sans', system-ui, sans-serif",
               fontWeight: 700,
               padding: "6px 12px",
               textDecoration: "none",
               transition: "transform 0.15s, color 0.15s",
             }}
-            className="hover:-translate-y-px hover:text-[var(--lingo-teal)]"
+            className="whitespace-nowrap hover:-translate-y-px hover:text-[var(--lingo-teal)]"
           >
             Sign in
           </Link>
-          <PrimaryButton href="/onboarding/journey" size="compact">
+          <PrimaryButton href="/onboarding/journey" size="compact" journeyTransition={home}>
             Try for free
           </PrimaryButton>
         </div>
@@ -125,7 +120,7 @@ export default function Nav() {
         {/* Mobile Hamburger */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden flex flex-col gap-1.5 p-2"
+          className={home ? "flex flex-col gap-1.5 p-2 lg:hidden" : "flex flex-col gap-1.5 p-2 md:hidden"}
           aria-label="Toggle menu"
           aria-expanded={mobileMenuOpen}
         >
@@ -147,7 +142,7 @@ export default function Nav() {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div
-          className="md:hidden"
+          className={home ? "lg:hidden" : "md:hidden"}
           style={{
             margin: "0 12px 12px",
             borderRadius: 24,
@@ -198,6 +193,7 @@ export default function Nav() {
                 href="/onboarding/journey"
                 className="w-full"
                 style={{ display: "flex" }}
+                journeyTransition={home}
               >
                 Try for free
               </PrimaryButton>

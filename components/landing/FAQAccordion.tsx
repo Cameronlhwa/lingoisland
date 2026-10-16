@@ -3,8 +3,8 @@
 import { useId, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const SHADOW = "0 14px 40px rgba(44,105,128,0.08), 0 2px 8px rgba(44,105,128,0.05)";
-const SHADOW_REST = "0 1px 2px rgba(7,30,46,0.04), 0 8px 16px -12px rgba(33,118,174,0.2)";
+const SHADOW = "var(--lingo-card-shadow, 0 14px 40px rgba(44,105,128,0.08), 0 2px 8px rgba(44,105,128,0.05))";
+const SHADOW_REST = "var(--lingo-card-shadow-rest, 0 1px 2px rgba(7,30,46,0.04), 0 8px 16px -12px rgba(33,118,174,0.2))";
 
 type FAQItem = {
   question: string;
@@ -28,8 +28,8 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
           <div
             key={item.question}
             style={{
-              background: "rgba(255,255,255,0.94)",
-              border: "1px solid rgba(72,150,175,0.12)",
+              background: "var(--lingo-card-bg, rgba(255,255,255,0.94))",
+              border: "var(--lingo-card-border, 1px solid rgba(72,150,175,0.12))",
               borderRadius: 18,
               overflow: "hidden",
               boxShadow: isOpen ? SHADOW : SHADOW_REST,

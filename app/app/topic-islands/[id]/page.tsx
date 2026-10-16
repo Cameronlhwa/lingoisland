@@ -341,14 +341,14 @@ export default function TopicIslandDetailPage() {
   );
 
   const islandHintCard = showNewUserHint ? (
-    <div className="relative overflow-hidden rounded-lg border-2 border-gray-800 bg-gray-900 p-5 shadow-lg">
+    <div className="relative overflow-hidden rounded-lg border-2 border-gray-800 bg-[var(--lingo-btn-bg)] p-5 shadow-lg">
       <button
         type="button"
         onClick={() => {
           setShowNewUserHint(false);
           localStorage.setItem("island_hint_dismissed", "1");
         }}
-        className="absolute right-3 top-3 rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+        className="absolute right-3 top-3 rounded-full p-1.5 text-gray-400 transition-colors hover:opacity-90 hover:text-white"
         aria-label="Dismiss"
       >
         <svg
@@ -1388,7 +1388,7 @@ export default function TopicIslandDetailPage() {
                     <button
                       onClick={handleSaveTitle}
                       disabled={savingTitle || !editedTitle.trim()}
-                      className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                      className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                     >
                       {savingTitle ? t("Saving...") : t("Save")}
                     </button>
@@ -1437,7 +1437,7 @@ export default function TopicIslandDetailPage() {
                   </div>
                   <div className="h-2.5 w-full rounded-full bg-gray-200">
                     <div
-                      className="h-full rounded-full bg-gray-900 transition-all"
+                      className="h-full rounded-full bg-[var(--lingo-btn-bg)] transition-all"
                       style={{ width: `${progressPercentage}%` }}
                     />
                   </div>
@@ -1925,7 +1925,7 @@ export default function TopicIslandDetailPage() {
                           </p>
                           <Link
                             href={`/signup?next=${encodeURIComponent(`/app/topic-islands/${islandId}`)}`}
-                            className="inline-block rounded-lg bg-gray-900 px-8 py-3 text-center text-base font-medium text-white transition-colors hover:bg-gray-800"
+                            className="inline-block rounded-full bg-[var(--lingo-btn-bg)] px-8 py-3 text-center text-base font-medium text-white transition-colors hover:opacity-90"
                           >
                             See all {words.length} words for free →
                           </Link>
@@ -2094,7 +2094,7 @@ export default function TopicIslandDetailPage() {
                           <button
                             onClick={() => handleStartJourneyQuiz("drag-drop")}
                             disabled={selectableWords.length < 2}
-                            className="group rounded-xl border-2 border-cyan-300 bg-white p-6 text-left transition-all hover:border-gray-900 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-cyan-300 disabled:hover:shadow-none"
+                            className="group rounded-xl border-2 border-[var(--lingo-accent)] bg-white p-6 text-left transition-all hover:border-[var(--lingo-navy)] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[var(--lingo-accent)] disabled:hover:shadow-none"
                           >
                             <div className="mb-3">
                               <svg
@@ -2123,7 +2123,7 @@ export default function TopicIslandDetailPage() {
                           <button
                             onClick={() => handleStartJourneyQuiz("flashcard")}
                             disabled={selectableWords.length < 2}
-                            className="group rounded-xl border-2 border-cyan-300 bg-white p-6 text-left transition-all hover:border-gray-900 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-cyan-300 disabled:hover:shadow-none"
+                            className="group rounded-xl border-2 border-[var(--lingo-accent)] bg-white p-6 text-left transition-all hover:border-[var(--lingo-navy)] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[var(--lingo-accent)] disabled:hover:shadow-none"
                           >
                             <div className="mb-3">
                               <svg
@@ -2263,7 +2263,7 @@ export default function TopicIslandDetailPage() {
                                   island.status !== "ready" ||
                                   addCount < 5)
                               }
-                              className="rounded-lg border border-gray-900 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-5 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {addingWords
                                 ? "Generating..."
@@ -2409,7 +2409,7 @@ export default function TopicIslandDetailPage() {
                             <button
                               onClick={() => handleStartQuiz("drag-drop")}
                               disabled={selectedWordIds.size < 2}
-                              className="group text-left p-6 rounded-xl border-2 border-cyan-300 bg-white hover:border-gray-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-cyan-300 disabled:hover:shadow-none"
+                              className="group text-left p-6 rounded-xl border-2 border-[var(--lingo-accent)] bg-white hover:border-[var(--lingo-navy)] hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-[var(--lingo-accent)] disabled:hover:shadow-none"
                             >
                               <div className="mb-3">
                                 <svg
@@ -2439,7 +2439,7 @@ export default function TopicIslandDetailPage() {
                             <button
                               onClick={() => handleStartQuiz("flashcard")}
                               disabled={selectedWordIds.size < 2}
-                              className="group text-left p-6 rounded-xl border-2 border-cyan-300 bg-white hover:border-gray-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-cyan-300 disabled:hover:shadow-none"
+                              className="group text-left p-6 rounded-xl border-2 border-[var(--lingo-accent)] bg-white hover:border-[var(--lingo-navy)] hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-[var(--lingo-accent)] disabled:hover:shadow-none"
                             >
                               <div className="mb-3">
                                 <svg
@@ -2491,7 +2491,7 @@ export default function TopicIslandDetailPage() {
                           <div className="mb-6">
                             <div className="h-2 w-full rounded-full bg-gray-200">
                               <div
-                                className="h-full rounded-full bg-gray-900 transition-all"
+                                className="h-full rounded-full bg-[var(--lingo-btn-bg)] transition-all"
                                 style={{
                                   width: `${((currentQuizIndex + 1) / quizWords.length) * 100}%`,
                                 }}
@@ -2574,7 +2574,7 @@ export default function TopicIslandDetailPage() {
                                 {!showFlashcardAnswer ? (
                                   <button
                                     onClick={() => setShowFlashcardAnswer(true)}
-                                    className="w-full rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+                                    className="w-full rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-base font-medium text-white transition-colors hover:opacity-90"
                                   >
                                     Show Answer
                                   </button>
@@ -2600,7 +2600,7 @@ export default function TopicIslandDetailPage() {
                                   /* Non-journey: just advance — huahua counts every card */
                                   <button
                                     onClick={handleFlashcardNext}
-                                    className="w-full rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+                                    className="w-full rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-base font-medium text-white transition-colors hover:opacity-90"
                                   >
                                     Next →
                                   </button>
@@ -2684,9 +2684,9 @@ export default function TopicIslandDetailPage() {
                                     }
                                     className={`p-4 rounded-lg border-2 transition-all ${
                                       isUsed
-                                        ? "border-cyan-300 bg-cyan-50 text-cyan-900 opacity-60 cursor-not-allowed"
+                                        ? "border-[var(--lingo-accent)] bg-[var(--lingo-accent-tint)] text-[var(--lingo-navy)] opacity-60 cursor-not-allowed"
                                         : isSelected || isDragging
-                                          ? "border-gray-900 bg-gray-900 text-white shadow-lg cursor-grabbing"
+                                          ? "border-transparent bg-[var(--lingo-btn-bg)] text-white shadow-lg cursor-grabbing"
                                           : "border-gray-200 bg-white text-gray-900 hover:border-gray-400 hover:shadow-md cursor-grab"
                                     } ${useTapMode && !isUsed ? "cursor-pointer" : ""}`}
                                   >
@@ -2750,13 +2750,13 @@ export default function TopicIslandDetailPage() {
                                     }
                                     className={`p-4 rounded-lg border-2 min-h-[56px] flex items-center justify-between transition-all ${
                                       hasMatch
-                                        ? "border-cyan-300 bg-cyan-50 border-solid"
+                                        ? "border-[var(--lingo-accent)] bg-[var(--lingo-accent-tint)] border-solid"
                                         : "border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100"
                                     } ${useTapMode ? "cursor-pointer" : ""}`}
                                   >
                                     <div className="flex items-center gap-2">
                                       <span
-                                        className={`font-medium ${hasMatch ? "text-cyan-900" : "text-gray-900"}`}
+                                        className={`font-medium ${hasMatch ? "text-[var(--lingo-navy)]" : "text-gray-900"}`}
                                       >
                                         {convertText(word.hanzi)}
                                       </span>
@@ -2766,14 +2766,14 @@ export default function TopicIslandDetailPage() {
                                         size="sm"
                                       />
                                       <span
-                                        className={`text-sm ${hasMatch ? "text-cyan-700" : "text-gray-600"}`}
+                                        className={`text-sm ${hasMatch ? "text-[#C45E12]" : "text-gray-600"}`}
                                       >
                                         ({word.pinyin})
                                       </span>
                                     </div>
                                     {dropMatches[word.hanzi] && (
                                       <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-cyan-800">
+                                        <span className="text-sm font-medium text-[var(--lingo-navy)]">
                                           {dropMatches[word.hanzi]}
                                         </span>
                                         <button
@@ -2784,7 +2784,7 @@ export default function TopicIslandDetailPage() {
                                               return newMatches;
                                             });
                                           }}
-                                          className="ml-1 text-cyan-600 hover:text-cyan-800 font-semibold"
+                                          className="ml-1 text-[var(--lingo-accent)] hover:text-[var(--lingo-navy)] font-semibold"
                                           title="Remove match"
                                         >
                                           ✕
@@ -2804,7 +2804,7 @@ export default function TopicIslandDetailPage() {
                                 Object.keys(dropMatches).length !==
                                 quizWords.length
                               }
-                              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-base font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Submit Answers
                             </button>
@@ -2933,7 +2933,7 @@ export default function TopicIslandDetailPage() {
                                 setQuizMode(null);
                                 setJourneyQuizPassed(false);
                               }}
-                              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800"
+                              className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-base font-medium text-white transition-colors hover:opacity-90"
                             >
                               Try Again
                             </button>
@@ -2942,7 +2942,7 @@ export default function TopicIslandDetailPage() {
                             <button
                               onClick={() => router.push("/app/journey")}
                               disabled={journeyCompletionPending}
-                              className="rounded-lg border border-gray-900 bg-gray-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-6 py-3 text-base font-medium text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {journeyCompletionPending
                                 ? "Unlocking next island..."
@@ -3002,7 +3002,7 @@ export default function TopicIslandDetailPage() {
                         setShowCapybaraTeaser(false);
                         router.push(`/signup?redirect=/app/topic-islands/${island?.id}`);
                       }}
-                      className="w-full rounded-xl bg-gray-900 px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-gray-800"
+                      className="w-full rounded-full bg-[var(--lingo-btn-bg)] px-6 py-3.5 text-base font-semibold text-white transition-colors hover:opacity-90"
                     >
                       Help 华华 build his home →
                     </button>
@@ -3075,7 +3075,7 @@ export default function TopicIslandDetailPage() {
                             disabled={
                               creatingQuizIsland || !newQuizIslandName.trim()
                             }
-                            className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                            className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                           >
                             {creatingQuizIsland
                               ? "Creating..."
@@ -3131,7 +3131,7 @@ export default function TopicIslandDetailPage() {
                           <button
                             onClick={() => handleAddToQuizConfirm()}
                             disabled={addingToQuiz || !selectedQuizIslandId}
-                            className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                            className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                           >
                             {addingToQuiz ? "Adding..." : "Add"}
                           </button>
@@ -3192,10 +3192,10 @@ export default function TopicIslandDetailPage() {
               </button>
               <div className="border-b p-4 pr-12">
                 <h2
-                  className="text-lg font-semibold text-[#071E2E]"
-                  style={{ fontFamily: "'Lora', Georgia, serif" }}
+                  className="text-lg font-semibold text-[#5F3119]"
+                  style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
                 >
-                  Chat with <span className="text-[#2176AE]">华华</span>
+                  Chat with <span className="text-[#20674F]">华华</span>
                 </h2>
                 <p className="text-sm text-gray-500">{island.topic}</p>
               </div>

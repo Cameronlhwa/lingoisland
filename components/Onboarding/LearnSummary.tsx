@@ -53,8 +53,8 @@ export default function LearnSummary({
             <div
               style={{
                 fontSize: 28,
-                fontFamily: "'Lora', Georgia, serif",
-                color: "#071E2E",
+                fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
+                color: "#5F3119",
                 marginBottom: 6,
               }}
             >
@@ -76,7 +76,7 @@ export default function LearnSummary({
             style={{
               fontSize: 20,
               fontWeight: 600,
-              color: "#071E2E",
+              color: "#5F3119",
               marginBottom: 24,
               fontFamily: "'DM Sans', sans-serif",
             }}
@@ -115,7 +115,7 @@ export default function LearnSummary({
                       fontFamily: "'DM Sans', sans-serif",
                       fontSize: 20,
                       fontWeight: 600,
-                      color: "#2176AE",
+                      color: "#20674F",
                       textAlign: "left",
                     }}
                   >
@@ -123,9 +123,9 @@ export default function LearnSummary({
                   </span>
                   <span
                     style={{
-                      fontFamily: "'Lora', Georgia, serif",
+                      fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
                       fontSize: 18,
-                      color: "#071E2E",
+                      color: "#5F3119",
                       textAlign: "center",
                     }}
                   >
@@ -145,9 +145,9 @@ export default function LearnSummary({
                 <>
                   <span
                     style={{
-                      fontFamily: "'Lora', Georgia, serif",
+                      fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif',
                       fontSize: 20,
-                      color: "#071E2E",
+                      color: "#5F3119",
                       textAlign: "left",
                     }}
                   >
@@ -202,7 +202,7 @@ export default function LearnSummary({
           type="button"
           onClick={onContinue}
           style={{
-            background: "#2176AE",
+            background: "#20674F",
             color: "#fff",
             border: "none",
             borderRadius: "10px",

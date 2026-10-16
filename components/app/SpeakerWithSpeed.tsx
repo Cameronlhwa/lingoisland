@@ -114,7 +114,7 @@ export default function SpeakerWithSpeed({
                 onClick={() => persistRate(option)}
                 className={`w-full px-3 py-1.5 text-left text-xs font-medium transition-colors hover:bg-gray-50 ${
                   Math.abs(rate - option) < 0.03
-                    ? "bg-[#2176AE]/10 text-[#2176AE]"
+                    ? "bg-[#20674F]/10 text-[#20674F]"
                     : "text-gray-700"
                 }`}
               >

@@ -12,7 +12,7 @@ const iconClass = "h-6 w-6 shrink-0";
 
 function tabStyles(active: boolean) {
   return `flex min-h-[60px] flex-1 flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium transition-colors ${
-    active ? "text-[#121926]" : "text-gray-500"
+    active ? "text-[var(--lingo-teal)]" : "text-[var(--lingo-text-muted)]"
   }`;
 }
 
@@ -42,8 +42,8 @@ export default function MobileTabBar({
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-[48] border-t border-gray-200 bg-white md:hidden"
-      style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+      className="fixed bottom-0 left-0 right-0 z-[48] border-t bg-[var(--lingo-page-bg)] md:hidden"
+      style={{ borderColor: "var(--lingo-border)", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
       aria-label="Main navigation"
     >
       <div className="mx-auto flex max-w-2xl items-stretch">

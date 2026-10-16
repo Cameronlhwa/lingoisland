@@ -14,7 +14,7 @@ import {
   HSK_BTN_SHADOW,
 } from "@/lib/glossy-theme";
 
-const NAVY = "#071E2E";
+const NAVY = "#5F3119";
 const MUTED = "#5A7A90";
 const BORDER = "#C2DCF0";
 
@@ -98,7 +98,7 @@ export default function HskPathSetupModal({
 
         {step === "motivation" && (
           <>
-            <h2 className="mt-2 text-xl font-bold" style={{ color: NAVY, fontFamily: "'Lora', Georgia, serif" }}>
+            <h2 className="mt-2 text-xl font-bold" style={{ color: NAVY, fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}>
               What brings you to HSK prep?
             </h2>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -130,7 +130,7 @@ export default function HskPathSetupModal({
 
         {step === "interests" && (
           <>
-            <h2 className="mt-2 text-xl font-bold" style={{ color: NAVY, fontFamily: "'Lora', Georgia, serif" }}>
+            <h2 className="mt-2 text-xl font-bold" style={{ color: NAVY, fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}>
               Which of these are you into?
             </h2>
             <p className="mt-2 text-sm" style={{ color: MUTED }}>
@@ -185,7 +185,7 @@ export default function HskPathSetupModal({
 
         {step === "personalize" && (
           <>
-            <h2 className="mt-2 text-xl font-bold" style={{ color: NAVY, fontFamily: "'Lora', Georgia, serif" }}>
+            <h2 className="mt-2 text-xl font-bold" style={{ color: NAVY, fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}>
               Anything else we should know?
             </h2>
             <p className="mt-2 text-sm" style={{ color: MUTED }}>

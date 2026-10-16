@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import PrimaryButton from "@/components/landing/PrimaryButton";
 import BrushUnderline from "@/components/landing/BrushUnderline";
 import { Sparkle, FloatingCloud } from "@/components/landing/Decorations";
@@ -20,67 +21,113 @@ export default function HSKHero({
   subtitle = "Pass the HSK with vocabulary that actually sticks — real topics, real sentences, 150+ tests to prove you're ready.",
   ctaHref = "/onboarding/hsk",
   ctaLabel = "Start My HSK Journey",
+  showDecorations = true,
+  fadeTo,
+  priorityImage = false,
+  underNav = false,
+  journeyTransition = false,
 }: {
   backgroundImageUrl?: string;
   title?: ReactNode;
   subtitle?: string;
   ctaHref?: string;
   ctaLabel?: string;
+  /** Clouds, sparkles, and the center wash. Off for the homepage illustration. */
+  showDecorations?: boolean;
+  /** Bottom edge fades into this color. Omit to keep the original white fade. */
+  fadeTo?: string;
+  /** next/image with priority. Homepage only — other heroes keep the CSS background. */
+  priorityImage?: boolean;
+  /** Pull the artwork under a transparent sticky nav. */
+  underNav?: boolean;
+  /** Homepage “Try for free” fades into the journey screen. */
+  journeyTransition?: boolean;
 }) {
   return (
     <section
-      className="hero-scene"
+      className={underNav ? "hero-scene hero-scene-under-nav" : "hero-scene"}
       style={{ position: "relative", overflow: "hidden" }}
     >
-      <div
-        aria-hidden
-        className="hero-scene-bg"
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: `url(${backgroundImageUrl})`,
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
-
-      <Sparkle style={{ top: "14%", right: "18%" }} size={16} />
-      <Sparkle style={{ top: "68%", left: "12%" }} size={12} />
-      <FloatingCloud style={{ top: "8%", left: "4%" }} width={110} floatClass="lingo-float-slow" />
-      <FloatingCloud style={{ top: "16%", right: "6%" }} width={90} floatClass="lingo-float" />
-
-      <div
-        style={{
-          maxWidth: 760,
-          margin: "0 auto",
-          textAlign: "center",
-          padding: "24px",
-          position: "relative",
-          zIndex: 3,
-          minHeight: "clamp(560px, 78vh, 780px)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      {priorityImage ? (
+        <div aria-hidden className="hero-scene-media">
+          <Image
+            src={backgroundImageUrl}
+            alt=""
+            fill
+            priority
+            quality={90}
+            sizes="100vw"
+            className="hero-home-img"
+          />
+        </div>
+      ) : (
         <div
           aria-hidden
+          className="hero-scene-bg"
           style={{
             position: "absolute",
-            inset: "-40px -10% -20px",
-            zIndex: -1,
-            background:
-              "radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.14) 42%, transparent 74%)",
-            pointerEvents: "none",
+            inset: 0,
+            backgroundImage: `url(${backgroundImageUrl})`,
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
           }}
         />
+      )}
+
+      {showDecorations && (
+        <>
+          <Sparkle style={{ top: "14%", right: "18%" }} size={16} />
+          <Sparkle style={{ top: "68%", left: "12%" }} size={12} />
+          <FloatingCloud style={{ top: "8%", left: "4%" }} width={110} floatClass="lingo-float-slow" />
+          <FloatingCloud style={{ top: "16%", right: "6%" }} width={90} floatClass="lingo-float" />
+        </>
+      )}
+
+      <div
+        className={underNav ? "hero-home-copy" : undefined}
+        style={
+          underNav
+            ? {
+                maxWidth: 760,
+                margin: "0 auto",
+                textAlign: "center",
+                position: "relative",
+                zIndex: 3,
+              }
+            : {
+                maxWidth: 760,
+                margin: "0 auto",
+                textAlign: "center",
+                padding: "24px",
+                position: "relative",
+                zIndex: 3,
+                minHeight: "clamp(560px, 78vh, 780px)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }
+        }
+      >
+        {showDecorations && (
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: "-40px -10% -20px",
+              zIndex: -1,
+              background:
+                "radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.14) 42%, transparent 74%)",
+              pointerEvents: "none",
+            }}
+          />
+        )}
 
         <h1
           className="hero-headline lingo-display"
           style={{
-            fontWeight: 700,
-            fontSize: "clamp(36px, 5vw, 56px)",
+            fontWeight: underNav ? 800 : 700,
+            fontSize: underNav ? "clamp(36px, 6vw, 64px)" : "clamp(36px, 5vw, 56px)",
             lineHeight: 1.02,
             letterSpacing: "-0.035em",
             color: "var(--lingo-navy)",
@@ -93,7 +140,8 @@ export default function HSKHero({
         <p
           className="hero-sub"
           style={{
-            fontSize: 17.5,
+            fontSize: underNav ? 18 : 17.5,
+            fontWeight: underNav ? 500 : undefined,
             color: "var(--lingo-text-muted)",
             lineHeight: 1.65,
             maxWidth: 560,
@@ -114,7 +162,7 @@ export default function HSKHero({
             flexWrap: "wrap",
           }}
         >
-          <PrimaryButton href={ctaHref}>
+          <PrimaryButton href={ctaHref} journeyTransition={journeyTransition}>
             {ctaLabel}
             <span className="inline-block transition-transform duration-200 group-hover:translate-x-[3px]">
               →
@@ -128,10 +176,11 @@ export default function HSKHero({
         style={{
           position: "relative",
           zIndex: 2,
-          height: 140,
-          marginTop: -80,
-          background:
-            "linear-gradient(to bottom, rgba(239,249,252,0) 0%, rgba(248,252,253,0.86) 60%, #ffffff 100%)",
+          height: fadeTo ? 72 : 140,
+          marginTop: fadeTo ? -72 : -80,
+          background: fadeTo
+            ? `linear-gradient(to bottom, transparent 0%, ${fadeTo} 100%)`
+            : "linear-gradient(to bottom, rgba(239,249,252,0) 0%, rgba(248,252,253,0.86) 60%, #ffffff 100%)",
         }}
       />
     </section>

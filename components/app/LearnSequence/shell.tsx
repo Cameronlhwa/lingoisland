@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import Chip from "@/components/ui/Chip";
 import {
   HSK_CARD_BORDER,
   HSK_CARD_SHADOW,
@@ -49,15 +50,7 @@ export function HskAppChip({
   active?: boolean;
 }) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-bold ${
-        active
-          ? "border-transparent bg-[var(--lingo-navy)] text-white"
-          : "border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] text-[var(--lingo-navy)]"
-      }`}
-    >
-      {children}
-    </span>
+    <Chip tone={active ? "solid" : "accent"}>{children}</Chip>
   );
 }
 

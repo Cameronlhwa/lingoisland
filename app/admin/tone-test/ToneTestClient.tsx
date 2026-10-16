@@ -142,7 +142,7 @@ export default function ToneTestClient() {
     >
       <div className="mx-auto max-w-3xl">
         <header className="mb-8 sm:mb-10">
-          <p className="mb-3 inline-flex rounded-full border border-[#2176AE]/15 bg-white/75 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#2176AE] shadow-sm">
+          <p className="mb-3 inline-flex rounded-full border border-[#20674F]/15 bg-white/75 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#20674F] shadow-sm">
             LingoIsland Lab · Internal tools
           </p>
           <h1 className="lingo-display text-3xl text-[var(--lingo-navy)] sm:text-[40px]">
