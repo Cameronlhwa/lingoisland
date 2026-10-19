@@ -68,13 +68,13 @@ export default function JourneyCreatePage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col" style={{ background: "#f0f7fa" }}>
+    <div className="flex min-h-screen flex-col bg-[var(--lingo-sky-pale)]">
       {/* Header */}
-      <div className="flex h-14 items-center border-b border-[#ddeef7] bg-white px-6">
+      <div className="flex h-14 items-center border-b border-[var(--lingo-border)] bg-white px-6">
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800"
+          className="flex items-center gap-1.5 text-sm font-medium text-[var(--lingo-text-muted)] transition-colors hover:text-[var(--lingo-navy)]"
         >
           <ArrowLeft className="h-4 w-4" />
           {t("Back")}
@@ -84,15 +84,15 @@ export default function JourneyCreatePage() {
       {/* Content */}
       <div className="mx-auto w-full max-w-lg px-6 py-14">
         {/* Heading */}
-        <p className="mb-1 text-xs font-black uppercase tracking-widest text-[#8aa8b5]">
+        <p className="mb-1 text-xs font-black uppercase tracking-widest text-[var(--lingo-teal)]">
           {t("New Journey")}
         </p>
-        <h1 className="text-3xl font-black leading-tight text-[#1a2332]">
+        <h1 className="text-3xl font-black leading-tight text-[var(--lingo-navy)]">
           {t("What do you want")}
           <br />
-          <em className="not-italic text-[#4a9fc4]">{t("to learn about?")}</em>
+          <em className="not-italic text-[var(--lingo-accent)]">{t("to learn about?")}</em>
         </h1>
-        <p className="mt-2 text-sm text-[#7a9aaa]">
+        <p className="mt-2 text-sm text-[var(--lingo-text-muted)]">
           {t("Pick a topic and your level — we'll build a custom learning path in seconds.")}
         </p>
 
@@ -102,7 +102,7 @@ export default function JourneyCreatePage() {
           <div>
             <label
               htmlFor="topic"
-              className="mb-2 block text-xs font-black uppercase tracking-widest text-[#1a2332]"
+              className="mb-2 block text-xs font-black uppercase tracking-widest text-[var(--lingo-navy)]"
             >
               {t("Topic")}
             </label>
@@ -114,13 +114,13 @@ export default function JourneyCreatePage() {
               onKeyDown={(e) => e.key === "Enter" && !loading && handleCreate()}
               placeholder={t("e.g. Coffee shop conversations, K-pop, Business emails…")}
               disabled={loading}
-              className="w-full rounded-xl border border-[#c8dce6] bg-white px-4 py-3 text-sm font-medium text-[#1a2332] placeholder-[#b5cdd8] outline-none transition focus:border-[#4a9fc4] focus:ring-2 focus:ring-[#4a9fc4]/20 disabled:opacity-60"
+              className="w-full rounded-xl border border-[var(--lingo-border)] bg-white px-4 py-3 text-sm font-medium text-[var(--lingo-navy)] placeholder:text-[rgba(122,100,86,0.55)] outline-none transition focus:border-[var(--lingo-teal)] focus:ring-2 focus:ring-[var(--lingo-teal)]/20 disabled:opacity-60"
             />
           </div>
 
           {/* Level */}
           <div>
-            <label className="mb-3 block text-xs font-black uppercase tracking-widest text-[#1a2332]">
+            <label className="mb-3 block text-xs font-black uppercase tracking-widest text-[var(--lingo-navy)]">
               {t("Your Mandarin Level")}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -132,25 +132,17 @@ export default function JourneyCreatePage() {
                     type="button"
                     disabled={loading}
                     onClick={() => setLevel(l.code)}
-                    className="flex flex-col items-start rounded-xl border px-4 py-3 text-left transition-all disabled:opacity-60"
-                    style={
+                    className={`flex flex-col items-start rounded-xl border px-4 py-3 text-left transition-all disabled:opacity-60 ${
                       active
-                        ? {
-                            background: "#1a2332",
-                            borderColor: "#1a2332",
-                            color: "#ffffff",
-                          }
-                        : {
-                            background: "#ffffff",
-                            borderColor: "#c8dce6",
-                            color: "#1a2332",
-                          }
-                    }
+                        ? "border-[var(--lingo-teal)] bg-[var(--lingo-teal)] text-white"
+                        : "border-[var(--lingo-border)] bg-white text-[var(--lingo-navy)] hover:bg-[var(--lingo-sky-soft)]"
+                    }`}
                   >
                     <span className="text-sm font-black">{l.label}</span>
                     <span
-                      className="text-[10px] font-medium"
-                      style={{ color: active ? "rgba(255,255,255,0.65)" : "#8aa8b5" }}
+                      className={`text-[10px] font-medium ${
+                        active ? "text-white/70" : "text-[var(--lingo-text-muted)]"
+                      }`}
                     >
                       {l.desc}
                     </span>
@@ -162,7 +154,7 @@ export default function JourneyCreatePage() {
 
           {/* Sentence style */}
           <div>
-            <label className="mb-3 block text-xs font-black uppercase tracking-widest text-[#1a2332]">
+            <label className="mb-3 block text-xs font-black uppercase tracking-widest text-[var(--lingo-navy)]">
               {t("Example Sentences")}
             </label>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -174,27 +166,17 @@ export default function JourneyCreatePage() {
                     type="button"
                     disabled={loading}
                     onClick={() => setSentenceStyle(option.value)}
-                    className="flex flex-col items-start rounded-xl border px-4 py-3 text-left transition-all disabled:opacity-60"
-                    style={
+                    className={`flex flex-col items-start rounded-xl border px-4 py-3 text-left transition-all disabled:opacity-60 ${
                       active
-                        ? {
-                            background: "#1a2332",
-                            borderColor: "#1a2332",
-                            color: "#ffffff",
-                          }
-                        : {
-                            background: "#ffffff",
-                            borderColor: "#c8dce6",
-                            color: "#1a2332",
-                          }
-                    }
+                        ? "border-[var(--lingo-teal)] bg-[var(--lingo-teal)] text-white"
+                        : "border-[var(--lingo-border)] bg-white text-[var(--lingo-navy)] hover:bg-[var(--lingo-sky-soft)]"
+                    }`}
                   >
                     <span className="text-sm font-black">{t(option.label)}</span>
                     <span
-                      className="mt-1 text-[10px] font-medium leading-snug"
-                      style={{
-                        color: active ? "rgba(255,255,255,0.65)" : "#8aa8b5",
-                      }}
+                      className={`mt-1 text-[10px] font-medium leading-snug ${
+                        active ? "text-white/70" : "text-[var(--lingo-text-muted)]"
+                      }`}
                     >
                       {t(option.description)}
                     </span>
@@ -216,8 +198,7 @@ export default function JourneyCreatePage() {
             type="button"
             disabled={loading || !topic.trim()}
             onClick={handleCreate}
-            className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-black text-white transition-all disabled:opacity-50"
-            style={{ background: "#1a2332" }}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--lingo-btn-bg)] py-3.5 text-sm font-black text-white shadow-[var(--lingo-btn-shadow)] transition-all hover:bg-[var(--lingo-teal-soft)] disabled:opacity-50 disabled:shadow-none disabled:hover:bg-[var(--lingo-btn-bg)]"
           >
             {loading ? (
               <>
@@ -230,7 +211,7 @@ export default function JourneyCreatePage() {
           </button>
 
           {loading && (
-            <p className="text-center text-xs text-[#8aa8b5]">
+            <p className="text-center text-xs text-[var(--lingo-text-muted)]">
               {t("We're generating your personalized learning path. This takes about 10 seconds.")}
             </p>
           )}

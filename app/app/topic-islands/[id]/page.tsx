@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import AppLogo from "@/components/app/AppLogo";
+import Chip from "@/components/ui/Chip";
 import JourneyIslandPaywall from "@/components/app/JourneyIslandPaywall";
 import LearnSummary from "@/components/Onboarding/LearnSummary";
 import {
@@ -1334,9 +1335,9 @@ export default function TopicIslandDetailPage() {
       {journeyContext?.order === 1 ? (
         <div className="sticky top-16 z-20 hidden items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:top-0 md:flex md:px-8">
           <AppLogo size="sm" />
-          <span className="rounded-full bg-teal-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+          <Chip tone="solid" className="uppercase tracking-wide">
             Get 80% on a quiz to achieve the next island in the journey!
-          </span>
+          </Chip>
         </div>
       ) : null}
       <div className="flex w-full">
