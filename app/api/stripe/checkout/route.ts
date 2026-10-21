@@ -67,30 +67,17 @@ export async function POST(request: Request) {
       );
     }
     const entitlements = await getEntitlements(user.id);
-    const alreadySubscribed =
-      product === "core"
-        ? entitlements.isIslandsPro
-        : entitlements.isHskPro;
-    if (alreadySubscribed) {
+    if (entitlements.isIslandsPro) {
       return NextResponse.json(
-        { error: `Already subscribed to ${product === "core" ? "Islands" : "HSK Prep"}` },
+        { error: "Already subscribed to Islands" },
         { status: 409 },
       );
     }
 
-    // TODO(cameron): STRIPE_PRICE_HSK_MONTHLY / STRIPE_PRICE_HSK_ANNUAL need
-    // real Stripe Price IDs created before this tier can go live — these are
-    // new, separate prices from the core $9.99/mo subscription above, per the
-    // HSK onboarding plan-reveal spec ($14.99/mo, or $9.99/mo billed $119.99/yr).
     const priceId =
-      product === "hsk"
-        ? interval === "monthly"
-          ? process.env.STRIPE_PRICE_HSK_MONTHLY
-          : process.env.STRIPE_PRICE_HSK_ANNUAL ||
-            process.env.STRIPE_PRICE_HSK_YEARLY
-        : interval === "monthly"
-          ? process.env.STRIPE_PRICE_PRO_MONTHLY
-          : process.env.STRIPE_PRICE_PRO_YEARLY;
+      interval === "monthly"
+        ? process.env.STRIPE_PRICE_PRO_MONTHLY
+        : process.env.STRIPE_PRICE_PRO_YEARLY;
 
     if (!priceId) {
       console.error("[STRIPE CHECKOUT] Missing price ID for", product, interval);
@@ -164,15 +151,13 @@ export async function POST(request: Request) {
     let cancelUrl = `${siteUrl}/pricing`;
     if (safeCancelPath) {
       cancelUrl = `${siteUrl}${safeCancelPath}`;
-    } else if (cancelContext === "onboarding" && body?.product === "hsk") {
-      cancelUrl = `${siteUrl}/onboarding/hsk?resume=1&canceled=1&plan=${interval}`;
     } else if (cancelContext === "onboarding" && islandId) {
       cancelUrl = `${siteUrl}/onboarding/upgrade?canceled=1&islandId=${encodeURIComponent(islandId)}&plan=${interval}`;
     } else if (cancelContext === "onboarding") {
       cancelUrl = `${siteUrl}/onboarding/upgrade?canceled=1&plan=${interval}`;
     }
 
-    const successPath = product === "hsk" ? "/hsk/app" : "/app";
+    const successPath = "/app";
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
