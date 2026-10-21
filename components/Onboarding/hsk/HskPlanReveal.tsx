@@ -3,7 +3,9 @@
 import { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Check } from "lucide-react";
-import OnboardingCheckoutAuth from "@/components/Onboarding/OnboardingCheckoutAuth";
+import OnboardingCheckoutAuth, {
+  CheckoutHandoff,
+} from "@/components/Onboarding/OnboardingCheckoutAuth";
 import { useHskCheckout } from "@/hooks/useHskCheckout";
 import { MOTIVATION_BUCKETS, type HskMotivation } from "./hskPersonalizationContent";
 import { formatHskLevel } from "@/lib/utils/hsk";
@@ -88,6 +90,8 @@ export default function HskPlanReveal({
     checkoutLoading,
     authOpen,
     setAuthOpen,
+    redirecting,
+    setRedirecting,
     error,
     proceedToCheckout,
     onAuthComplete,
@@ -386,8 +390,11 @@ export default function HskPlanReveal({
           returnPath={returnPath}
           onComplete={() => void onAuthComplete()}
           onCancel={() => setAuthOpen(false)}
+          onHandoffStart={() => setRedirecting(true)}
+          onHandoffEnd={() => setRedirecting(false)}
         />
       )}
+      {redirecting ? <CheckoutHandoff /> : null}
     </div>
   );
 }

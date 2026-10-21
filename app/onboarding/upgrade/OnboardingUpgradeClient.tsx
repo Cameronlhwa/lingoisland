@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import OnboardingPaywall from "@/components/Onboarding/OnboardingPaywall";
-import OnboardingCheckoutAuth from "@/components/Onboarding/OnboardingCheckoutAuth";
+import OnboardingCheckoutAuth, {
+  CheckoutHandoff,
+} from "@/components/Onboarding/OnboardingCheckoutAuth";
 import { useOnboardingCheckout } from "@/hooks/useOnboardingCheckout";
 import {
   type CheckoutPlan,
@@ -112,15 +114,6 @@ export default function OnboardingUpgradeClient({
     void refetch();
   }, [ready, refetch, autoCheckout]);
 
-  useEffect(() => {
-    if (subscriptionLoading || !isPro || proRedirectStarted.current) return;
-    proRedirectStarted.current = true;
-    clearUpgradePending();
-    // Existing Pro accounts often switch away from the guest user that owned
-    // this island — send them to the app home, not a possibly inaccessible island.
-    router.replace("/app");
-  }, [isPro, subscriptionLoading, router]);
-
   const checkout = useOnboardingCheckout(
     snapshot ?? {
       v: 1,
@@ -129,6 +122,16 @@ export default function OnboardingUpgradeClient({
       plan: urlPlan ?? "monthly",
     },
   );
+
+  useEffect(() => {
+    if (checkout.redirecting) return;
+    if (subscriptionLoading || !isPro || proRedirectStarted.current) return;
+    proRedirectStarted.current = true;
+    clearUpgradePending();
+    // Existing Pro accounts often switch away from the guest user that owned
+    // this island — send them to the app home, not a possibly inaccessible island.
+    router.replace("/app");
+  }, [checkout.redirecting, isPro, subscriptionLoading, router]);
 
   useEffect(() => {
     if (!ready || !snapshot) return;
@@ -174,7 +177,9 @@ export default function OnboardingUpgradeClient({
     subscriptionLoading,
   ]);
 
-  if (!ready || !snapshot || subscriptionLoading) {
+  const holdCheckout = checkout.authOpen || checkout.redirecting;
+
+  if ((!ready || !snapshot || subscriptionLoading) && !holdCheckout) {
     return (
       <div
         className="flex min-h-screen items-center justify-center text-[#5A7A90]"
@@ -185,7 +190,9 @@ export default function OnboardingUpgradeClient({
     );
   }
 
-  if (isPro) return null;
+  if (!snapshot) return null;
+
+  if (isPro && !holdCheckout) return null;
 
   return (
     <>
@@ -211,8 +218,11 @@ export default function OnboardingUpgradeClient({
           returnPath={returnPath}
           onComplete={() => void checkout.onAuthComplete()}
           onCancel={() => checkout.setAuthOpen(false)}
+          onHandoffStart={() => checkout.setRedirecting(true)}
+          onHandoffEnd={() => checkout.setRedirecting(false)}
         />
       ) : null}
+      {checkout.redirecting ? <CheckoutHandoff /> : null}
     </>
   );
 }
