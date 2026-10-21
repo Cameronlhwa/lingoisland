@@ -89,20 +89,19 @@ export default function OnboardingPaywall({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
+        className="hsk-onboarding-bg pointer-events-none fixed inset-0"
         style={{
-          backgroundImage: "url(/hskprep/hsk-onboarding-bg.png)",
+          backgroundImage: "url(/onboarding/journey-bg.png)",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
-          backgroundPosition: "center 40%",
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none fixed inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 65% 50% at 50% 30%, rgba(255,255,255,0.72) 0%, rgba(234,246,251,0.45) 55%, rgba(234,246,251,0.85) 100%)",
+            "radial-gradient(ellipse 70% 55% at 50% 38%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.22) 45%, transparent 72%)",
         }}
       />
       <div
