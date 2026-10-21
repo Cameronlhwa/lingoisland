@@ -350,10 +350,9 @@ export default function HskOnboardingFlow() {
         aria-hidden
         className="hsk-onboarding-bg pointer-events-none fixed inset-0"
         style={{
-          backgroundImage: "url(/hskprep/hsk-onboarding-bg.png)",
+          backgroundImage: "url(/onboarding/journey-bg.png)",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
-          backgroundPosition: "center 40%",
         }}
       />
       <div

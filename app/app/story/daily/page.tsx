@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
-import { getLocalDateKey } from "@/lib/utils/date";
 import StoryReader, {
   type StoryDetail,
   type StoryTargetWord,
@@ -25,8 +24,6 @@ export default function DailyStoryPreviewPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const today = getLocalDateKey();
-
   useEffect(() => {
     let active = true;
     const supabase = createClient();
@@ -35,7 +32,7 @@ export default function DailyStoryPreviewPage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/story/daily?date=${today}`, {
+        const response = await fetch("/api/story/daily", {
           cache: "no-store",
         });
         if (!active) return;
@@ -84,7 +81,7 @@ export default function DailyStoryPreviewPage() {
     return () => {
       active = false;
     };
-  }, [today]);
+  }, []);
 
   const handleSaveDaily = async () => {
     setSaving(true);

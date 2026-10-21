@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getLocalDateKey } from "@/lib/utils/date";
+import { resolveStoryDateKey } from "@/lib/profile/timeZone";
 
 type StoryRow = {
   id: string;
@@ -25,10 +25,6 @@ type IslandWordRow = WordRow & {
   island_id: string;
   learned_at?: string | null;
 };
-
-function getTodayDate() {
-  return getLocalDateKey();
-}
 
 function sample<T>(items: T[], count: number) {
   const copy = [...items];
@@ -404,7 +400,10 @@ export async function getOrCreateDailyStory({
     return null;
   }
 
-  const targetDate = date || getTodayDate();
+  const targetDate =
+    date && /^\d{4}-\d{2}-\d{2}$/.test(date)
+      ? date
+      : (await resolveStoryDateKey(supabaseServerClient, user.id)).dateKey;
 
   await supabaseServerClient
     .from("stories")

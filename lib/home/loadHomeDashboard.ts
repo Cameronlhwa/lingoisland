@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { mapJourneyIslandRow } from "@/lib/journey/mapJourneyNodes";
 import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
+import { resolveStoryDateKey } from "@/lib/profile/timeZone";
 import { getLocalDateKey } from "@/lib/utils/date";
 
 export type HomeStory = {
@@ -35,6 +36,7 @@ export type HomeCore = {
   huahua: { stage: number; reviews: number } | null;
   huahuaStatus: "ready" | "error";
   dateKey: string;
+  timeZone: string | null;
   story: HomeStory | null;
   storyStatus: "ready" | "empty" | "error";
   journey: { id: string; topic: string } | null;
@@ -246,11 +248,17 @@ async function loadJourney(supabase: SupabaseClient, userId: string) {
   };
 }
 
-function emptyCore(userId: string, firstName: string, dateKey: string): HomeCore {
+function emptyCore(
+  userId: string,
+  firstName: string,
+  dateKey: string,
+  timeZone: string | null = null,
+): HomeCore {
   return {
     userId,
     firstName,
     dateKey,
+    timeZone,
     wordsLearned: null,
     wordsStatus: "error",
     huahua: null,
@@ -264,14 +272,17 @@ function emptyCore(userId: string, firstName: string, dateKey: string): HomeCore
 }
 
 export async function loadHomeCore(date?: string): Promise<HomeCore> {
-  const dateKey =
-    date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : getLocalDateKey();
   const { user } = await getAuthenticatedUser();
   if (!user) {
+    const dateKey =
+      date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : getLocalDateKey();
     return emptyCore("", "there", dateKey);
   }
 
   const supabase = await createClient();
+  const resolved = await resolveStoryDateKey(supabase, user.id);
+  const dateKey =
+    date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : resolved.dateKey;
   const firstName = firstNameFromUser(user);
   const [huahua, words, story, journey] = await Promise.allSettled([
     loadHuahua(supabase, user.id),
@@ -284,6 +295,7 @@ export async function loadHomeCore(date?: string): Promise<HomeCore> {
     userId: user.id,
     firstName,
     dateKey,
+    timeZone: resolved.timeZone,
     wordsLearned: words.status === "fulfilled" ? words.value : null,
     wordsStatus: words.status === "fulfilled" ? "ready" : "error",
     huahua: huahua.status === "fulfilled" ? huahua.value : null,

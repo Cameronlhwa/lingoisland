@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
+import HskWaitlistForm from "@/components/hsk/HskWaitlistForm";
 import {
   productLabel,
   type BillableProduct,
@@ -49,9 +50,75 @@ export default function SideUpgradeModal({
 
   const label = productLabel(product);
   const isHsk = product === "hsk";
-  const monthlyPrice = isHsk ? "$14.99" : "$9.99";
-  const yearlyPrice = isHsk ? "$9.99" : "$6.67";
-  const yearlyBilling = isHsk ? "$119.88/year" : "$79.99/year";
+
+  if (isHsk) {
+    return createPortal(
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <div
+          className="relative w-full max-w-md overflow-hidden rounded-[22px] bg-white"
+          style={{
+            border: "1px solid rgba(33,118,174,0.12)",
+            boxShadow:
+              "0 20px 48px -18px rgba(7,30,46,0.38), 0 2px 6px rgba(33,118,174,0.08)",
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+          }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 z-10 rounded-full bg-[#F1F7FA] px-2.5 py-1.5 text-sm font-semibold text-[#5A7A90] transition-colors hover:bg-[#E3F0F6]"
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
+
+          <div className="px-7 pb-7 pt-8">
+            <p
+              className="text-[10.5px] font-bold uppercase tracking-[0.14em]"
+              style={{ color: "#20674F" }}
+            >
+              Coming in December
+            </p>
+            <h2
+              className="lingo-display mt-2 text-[28px] leading-none tracking-[-0.025em]"
+              style={{ color: "#5F3119" }}
+            >
+              Join the waitlist
+            </h2>
+            <p className="mt-3 text-[14px] leading-relaxed" style={{ color: "#5A7A90" }}>
+              We&apos;re currently perfecting the experience. The new HSK 3.0 launches
+              in December — join the waitlist and we&apos;ll email you when it&apos;s ready.
+            </p>
+
+            <div className="mt-5">
+              <HskWaitlistForm
+                source="upgrade"
+                id="hsk-upgrade-waitlist-email"
+                showIntro={false}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-3 w-full rounded-xl px-5 py-2.5 text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
+            >
+              Stay on current side
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
+  const monthlyPrice = "$9.99";
+  const yearlyPrice = "$6.67";
+  const yearlyBilling = "$79.99/year";
 
   const startCheckout = async (interval: "monthly" | "yearly") => {
     if (checkoutLoading) return;
@@ -62,7 +129,7 @@ export default function SideUpgradeModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           interval,
-          product: isHsk ? "hsk" : "core",
+          product: "core",
           cancelContext: "pricing",
         }),
       });

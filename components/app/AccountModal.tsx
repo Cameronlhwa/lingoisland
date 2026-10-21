@@ -18,6 +18,62 @@ import {
   type HskStandard,
 } from "@/lib/utils/hsk";
 import { HSK_STANDARD_COOKIE } from "@/lib/hsk/standardPreference";
+import { deviceTimeZone, isValidTimeZone } from "@/lib/utils/date";
+
+function readTimeZoneCookie() {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|; )lingo_timezone=([^;]*)/);
+  if (!match) return null;
+  try {
+    const value = decodeURIComponent(match[1]);
+    return isValidTimeZone(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function timeZoneChoices(now: Date) {
+  const intl = Intl as typeof Intl & {
+    supportedValuesOf?: (key: string) => string[];
+  };
+  let zones: string[] = [];
+  try {
+    zones = intl.supportedValuesOf?.("timeZone") ?? [];
+  } catch {
+    zones = [];
+  }
+  const device = deviceTimeZone();
+  if (!zones.includes(device)) zones = [device, ...zones];
+
+  const groups: Record<string, { value: string; label: string }[]> = {};
+  for (const zone of zones) {
+    const region = zone.includes("/") ? zone.split("/")[0] : "Other";
+    const city =
+      zone.split("/").slice(1).join(" / ").replace(/_/g, " ") || zone;
+    let offset = "";
+    try {
+      offset =
+        new Intl.DateTimeFormat("en-US", {
+          timeZone: zone,
+          timeZoneName: "shortOffset",
+        })
+          .formatToParts(now)
+          .find((part) => part.type === "timeZoneName")?.value ?? "";
+    } catch {
+      offset = "";
+    }
+    const label = offset ? `${city} (${offset})` : city;
+    if (!groups[region]) groups[region] = [];
+    groups[region].push({ value: zone, label });
+  }
+
+  return Object.keys(groups)
+    .sort((a, b) => a.localeCompare(b))
+    .map((region) => ({
+      region,
+      options: groups[region].sort((a, b) => a.label.localeCompare(b.label)),
+    }));
+}
 
 type Entitlements = {
   plan: ProductPlan;
@@ -61,6 +117,11 @@ export default function AccountModal({
   >("idle");
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
   const [cefrLevel, setCefrLevel] = useState<string>("B1");
+  const [timeZone, setTimeZone] = useState(deviceTimeZone);
+  const [timeZoneSaving, setTimeZoneSaving] = useState(false);
+  const [timeZoneStatus, setTimeZoneStatus] = useState<
+    "idle" | "saved" | "error"
+  >("idle");
   const [levelLoading, setLevelLoading] = useState(false);
   const [entitlementsLoading, setEntitlementsLoading] = useState(true);
   const [entitlementsError, setEntitlementsError] = useState<string | null>(
@@ -221,6 +282,11 @@ export default function AccountModal({
         if (response.ok) {
           const data = await response.json();
           setCefrLevel(data.cefrLevel || "B1");
+          const savedZone =
+            typeof data.timeZone === "string" && isValidTimeZone(data.timeZone)
+              ? data.timeZone
+              : readTimeZoneCookie();
+          if (savedZone) setTimeZone(savedZone);
           setTtsRateSentences(data.ttsRateSentences || 1.0);
           setTtsRateWords(data.ttsRateWords || 1.0);
           setCharacterSet(data.characterSet || "simplified");
@@ -506,6 +572,48 @@ export default function AccountModal({
     await saveTtsSettings(1.0, 1.0);
   }, [saveTtsSettings]);
 
+  const timeZoneGroups = useMemo(
+    () => (open ? timeZoneChoices(new Date()) : []),
+    [open],
+  );
+  const timeZoneDay = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat(undefined, {
+        timeZone: isValidTimeZone(timeZone) ? timeZone : undefined,
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      }).format(new Date());
+    } catch {
+      return "";
+    }
+  }, [timeZone, open]);
+
+  const handleTimeZoneChange = useCallback(async (nextZone: string) => {
+    if (!isValidTimeZone(nextZone)) return;
+    setTimeZone(nextZone);
+    setTimeZoneSaving(true);
+    setTimeZoneStatus("idle");
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timeZone: nextZone }),
+      });
+      if (response.ok) {
+        setTimeZoneStatus("saved");
+        window.location.reload();
+      } else {
+        setTimeZoneStatus("error");
+      }
+    } catch (error) {
+      console.error("Error saving time zone:", error);
+      setTimeZoneStatus("error");
+    } finally {
+      setTimeZoneSaving(false);
+    }
+  }, []);
+
   const handleHskStandardChange = useCallback(
     async (newStandard: HskStandard) => {
       setHskStandard(newStandard);
@@ -729,6 +837,52 @@ export default function AccountModal({
                     <option key={opt.cefr} value={opt.cefr}>
                       HSK {opt.hsk} ({opt.label})
                     </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="timezone-select"
+                    className="text-sm font-medium text-gray-900"
+                  >
+                    Time zone
+                  </label>
+                  {timeZoneStatus === "saved" ? (
+                    <span className="text-xs font-medium text-green-600">
+                      Saved
+                    </span>
+                  ) : timeZoneStatus === "error" ? (
+                    <span className="text-xs font-medium text-red-600">
+                      Error saving
+                    </span>
+                  ) : null}
+                </div>
+                <p className="text-xs text-gray-600">
+                  Daily stories reset at midnight in this time zone.
+                  {timeZoneDay ? ` Today is ${timeZoneDay}.` : ""}
+                </p>
+                <select
+                  id="timezone-select"
+                  value={timeZone}
+                  onChange={(e) => void handleTimeZoneChange(e.target.value)}
+                  disabled={timeZoneSaving}
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
+                >
+                  {timeZoneGroups.every((group) =>
+                    group.options.every((option) => option.value !== timeZone),
+                  ) ? (
+                    <option value={timeZone}>{timeZone}</option>
+                  ) : null}
+                  {timeZoneGroups.map((group) => (
+                    <optgroup key={group.region} label={group.region}>
+                      {group.options.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>
