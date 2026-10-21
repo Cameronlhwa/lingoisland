@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import AppLogo from "@/components/app/AppLogo";
 import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
@@ -11,6 +11,33 @@ interface OnboardingCheckoutAuthProps {
   returnPath: string;
   onComplete: () => void;
   onCancel: () => void;
+  /** Cover the page until Stripe opens, so auth state changes cannot swap screens. */
+  onHandoffStart?: () => void;
+  onHandoffEnd?: () => void;
+}
+
+export function CheckoutHandoff() {
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#5F3119]/50 p-4 backdrop-blur-sm">
+      <div
+        className="w-full max-w-md rounded-[22px] border border-[#C2DCF0] bg-white px-6 py-8 text-center shadow-xl"
+        style={{ boxShadow: "0 20px 48px -20px rgba(7,30,46,0.45)" }}
+      >
+        <p
+          className="text-lg font-bold text-[#5F3119]"
+          style={{ fontFamily: "var(--font-home-display), Nunito, system-ui, sans-serif" }}
+        >
+          Taking you to checkout…
+        </p>
+        <p
+          className="mt-2 text-sm text-[#5A7A90]"
+          style={{ fontFamily: "'DM Sans', sans-serif" }}
+        >
+          This only takes a moment.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export default function OnboardingCheckoutAuth({
@@ -18,14 +45,29 @@ export default function OnboardingCheckoutAuth({
   returnPath,
   onComplete,
   onCancel,
+  onHandoffStart,
+  onHandoffEnd,
 }: OnboardingCheckoutAuthProps) {
   const supabase = createClient();
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  const handedOffRef = useRef(false);
+  const finish = () => {
+    handedOffRef.current = true;
+    onCompleteRef.current();
+  };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [linking, setLinking] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAnonymous, setIsAnonymous] = useState<boolean | null>(null);
+  const [mode, setMode] = useState<"signup" | "signin">("signup");
+
+  const switchMode = (next: "signup" | "signin") => {
+    setMode(next);
+    setErrorMessage(null);
+  };
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data: { user } }) => {
@@ -58,6 +100,7 @@ export default function OnboardingCheckoutAuth({
   const handleGoogle = async () => {
     setErrorMessage(null);
     setLinking(true);
+    onHandoffStart?.();
     const { redirectTo, cookieOptions } = getOAuthRedirectConfig();
     const sep = returnPath.includes("?") ? "&" : "?";
     const next = `${returnPath}${sep}resume=1&autoCheckout=1&plan=${plan}`;
@@ -76,6 +119,7 @@ export default function OnboardingCheckoutAuth({
       options: { redirectTo },
     });
     if (error) {
+      onHandoffEnd?.();
       setErrorMessage(error.message || "Google sign-in failed.");
       setLinking(false);
     }
@@ -88,7 +132,7 @@ export default function OnboardingCheckoutAuth({
     const res = await fetch("/api/auth/confirm-for-checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, email: accountEmail }),
+      body: JSON.stringify({ userId, email: accountEmail, password }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -112,7 +156,7 @@ export default function OnboardingCheckoutAuth({
       });
       if (!otpErr && otpData.user && !otpData.user.is_anonymous) {
         await ensureProfiles(otpData.user.id);
-        onComplete();
+        finish();
         return;
       }
     }
@@ -123,7 +167,7 @@ export default function OnboardingCheckoutAuth({
     } = await supabase.auth.getUser();
     if (refreshed && !refreshed.is_anonymous) {
       await ensureProfiles(refreshed.id);
-      onComplete();
+      finish();
       return;
     }
 
@@ -140,7 +184,7 @@ export default function OnboardingCheckoutAuth({
       );
     }
     await ensureProfiles(signedIn.user.id);
-    onComplete();
+    finish();
   };
 
   /** Primary path: create an account (sign up), not log in. */
@@ -153,25 +197,8 @@ export default function OnboardingCheckoutAuth({
     });
 
     if (signUpErr) {
-      // Only fall back to login when signup says the email is taken.
       if (/already|registered|exists/i.test(signUpErr.message)) {
-        const { data: signedIn, error: signInErr } =
-          await supabase.auth.signInWithPassword({
-            email: trimmedEmail,
-            password,
-          });
-        if (!signInErr && signedIn.user) {
-          await ensureProfiles(signedIn.user.id);
-          if (signedIn.user.is_anonymous) {
-            await completeSignup(signedIn.user.id, trimmedEmail);
-            return;
-          }
-          onComplete();
-          return;
-        }
-        setErrorMessage(
-          "That email is already registered. Use the same password, or continue with Google.",
-        );
+        await continueExistingEmail(trimmedEmail);
         return;
       }
       setErrorMessage(signUpErr.message);
@@ -185,30 +212,35 @@ export default function OnboardingCheckoutAuth({
     }
 
     // Supabase anti-enumeration: existing email can return a user with no identities.
+    // That includes the unconfirmed account created on a previous attempt.
     if (Array.isArray(newUser.identities) && newUser.identities.length === 0) {
-      const { data: signedIn, error: signInErr } =
-        await supabase.auth.signInWithPassword({
-          email: trimmedEmail,
-          password,
-        });
-      if (!signInErr && signedIn.user) {
-        await ensureProfiles(signedIn.user.id);
-        onComplete();
-        return;
-      }
-      setErrorMessage(
-        "That email is already registered. Use the same password, or continue with Google.",
-      );
+      await continueExistingEmail(trimmedEmail);
       return;
     }
 
     if (signedUp.session && !newUser.is_anonymous) {
       await ensureProfiles(newUser.id);
-      onComplete();
+      finish();
       return;
     }
 
     await completeSignup(newUser.id, trimmedEmail);
+  };
+
+  /**
+   * Email is already registered. If this is the unconfirmed signup from a
+   * moment ago, finish it and continue to checkout. Otherwise open sign-in.
+   */
+  const continueExistingEmail = async (accountEmail: string) => {
+    try {
+      await supabase.auth.signOut({ scope: "local" }).catch(() => null);
+      await completeSignup("", accountEmail);
+    } catch {
+      setMode("signin");
+      setErrorMessage(
+        "That email already has an account. Sign in to continue.",
+      );
+    }
   };
 
   /** Guest onboarding: attach email/password to the anonymous user (still a signup). */
@@ -230,7 +262,7 @@ export default function OnboardingCheckoutAuth({
       }
       if (!user.is_anonymous) {
         await ensureProfiles(user.id);
-        onComplete();
+        finish();
         return;
       }
       await completeSignup(user.id, trimmedEmail);
@@ -255,22 +287,52 @@ export default function OnboardingCheckoutAuth({
       }
     }
 
-    // Email already used on another account — fall back to signup/login helpers.
+    // Email already used on another account — finish an unconfirmed signup, or
+    // open the sign-in modal when the password does not match.
     if (/already|registered|exists/i.test(msg)) {
-      await supabase.auth.signOut().catch(() => null);
-      await signUpWithEmail();
+      await continueExistingEmail(trimmedEmail);
       return;
     }
 
     setErrorMessage(msg);
   };
 
+  /** Existing account: replace the guest session, then continue to checkout. */
+  const signInWithEmail = async () => {
+    const trimmedEmail = email.trim();
+    await supabase.auth.signOut({ scope: "local" }).catch(() => null);
+    const { data: signedIn, error } = await supabase.auth.signInWithPassword({
+      email: trimmedEmail,
+      password,
+    });
+    if (error || !signedIn.user || signedIn.user.is_anonymous) {
+      const code = (error as { code?: string } | null)?.code ?? "";
+      if (
+        code === "email_not_confirmed" ||
+        /not confirmed/i.test(error?.message ?? "")
+      ) {
+        await completeSignup("", trimmedEmail);
+        return;
+      }
+      setErrorMessage(
+        error?.message || "Could not sign in. Check your email and password.",
+      );
+      return;
+    }
+    await ensureProfiles(signedIn.user.id);
+    finish();
+  };
+
   const handleEmail = async (event: FormEvent) => {
     event.preventDefault();
     setIsSubmitting(true);
     setErrorMessage(null);
+    handedOffRef.current = false;
+    onHandoffStart?.();
     try {
-      if (isAnonymous) {
+      if (mode === "signin") {
+        await signInWithEmail();
+      } else if (isAnonymous) {
         await convertGuestToAccount();
       } else {
         await signUpWithEmail();
@@ -280,6 +342,7 @@ export default function OnboardingCheckoutAuth({
         err instanceof Error ? err.message : "Something went wrong. Please try again.",
       );
     } finally {
+      if (!handedOffRef.current) onHandoffEnd?.();
       setIsSubmitting(false);
     }
   };
@@ -299,15 +362,43 @@ export default function OnboardingCheckoutAuth({
           className="mt-5 text-2xl font-bold text-[#5F3119]"
           style={{ fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
         >
-          Sign in to continue
+          {mode === "signin" ? "Sign in" : "Create an account"}
         </h3>
         <p
           className="mt-2 text-sm text-[#5A7A90]"
           style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
-          Create an account or sign in with an existing one to unlock your
-          personalized plan. You&apos;ll go to secure checkout right after, or
-          straight into the app if you already have Pro.
+          {mode === "signin"
+            ? "Sign in with your existing account. You'll continue to secure checkout, or straight into the app if you already have Pro."
+            : "Create an account to unlock your personalized plan. You'll go to secure checkout right after."}
+        </p>
+        <p
+          className="mt-2 text-xs text-[#8AABBF]"
+          style={{ fontFamily: "'DM Sans', sans-serif" }}
+        >
+          {mode === "signin" ? (
+            <>
+              New here?{" "}
+              <button
+                type="button"
+                onClick={() => switchMode("signup")}
+                className="font-semibold text-[#5F3119] underline decoration-[#C2DCF0] underline-offset-2 hover:text-[#20674F]"
+              >
+                Create an account
+              </button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => switchMode("signin")}
+                className="font-semibold text-[#5F3119] underline decoration-[#C2DCF0] underline-offset-2 hover:text-[#20674F]"
+              >
+                Sign in
+              </button>
+            </>
+          )}
         </p>
 
         <button
@@ -316,7 +407,11 @@ export default function OnboardingCheckoutAuth({
           disabled={linking}
           className="mt-5 flex w-full items-center justify-center rounded-xl border border-[#C2DCF0] bg-white px-4 py-3 text-sm font-semibold text-[#5F3119] transition-colors hover:bg-[#EAF6FB] disabled:opacity-60"
         >
-          {linking ? "Connecting…" : "Continue with Google"}
+          {linking
+            ? "Connecting…"
+            : mode === "signin"
+              ? "Sign in with Google"
+              : "Continue with Google"}
         </button>
 
         <div className="my-5 flex items-center gap-3">
@@ -339,7 +434,7 @@ export default function OnboardingCheckoutAuth({
             type="password"
             required
             minLength={6}
-            autoComplete="new-password"
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (6+ characters)"
@@ -353,7 +448,13 @@ export default function OnboardingCheckoutAuth({
             disabled={isSubmitting}
             className="w-full rounded-xl bg-[#5F3119] py-3 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:brightness-110 disabled:opacity-60"
           >
-            {isSubmitting ? "Continuing…" : "Continue with email"}
+            {isSubmitting
+              ? mode === "signin"
+                ? "Signing in…"
+                : "Creating account…"
+              : mode === "signin"
+                ? "Sign in"
+                : "Create account"}
           </button>
         </form>
 

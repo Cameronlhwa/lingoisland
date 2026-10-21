@@ -20,6 +20,7 @@ export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
   const [plan, setPlan] = useState<CheckoutPlan>(snapshot.plan);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const persistPlan = useCallback((next: CheckoutPlan) => {
@@ -45,15 +46,25 @@ export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
         });
         const data = await res.json().catch(() => ({}));
         if (res.status === 401) {
+          setRedirecting(false);
           setAuthOpen(true);
           return;
         }
+        if (res.status === 409) {
+          clearUpgradePending();
+          window.location.href = "/app";
+          return;
+        }
         if (!res.ok || !data?.url) {
+          setRedirecting(false);
+          setAuthOpen(false);
           setError(data?.error || "Could not start checkout");
           return;
         }
         window.location.href = data.url as string;
       } catch {
+        setRedirecting(false);
+        setAuthOpen(false);
         setError("Could not start checkout. Please try again.");
       } finally {
         setCheckoutLoading(false);
@@ -87,24 +98,20 @@ export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
   }, [plan, snapshot, startCheckout, supabase]);
 
   const onAuthComplete = useCallback(async () => {
-    setAuthOpen(false);
+    setRedirecting(true);
+    setError(null);
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user || user.is_anonymous) {
+      setRedirecting(false);
       setError("Please finish creating your account to continue.");
       return;
     }
 
-    // Existing Pro accounts (e.g. signed in via Google) should skip Stripe.
-    invalidateSubscriptionCache();
-    const pro = await fetchIsPro();
-    if (pro) {
-      clearUpgradePending();
-      window.location.href = "/app";
-      return;
-    }
-
+    // Go straight to Checkout. A brand-new account is not Pro, and waiting on
+    // entitlements plus Stripe reconcile was flashing other screens first.
+    // Already-subscribed accounts get a 409 and are sent into the app.
     await startCheckout(pendingPlanRef.current);
   }, [startCheckout, supabase]);
 
@@ -114,6 +121,8 @@ export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
     checkoutLoading,
     authOpen,
     setAuthOpen,
+    redirecting,
+    setRedirecting,
     error,
     proceedToCheckout,
     onAuthComplete,

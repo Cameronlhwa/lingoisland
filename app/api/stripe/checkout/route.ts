@@ -169,6 +169,7 @@ export async function POST(request: Request) {
       mode: "subscription",
       customer: stripeCustomerId,
       line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
       client_reference_id: user.id,
       subscription_data: {
         metadata: {

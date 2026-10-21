@@ -21,6 +21,7 @@ export function useHskCheckout() {
   const [plan, setPlan] = useState<HskCheckoutPlan>("monthly");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const startCheckout = useCallback(async (interval: HskCheckoutPlan) => {
@@ -39,15 +40,24 @@ export function useHskCheckout() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
+        setRedirecting(false);
         setAuthOpen(true);
         return;
       }
+      if (res.status === 409) {
+        window.location.href = "/hsk/app";
+        return;
+      }
       if (!res.ok || !data?.url) {
+        setRedirecting(false);
+        setAuthOpen(false);
         setError(data?.error || "Could not start checkout");
         return;
       }
       window.location.href = data.url as string;
     } catch {
+      setRedirecting(false);
+      setAuthOpen(false);
       setError("Could not start checkout. Please try again.");
     } finally {
       setCheckoutLoading(false);
@@ -79,21 +89,16 @@ export function useHskCheckout() {
   }, [plan, startCheckout, supabase]);
 
   const onAuthComplete = useCallback(async () => {
-    setAuthOpen(false);
+    setRedirecting(true);
     setError(null);
     await supabase.auth.refreshSession().catch(() => null);
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user || user.is_anonymous) {
+      setRedirecting(false);
       setAuthOpen(true);
       setError("Please sign in to continue to checkout.");
-      return;
-    }
-
-    invalidateSubscriptionCache();
-    if ((await fetchProductAccess()).isHskPro) {
-      window.location.href = "/hsk/app";
       return;
     }
 
@@ -109,6 +114,8 @@ export function useHskCheckout() {
     checkoutLoading,
     authOpen,
     setAuthOpen,
+    redirecting,
+    setRedirecting,
     error,
     proceedToCheckout,
     onAuthComplete,
