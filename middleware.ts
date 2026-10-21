@@ -9,6 +9,7 @@ function isProtectedHskApi(pathname: string): boolean {
     if (pathname === '/api/hsk/curriculum/generate') return false
     if (pathname === '/api/hsk/onboarding-answers') return false
     if (pathname === '/api/hsk/placement-checklist') return false
+    if (pathname === '/api/hsk/waitlist') return false
     return true
   }
   return false

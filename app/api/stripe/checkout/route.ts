@@ -57,6 +57,15 @@ export async function POST(request: Request) {
     }
 
     const product = body?.product === "hsk" ? "hsk" : "core";
+    if (product === "hsk") {
+      return NextResponse.json(
+        {
+          error:
+            "HSK Prep opens with HSK 3.0 in December. Join the waitlist instead.",
+        },
+        { status: 403 },
+      );
+    }
     const entitlements = await getEntitlements(user.id);
     const alreadySubscribed =
       product === "core"

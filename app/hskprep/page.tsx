@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { Nunito } from "next/font/google";
 import Nav from "@/components/landing/Nav";
 import Footer from "@/components/landing/Footer";
 import FadeSectionObserver from "@/components/landing/FadeSectionObserver";
 import HowItWorks from "@/components/landing/HowItWorks";
 import FeatureGrid from "@/components/landing/FeatureGrid";
 import FAQ from "@/components/landing/FAQ";
+import BrushUnderline from "@/components/landing/BrushUnderline";
 import HSKHero from "@/components/hskprep/HSKHero";
 import HSKPillars from "@/components/hskprep/HSKPillars";
 import HSKCompareSplit from "@/components/hskprep/HSKCompareSplit";
@@ -16,6 +18,13 @@ import {
   HSK_FEATURE_HIGHLIGHTS,
   HSK_FAQ_ITEMS,
 } from "@/lib/hskprep-content";
+
+const nunito = Nunito({
+  weight: ["700", "800"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-home-display",
+});
 
 const siteUrl = getSiteUrl();
 const pageUrl = `${siteUrl}/hskprep`;
@@ -62,14 +71,31 @@ const structuredData = {
 
 export default function HSKPrepPage() {
   return (
-    <main style={{ background: "#fff" }}>
+    <main className={nunito.variable} style={{ background: "var(--lingo-page-bg)" }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <FadeSectionObserver />
-      <Nav />
-      <HSKHero />
+      <Nav tone="home" />
+      <HSKHero
+        backgroundImageUrl="/home/hero-cove.png"
+        showDecorations={false}
+        priorityImage
+        underNav
+        fadeTo="var(--lingo-page-bg)"
+        title={
+          <>
+            Learn Mandarin
+            <br />
+            you{" "}
+            <BrushUnderline variant="brush" color="var(--lingo-accent, #EC7D28)">
+              actually
+            </BrushUnderline>{" "}
+            need
+          </>
+        }
+      />
       <HSKPillars />
       <HSKCompareSplit />
       <HowItWorks
@@ -89,7 +115,7 @@ export default function HSKPrepPage() {
         subtitle="Clear answers about how HSK prep works on LingoIsland."
         items={HSK_FAQ_ITEMS}
       />
-      <HSKNightCTA />
+      <HSKNightCTA appearance="warm" />
       <Footer track="hsk" />
     </main>
   );

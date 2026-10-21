@@ -8,7 +8,7 @@ import useSWR, { useSWRConfig } from "swr";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import JourneyHero from "@/components/app/JourneyHero";
-import { getLocalDateKey } from "@/lib/utils/date";
+import { dateKeyInTimeZone, getLocalDateKey } from "@/lib/utils/date";
 import UpgradeModal from "@/components/app/UpgradeModal";
 import OnboardingNudgeBanner from "@/components/Onboarding/OnboardingNudgeBanner";
 import { STAGE_THRESHOLDS, STAGE_NAMES, STAGE_EMOJIS } from "@/lib/huahua";
@@ -382,7 +382,9 @@ export default function HomeDashboard({
     string | undefined
   >(undefined);
   const previousUserId = useRef(initialCore.userId);
-  const localDate = getLocalDateKey();
+  const localDate = initialCore.timeZone
+    ? dateKeyInTimeZone(initialCore.timeZone)
+    : getLocalDateKey();
   const tzOffset = new Date().getTimezoneOffset();
   const coreKey = initialCore.userId
     ? (["home-core", initialCore.userId, localDate] as const)

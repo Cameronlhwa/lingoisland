@@ -7,8 +7,12 @@ import {
   HSK_STANDARD_COOKIE,
   resolveHskStandard,
 } from '@/lib/hsk/standardPreference'
+import { TIMEZONE_COOKIE } from '@/lib/profile/timeZone'
+import { isValidTimeZone } from '@/lib/utils/date'
 
 const PROFILE_COLUMNS =
+  'cefr_level, tts_rate_sentences, tts_rate_words, character_set, hsk_standard, timezone'
+const PROFILE_COLUMNS_NO_TZ =
   'cefr_level, tts_rate_sentences, tts_rate_words, character_set, hsk_standard'
 const PROFILE_COLUMNS_LEGACY =
   'cefr_level, tts_rate_sentences, tts_rate_words, character_set'
@@ -19,11 +23,13 @@ type ProfileRow = {
   tts_rate_words?: number | null
   character_set?: string | null
   hsk_standard?: string | null
+  timezone?: string | null
 }
 
-function jsonWithHskCookie(
+function jsonWithProfileCookies(
   payload: Record<string, unknown>,
   standard: HskStandard,
+  timeZone?: string | null,
   init?: { status?: number },
 ) {
   const response = NextResponse.json(payload, init)
@@ -32,6 +38,18 @@ function jsonWithHskCookie(
     maxAge: 60 * 60 * 24 * 365,
     sameSite: 'lax',
   })
+  if (typeof timeZone === 'string' && isValidTimeZone(timeZone)) {
+    response.cookies.set(TIMEZONE_COOKIE, timeZone, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    })
+  } else if (timeZone === null) {
+    response.cookies.set(TIMEZONE_COOKIE, '', {
+      path: '/',
+      maxAge: 0,
+    })
+  }
   return response
 }
 
@@ -46,6 +64,10 @@ function toPayload(profile: ProfileRow | null, cookieStandard?: string | null) {
     ttsRateWords: profile?.tts_rate_words || 1.0,
     characterSet: profile?.character_set || 'simplified',
     hskStandard,
+    timeZone:
+      typeof profile?.timezone === 'string' && isValidTimeZone(profile.timezone)
+        ? profile.timezone
+        : null,
   }
 }
 
@@ -75,6 +97,18 @@ export async function GET() {
       .single()
     let profile: ProfileRow | null = initial.data as ProfileRow | null
     let error = initial.error
+    let timeZoneColumnReady = true
+
+    if (error && error.message?.includes('timezone')) {
+      timeZoneColumnReady = false
+      const retry = await supabase
+        .from('user_profiles')
+        .select(PROFILE_COLUMNS_NO_TZ)
+        .eq('user_id', user.id)
+        .single()
+      profile = retry.data as ProfileRow | null
+      error = retry.error
+    }
 
     if (error && error.message?.includes('hsk_standard')) {
       const retry = await supabase
@@ -118,7 +152,11 @@ export async function GET() {
     }
 
     const payload = toPayload(profile, cookieStandard)
-    return jsonWithHskCookie(payload, payload.hskStandard)
+    return jsonWithProfileCookies(
+      payload,
+      payload.hskStandard,
+      timeZoneColumnReady && payload.timeZone ? payload.timeZone : undefined,
+    )
   } catch (error) {
     console.error('Error in GET /api/profile:', error)
     return NextResponse.json(
@@ -144,7 +182,14 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { cefrLevel, ttsRateSentences, ttsRateWords, characterSet, hskStandard } = body
+    const {
+      cefrLevel,
+      ttsRateSentences,
+      ttsRateWords,
+      characterSet,
+      hskStandard,
+      timeZone,
+    } = body
 
     // Prepare update object
     const updates: {
@@ -156,6 +201,7 @@ export async function PATCH(request: Request) {
       hsk_standard?: string
       hsk_current_level?: number
       hsk_level_source?: string
+      timezone?: string | null
     } = {
       user_id: user.id,
     }
@@ -238,6 +284,19 @@ export async function PATCH(request: Request) {
       updates.hsk_standard = hskStandard
     }
 
+    let requestedTimeZone: string | null | undefined
+    if (timeZone !== undefined) {
+      if (timeZone === null || timeZone === '') {
+        requestedTimeZone = null
+        updates.timezone = null
+      } else if (typeof timeZone !== 'string' || !isValidTimeZone(timeZone)) {
+        return NextResponse.json({ error: 'Invalid time zone' }, { status: 400 })
+      } else {
+        requestedTimeZone = timeZone
+        updates.timezone = timeZone
+      }
+    }
+
     // Update or insert profile
     const upserted = await supabase
       .from('user_profiles')
@@ -249,8 +308,19 @@ export async function PATCH(request: Request) {
     let profile: ProfileRow | null = upserted.data as ProfileRow | null
     let error = upserted.error
 
-    if (error && updates.hsk_standard) {
-      const { hsk_standard: _ignored, ...withoutStandard } = updates
+    if (error && updates.timezone !== undefined && error.message?.includes('timezone')) {
+      const { timezone: _ignored, ...withoutTimeZone } = updates
+      const retry = await supabase
+        .from('user_profiles')
+        .upsert(withoutTimeZone, { onConflict: 'user_id' })
+        .select(PROFILE_COLUMNS_NO_TZ)
+        .single()
+      profile = retry.data as ProfileRow | null
+      error = retry.error
+    }
+
+    if (error && updates.hsk_standard && error.message?.includes('hsk_standard')) {
+      const { hsk_standard: _ignored, timezone: _tz, ...withoutStandard } = updates
       const retry = await supabase
         .from('user_profiles')
         .upsert(withoutStandard, { onConflict: 'user_id' })
@@ -273,10 +343,18 @@ export async function PATCH(request: Request) {
       {
         ...profile,
         hsk_standard: requestedStandard ?? profile?.hsk_standard,
+        timezone:
+          requestedTimeZone !== undefined
+            ? requestedTimeZone
+            : profile?.timezone,
       },
       cookieStore.get(HSK_STANDARD_COOKIE)?.value,
     )
-    return jsonWithHskCookie(payload, payload.hskStandard)
+    return jsonWithProfileCookies(
+      payload,
+      payload.hskStandard,
+      requestedTimeZone,
+    )
   } catch (error) {
     console.error('Error in PATCH /api/profile:', error)
     return NextResponse.json(

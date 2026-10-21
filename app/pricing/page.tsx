@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Check } from "lucide-react";
 import { Suspense, useState } from "react";
+import HskWaitlistForm from "@/components/hsk/HskWaitlistForm";
 import { useAnalytics } from "@/lib/posthog/client";
 
 type Interval = "monthly" | "yearly";
@@ -32,8 +33,9 @@ const PLANS: Record<
     ],
   },
   hsk: {
-    name: "HSK Prep Pro",
-    description: "Follow a personalized path to your next HSK level.",
+    name: "HSK Prep",
+    description:
+      "We're currently perfecting the experience. The new HSK 3.0 launches in December.",
     monthly: "$14.99",
     yearly: "$9.99",
     yearlyDetail: "$119.88 billed yearly",
@@ -113,8 +115,7 @@ function PricingContent() {
             Plans built for how you want to learn Mandarin
           </h1>
           <p className="mt-4 text-base text-slate-600">
-            Topic Islands and HSK Prep are separate products. Choose one now,
-            then add the other whenever you need it.
+            Topic Islands is open now. HSK Prep opens with the new HSK 3.0 in December.
           </p>
         </div>
 
@@ -154,25 +155,35 @@ function PricingContent() {
                   ))}
                 </ul>
 
-                <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                  <PlanButton
-                    label="Monthly"
-                    price={plan.monthly}
-                    detail="per month"
-                    loading={loading === `${product}-monthly`}
-                    disabled={loading !== null}
-                    onClick={() => void startCheckout(product, "monthly")}
-                  />
-                  <PlanButton
-                    label="Annual"
-                    price={plan.yearly}
-                    detail={plan.yearlyDetail}
-                    badge="Best value"
-                    loading={loading === `${product}-yearly`}
-                    disabled={loading !== null}
-                    onClick={() => void startCheckout(product, "yearly")}
-                  />
-                </div>
+                {product === "hsk" ? (
+                  <div className="mt-8">
+                    <HskWaitlistForm
+                      source="pricing"
+                      id="hsk-pricing-waitlist-email"
+                      showIntro={false}
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                    <PlanButton
+                      label="Monthly"
+                      price={plan.monthly}
+                      detail="per month"
+                      loading={loading === `${product}-monthly`}
+                      disabled={loading !== null}
+                      onClick={() => void startCheckout(product, "monthly")}
+                    />
+                    <PlanButton
+                      label="Annual"
+                      price={plan.yearly}
+                      detail={plan.yearlyDetail}
+                      badge="Best value"
+                      loading={loading === `${product}-yearly`}
+                      disabled={loading !== null}
+                      onClick={() => void startCheckout(product, "yearly")}
+                    />
+                  </div>
+                )}
               </section>
             );
           })}

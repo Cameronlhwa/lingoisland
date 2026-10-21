@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getLocalDateKey } from "@/lib/utils/date";
+import { resolveStoryDateKey } from "@/lib/profile/timeZone";
 import DailyStoryCard from "@/components/stories/DailyStoryCard";
 import StoriesList from "@/components/stories/StoriesList";
 import type { StorySummary } from "@/components/stories/StoryCard";
@@ -22,7 +22,7 @@ export default async function StoriesPage() {
 
   let dailyStory = null;
   if (user) {
-    const today = getLocalDateKey();
+    const { dateKey: today } = await resolveStoryDateKey(supabase, user.id);
     const { data } = await supabase
       .from("stories")
       .select("id, title, title_en, level, date, created_at, story_zh")
