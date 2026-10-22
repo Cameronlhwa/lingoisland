@@ -14,7 +14,7 @@ import {
   lookupChineseWordDetailed,
   segmentChineseText,
   toneMarks,
-} from "@/lib/chineseTokenizer";
+} from "@/lib/chineseTokenizerClient";
 import type { DictionaryEntry } from "cc-cedict";
 import type { SegmentToken } from "segmentit";
 

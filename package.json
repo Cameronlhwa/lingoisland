@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "gen:island-library": "tsx scripts/generateIslandLibrary.ts",
+    "gen:cedict": "tsx scripts/buildCompactCedict.mts",
     "backfill:island-covers": "tsx scripts/backfillIslandCovers.ts",
     "backfill:missing-sentences": "tsx scripts/backfillMissingSentences.ts",
     "db:migrate:sentence-style": "tsx scripts/runSentenceStyleMigration.ts",
