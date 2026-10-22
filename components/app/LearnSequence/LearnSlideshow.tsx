@@ -9,7 +9,7 @@ import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import {
   buildSentenceBreakdown,
   type BreakdownToken,
-} from "@/lib/chineseTokenizer";
+} from "@/lib/chineseTokenizerClient";
 import {
   LINGO_ACCENT_CHIP_SHADOW,
   LINGO_ACCENT_GRADIENT_GLOSSY,

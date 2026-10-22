@@ -5,7 +5,7 @@ import { useCharacterSet } from "@/contexts/CharacterSetContext";
 import {
   buildSentenceBreakdown,
   type BreakdownToken,
-} from "@/lib/chineseTokenizer";
+} from "@/lib/chineseTokenizerClient";
 
 export default function SentenceBreakdownTable({
   sentenceHanzi,
