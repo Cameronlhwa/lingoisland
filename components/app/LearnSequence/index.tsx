@@ -47,9 +47,12 @@ export default function LearnSequence({
   }, []);
 
   const overlay = (
-    <div className="hsk-app-theme lingo-body fixed inset-0 z-[100] overflow-y-auto bg-white">
-      <header className="sticky top-0 z-10 border-b border-[var(--lingo-accent-border)] bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-3xl items-end justify-between gap-4 px-4 py-5 sm:px-6">
+    <div
+      className="hsk-app-theme lingo-body fixed inset-0 z-[100] flex flex-col bg-white"
+      style={{ backgroundColor: "#fff" }}
+    >
+      <header className="shrink-0 border-b border-[var(--lingo-accent-border)] bg-white">
+        <div className="mx-auto flex max-w-3xl items-end justify-between gap-4 px-4 pb-4 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6">
           <div>
             <LearnEyebrow>{t("Getting started")}</LearnEyebrow>
             <h1 className="lingo-display mt-1.5 text-[30px] leading-tight text-[var(--lingo-navy)] sm:text-[34px]">
@@ -69,7 +72,8 @@ export default function LearnSequence({
         </div>
       </header>
 
-      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div className="mx-auto max-w-3xl px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6">
         {step === "slideshow" && (
           <LearnSlideshow
             key={learnLevel}
@@ -100,9 +104,12 @@ export default function LearnSequence({
           />
         )}
       </div>
+      </div>
     </div>
   );
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return <div className="min-h-[100dvh] w-full bg-white" style={{ backgroundColor: "#fff" }} />;
+  }
   return createPortal(overlay, document.body);
 }
