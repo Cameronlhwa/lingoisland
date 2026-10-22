@@ -64,7 +64,12 @@ export function segmentChineseText(text: string): Promise<SegmentToken[]> {
 
   const promise = new Promise<SegmentToken[]>((resolve) => {
     pendingSegments.push({ text, resolve });
-    if (pendingSegments.length >= 100) {
+    const pendingLength = pendingSegments.reduce(
+      (total, item) => total + item.text.length,
+      0,
+    );
+    // Keep each request under the route's MAX_TEXTS / MAX_TOTAL_LENGTH caps.
+    if (pendingSegments.length >= 100 || pendingLength >= 40_000) {
       void flushSegments();
     } else if (!segmentFlushScheduled) {
       segmentFlushScheduled = true;

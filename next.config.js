@@ -2,6 +2,13 @@
 const path = require("path");
 
 const nextConfig = {
+  experimental: {
+    // Read with fs at runtime by lib/chineseTokenizer.ts, so it isn't traced
+    // automatically.
+    outputFileTracingIncludes: {
+      "/api/chinese": ["./lib/data/cedict-compact.json"],
+    },
+  },
   images: {
     formats: ['image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],

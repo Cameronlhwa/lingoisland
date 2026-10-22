@@ -8,7 +8,9 @@ import {
 export const runtime = "nodejs";
 
 const MAX_TEXTS = 200;
-const MAX_TEXT_LENGTH = 2000;
+// Story pages send a whole story as one text.
+const MAX_TEXT_LENGTH = 20_000;
+const MAX_TOTAL_LENGTH = 100_000;
 
 function isShortString(value: unknown): value is string {
   return typeof value === "string" && value.length <= MAX_TEXT_LENGTH;
@@ -24,7 +26,9 @@ export async function POST(request: Request) {
       if (
         !Array.isArray(texts) ||
         texts.length > MAX_TEXTS ||
-        !texts.every(isShortString)
+        !texts.every(isShortString) ||
+        texts.reduce((total: number, text: string) => total + text.length, 0) >
+          MAX_TOTAL_LENGTH
       ) {
         return NextResponse.json({ error: "Invalid texts" }, { status: 400 });
       }
