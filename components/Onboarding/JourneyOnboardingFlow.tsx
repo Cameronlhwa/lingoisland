@@ -13,7 +13,10 @@ import { createClient } from "@/lib/supabase/browser";
 import AppLogo from "@/components/app/AppLogo";
 import OnboardingUpgradeClient from "@/app/onboarding/upgrade/OnboardingUpgradeClient";
 import { Loader2 } from "lucide-react";
-import { getTopicSuggestions } from "@/lib/onboarding/topicSuggestions";
+import {
+  getTopicSuggestions,
+  TOPIC_SUGGESTION_EMOJI,
+} from "@/lib/onboarding/topicSuggestions";
 import {
   buildUpgradePageUrl,
 } from "@/lib/onboarding/onboardingCheckoutStorage";
@@ -327,8 +330,11 @@ export default function JourneyOnboardingFlow({
             .filter(Boolean)
             .join(" · ")
         : undefined,
+      interests: [...(whyKey ? [whyLabel(whyKey)] : []), ...freeTimeTopics],
+      daysPerWeek,
+      timeLabel,
     }),
-    [branchAnswer, cefrLevel, previewNodes, topic, whyKey, wordsPerWeek],
+    [branchAnswer, cefrLevel, previewNodes, topic, whyKey, wordsPerWeek, freeTimeKeys, daysPerWeek, timeLabel],
   );
 
   // Legacy ?islandId= links used to resume the free first lesson — send them
@@ -1045,6 +1051,7 @@ export default function JourneyOnboardingFlow({
                 }
               >
                 {c}
+                {TOPIC_SUGGESTION_EMOJI[c] ? ` ${TOPIC_SUGGESTION_EMOJI[c]}` : null}
               </button>
             );
           })}

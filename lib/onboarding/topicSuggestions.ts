@@ -79,11 +79,11 @@ export const TOPIC_SUGGESTIONS: Record<string, Record<string, string[]>> = {
       "Talking About Family",
     ],
     community: [
-      "Community Life",
-      "Neighbourhood Chat",
-      "Local Events",
-      "Food & Markets",
-      "Introductions",
+      "Food & Drinks",
+      "Travel",
+      "School & University",
+      "Dating & Relationships",
+      "Movies & TV Shows",
     ],
     roots: [
       "Chinese Culture",
@@ -153,6 +153,15 @@ export const TOPIC_SUGGESTIONS: Record<string, Record<string, string[]>> = {
       "Weekend Plans",
     ],
   },
+};
+
+/** Shown on the chip only; the topic itself stays plain text for generation. */
+export const TOPIC_SUGGESTION_EMOJI: Record<string, string> = {
+  "Food & Drinks": "🍜",
+  Travel: "✈️",
+  "School & University": "📚",
+  "Dating & Relationships": "❤️",
+  "Movies & TV Shows": "🎬",
 };
 
 export function getTopicSuggestions(

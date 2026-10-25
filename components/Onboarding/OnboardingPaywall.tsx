@@ -2,12 +2,120 @@
 
 import { useMemo } from "react";
 import Image from "next/image";
-import { Check } from "lucide-react";
-import { hskLabelForCefr } from "@/lib/levelBands";
 import {
-  HSK_BTN_GRADIENT,
-  HSK_BTN_SHADOW,
-} from "@/lib/glossy-theme";
+  AudioLines,
+  BarChart3,
+  BookOpen,
+  Briefcase,
+  Clapperboard,
+  Dumbbell,
+  Gamepad2,
+  House,
+  Infinity as InfinityIcon,
+  Landmark,
+  MessagesSquare,
+  Music,
+  Plane,
+  Sparkles,
+  Users,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react";
+import { cefrToHsk, hskLabelForCefr } from "@/lib/levelBands";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Chip from "@/components/ui/Chip";
+import LearningPaceChart from "@/components/Onboarding/LearningPaceChart";
+import MobileJourneyUpgradeModal, {
+  type PaywallPlanPricing,
+} from "@/components/Onboarding/MobileJourneyUpgradeModal";
+
+const PLAN_PRICING: PaywallPlanPricing = {
+  monthly: { price: "$9.99", note: "Cancel anytime" },
+  yearly: { price: "$6.67", note: "$79.99 billed yearly" },
+};
+
+const MUTED = "#5A7A90";
+const BLUE = "#2176AE";
+
+const PERSONAL_NOTES = {
+  beginner:
+    "When I first started Mandarin, I spent so much time memorizing random words, but barely knew how to use them. Learning through topics I actually cared about made studying so much more enjoyable, and the words finally started sticking.",
+  intermediate:
+    "The most frustrating part of learning Mandarin was realizing I could talk about some things, but completely freeze when the topic changed. Practicing conversations around my own interests helped me fill those gaps and feel much more confident speaking.",
+  advanced:
+    "Even after learning thousands of Chinese words, I still struggled to express myself naturally on certain topics. I've found that focusing on subjects I genuinely care about, then actually practicing conversations, makes such a difference.",
+} as const;
+
+/** Missing or unrecognised levels map to HSK 4 via cefrToHsk, i.e. the intermediate note. */
+function personalNoteForLevel(cefr: string | null | undefined): string {
+  const hsk = cefrToHsk(cefr);
+  if (hsk <= 2) return PERSONAL_NOTES.beginner;
+  if (hsk <= 4) return PERSONAL_NOTES.intermediate;
+  return PERSONAL_NOTES.advanced;
+}
+
+const CHIP_ICONS: [RegExp, LucideIcon][] = [
+  [/food|restaurant|eat|cook|drink/i, UtensilsCrossed],
+  [/music|concert|song|live/i, Music],
+  [/travel|trip|city|explore/i, Plane],
+  [/friend|social|dating|relationship/i, Users],
+  [/film|tv|movie|show|stor/i, Clapperboard],
+  [/fitness|sport|gym|outdoor/i, Dumbbell],
+  [/game|tech/i, Gamepad2],
+  [/family|home|heritage/i, House],
+  [/work|business|office|career/i, Briefcase],
+  [/culture|history|art/i, Landmark],
+  [/school|universit|study|class/i, BookOpen],
+];
+const CHIP_COLORS = [
+  "var(--lingo-accent)",
+  BLUE,
+  "#8A5CC2",
+  "var(--lingo-teal)",
+  "#D9735A",
+];
+
+function chipIcon(label: string): LucideIcon {
+  return CHIP_ICONS.find(([re]) => re.test(label))?.[1] ?? Sparkles;
+}
+
+const BENEFITS: {
+  icon: LucideIcon;
+  title: string;
+  detail: string;
+  color: string;
+  tint: string;
+}[] = [
+  {
+    icon: InfinityIcon,
+    title: "Unlimited lessons",
+    detail: "Any topic, any time",
+    color: "var(--lingo-teal)",
+    tint: "rgba(32,103,79,0.10)",
+  },
+  {
+    icon: MessagesSquare,
+    title: "Real conversations",
+    detail: "Gentle feedback as you speak",
+    color: BLUE,
+    tint: "rgba(33,118,174,0.10)",
+  },
+  {
+    icon: AudioLines,
+    title: "Pronunciation & tone coaching",
+    detail: "Hear exactly which tones to fix — and nail them",
+    color: "#D9735A",
+    tint: "rgba(217,115,90,0.12)",
+  },
+  {
+    icon: BarChart3,
+    title: "Built for your interests",
+    detail: "Learn vocabulary you'll actually use",
+    color: "var(--lingo-accent)",
+    tint: "var(--lingo-accent-tint)",
+  },
+];
 
 type JourneyNode = {
   order: number;
@@ -26,6 +134,9 @@ interface OnboardingPaywallProps {
   wordsPerWeek?: number;
   lockedIslands?: JourneyNode[];
   motivationLabel?: string;
+  interests?: string[];
+  daysPerWeek?: number;
+  timeLabel?: string;
   billingInterval: "yearly" | "monthly";
   onBillingIntervalChange: (interval: "yearly" | "monthly") => void;
   onProceedCheckout: () => void;
@@ -39,8 +150,12 @@ export default function OnboardingPaywall({
   journeyTopic,
   islandLevel = "B1",
   islandName,
+  wordsPerWeek,
   lockedIslands = [],
   motivationLabel,
+  interests,
+  daysPerWeek,
+  timeLabel,
   billingInterval,
   onBillingIntervalChange,
   onProceedCheckout,
@@ -50,6 +165,7 @@ export default function OnboardingPaywall({
 }: OnboardingPaywallProps) {
   const displayJourneyTitle = journeyTopic || topic;
   const levelChip = hskLabelForCefr(islandLevel) || islandLevel;
+  const selectedPlan = PLAN_PRICING[billingInterval];
 
   const previewUnits = useMemo(() => {
     const units: { name: string; zh: string | null }[] = [];
@@ -68,237 +184,315 @@ export default function OnboardingPaywall({
     return units;
   }, [islandName, lockedIslands, topic]);
 
-  const benefits = [
-    "Unlimited lessons — any topic, any time",
-    "Full stories built from your real vocabulary",
-    "Conversation practice, gently corrected as you speak",
-    "Review that adapts as you go, so nothing gets forgotten",
-  ];
+  const interestChips = useMemo(() => {
+    const source = interests?.length
+      ? interests
+      : motivationLabel
+        ? [motivationLabel.split(" · ")[0]]
+        : [];
+    const seen = new Set<string>();
+    const chips: string[] = [];
+    for (const raw of [...source, displayJourneyTitle]) {
+      const label = raw?.trim();
+      if (!label || seen.has(label.toLowerCase())) continue;
+      seen.add(label.toLowerCase());
+      chips.push(label);
+    }
+    return chips.slice(0, 5);
+  }, [interests, motivationLabel, displayJourneyTitle]);
 
-  return (
-    <div
-      className={
-        fullPage
-          ? "relative flex min-h-screen items-center justify-center overflow-y-auto p-4 sm:p-6"
-          : "fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 sm:p-6"
-      }
-      style={{
-        background: "#EAF6FB",
-        fontFamily: "'DM Sans', system-ui, sans-serif",
-      }}
-    >
-      <div
-        aria-hidden
-        className="hsk-onboarding-bg pointer-events-none fixed inset-0"
+  const lessonHeading =
+    previewUnits.length === 1
+      ? "Your first lesson"
+      : `Your first ${previewUnits.length} lessons`;
+
+  const planButton = (interval: "monthly" | "yearly", label: string) => {
+    const active = billingInterval === interval;
+    return (
+      <button
+        type="button"
+        aria-pressed={active}
+        onClick={() => onBillingIntervalChange(interval)}
+        className="flex-1 px-3 py-2.5 text-center text-[13px] font-semibold transition-colors"
         style={{
-          backgroundImage: "url(/onboarding/journey-bg.png)",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 55% at 50% 38%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.22) 45%, transparent 72%)",
-        }}
-      />
-      <div
-        className="relative z-10 my-auto w-full max-w-[1040px] overflow-hidden rounded-[22px] bg-white"
-        style={{
-          boxShadow: "0 14px 36px -20px rgba(7,30,46,0.3), 0 1px 4px rgba(33,118,174,0.06)",
-          border: "1px solid rgba(33,118,174,0.08)",
+          borderRadius: "var(--lingo-radius-control)",
+          border: active
+            ? "1.5px solid var(--lingo-teal)"
+            : "1px solid var(--lingo-border)",
+          background: active ? "rgba(32,103,79,0.06)" : "var(--lingo-white)",
+          color: active ? "var(--lingo-teal)" : "var(--lingo-navy)",
         }}
       >
-        <div className="grid grid-cols-1 min-[820px]:grid-cols-2">
-          <div className="px-5 py-6 sm:px-8 sm:py-10">
-            <p className="text-[11px] font-bold" style={{ color: "#20674F" }}>
-              Your personalized plan is ready
-            </p>
-            <h1
-              className="lingo-display mt-3"
-              style={{ fontSize: "clamp(28px, 3.2vw, 38px)", lineHeight: 1.12, color: "#5F3119" }}
-            >
-              Get fluent faster by learning Mandarin around what you love
-            </h1>
-            <p className="mt-4 text-[15px] leading-relaxed" style={{ color: "#5A7A90" }}>
-              No generic textbooks to work through — every lesson is built from topics you actually care about, so it sticks.
-            </p>
-            <p className="mt-6 text-[12px] leading-snug" style={{ color: "#5A7A90" }}>
-              Based on:{" "}
-              <span className="font-semibold" style={{ color: "#5F3119" }}>
-                {motivationLabel || "your goals"}
-              </span>
-              {" · "}
-              <span className="font-semibold" style={{ color: "#5F3119" }}>
-                {displayJourneyTitle}
-              </span>
-              {" · "}
-              <span className="font-semibold" style={{ color: "#5F3119" }}>
-                HSK Level {levelChip.replace("HSK ", "")}
-              </span>
-            </p>
-            <div className="flex flex-col gap-1">
-              {previewUnits.map((unit, idx) => (
-                <div
-                  key={`${unit.name}-${idx}`}
-                  className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5"
-                  style={{ border: "1px solid #C2DCF0", background: "#fff" }}
-                >
-                  <span
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                    style={{ background: "linear-gradient(135deg, #20674F 0%, #2BBBAD 100%)" }}
+        {label}
+      </button>
+    );
+  };
+
+  return (
+    <>
+      <MobileJourneyUpgradeModal
+        lessons={previewUnits}
+        billingInterval={billingInterval}
+        onBillingIntervalChange={onBillingIntervalChange}
+        onProceedCheckout={onProceedCheckout}
+        checkoutLoading={checkoutLoading}
+        checkoutError={checkoutError}
+        pricing={PLAN_PRICING}
+        fullPage={fullPage}
+      />
+      <div
+        className={
+          fullPage
+            ? "relative hidden min-h-screen items-center justify-center overflow-y-auto p-4 sm:p-6 md:flex"
+            : "fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto p-4 sm:p-6 md:flex"
+        }
+        style={{
+          background: "#EAF6FB",
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+        }}
+      >
+        <div
+          aria-hidden
+          className="hsk-onboarding-bg pointer-events-none fixed inset-0"
+          style={{
+            backgroundImage: "url(/onboarding/journey-bg.png)",
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 55% at 50% 38%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.22) 45%, transparent 72%)",
+          }}
+        />
+        <Card
+          hover={false}
+          padded={false}
+          className="relative z-10 my-auto w-full max-w-[1040px] overflow-hidden"
+          style={{
+            boxShadow:
+              "0 18px 44px -22px rgba(7,30,46,0.35), 0 1px 4px rgba(33,118,174,0.06)",
+          }}
+        >
+          <div className="grid grid-cols-1 min-[820px]:grid-cols-[11fr_9fr]">
+            <div className="px-6 py-6 lg:px-9 lg:py-7">
+              <p className="text-[12px] font-bold text-[var(--lingo-teal)]">
+                Your personalized plan is ready
+              </p>
+              <h1
+                className="lingo-display mt-2 text-[var(--lingo-navy)]"
+                style={{ fontSize: "clamp(28px, 3vw, 36px)", lineHeight: 1.1 }}
+              >
+                Learn Mandarin through what you love
+              </h1>
+              <p
+                className="mt-2 text-[15px] leading-relaxed"
+                style={{ color: MUTED }}
+              >
+                A personalized path built around your interests and pace.
+              </p>
+
+              <ul
+                className="mt-3.5 flex flex-wrap gap-2"
+                aria-label="Your plan is based on"
+              >
+                {interestChips.map((label, idx) => {
+                  const Icon = chipIcon(label);
+                  return (
+                    <li key={label} className="max-w-full">
+                      <Chip className="max-w-full">
+                        <Icon
+                          size={14}
+                          strokeWidth={2.3}
+                          className="shrink-0"
+                          style={{
+                            color: CHIP_COLORS[idx % CHIP_COLORS.length],
+                          }}
+                          aria-hidden
+                        />
+                        <span className="min-w-0 truncate">{label}</span>
+                      </Chip>
+                    </li>
+                  );
+                })}
+                <li>
+                  <Chip>
+                    <BarChart3
+                      size={14}
+                      strokeWidth={2.3}
+                      className="shrink-0 text-[var(--lingo-teal)]"
+                      aria-hidden
+                    />
+                    {levelChip}
+                  </Chip>
+                </li>
+              </ul>
+
+              <h2 className="mt-4 text-[15px] font-bold text-[var(--lingo-navy)]">
+                {lessonHeading}
+              </h2>
+              <ol className="mt-2 flex flex-col gap-1.5">
+                {previewUnits.map((unit, idx) => (
+                  <li
+                    key={`${unit.name}-${idx}`}
+                    className="flex items-center gap-3 px-3 py-1.5"
+                    style={{
+                      borderRadius: "var(--lingo-radius-control)",
+                      border: "var(--lingo-card-border)",
+                      background: "var(--lingo-sky-pale)",
+                    }}
                   >
-                    {String(idx + 1).padStart(2, "0")}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-bold leading-tight" style={{ color: "#5F3119" }}>
-                      {unit.name}
-                    </p>
-                    {unit.zh && (
-                      <p className="truncate text-[11px] leading-tight" style={{ color: "#5A7A90" }}>
-                        {unit.zh}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                    <span
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                      style={{ background: "var(--lingo-icon-bg)" }}
+                    >
+                      {String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-bold leading-tight text-[var(--lingo-navy)]">
+                        {unit.name}
+                      </span>
+                      {unit.zh ? (
+                        <span
+                          className="mt-0.5 block truncate text-[12px] leading-tight"
+                          style={{ color: MUTED }}
+                        >
+                          {unit.zh}
+                        </span>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ol>
 
-            <p className="mt-3 text-[12px] font-semibold leading-snug" style={{ color: "#20674F" }}>
-              + new lessons anytime, on any topic you choose — this never runs out
-            </p>
-
-            <ul className="mt-7 space-y-3 text-[13px]" style={{ color: "#5F3119" }}>
-              {[
-                "Real example sentences, not flashcard fragments",
-                "Short lessons that fit around your schedule",
-                "Guided conversation practice with spoken feedback",
-              ].map((feature) => (
-                <li key={feature} className="flex items-start gap-3">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "#20674F" }} />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div
-            className="px-5 py-6 sm:px-8 sm:py-10 min-[820px]:border-l"
-            style={{ borderColor: "rgba(33,118,174,0.12)" }}
-          >
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => onBillingIntervalChange("monthly")}
-                className="flex-1 rounded-xl px-3 py-2 text-center text-[13px] font-semibold transition-all"
-                style={{
-                  border: `2px solid ${billingInterval === "monthly" ? "#20674F" : "rgba(33,118,174,0.1)"}`,
-                  color: "#5F3119",
-                  background: "#fff",
-                }}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                onClick={() => onBillingIntervalChange("yearly")}
-                className="flex-1 rounded-xl px-3 py-2 text-center text-[13px] transition-all"
-                style={{
-                  border: `1px solid ${billingInterval === "yearly" ? "#20674F" : "rgba(33,118,174,0.1)"}`,
-                  color: "#5F3119",
-                  background: billingInterval === "yearly" ? "rgba(33,118,174,0.06)" : "#fff",
-                }}
-              >
-                Annual · best value
-              </button>
-            </div>
-            <div className="mt-5">
-              <p className="lingo-display" style={{ fontSize: 38, lineHeight: 1, color: "#5F3119" }}>
-                {billingInterval === "monthly" ? "$9.99" : "$6.67"}
-                <span className="ml-1 font-sans text-[14px] font-normal" style={{ color: "#5A7A90" }}>/mo</span>
-              </p>
-              <p className="mt-1 text-[12px]" style={{ color: "#5A7A90" }}>
-                {billingInterval === "monthly" ? "Cancel anytime" : "$79.99 billed yearly"}
-              </p>
-            </div>
-
-            <ul className="mt-6 space-y-3 text-[13px]" style={{ color: "#5F3119" }}>
-              {benefits.map((benefit) => (
-                <li key={benefit} className="flex items-start gap-2">
-                  <Check className="mt-0.5 shrink-0" size={16} style={{ color: "#20674F" }} aria-hidden />
-                  <span>{benefit}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-7">
-              <p className="text-[13px] font-bold" style={{ color: "#5F3119" }}>
-                Why this works better than learning from textbooks
-              </p>
-              <div className="mt-4 space-y-3 text-[11px]" style={{ color: "#5A7A90" }}>
-                <div>
-                  <div className="mb-1 flex justify-between"><span>Typical textbook method</span><span>lower retention</span></div>
-                  <div className="h-2 rounded-full" style={{ background: "#E9EEF1" }}>
-                    <div className="h-full w-[55%] rounded-full" style={{ background: "#CED6DA" }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="mb-1 flex justify-between"><span>Learning through your interests</span><span>higher retention</span></div>
-                  <div className="h-2 rounded-full" style={{ background: "#E9EEF1" }}>
-                    <div className="h-full w-[85%] rounded-full" style={{ background: "#20674F" }} />
-                  </div>
-                </div>
-              </div>
-              <p className="mt-3 text-[11px] leading-relaxed" style={{ color: "#5A7A90" }}>
-                Based on published research on vocabulary acquisition: content that&apos;s personally relevant is remembered significantly longer than material learned by rote.
-              </p>
-            </div>
-
-            {checkoutError && (
-              <p className="mt-4 text-xs text-red-600">{checkoutError}</p>
-            )}
-
-            <button
-              type="button"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:brightness-110 disabled:opacity-60 disabled:hover:translate-y-0"
-              style={{
-                background: HSK_BTN_GRADIENT,
-                boxShadow: HSK_BTN_SHADOW,
-              }}
-              disabled={checkoutLoading}
-              onClick={onProceedCheckout}
-            >
-              {checkoutLoading
-                ? "Starting checkout…"
-                : "Start my Mandarin plan →"}
-            </button>
-            <figure
-              className="mt-7 flex items-center gap-3 border-t pt-4"
-              style={{ borderColor: "rgba(33,118,174,0.12)" }}
-            >
-              <Image
-                src="/founder/cameron-lim-profile.jpg"
-                alt="Cameron Lim"
-                width={42}
-                height={42}
-                className="shrink-0 rounded-full border-2 border-white object-cover"
-                style={{ boxShadow: "0 2px 8px rgba(33,118,174,0.18)" }}
-                sizes="42px"
+              <LearningPaceChart
+                wordsPerWeek={wordsPerWeek}
+                daysPerWeek={daysPerWeek}
+                timeLabel={timeLabel}
               />
-              <figcaption>
-                <blockquote className="text-[11px] leading-relaxed italic" style={{ color: "#5A7A90" }}>
-                  “LingoIsland transformed how I learned Mandarin by personalizing lessons around what I actually needed, not textbook scenarios like opening a bank account in China.”
-                </blockquote>
-                <p className="mt-1 text-[10px] font-bold" style={{ color: "#20674F" }}>
-                  — Cameron Lim
+            </div>
+
+            <div
+              className="flex flex-col px-6 py-6 lg:px-9 lg:py-7 border-t min-[820px]:border-l min-[820px]:border-t-0"
+              style={{ borderColor: "rgba(95,49,25,0.1)" }}
+            >
+              <div className="flex gap-2">
+                {planButton("monthly", "Monthly")}
+                {planButton("yearly", "Annual · best value")}
+              </div>
+
+              <div className="mt-5">
+                <p className="lingo-display text-[44px] leading-none text-[var(--lingo-navy)]">
+                  {selectedPlan.price}
+                  <span
+                    className="ml-1.5 font-sans text-[16px] font-normal"
+                    style={{ color: MUTED }}
+                  >
+                    /mo
+                  </span>
                 </p>
-              </figcaption>
-            </figure>
+                <p className="mt-1.5 text-[13px]" style={{ color: MUTED }}>
+                  {selectedPlan.note}
+                </p>
+              </div>
+
+              <ul className="mt-5 space-y-3">
+                {BENEFITS.map(({ icon: Icon, title, detail, color, tint }) => (
+                  <li key={title} className="flex items-center gap-3">
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                      style={{ background: tint }}
+                    >
+                      <Icon
+                        size={19}
+                        strokeWidth={2.3}
+                        style={{ color }}
+                        aria-hidden
+                      />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[14px] font-bold leading-tight text-[var(--lingo-navy)]">
+                        {title}
+                      </span>
+                      <span
+                        className="mt-0.5 block text-[12.5px] leading-snug"
+                        style={{ color: MUTED }}
+                      >
+                        {detail}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              {checkoutError && (
+                <p className="mt-4 text-xs text-red-600">{checkoutError}</p>
+              )}
+
+              <Button
+                className="mt-6 w-full"
+                style={{
+                  borderRadius: "var(--lingo-radius-control)",
+                  padding: "14px 20px",
+                }}
+                disabled={checkoutLoading}
+                onClick={onProceedCheckout}
+              >
+                {checkoutLoading
+                  ? "Starting checkout…"
+                  : "Start my Mandarin plan →"}
+              </Button>
+
+              <div aria-hidden className="min-h-6 flex-1" />
+              <figure
+                className="rounded-2xl px-4 py-3"
+                style={{
+                  background: "var(--lingo-sky-pale)",
+                  border: "var(--lingo-card-border)",
+                }}
+              >
+                <blockquote
+                  className="text-[12.5px] italic leading-relaxed"
+                  style={{ color: MUTED }}
+                >
+                  “{personalNoteForLevel(islandLevel)}”
+                </blockquote>
+                <figcaption className="mt-2.5 flex items-center gap-2">
+                  <Image
+                    src="/founder/cameron-lim-profile.jpg"
+                    alt="Cameron Lim"
+                    width={28}
+                    height={28}
+                    className="shrink-0 rounded-full border-2 border-white object-cover"
+                    style={{ boxShadow: "0 2px 6px rgba(33,118,174,0.18)" }}
+                    sizes="28px"
+                  />
+                  <span className="min-w-0 text-[11.5px] leading-snug">
+                    <span className="font-bold text-[var(--lingo-teal)]">
+                      Cameron
+                    </span>
+                    <span style={{ color: MUTED }}>
+                      {" "}
+                      · 125K+ YouTube subscribers
+                    </span>
+                  </span>
+                </figcaption>
+              </figure>
+              <p
+                className="mt-3 text-[11.5px] leading-snug"
+                style={{ color: MUTED }}
+              >
+                LingoIsland was designed by a teacher certified with the CTCSOL,
+                the international certificate for teaching Chinese to speakers
+                of other languages.
+              </p>
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
-    </div>
+    </>
   );
 }

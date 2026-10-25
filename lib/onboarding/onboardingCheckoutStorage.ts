@@ -22,6 +22,11 @@ export type OnboardingUpgradeSnapshot = {
   plan: CheckoutPlan;
   /** e.g. Work / Travel — shown on the Mandarin plan reveal */
   motivationLabel?: string;
+  /** Display-only wizard answers for the plan reveal; never persisted server-side from here. */
+  interests?: string[];
+  daysPerWeek?: number;
+  /** Same value as `journeys.time_label`, e.g. "15min" or "1h+". */
+  timeLabel?: string;
 };
 
 const SNAPSHOT_KEY = "lingo_onboarding_checkout_v1";

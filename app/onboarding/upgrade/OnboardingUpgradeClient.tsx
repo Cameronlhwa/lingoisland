@@ -205,6 +205,9 @@ export default function OnboardingUpgradeClient({
         wordsPerWeek={snapshot.wordsPerWeek}
         lockedIslands={snapshot.lockedIslands}
         motivationLabel={snapshot.motivationLabel}
+        interests={snapshot.interests}
+        daysPerWeek={snapshot.daysPerWeek}
+        timeLabel={snapshot.timeLabel}
         billingInterval={checkout.plan}
         onBillingIntervalChange={checkout.setPlan}
         onProceedCheckout={() => void checkout.proceedToCheckout()}
