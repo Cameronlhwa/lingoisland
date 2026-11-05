@@ -35,7 +35,17 @@ export async function generateJourneyPlan({
     throw new Error('DEEPSEEK_API_KEY not configured')
   }
 
-  const prompt = `You are a Mandarin vocabulary curriculum designer for learners at CEFR level ${level} (A1–C1).
+  const isA0 = level.trim().toUpperCase().startsWith('A0')
+  const audience = isA0
+    ? 'absolute beginners (CEFR A0 / HSK 1) who know no Mandarin yet'
+    : `learners at CEFR level ${level} (A1–C1)`
+  const a0Rules = isA0
+    ? `
+- Island 1 is fixed as "Greetings & Introductions" (你好, 我, 叫, 什么, 名字). Do not repeat greetings in islands 2-5.
+- Islands 2-5 must use only the most common, concrete HSK 1 words connected to the topic.`
+    : ''
+
+  const prompt = `You are a Mandarin vocabulary curriculum designer for ${audience}.
 
 The user wants to learn vocabulary about: "${topic}"
 Their reason for learning: "${why}"
@@ -46,7 +56,7 @@ RULES:
 - Island 1 has 5 words.
 - Islands 2-5 have 10 words each.
 - Add a story checkpoint after island 2 and after island 5.
-- Keep islands practical and progressively harder.
+- Keep islands practical and progressively harder.${a0Rules}
 
 Respond in this exact JSON format:
 {

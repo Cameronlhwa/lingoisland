@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getFixedA0JourneyPlan, isA0Level } from '@/lib/a0Course'
+import { getA0JourneyPlan, isA0Level } from '@/lib/a0Course'
 import { generateJourneyPlan } from '@/lib/deepseek/generate-journey'
 import { normalizeSentenceStyle } from '@/lib/sentenceStyle'
 import { journeysHasSentenceStyleColumn } from '@/lib/supabase/schemaFeatures'
@@ -84,8 +84,7 @@ export async function POST(request: Request) {
     const STORY_POSITION_BY_AFTER_ISLAND: Record<number, number> = { 2: 4, 5: 11 }
 
     const plan = isA0Level(level)
-      // A0: fully fixed journey plan — no DeepSeek call, no generation latency.
-      ? getFixedA0JourneyPlan(topic)
+      ? await getA0JourneyPlan({ topic, why })
       : await generateJourneyPlan({ topic, why, level })
 
     const planTitle = plan.journeyTitle || topic

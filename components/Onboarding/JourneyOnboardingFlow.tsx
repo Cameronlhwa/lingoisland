@@ -303,7 +303,6 @@ export default function JourneyOnboardingFlow({
     [whyKey, branchAnswer],
   );
 
-  const isA0 = cefrLevel === "A0";
   const [topicPlaceholder, setTopicPlaceholder] = useState(TOPIC_PLACEHOLDER_TEXT);
 
   const effectiveWhyText =
@@ -360,7 +359,7 @@ export default function JourneyOnboardingFlow({
 
   // Typewriter placeholder when topic input is empty.
   useEffect(() => {
-    if (step !== "topic" || isA0 || topic.trim().length > 0) {
+    if (step !== "topic" || topic.trim().length > 0) {
       setTopicPlaceholder(TOPIC_PLACEHOLDER_TEXT);
       return;
     }
@@ -398,7 +397,7 @@ export default function JourneyOnboardingFlow({
       cancelled = true;
       if (timeout) clearTimeout(timeout);
     };
-  }, [step, isA0, topic]);
+  }, [step, topic]);
 
   useEffect(() => {
     if (!smartProfileSkip) return;
@@ -465,24 +464,17 @@ export default function JourneyOnboardingFlow({
   }, [step]);
 
   useEffect(() => {
-    // A0 uses fixed backend content, so it does not need simulated
-    // generation progress. A1–C1 retain the existing journey animation.
-    if (step !== "generating" || isA0) return;
+    if (step !== "generating") return;
     const steps = GEN_STEPS;
     const timers: ReturnType<typeof setTimeout>[] = [];
     for (let i = 0; i < steps.length; i++) {
       timers.push(setTimeout(() => setGeneratingStep(i + 1), 550 * (i + 1)));
     }
     return () => timers.forEach(clearTimeout);
-  }, [step, isA0]);
+  }, [step]);
 
   useEffect(() => {
-    // A0 needs no simulated progress; other levels retain the in-app animation.
-    if (
-      step !== "generating" ||
-      (!isA0 && generatingStep < GEN_STEPS.length)
-    )
-      return;
+    if (step !== "generating" || generatingStep < GEN_STEPS.length) return;
     if (generateStartedRef.current) return;
     generateStartedRef.current = true;
 
@@ -558,13 +550,7 @@ export default function JourneyOnboardingFlow({
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Something went wrong";
         setError(msg);
-        if (isA0) {
-          setStep("topic");
-        } else if (whyKey) {
-          setStep("topic");
-        } else {
-          setStep("level");
-        }
+        setStep(whyKey ? "topic" : "level");
       }
     };
     void run();
@@ -585,7 +571,6 @@ export default function JourneyOnboardingFlow({
     daysPerWeek,
     collectProfileQuestions,
     publicSurface,
-    isA0,
     whyKey,
   ]);
 
@@ -765,14 +750,6 @@ export default function JourneyOnboardingFlow({
                 }
               }
 
-              if (selectedLevel === "A0") {
-                setTopic(A0_TOPIC);
-                setWhyKey("fluency");
-                setBranchAnswer("curious");
-                setStep("time");
-                return;
-              }
-
               if (!collectProfileQuestions) {
                 if (!whyKey) setWhyKey("fluency");
                 if (!branchAnswer) setBranchAnswer("curious");
@@ -929,7 +906,7 @@ export default function JourneyOnboardingFlow({
         </div>
         <button
           type="button"
-          onClick={() => setStep(isA0 ? "topic" : "free-time")}
+          onClick={() => setStep("free-time")}
           className={`mt-8 ${BTN_PRIMARY}`}
           style={primaryBtnStyle}
         >
@@ -984,45 +961,6 @@ export default function JourneyOnboardingFlow({
   }
 
   if (step === "topic") {
-    if (isA0) {
-      return shell(
-        <>
-          {progressDash(5)}
-          <div className="mt-6 text-center">
-            <img
-              src="/characters/capybara-waving.png"
-              alt=""
-              className="mx-auto h-20 w-20 rounded-full object-cover"
-              aria-hidden
-            />
-            <h2
-              className="mt-4 text-xl font-bold sm:text-2xl"
-              style={{ fontFamily: FONT_DISPLAY, color: NAVY }}
-            >
-              {A0_TOPIC}
-            </h2>
-            <p className="mt-3 text-sm" style={{ color: MUTED }}>
-              Your first five Mandarin words — greetings and introducing
-              yourself. No prior knowledge needed.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setTopic(A0_TOPIC);
-                setError(null);
-                setStep("generating");
-              }}
-              className={`mt-8 ${BTN_PRIMARY}`}
-              style={primaryBtnStyle}
-            >
-              Let&apos;s start →
-            </button>
-          </div>
-          {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
-        </>,
-      );
-    }
-
     return shell(
       <>
         {progressDash(5)}
@@ -1088,22 +1026,6 @@ export default function JourneyOnboardingFlow({
   }
 
   if (step === "generating") {
-    if (isA0) {
-      return shell(
-        <div className="flex flex-col items-center py-4 text-center">
-          <div className="animate-bounce" aria-hidden>
-            <AppLogo size="md" />
-          </div>
-          <p className="mt-6 text-sm" style={{ color: MUTED }}>
-            Starting your first lesson…
-          </p>
-          {error ? (
-            <p className="mt-6 text-center text-sm text-red-600">{error}</p>
-          ) : null}
-        </div>,
-      );
-    }
-
     const genSteps = GEN_STEPS;
     const progressPct = Math.min(
       100,

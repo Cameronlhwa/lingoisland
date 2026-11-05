@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { HSK_COMPARE } from "@/lib/hskprep-content";
 import SectionHeader from "@/components/landing/SectionHeader";
@@ -30,6 +31,7 @@ export default function HSKCompareSplit({
   compare = HSK_COMPARE,
   textbookFootnote = "Fixed order, fixed pace — whether it fits your life or not.",
   islandFootnote = "Your order, your pace.",
+  startHref,
 }: {
   id?: string;
   eyebrow?: string;
@@ -37,6 +39,8 @@ export default function HSKCompareSplit({
   compare?: CompareData;
   textbookFootnote?: string;
   islandFootnote?: string;
+  /** Makes each topic's "Start" a link (with the journey transition) instead of a static label. */
+  startHref?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
   const {
@@ -63,6 +67,7 @@ export default function HSKCompareSplit({
         background:
           "var(--lingo-section-bg, radial-gradient(circle at 90% 10%, rgba(160,224,239,0.14), transparent 30%), #FCFEFF)",
         padding: "120px 24px",
+        overflowX: "clip",
       }}
     >
       <style jsx>{`
@@ -202,6 +207,19 @@ export default function HSKCompareSplit({
         .hsk-compare-row:hover .hsk-row-start {
           background: var(--lingo-card-bg, #fff);
           border-color: var(--lingo-accent-border);
+        }
+        :global(.hsk-row-start-link) {
+          display: inline-flex;
+          flex-shrink: 0;
+          border-radius: var(--lingo-radius-btn);
+          text-decoration: none;
+        }
+        :global(.hsk-row-start-link:focus-visible) {
+          outline: 3px solid rgba(32, 103, 79, 0.35);
+          outline-offset: 2px;
+        }
+        :global(.hsk-row-start-link:hover) .hsk-row-start {
+          border-color: var(--lingo-accent);
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -392,7 +410,18 @@ export default function HSKCompareSplit({
                           </div>
                         )}
                       </div>
-                      <span className="hsk-row-start">Start →</span>
+                      {startHref ? (
+                        <Link
+                          href={startHref}
+                          data-journey-transition=""
+                          className="hsk-row-start-link"
+                          aria-label={`Start ${u.title}`}
+                        >
+                          <span className="hsk-row-start">Start →</span>
+                        </Link>
+                      ) : (
+                        <span className="hsk-row-start">Start →</span>
+                      )}
                     </div>
                   </motion.div>
                 ))}
