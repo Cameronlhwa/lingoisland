@@ -1,5 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { JourneyPlan } from "@/lib/deepseek/generate-journey";
+import {
+  generateJourneyPlan,
+  type JourneyPlan,
+} from "@/lib/deepseek/generate-journey";
 
 /**
  * Fixed A0 onboarding course — stored in backend code (not DeepSeek, not
@@ -113,6 +116,38 @@ export function getFixedA0JourneyPlan(topic = A0_COURSE_TOPIC): JourneyPlan {
       },
     ],
   };
+}
+
+/**
+ * A0 journey plan personalized to the learner's onboarding topic. Island 1 is
+ * always the fixed course because start-island seeds it from A0_COURSE_WORDS
+ * regardless of its name. Falls back to the fully fixed plan when generation
+ * fails so absolute beginners are never blocked at onboarding.
+ */
+export async function getA0JourneyPlan({
+  topic,
+  why,
+}: {
+  topic: string;
+  why: string;
+}): Promise<JourneyPlan> {
+  const fixed = getFixedA0JourneyPlan(topic);
+  if (!topic.trim() || topic.trim() === A0_COURSE_TOPIC) return fixed;
+  try {
+    const generated = await generateJourneyPlan({ topic, why, level: "A0" });
+    return {
+      ...generated,
+      islands: [
+        fixed.islands[0],
+        ...generated.islands
+          .slice(1, 5)
+          .map((island, idx) => ({ ...island, position: idx + 2 })),
+      ],
+    };
+  } catch (e) {
+    console.warn("[a0Course] journey generation failed, using fixed plan", e);
+    return fixed;
+  }
 }
 
 export async function seedA0IslandFromCourse(

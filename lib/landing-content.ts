@@ -124,9 +124,9 @@ export const FAQ_ITEMS = [
       "You choose a level, and we generate words and sentences that stay readable while still stretching you with new vocabulary.",
   },
   {
-    question: "Is this only for intermediate learners?",
+    question: "Is LingoIsland beginner friendly?",
     answer:
-      "It is designed to help learners break the intermediate plateau, but anyone who wants topic-based vocabulary with real context can use it.",
+      "Yes. LingoIsland is built for every level, from complete beginners to advanced learners. You choose your level when you build your plan, and your lessons use words and sentences matched to it. Beginners start with the basics, like greetings and introductions, while more experienced learners go straight to the topics they need.",
   },
   {
     question: "Should I use this instead of a teacher or other resources?",
@@ -136,7 +136,7 @@ export const FAQ_ITEMS = [
   {
     question: "Do you support speaking practice?",
     answer:
-      "Not yet. LingoIsland currently focuses on reading, vocabulary, and text chat practice.",
+      "Yes. Say the words and sentences from your plan out loud, and LingoIsland scores your pronunciation tone by tone. It spots the sounds you keep missing and turns them into quick drills, so a few minutes of practice helps you speak more clearly with clients, colleagues, friends, or anyone you want to talk to in Mandarin.",
   },
   {
     question: "Can I review with flashcards?",
@@ -172,9 +172,9 @@ export const FEATURE_HIGHLIGHTS = [
       "Organized decks show due counts and progress so you always know what to review.",
   },
   {
-    title: "Streak + activity",
+    title: "Pronunciation + tones",
     description:
-      "Track your consistency with a calendar and streak reminders.",
+      "Say words and sentences out loud and get tone-by-tone feedback, then drill the sounds you miss.",
   },
 ];
 
@@ -226,39 +226,56 @@ export const LANDING_COMPARE = {
   textbookTitle: "HSK 4 · Fixed Course",
   islandEyebrow: "LingoIsland",
   reasonPrompt: "Why are you learning Mandarin?",
-  reasonAnswer: "Getting around China and chatting with friends.",
+  reasonAnswer: "Working with clients and colleagues in China.",
   islandUnits: [
     {
-      title: "Ordering at a Café",
-      word: "咖啡",
-      pinyin: "kāfēi",
+      title: "Meeting Clients",
+      word: "客户",
+      pinyin: "kèhù",
       level: "HSK 4",
-      wordCount: "18 words",
+      wordCount: "20 words",
     },
     {
-      title: "Talking About Work",
-      word: "工作",
-      pinyin: "gōngzuò",
+      title: "Team Meetings",
+      word: "会议",
+      pinyin: "huìyì",
       level: "HSK 4",
       wordCount: "22 words",
     },
     {
-      title: "Weekend Plans",
-      word: "计划",
-      pinyin: "jìhuà",
+      title: "Business Dinners",
+      word: "干杯",
+      pinyin: "gānbēi",
       level: "HSK 4",
       wordCount: "16 words",
     },
   ],
 };
 
-export const LANDING_TESTIMONIAL = {
-  headline: "Hear from Cameron, content creator with 125K+ subscribers on YouTube",
-  quote:
-    "As someone who could barely hold a Mandarin conversation a year ago, I reached conversational fluency in just six months with LingoIsland, because I could finally learn around topics I actually cared about, not whatever chapter a textbook said was next.",
-  name: "Cameron Lim",
-  image: "/founder/cameron-lim-profile.jpg",
-};
+export type LearnerTestimonial = { quote: string; role: string };
+
+export const LEARNER_TESTIMONIALS: LearnerTestimonial[] = [
+  {
+    quote:
+      "I spoke some Mandarin at home growing up, but I still struggled with clients from China. LingoIsland helped me focus on the business vocabulary I actually needed, and I now feel much more confident building connections.",
+    role: "Business and heritage learner",
+  },
+  {
+    quote:
+      "I have little time to study, so focusing on common business and banking vocabulary made a huge difference. My conversations with Chinese clients now feel more natural and productive.",
+    role: "Finance professional",
+  },
+  {
+    quote:
+      "As a doctor, I do not need every Mandarin word. I need the right medical terms for my patients. LingoIsland gave me a focused plan built around the vocabulary I use at work.",
+    role: "Medical professional",
+  },
+  {
+    quote:
+      "LingoIsland helped me prepare for China with vocabulary for airports, subways, restaurants, and attractions. Speaking with locals made the entire trip more rewarding.",
+    role: "Traveler",
+  },
+];
 
 export const LEARNER_BULLETS = [
   "Learners who can comfortably talk about certain topics, but not others.",

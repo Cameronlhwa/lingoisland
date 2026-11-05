@@ -18,7 +18,13 @@ const LINKS = [
   { href: "/privacy", label: "Privacy" },
 ];
 
-export default function Nav({ tone = "default" }: { tone?: "default" | "home" }) {
+export default function Nav({
+  tone = "default",
+  ctaLabel = "Try for free",
+}: {
+  tone?: "default" | "home";
+  ctaLabel?: string;
+}) {
   const home = tone === "home";
   const pathname = usePathname();
   const signInHref = loginHrefForLanding(pathname);
@@ -113,7 +119,7 @@ export default function Nav({ tone = "default" }: { tone?: "default" | "home" })
             Sign in
           </Link>
           <PrimaryButton href="/onboarding/journey" size="compact" journeyTransition={home}>
-            Try for free
+            {ctaLabel}
           </PrimaryButton>
         </div>
 
@@ -195,7 +201,7 @@ export default function Nav({ tone = "default" }: { tone?: "default" | "home" })
                 style={{ display: "flex" }}
                 journeyTransition={home}
               >
-                Try for free
+                {ctaLabel}
               </PrimaryButton>
             </div>
           </div>

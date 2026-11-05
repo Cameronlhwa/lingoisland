@@ -473,9 +473,9 @@ export default function FounderPage() {
 
       <HSKNightCTA
         appearance="warm"
-        title="Ready to build vocabulary you can actually use?"
-        subtitle="Create a Topic Island around what matters to you. Free to start — no credit card needed."
-        primary={{ href: "/onboarding/journey", label: "Try for free" }}
+        title="Turn 10 minutes into Mandarin you can actually use."
+        subtitle="Build a personalized learning plan around your work, studies, and real life. See your plan before choosing a membership."
+        primary={{ href: "/onboarding/journey", label: "Build my learning plan" }}
         secondary={{ href: "/topics", label: "Explore Topics" }}
       />
 

@@ -369,6 +369,517 @@
   }
 }
 
+/* ── Homepage split CTA (HSKNightCTA warm, layout="split") ── */
+
+.home-cta-split-section {
+  background: var(--lingo-page-bg, #fff);
+  padding: 72px 24px 88px;
+}
+
+.home-cta-split {
+  --home-cta-ivory: #FFF8EE;
+  --home-cta-art-cream: #FEEFCE;
+  position: relative;
+  display: grid;
+  grid-template-columns: 56fr 44fr;
+  max-width: 1120px;
+  min-height: 440px;
+  margin: 0 auto;
+  border-radius: 32px;
+  overflow: hidden;
+  background-color: var(--home-cta-art-cream);
+  background-image: url(/home/cta-cove-capybara.png);
+  background-size: cover;
+  background-position: right center;
+  background-repeat: no-repeat;
+  border: 1px solid rgba(95, 49, 25, 0.1);
+  box-shadow: 0 24px 60px rgba(95, 49, 25, 0.08), 0 2px 6px rgba(95, 49, 25, 0.04);
+}
+
+.home-cta-split-copy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  background: var(--home-cta-ivory);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 56px 32px 56px 64px;
+  text-align: left;
+}
+
+.home-cta-split-title {
+  margin: 0;
+  max-width: 520px;
+  color: var(--lingo-navy);
+  font-size: clamp(32px, 3.5vw, 44px);
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.03em;
+}
+
+.home-cta-split-sub {
+  margin: 24px 0 0;
+  max-width: 460px;
+  color: var(--lingo-text-muted);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.home-cta-split-proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-cta-split-proof li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--lingo-navy);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.home-cta-split-check {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(32, 103, 79, 0.12);
+  color: var(--lingo-teal);
+}
+
+.home-cta-split-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 26px;
+  margin-top: 30px;
+}
+
+.home-cta-split-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 0 26px;
+  border-radius: var(--lingo-btn-radius, 999px);
+  background: var(--lingo-btn-bg, #20674F);
+  box-shadow: var(--lingo-btn-shadow, none);
+  color: #fff;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 15.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-cta-split-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--lingo-btn-shadow-hover, none);
+}
+
+.home-cta-split-link {
+  padding: 6px 2px;
+  color: var(--lingo-teal);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-decoration-color: rgba(32, 103, 79, 0.4);
+  text-underline-offset: 5px;
+  transition: text-decoration-color 0.15s ease;
+}
+
+.home-cta-split-link:hover {
+  text-decoration-color: currentColor;
+}
+
+.home-cta-split-primary:focus-visible,
+.home-cta-split-link:focus-visible {
+  outline: 3px solid rgba(32, 103, 79, 0.35);
+  outline-offset: 3px;
+}
+
+.home-cta-split-note {
+  margin: 16px 0 0;
+  color: var(--lingo-text-muted);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.home-cta-split-art {
+  position: relative;
+  min-width: 0;
+}
+
+.home-cta-split-curve {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: -17px;
+  width: 88px;
+  height: 100%;
+  fill: var(--home-cta-ivory);
+}
+
+/* Medium: compact split with the artwork filling its own column. */
+@media (max-width: 1023px) {
+  .home-cta-split-section {
+    padding: 56px 24px 72px;
+  }
+
+  .home-cta-split {
+    grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
+    min-height: 460px;
+    max-width: 920px;
+    border-radius: 28px;
+    background-image: none;
+  }
+
+  .home-cta-split-copy {
+    padding: 44px 28px 44px 44px;
+  }
+
+  .home-cta-split-title {
+    font-size: clamp(34px, 4.9vw, 44px);
+    line-height: 1.1;
+  }
+
+  .home-cta-split-sub {
+    margin-top: 22px;
+    font-size: 16.5px;
+  }
+
+  .home-cta-split-actions {
+    margin-top: 26px;
+  }
+
+  .home-cta-split-art {
+    background-image: url(/home/cta-cove-capybara.png);
+    background-size: cover;
+    background-position: 93% center;
+    background-repeat: no-repeat;
+  }
+
+  .home-cta-split-curve {
+    left: -14px;
+    width: 64px;
+  }
+}
+
+/* Mobile: stacked copy, full-width button, then a cropped artwork strip. */
+@media (max-width: 639px) {
+  .home-cta-split-section {
+    padding: 32px 16px 48px;
+  }
+
+  .home-cta-split {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    border-radius: 24px;
+  }
+
+  .home-cta-split-copy {
+    padding: 28px 22px 24px;
+  }
+
+  .home-cta-split-title {
+    font-size: clamp(32px, 9.6vw, 38px);
+    line-height: 1.08;
+  }
+
+  .home-cta-split-sub {
+    margin-top: 20px;
+    font-size: 17px;
+  }
+
+  .home-cta-split-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    margin-top: 22px;
+  }
+
+  .home-cta-split-primary {
+    min-height: 52px;
+  }
+
+  .home-cta-split-curve {
+    display: none;
+  }
+
+  /* Plain cover keeps the whole sky in a strip this short, so the image is scaled
+     to 155% of the strip height (still wider than the card below 640px) and the
+     top edge fades into the ivory copy. */
+  .home-cta-split-art {
+    height: clamp(190px, 56vw, 220px);
+    background-image:
+      linear-gradient(to bottom, var(--home-cta-ivory), rgba(255, 248, 238, 0) 16%),
+      url(/home/cta-cove-capybara.png);
+    background-size: 100% 100%, auto 155%;
+    background-position: 0 0, 95% 75%;
+  }
+}
+
+/* ── Homepage learner testimonials carousel ── */
+
+.learner-tst-section {
+  background: var(--lingo-section-bg, #fff);
+  padding: 88px 24px 96px;
+}
+
+.learner-tst-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.learner-tst-header {
+  max-width: 620px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+/* Same pill as the SectionHeader eyebrow used by the other homepage sections. */
+.learner-tst-eyebrow {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 5px 14px;
+  border: 1px solid var(--lingo-accent-border);
+  border-radius: 999px;
+  background: var(--lingo-accent-tint);
+  color: var(--lingo-teal);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.65;
+  text-transform: uppercase;
+}
+
+.learner-tst-title {
+  margin: 0;
+  color: var(--lingo-navy);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.learner-tst-sub {
+  max-width: 500px;
+  margin: 12px auto 0;
+  text-wrap: balance;
+  color: var(--lingo-text-muted);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.learner-tst-carousel {
+  --tst-gap: 28px;
+  --tst-per-view: 1;
+}
+
+@media (min-width: 900px) {
+  .learner-tst-carousel {
+    --tst-per-view: 2;
+  }
+}
+
+/* Vertical padding and the clip margin leave room for the card shadows. The clip
+   margin stays under the gap so neighbouring cards never peek in, and under the
+   20px mobile page padding so it never widens the page. */
+.learner-tst-window {
+  margin: -8px 0 -32px;
+  padding: 8px 0 32px;
+  overflow: hidden;
+  overflow: clip;
+  overflow-clip-margin: 20px;
+  touch-action: pan-y;
+}
+
+.learner-tst-track {
+  display: flex;
+  gap: var(--tst-gap);
+  transform: translateX(
+    calc((100% + var(--tst-gap)) / var(--tst-per-view) * var(--tst-index, 1) * -1 + var(--tst-drag, 0px))
+  );
+}
+
+.learner-tst-track[data-animated] {
+  transition: transform 480ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.learner-tst-card {
+  display: flex;
+  flex: 0 0 calc((100% - (var(--tst-per-view) - 1) * var(--tst-gap)) / var(--tst-per-view));
+  flex-direction: column;
+  min-width: 0;
+  min-height: 248px;
+  margin: 0;
+  padding: 28px 32px 28px;
+  border: var(--lingo-card-border, 1px solid rgba(95, 49, 25, 0.1));
+  border-radius: var(--lingo-radius-card, 24px);
+  background: #FFFCF8;
+  box-shadow: var(--lingo-card-shadow, 0 8px 24px rgba(95, 49, 25, 0.05));
+}
+
+.learner-tst-mark {
+  display: block;
+  height: 30px;
+  margin-bottom: 6px;
+  color: var(--lingo-accent);
+  font-family: var(--font-home-display), "Nunito", Georgia, serif;
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.5;
+}
+
+.learner-tst-quote {
+  flex: 1;
+  margin: 0;
+}
+
+.learner-tst-quote p {
+  margin: 0;
+  color: var(--lingo-navy);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.learner-tst-role {
+  margin-top: 20px;
+  color: var(--lingo-teal);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.learner-tst-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.learner-tst-arrow {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--lingo-border);
+  border-radius: 999px;
+  background: var(--lingo-card-bg, #fff);
+  color: var(--lingo-navy);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.learner-tst-arrow:hover {
+  border-color: rgba(95, 49, 25, 0.24);
+  background: var(--lingo-sky-pale);
+}
+
+.learner-tst-dots {
+  display: flex;
+  align-items: center;
+}
+
+.learner-tst-dot {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  cursor: pointer;
+}
+
+.learner-tst-dot::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(95, 49, 25, 0.22);
+  transform: translate(-50%, -50%);
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+.learner-tst-dot:hover::before {
+  background: rgba(95, 49, 25, 0.38);
+}
+
+.learner-tst-dot[aria-current="true"]::before {
+  width: 20px;
+  background: var(--lingo-teal);
+}
+
+.learner-tst-arrow:focus-visible,
+.learner-tst-dot:focus-visible {
+  outline: 3px solid rgba(32, 103, 79, 0.35);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .learner-tst-track[data-animated],
+  .learner-tst-dot::before {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .learner-tst-section {
+    padding: 64px 20px 72px;
+  }
+
+  .learner-tst-header {
+    margin-bottom: 28px;
+  }
+
+  .learner-tst-title {
+    font-size: 28px;
+  }
+
+  .learner-tst-sub {
+    font-size: 15.5px;
+  }
+
+  .learner-tst-card {
+    min-height: 0;
+    padding: 24px 24px 24px;
+  }
+
+  .learner-tst-quote p {
+    font-size: 16.5px;
+  }
+}
+
 /* ── Full-bleed hero artwork positioning ─────────────── */
 
 .hero-scene-bg {
@@ -484,6 +995,17 @@
   margin-top: -74px;
 }
 
+.hero-home-title {
+  display: block;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+/* The highlight sits mid-headline here, so keep the stroke clear of the next line. */
+.hero-home-title .lingo-brush-line {
+  top: 88%;
+}
+
 .hero-home-copy {
   min-height: min(100vh, 63vw);
   display: flex;
@@ -518,5 +1040,48 @@
 
   .hero-home-img {
     object-position: center 46%;
+  }
+}
+
+/* Homepage only: below desktop, show the whole cove pinned to the bottom so
+   both capybaras stay in frame and the copy sits in the open sky above.
+   50vw reserves 80% of the artwork height (artwork is 1.6:1). */
+@media (max-width: 1024px) {
+  .lingo-home .hero-scene-media {
+    background: #FEFDF8;
+  }
+
+  .lingo-home .hero-home-img {
+    object-fit: contain;
+    object-position: center bottom;
+  }
+
+  .lingo-home .hero-home-copy {
+    min-height: 0;
+    padding: 160px 24px 50vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .lingo-home .hero-home-copy {
+    padding: 136px 20px 50vw;
+  }
+}
+
+@media (min-width: 1025px) {
+  .lingo-home .hero-home-copy {
+    padding-top: clamp(150px, 14vw, 236px);
+  }
+
+  .lingo-home .hero-home-title {
+    font-size: clamp(44px, 4.5vw, 64px);
+  }
+}
+
+/* Short laptop screens: never crop the sky off the artwork, so the three-line
+   headline keeps clear space above the islands. */
+@media (min-width: 1025px) and (max-height: 900px) {
+  .lingo-home .hero-home-copy {
+    min-height: max(min(100vh, 63vw), 62.5vw);
   }
 }

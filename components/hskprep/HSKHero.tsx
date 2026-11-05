@@ -40,7 +40,7 @@ export default function HSKHero({
   priorityImage?: boolean;
   /** Pull the artwork under a transparent sticky nav. */
   underNav?: boolean;
-  /** Homepage “Try for free” fades into the journey screen. */
+  /** Homepage CTA fades into the journey screen. */
   journeyTransition?: boolean;
 }) {
   return (

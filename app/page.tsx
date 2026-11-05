@@ -10,15 +10,14 @@ import BrushUnderline from "@/components/landing/BrushUnderline";
 import HSKHero from "@/components/hskprep/HSKHero";
 import HSKPillars from "@/components/hskprep/HSKPillars";
 import HSKCompareSplit from "@/components/hskprep/HSKCompareSplit";
-import HSKTestimonialPlaceholder from "@/components/hskprep/HSKTestimonialPlaceholder";
 import HSKNightCTA from "@/components/hskprep/HSKNightCTA";
 import TopicsGrid from "@/components/landing/TopicsGrid";
+import LearnerTestimonials from "@/components/landing/LearnerTestimonials";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import {
   FAQ_ITEMS,
   LANDING_PILLARS,
   LANDING_COMPARE,
-  LANDING_TESTIMONIAL,
   HOW_IT_WORKS_STEPS,
   FEATURE_HIGHLIGHTS,
 } from "@/lib/landing-content";
@@ -100,7 +99,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <FadeSectionObserver />
-      <Nav tone="home" />
+      <Nav tone="home" ctaLabel="Build my plan" />
       <HSKHero
         backgroundImageUrl="/home/hero-cove.png"
         showDecorations={false}
@@ -108,26 +107,24 @@ export default function Home() {
         underNav
         fadeTo="var(--lingo-page-bg)"
         title={
-          <>
-            Learn Mandarin
-            <br />
-            you{" "}
+          <span className="hero-home-title">
+            Learn the Mandarin you{" "}
             <BrushUnderline variant="brush" color="var(--lingo-accent, #EC7D28)">
-              actually
+              actually need
             </BrushUnderline>{" "}
-            need
-          </>
+            in 10 minutes a day.
+          </span>
         }
-        subtitle="Topic Islands with real-life sentences, stories, and review — vocabulary that shows up in conversation, not just textbooks."
+        subtitle="Personalized lessons for your work, studies, and real life."
         ctaHref="/onboarding/journey"
-        ctaLabel="Try for free"
+        ctaLabel="Build my learning plan"
         journeyTransition
       />
       <HSKPillars
         pillars={LANDING_PILLARS}
         capybaraOnTitle="Stories + Review"
       />
-      <HSKCompareSplit id="demo" compare={LANDING_COMPARE} />
+      <HSKCompareSplit id="demo" compare={LANDING_COMPARE} startHref="/onboarding/journey" />
       <HowItWorks
         id="how-it-works"
         title="How it works"
@@ -141,7 +138,7 @@ export default function Home() {
         features={FEATURE_HIGHLIGHTS}
       />
       <TopicsGrid />
-      <HSKTestimonialPlaceholder testimonial={LANDING_TESTIMONIAL} plain />
+      <LearnerTestimonials />
       <FAQ
         title="Frequently asked questions"
         subtitle="Clear answers about how LingoIsland helps you learn Mandarin you'll actually use."
@@ -149,10 +146,12 @@ export default function Home() {
       />
       <HSKNightCTA
         appearance="warm"
-        title="Ready to build vocabulary you can actually use?"
-        subtitle="Create a Topic Island around what matters to you. Free to start — no credit card needed."
-        primary={{ href: "/onboarding/journey", label: "Try for free" }}
-        secondary={{ href: "/topics", label: "Explore Topics" }}
+        layout="split"
+        title="Turn 10 minutes into Mandarin you can actually use"
+        highlight="actually use"
+        subtitle="Personalized lessons for your work, studies, and real life."
+        primary={{ href: "/onboarding/journey", label: "Build my learning plan" }}
+        secondary={null}
       />
       <Footer />
       </main>
