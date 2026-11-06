@@ -233,7 +233,7 @@ describe("privacy and retention", () => {
     assert.ok(rows.every((row) => row.body === ""));
   });
 
-  it("keeps every Huahua table closed to browser roles", async () => {
+  it("keeps Huahua tables and functions closed to browser roles", async () => {
     const tables = [
       "sms_preferences",
       "sms_jobs",
@@ -243,27 +243,48 @@ describe("privacy and retention", () => {
       "sms_country_interest",
       "sms_transfer_audit",
       "sms_consent_events",
-      "sms_messages",
-      "sms_contacts",
     ];
     for (const role of ["anon", "authenticated"]) {
-      for (const table of tables) {
-        await ctx.db.exec(`set role ${role}`);
-        try {
-          await assert.rejects(ctx.db.query(`select * from public.${table} limit 1`), /permission denied/, `${role} ${table}`);
-        } finally {
-          await ctx.db.exec("reset role");
-        }
-      }
       await ctx.db.exec(`set role ${role}`);
       try {
-        await assert.rejects(
-          ctx.db.query("select public.sms_get_huahua_overview(gen_random_uuid(), 1, 1, 1)"),
-          /permission denied/,
-        );
+        for (const table of tables) {
+          await assert.rejects(ctx.db.query(`select * from public.${table} limit 1`), /permission denied/, `${role} ${table}`);
+        }
+        for (const fn of [
+          "select public.sms_get_huahua_overview(gen_random_uuid(), 1, 1, 1)",
+          "select public.sms_update_preferences(gen_random_uuid(), '{}'::jsonb)",
+          "select public.sms_delete_history(gen_random_uuid(), true)",
+        ]) {
+          await assert.rejects(ctx.db.query(fn), /permission denied/, `${role}: ${fn}`);
+        }
       } finally {
         await ctx.db.exec("reset role");
       }
+    }
+  });
+
+  it("never shows another learner's number or messages to a signed-in user", async () => {
+    const me = await connectLearner(ctx);
+    const other = await connectLearner(ctx);
+    await deliverWebhook(ctx, inboundText(other.phone, "别人的秘密"));
+    await ctx.db.exec(`set request.jwt.claim.sub = '${me.userId}'`);
+    await ctx.db.exec("set role authenticated");
+    try {
+      const contacts = await ctx.db.query<{ user_id: string }>("select user_id from public.sms_contacts");
+      assert.ok(contacts.rows.length > 0, "own contact is visible");
+      assert.ok(contacts.rows.every((row) => row.user_id === me.userId));
+      const messages = await ctx.db.query<{ body: string; user_id: string }>("select body, user_id from public.sms_messages");
+      assert.ok(messages.rows.every((row) => row.user_id === me.userId));
+      assert.ok(!messages.rows.some((row) => row.body.includes("别人的秘密")));
+      await assert.rejects(
+        ctx.db.query("update public.sms_contacts set status = 'active' where user_id = $1", [other.userId]).then((result) => {
+          if ((result.affectedRows ?? 0) === 0) throw new Error("permission denied (no rows)");
+        }),
+        /permission denied|no rows/,
+      );
+    } finally {
+      await ctx.db.exec("reset role");
+      await ctx.db.exec("reset request.jwt.claim.sub");
     }
   });
 

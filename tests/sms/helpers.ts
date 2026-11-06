@@ -26,7 +26,13 @@ export async function createSmsTestDb() {
     create role service_role;
     create schema auth;
     create table auth.users (id uuid primary key);
-    create function auth.uid() returns uuid language sql stable as $$ select null::uuid $$;
+    create function auth.uid() returns uuid language sql stable as $$
+      select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
+    $$;
+    -- Supabase grants new objects to the API roles by default; migrations must revoke explicitly.
+    alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+    alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+    alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 
     -- Minimal shapes of the app tables the SMS functions read.
     create table public.user_profiles (
