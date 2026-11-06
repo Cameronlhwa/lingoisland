@@ -899,6 +899,12 @@ export default function AccountModal({
                   </p>
                 </div>
                 <SmsPhoneSetup source="account_settings" />
+                <a
+                  href="/app/huahua"
+                  className="text-sm font-medium text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                >
+                  Texting style, schedule, and history
+                </a>
               </div>
 
               <div className="flex flex-col gap-4 border-t border-gray-100 pt-6">

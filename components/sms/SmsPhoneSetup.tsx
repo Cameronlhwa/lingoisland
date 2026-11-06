@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAnalytics } from "@/lib/posthog/client";
+import { interestSmsCountries } from "@/lib/sms/countries";
 import { SMS_CONSENT_TEXT, SMS_CONSENT_VERSION, type SmsConsentSource } from "@/lib/sms/consent";
 import type { SmsPhoneErrorBody, SmsPhoneState } from "@/lib/sms/phoneState";
 
@@ -330,7 +331,8 @@ export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Pro
           This number is connected to another LingoIsland account.
         </p>
         <p className="text-xs text-gray-600">
-          Move it to this account? The other account will stop receiving practice texts.
+          Move it to this account? The other account will stop receiving practice texts, and its
+          conversations stay with that account.
         </p>
         {messages}
         <div className="flex flex-wrap gap-2">
@@ -448,7 +450,11 @@ export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Pro
           </p>
         ) : contact.status === "paused" ? (
           <p className="text-xs text-gray-600">
-            Texting is paused. 华华 won&apos;t reply until you resume.
+            {contact.pausedReason === "no_response"
+              ? "We paused practice texts while you're busy. "
+              : "Practice texts are paused. "}
+            华华 won&apos;t text you first, but you can still text{" "}
+            <span className="font-medium text-gray-900">{lingoNumber}</span> anytime.
           </p>
         ) : contact.status === "opted_out" ? (
           <p className="text-xs text-gray-600">
@@ -467,7 +473,7 @@ export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Pro
         {confirmDisconnect ? (
           <div className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
             <p className="text-xs text-gray-700">
-              Disconnect {contact.maskedNumber}? 华华 will stop replying to texts from it.
+              Disconnect {contact.maskedNumber}? 华华 will stop texting it and won&apos;t reply to it.
             </p>
             <div className="flex flex-wrap gap-2">
               <button
@@ -600,6 +606,8 @@ export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Pro
 
       {messages}
 
+      <CountryInterest supported={state.supportedCountries.map((option) => option.code)} source={source} />
+
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={!canSend || busy !== null}>
           {busy === "start" ? "Sending…" : "Text me a code"}
@@ -615,5 +623,73 @@ export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Pro
         ) : null}
       </div>
     </form>
+  );
+}
+
+function CountryInterest({ supported, source }: { supported: string[]; source: SmsConsentSource }) {
+  const { captureEvent } = useAnalytics();
+  const options = useMemo(() => interestSmsCountries(supported), [supported]);
+  const [open, setOpen] = useState(false);
+  const [country, setCountry] = useState("");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  if (options.length === 0) return null;
+  if (!open) {
+    return (
+      <button type="button" className={`${LINK_BUTTON_CLASS} self-start text-xs`} onClick={() => setOpen(true)}>
+        My country isn&apos;t listed
+      </button>
+    );
+  }
+  if (status === "saved") {
+    return <p className="text-xs text-gray-600">Thanks! We&apos;ll let you know when texting is available there.</p>;
+  }
+
+  const submit = async () => {
+    setStatus("saving");
+    try {
+      const response = await fetch("/api/sms/huahua/interest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ country }),
+      });
+      if (!response.ok) throw new Error("failed");
+      captureEvent("sms_country_interest", { source, country });
+      setStatus("saved");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
+      <label htmlFor="sms-interest-country" className="text-xs text-gray-700">
+        Texting is available in {supported.map(countryName).join(" and ")} for now. Where are you?
+      </label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <select
+          id="sms-interest-country"
+          value={country}
+          onChange={(event) => setCountry(event.target.value)}
+          className={`${INPUT_CLASS} sm:max-w-[13rem]`}
+        >
+          <option value="">Choose a country</option>
+          {options.map((option) => (
+            <option key={option.code} value={option.code}>
+              {flagEmoji(option.code)} {option.name}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={!country || status === "saving"}
+          onClick={() => void submit()}
+        >
+          {status === "saving" ? "Saving…" : "Tell me when it's ready"}
+        </button>
+      </div>
+      {status === "error" ? <p className="text-xs text-red-600">Couldn&apos;t save that. Try again.</p> : null}
+    </div>
   );
 }

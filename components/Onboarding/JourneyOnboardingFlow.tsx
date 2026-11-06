@@ -15,6 +15,7 @@ import { useAnalytics } from "@/lib/posthog/client";
 import type { SmsPhoneState } from "@/lib/sms/phoneState";
 import AppLogo from "@/components/app/AppLogo";
 import SmsPhoneSetup from "@/components/sms/SmsPhoneSetup";
+import HuahuaOnboardingStyle from "@/components/sms/HuahuaOnboardingStyle";
 import OnboardingUpgradeClient from "@/app/onboarding/upgrade/OnboardingUpgradeClient";
 import { Loader2 } from "lucide-react";
 import {
@@ -743,6 +744,7 @@ export default function JourneyOnboardingFlow({
             onStateChange={handleTextingState}
             onVerified={() => setTextingVerified(true)}
           />
+          {textingVerified ? <HuahuaOnboardingStyle /> : null}
         </div>
         {textingVerified ? (
           <button

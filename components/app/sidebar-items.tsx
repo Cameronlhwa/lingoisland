@@ -10,6 +10,7 @@ import {
   Library,
   ClipboardCheck,
   Mic,
+  MessageCircle,
 } from "lucide-react";
 import { HSK_APP_LABELS } from "@/lib/hsk-app-labels";
 
@@ -41,6 +42,13 @@ export const sidebarItems: SidebarItem[] = [
     label: "Pronunciation",
     icon: (className = iconClass) => (
       <Mic className={className} aria-hidden strokeWidth={2} />
+    ),
+  },
+  {
+    href: "/app/huahua",
+    label: "Texting",
+    icon: (className = iconClass) => (
+      <MessageCircle className={className} aria-hidden strokeWidth={2} />
     ),
   },
   {

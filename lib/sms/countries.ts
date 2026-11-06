@@ -1,4 +1,5 @@
-// Server-side SMS country capabilities. A country is offered to learners only
+// SMS country capabilities (static data, safe to import in the browser). A
+// country is offered to learners only
 // when `enabled` is true here (a reviewed code change) and, if
 // SMS_SUPPORTED_COUNTRIES is set, it is also listed there. The env variable
 // can narrow the list but can never enable a country on its own.
