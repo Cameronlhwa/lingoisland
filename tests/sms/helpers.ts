@@ -169,7 +169,7 @@ export async function createSmsTestContext(options: { now?: Date } = {}) {
   };
 
   /** Gives the user an active subscription (via product_subscriptions). */
-  async function subscribe(userId: string, periodEnd = new Date(Date.now() + 20 * 86400_000)) {
+  async function subscribe(userId: string, periodEnd = new Date(Date.now() + 200 * 86400_000)) {
     await database.db.query(
       `insert into public.product_subscriptions (user_id, product, status, current_period_end)
        values ($1, 'core', 'active', $2)
