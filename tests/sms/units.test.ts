@@ -10,7 +10,8 @@ import {
 } from "../../lib/sms/codes";
 import { detectSmsKeyword } from "../../lib/sms/keywords";
 import { redactSmsText } from "../../lib/sms/log";
-import { SMS_WELCOME_MESSAGE, verificationCodeMessage } from "../../lib/sms/messages";
+import { buildWelcomeMessage } from "../../lib/sms/huahua/welcome";
+import { verificationCodeMessage } from "../../lib/sms/messages";
 import { maskPhoneNumber, normalizePhoneNumber, parsePhoneForSms } from "../../lib/sms/phone";
 import { estimateSmsSegments, fitToSmsSegments } from "../../lib/sms/segments";
 import { TelnyxSmsProvider, verifyTelnyxSignature } from "../../lib/sms/telnyx";
@@ -143,10 +144,14 @@ describe("SMS segment estimation", () => {
     assert.equal(estimateSmsSegments("你".repeat(66) + "👋" + "你".repeat(67)).segments, 3);
   });
 
-  it("fits the welcome message in two segments", () => {
-    const estimate = estimateSmsSegments(SMS_WELCOME_MESSAGE);
-    assert.equal(estimate.encoding, "UCS-2");
-    assert.ok(estimate.segments <= 2);
+  it("fits every welcome variant in three segments", () => {
+    for (const level of [1, 2, 3, 4, 5, 6] as const) {
+      for (const subscribed of [true, false]) {
+        const estimate = estimateSmsSegments(buildWelcomeMessage({ level, subscribed }));
+        assert.equal(estimate.encoding, "UCS-2");
+        assert.ok(estimate.segments <= 3, `level ${level} subscribed=${subscribed}: ${estimate.segments}`);
+      }
+    }
   });
 
   it("leaves short replies untouched", () => {

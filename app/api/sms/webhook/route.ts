@@ -1,5 +1,6 @@
 import { waitUntil } from "@vercel/functions";
 import { NextResponse } from "next/server";
+import { detectSmsKeyword } from "@/lib/sms/keywords";
 import { logSmsError } from "@/lib/sms/log";
 import { processSmsWebhookEvent } from "@/lib/sms/processor";
 import { getSmsDeps } from "@/lib/sms/server";
@@ -10,7 +11,9 @@ export const dynamic = "force-dynamic";
 /**
  * Telnyx expects a fast 2xx. We verify the signature, durably store the
  * event (deduplicated by provider event id), acknowledge, and process in the
- * background. Unprocessed events are retried by /api/cron/sms-process.
+ * background. STOP/START/HELP are handled before acknowledging so an opt-out
+ * takes effect immediately. Unprocessed events are retried by
+ * /api/cron/sms-process.
  */
 export async function POST(request: Request) {
   const deps = getSmsDeps();
@@ -39,7 +42,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Temporarily unavailable" }, { status: 500 });
   }
 
-  if (recorded.pending) {
+  const isKeyword =
+    event.type === "message.received" && Boolean(event.message && detectSmsKeyword(event.message.body));
+  if (recorded.pending && isKeyword) {
+    try {
+      await processSmsWebhookEvent(deps, recorded.id);
+    } catch (error) {
+      // Stored; the cron retries it.
+      logSmsError("keyword processing failed", error, { eventRowId: recorded.id });
+    }
+  } else if (recorded.pending) {
     waitUntil(
       processSmsWebhookEvent(deps, recorded.id).catch((error) =>
         logSmsError("background processing failed", error, { eventRowId: recorded.id }),

@@ -1,10 +1,11 @@
 import { SMS_LIMITS, type SmsConfig } from "./config";
-import type { generateSmsReply } from "./generate-reply";
+import type { TurnGenerator } from "./huahua/ai";
+import { respondToInbound } from "./huahua/conversation";
 import { detectSmsKeyword } from "./keywords";
 import { describeSmsError, logSmsError } from "./log";
-import { SMS_FALLBACK_REPLY, SMS_HELP_MESSAGE, SMS_RESUBSCRIBED_MESSAGE } from "./messages";
+import { SMS_HELP_MESSAGE, SMS_RESUBSCRIBED_MESSAGE } from "./messages";
 import { sendTrackedSms } from "./outbound";
-import { isE164, maskPhoneNumber, normalizePhoneNumber } from "./phone";
+import { maskPhoneNumber, normalizePhoneNumber } from "./phone";
 import { consumeSmsRateLimits } from "./rateLimit";
 import type { SmsRpc } from "./rpc";
 import type { SmsProvider, SmsWebhookEvent } from "./types";
@@ -20,12 +21,14 @@ export type SmsProcessorDeps = {
   rpc: SmsRpc;
   provider: SmsProvider;
   config: SmsConfig;
-  generateReply: typeof generateSmsReply;
+  generateTurn: TurnGenerator;
+  /** Injected clock (tests). */
+  now?: () => Date;
+  turnTimeoutMs?: number;
 };
 
 export const WEBHOOK_LEASE_SECONDS = 90;
 export const WEBHOOK_MAX_ATTEMPTS = 5;
-const HISTORY_LIMIT = 12;
 const FAILED_STATUSES = new Set(["delivery_failed", "sending_failed"]);
 
 type InboundResult = {
@@ -35,9 +38,9 @@ type InboundResult = {
   duplicate?: boolean;
   contact?: {
     id: string;
-    display_name: string;
-    language_level: string;
-    persona: string;
+    user_id: string;
+    status: string;
+    display_name: string | null;
   };
 };
 
@@ -150,7 +153,13 @@ async function handleInbound(deps: SmsProcessorDeps, event: SmsWebhookEvent) {
     case "resubscribed":
       return sendFixed(deps, result, from, "resubscribed", SMS_RESUBSCRIBED_MESSAGE, true);
     case "reply":
-      return replyToInbound(deps, result, to);
+      if (!result.contact?.id || !result.message_id) return "reply_missing_contact";
+      return respondToInbound(deps, {
+        contact: result.contact,
+        inboundId: result.message_id,
+        body: message.body,
+        ownNumber: to,
+      });
     default:
       return result.outcome;
   }
@@ -193,63 +202,4 @@ async function sendFixed(
     body,
   });
   return sent.status === "sent" ? `${kind}_sent` : `${kind}_${sent.status}`;
-}
-
-async function generateWithRetry(
-  deps: SmsProcessorDeps,
-  input: Parameters<SmsProcessorDeps["generateReply"]>[0],
-) {
-  try {
-    return await deps.generateReply(input);
-  } catch (firstError) {
-    logSmsError("AI reply attempt failed, retrying", firstError);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return deps.generateReply(input);
-  }
-}
-
-async function replyToInbound(deps: SmsProcessorDeps, result: InboundResult, ownNumber: string) {
-  const contact = result.contact;
-  const inboundId = result.message_id;
-  if (!contact?.id || !inboundId) return "reply_missing_contact";
-
-  const limit = await consumeSmsRateLimits(deps.rpc, deps.config.secret, [
-    { name: "ai:contact:hour", identifier: contact.id, ...SMS_LIMITS.aiRepliesPerContactHour },
-    { name: "ai:contact:day", identifier: contact.id, ...SMS_LIMITS.aiRepliesPerContactDay },
-  ]);
-  if (!limit.allowed) return "ai_rate_limited";
-
-  const sent = await sendTrackedSms(deps, {
-    contactId: contact.id,
-    idempotencyKey: `reply:${inboundId}`,
-    kind: "reply",
-    requireActive: true,
-    from: isE164(ownNumber) ? ownNumber : undefined,
-    body: async () => {
-      const history = await deps.rpc<Array<{ direction: "inbound" | "outbound"; body: string }>>(
-        "sms_get_conversation",
-        { p_contact_id: contact.id, p_until_message_id: inboundId, p_limit: HISTORY_LIMIT },
-      );
-      try {
-        return await generateWithRetry(deps, {
-          learnerName: contact.display_name || "Learner",
-          level: contact.language_level || "beginner",
-          persona: contact.persona === "Huahua" ? "华华 (Huahua)" : contact.persona || "华华 (Huahua)",
-          history: history ?? [],
-        });
-      } catch (error) {
-        logSmsError("AI reply failed", error, { contactId: contact.id });
-        // One short apology per hour; beyond that stay quiet rather than spam.
-        const fallback = await consumeSmsRateLimits(deps.rpc, deps.config.secret, [
-          { name: "fallback:contact:hour", identifier: contact.id, ...SMS_LIMITS.fallbackPerContactHour },
-        ]);
-        if (!fallback.allowed) throw error;
-        return SMS_FALLBACK_REPLY;
-      }
-    },
-  });
-
-  if (sent.status === "sent") return "replied";
-  if (sent.status === "skipped") return `reply_skipped_${sent.reason}`;
-  return "reply_failed";
 }

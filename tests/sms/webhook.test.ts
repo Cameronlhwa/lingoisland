@@ -2,12 +2,8 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { before, describe, it } from "node:test";
 import { SMS_CONSENT_VERSION } from "../../lib/sms/consent";
-import {
-  SMS_FALLBACK_REPLY,
-  SMS_HELP_MESSAGE,
-  SMS_RESUBSCRIBED_MESSAGE,
-  SMS_WELCOME_MESSAGE,
-} from "../../lib/sms/messages";
+import { fallbackReply } from "../../lib/sms/huahua/fallbacks";
+import { RESUME_OFFER, SMS_HELP_MESSAGE, SMS_RESUBSCRIBED_MESSAGE } from "../../lib/sms/messages";
 import { startVerification, verifyPhoneCode } from "../../lib/sms/phoneService";
 import { processSmsWebhookEvent } from "../../lib/sms/processor";
 import { SmsSendError } from "../../lib/sms/types";
@@ -25,6 +21,7 @@ function nextPhone() {
 
 async function activeLearner() {
   const userId = await ctx.createUser();
+  await ctx.subscribe(userId);
   const phone = nextPhone();
   await startVerification(ctx.deps, {
     userId,
@@ -62,7 +59,7 @@ function inbound(from: string, text: string, extra: Partial<Parameters<typeof te
 /** Outbound texts other than verification codes and the welcome. */
 function conversationTo(phone: string) {
   return ctx.provider.sent.filter(
-    (message) => message.to === phone && message.body !== SMS_WELCOME_MESSAGE && !/code: \d{6}/.test(message.body),
+    (message) => message.to === phone && !message.body.includes("Huahua") && !/code: \d{6}/.test(message.body),
   );
 }
 
@@ -87,7 +84,7 @@ describe("inbound texts", () => {
 
     const call = ctx.replies[ctx.replies.length - 1];
     assert.equal(call.learnerName, "Cam");
-    assert.equal(call.level, "A2");
+    assert.equal(call.level, 3, "A2 maps to HSK 3");
     assert.deepEqual(call.history[call.history.length - 1], { direction: "inbound", body: "你好！我今天很累。" });
   });
 
@@ -135,12 +132,15 @@ describe("inbound texts", () => {
     assert.equal(conversationTo(phone).length, 0);
   });
 
-  it("does not reply while texting is paused", async () => {
+  it("still replies while proactive texts are paused, and offers to resume", async () => {
     const learner = await activeLearner();
     await ctx.db.query("update sms_contacts set status = 'paused', paused_at = now() where id = $1", [learner.contactId]);
     const result = await deliverWebhook(ctx, inbound(learner.phone, "你好"));
-    assert.equal(result.outcome, "ignored_paused");
-    assert.equal(conversationTo(learner.phone).length, 0);
+    assert.equal(result.outcome, "replied");
+    const replies = conversationTo(learner.phone);
+    assert.equal(replies.length, 1);
+    assert.ok(replies[0].body.includes(RESUME_OFFER));
+    assert.equal(await contactStatus(learner.contactId), "paused");
   });
 
   it("ignores texts from LingoIsland's own number", async () => {
@@ -316,7 +316,9 @@ describe("AI and provider failures", () => {
     ctx.failNextReply(new Error("DeepSeek reply failed (503)"), 2);
     const first = await deliverWebhook(ctx, inbound(learner.phone, "第一"));
     assert.equal(first.outcome, "replied");
-    assert.deepEqual(conversationTo(learner.phone).map((m) => m.body), [SMS_FALLBACK_REPLY]);
+    const sent = conversationTo(learner.phone);
+    assert.equal(sent.length, 1);
+    assert.ok(sent[0].body.startsWith(fallbackReply(3).message));
 
     ctx.failNextReply(new Error("DeepSeek reply failed (503)"), 2);
     const second = await deliverWebhook(ctx, inbound(learner.phone, "第二"));
@@ -329,7 +331,7 @@ describe("AI and provider failures", () => {
     ctx.failNextReply(new Error("timeout"), 1);
     const result = await deliverWebhook(ctx, inbound(learner.phone, "再试"));
     assert.equal(result.outcome, "replied");
-    assert.notEqual(conversationTo(learner.phone)[0].body, SMS_FALLBACK_REPLY);
+    assert.ok(!conversationTo(learner.phone)[0].body.startsWith(fallbackReply(3).message));
   });
 
   it("records provider failures and never resends an ambiguous message", async () => {

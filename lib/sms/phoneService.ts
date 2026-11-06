@@ -8,8 +8,8 @@ import {
 import { SMS_LIMITS, type SmsConfig } from "./config";
 import { SMS_CONSENT_VERSION, isSmsConsentSource } from "./consent";
 import { describeSmsError, logSmsError } from "./log";
-import { SMS_WELCOME_MESSAGE, verificationCodeMessage } from "./messages";
-import { sendTrackedSms } from "./outbound";
+import { sendHuahuaWelcome } from "./huahua/welcome";
+import { verificationCodeMessage } from "./messages";
 import {
   dialCodeForCountry,
   formatPhoneNumber,
@@ -26,6 +26,7 @@ export type SmsPhoneDeps = {
   rpc: SmsRpc;
   provider: SmsProvider;
   config: SmsConfig;
+  now?: () => Date;
 };
 
 export class SmsPhoneError extends Error {
@@ -49,6 +50,7 @@ type RawContact = {
   consent_at: string | null;
   welcome_sent_at: string | null;
   paused_at: string | null;
+  paused_reason?: "user" | "no_response" | null;
   opted_out_at: string | null;
   disabled_at: string | null;
   last_delivery_error: string | null;
@@ -123,6 +125,7 @@ export function toPublicState(config: SmsConfig, raw: RawState, now = Date.now()
           consentAt: contact.consent_at,
           welcomeSentAt: contact.welcome_sent_at,
           pausedAt: contact.paused_at,
+          pausedReason: contact.paused_reason ?? null,
           optedOutAt: contact.opted_out_at,
           disabledAt: contact.disabled_at,
           hasDeliveryIssue: contact.status === "disabled" || (contact.delivery_failure_count ?? 0) > 0,
@@ -411,6 +414,13 @@ export async function verifyPhoneCode(
       "This number is connected to another LingoIsland account. Move it to this account?",
     );
   }
+  if (completed.status === "conflict") {
+    throw new SmsPhoneError(
+      "transfer_conflict",
+      409,
+      "That number was just connected somewhere else. Request a new code and try again.",
+    );
+  }
   if (completed.status === "expired") {
     throw new SmsPhoneError("expired", 410, "That code expired. Request a new one.");
   }
@@ -436,13 +446,7 @@ export async function sendWelcome(deps: SmsPhoneDeps, userId: string, contactId:
       { name: "welcome:user:day", identifier: userId, ...SMS_LIMITS.welcomePerUserDay },
     ]);
     if (!limit.allowed) return { status: "skipped" as const, reason: "rate_limited" };
-    return await sendTrackedSms(deps, {
-      contactId,
-      idempotencyKey: `welcome:${contactId}`,
-      kind: "welcome",
-      requireActive: true,
-      body: SMS_WELCOME_MESSAGE,
-    });
+    return await sendHuahuaWelcome(deps, userId, contactId);
   } catch (error) {
     // Verification already succeeded; a missing welcome must not undo it.
     logSmsError("welcome send failed", error);

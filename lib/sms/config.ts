@@ -1,3 +1,4 @@
+import { enabledSmsCountryCodes } from "./countries";
 import { isE164 } from "./phone";
 
 export type SmsRateLimit = { bucket: string; max: number; windowSeconds: number };
@@ -18,7 +19,6 @@ export type SmsConfig = {
   disableAfterFailures: number;
 };
 
-const DEFAULT_SUPPORTED_COUNTRIES = ["US", "CA"];
 const MIN_SECRET_LENGTH = 32;
 
 const HOUR = 60 * 60;
@@ -65,7 +65,7 @@ export function getSmsConfig(env: NodeJS.ProcessEnv = process.env): SmsConfig {
   return {
     enabled: providerConfigured && secret.length >= MIN_SECRET_LENGTH,
     secret,
-    supportedCountries: countries.length > 0 ? countries : DEFAULT_SUPPORTED_COUNTRIES,
+    supportedCountries: enabledSmsCountryCodes(countries),
     ownNumbers,
     fromNumber,
     codeTtlMinutes: 10,

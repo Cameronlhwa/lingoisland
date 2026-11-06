@@ -4,7 +4,7 @@ import { isSameOriginMutation } from "@/lib/security/sameOrigin";
 import { getAuthenticatedUser } from "@/lib/supabase/server";
 import { getSmsSupabaseAdmin } from "./admin";
 import { getSmsConfig } from "./config";
-import { generateSmsReply } from "./generate-reply";
+import { createDeepSeekTurnGenerator } from "./huahua/ai";
 import { logSmsError } from "./log";
 import { SmsPhoneError } from "./phoneService";
 import type { SmsPhoneErrorBody } from "./phoneState";
@@ -17,7 +17,7 @@ export function getSmsDeps(): SmsProcessorDeps {
     rpc: createSupabaseSmsRpc(getSmsSupabaseAdmin()),
     provider: getSmsProvider(),
     config: getSmsConfig(),
-    generateReply: generateSmsReply,
+    generateTurn: createDeepSeekTurnGenerator(),
   };
 }
 

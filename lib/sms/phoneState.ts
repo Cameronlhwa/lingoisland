@@ -24,6 +24,8 @@ export type SmsPhoneState = {
     consentAt: string | null;
     welcomeSentAt: string | null;
     pausedAt: string | null;
+    /** "user" (paused from settings or by text) or "no_response" (auto-paused). */
+    pausedReason: "user" | "no_response" | null;
     optedOutAt: string | null;
     disabledAt: string | null;
     hasDeliveryIssue: boolean;
@@ -56,6 +58,7 @@ export type SmsPhoneErrorCode =
   | "invalid_code"
   | "incorrect_code"
   | "transfer_required"
+  | "transfer_conflict"
   | "send_limit"
   | "cooldown"
   | "no_contact"

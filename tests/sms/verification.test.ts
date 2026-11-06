@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 import { SMS_CONSENT_VERSION } from "../../lib/sms/consent";
-import { SMS_WELCOME_MESSAGE } from "../../lib/sms/messages";
 import {
   disconnectPhone,
   resendVerification,
@@ -13,6 +12,8 @@ import {
 } from "../../lib/sms/phoneService";
 import { SmsSendError } from "../../lib/sms/types";
 import { createSmsTestContext } from "./helpers";
+
+const isWelcome = (body: string) => body.startsWith("LingoIsland:") && body.includes("Huahua");
 
 type Ctx = Awaited<ReturnType<typeof createSmsTestContext>>;
 
@@ -218,7 +219,7 @@ describe("verifying codes", () => {
     assert.equal(rows[0].display_name, "Cam");
     assert.equal(rows[0].language_level, "A2");
 
-    const welcomes = sentTo(phone).filter((message) => message.body === SMS_WELCOME_MESSAGE);
+    const welcomes = sentTo(phone).filter((message) => isWelcome(message.body));
     assert.equal(welcomes.length, 1);
   });
 
@@ -232,7 +233,7 @@ describe("verifying codes", () => {
 
     assert.equal(again.alreadyVerified, true);
     assert.equal(again.state.contact?.status, "active");
-    assert.equal(sentTo(phone).filter((m) => m.body === SMS_WELCOME_MESSAGE).length, 1);
+    assert.equal(sentTo(phone).filter((m) => isWelcome(m.body)).length, 1);
   });
 
   it("rejects malformed codes without using an attempt", async () => {
@@ -328,7 +329,7 @@ describe("number ownership", () => {
     const result = await verify(userId, ctx.provider.lastCode());
     assert.equal(result.replaced, true);
     assert.ok(result.state.contact?.maskedNumber.endsWith(newPhone.slice(-4)));
-    assert.equal(sentTo(newPhone).filter((m) => m.body === SMS_WELCOME_MESSAGE).length, 1);
+    assert.equal(sentTo(newPhone).filter((m) => isWelcome(m.body)).length, 1);
 
     const { rows } = await ctx.db.query<{ status: string; release_reason: string }>(
       "select status, release_reason from sms_contacts where phone_number = $1",
@@ -364,7 +365,7 @@ describe("welcome idempotency", () => {
     );
     const again = await sendWelcome(ctx.deps, userId, rows[0].id);
     assert.equal(again.status, "skipped");
-    assert.equal(sentTo(phone).filter((m) => m.body === SMS_WELCOME_MESSAGE).length, 1);
+    assert.equal(sentTo(phone).filter((m) => isWelcome(m.body)).length, 1);
   });
 
   it("keeps verification successful when the welcome text fails", async () => {
@@ -376,7 +377,7 @@ describe("welcome idempotency", () => {
     const result = await verify(userId, code);
     assert.equal(result.state.contact?.status, "active");
     assert.equal(result.state.contact?.welcomeSentAt, null);
-    assert.equal(sentTo(phone).filter((m) => m.body === SMS_WELCOME_MESSAGE).length, 0);
+    assert.equal(sentTo(phone).filter((m) => isWelcome(m.body)).length, 0);
   });
 });
 

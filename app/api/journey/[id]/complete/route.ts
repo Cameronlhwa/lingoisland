@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { advanceCurriculumAfterUnitComplete } from '@/lib/hsk/curriculum'
+import { queueJourneyOpener } from '@/lib/sms/huahua/journeyTrigger'
 import {
   markCurriculumIslandWordsLearned,
   type CurriculumSeedWord,
@@ -64,6 +65,8 @@ export async function POST(
     if (upErr) {
       return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
     }
+
+    await queueJourneyOpener({ userId: user.id, journeyIslandId })
 
     // Curriculum unit: finishing an island marks the HSK words it taught as learned.
     if (journeyRow.curriculum_unit_id && ji.node_type !== 'story') {
