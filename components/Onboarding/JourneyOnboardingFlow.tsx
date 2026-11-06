@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -10,7 +11,10 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
+import { useAnalytics } from "@/lib/posthog/client";
+import type { SmsPhoneState } from "@/lib/sms/phoneState";
 import AppLogo from "@/components/app/AppLogo";
+import SmsPhoneSetup from "@/components/sms/SmsPhoneSetup";
 import OnboardingUpgradeClient from "@/app/onboarding/upgrade/OnboardingUpgradeClient";
 import { Loader2 } from "lucide-react";
 import {
@@ -231,7 +235,12 @@ type Step =
   | "free-time"
   | "topic"
   | "generating"
+  | "texting"
   | "upgrade";
+
+// Set once the journey exists, so returning to /app/onboarding (e.g. after
+// switching to Messages to read a code) resumes the optional texting step.
+const TEXTING_STEP_KEY = "lingo_onboarding_texting_step";
 
 function whyKeyFromProfile(
   goal: string | null | undefined,
@@ -292,6 +301,47 @@ export default function JourneyOnboardingFlow({
   const [generatingStep, setGeneratingStep] = useState(0);
   const generateStartedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const { captureEvent } = useAnalytics();
+  const [textingVerified, setTextingVerified] = useState(false);
+  const textingDoneRef = useRef(false);
+  const textingFirstStateRef = useRef(true);
+
+  useEffect(() => {
+    if (publicSurface) return;
+    try {
+      if (sessionStorage.getItem(TEXTING_STEP_KEY) === "1") setStep("texting");
+    } catch {
+      // ignore unavailable storage
+    }
+  }, [publicSurface]);
+
+  const finishOnboarding = useCallback(
+    (reason: "skipped" | "verified" | "unavailable" | "already_connected") => {
+      if (textingDoneRef.current) return;
+      textingDoneRef.current = true;
+      try {
+        sessionStorage.removeItem(TEXTING_STEP_KEY);
+      } catch {
+        // ignore unavailable storage
+      }
+      if (reason === "skipped") captureEvent("sms_setup_skipped", { source: "onboarding" });
+      router.push("/app/journey");
+    },
+    [captureEvent, router],
+  );
+
+  // Skip the optional step entirely when texting isn't offered or the
+  // learner already has an active number.
+  const handleTextingState = useCallback(
+    (state: SmsPhoneState) => {
+      const first = textingFirstStateRef.current;
+      textingFirstStateRef.current = false;
+      if (!first) return;
+      if (!state.available) finishOnboarding("unavailable");
+      else if (state.contact?.status === "active" && !state.pending) finishOnboarding("already_connected");
+    },
+    [finishOnboarding],
+  );
 
   const [profileLoaded, setProfileLoaded] = useState(!smartProfileSkip);
   const [needsLevel, setNeedsLevel] = useState(!smartProfileSkip);
@@ -546,7 +596,12 @@ export default function JourneyOnboardingFlow({
           .from("profiles")
           .update({ onboarding_complete: true })
           .eq("id", user.id);
-        router.push("/app/journey");
+        try {
+          sessionStorage.setItem(TEXTING_STEP_KEY, "1");
+        } catch {
+          // Storage unavailable (private mode); the step just won't resume.
+        }
+        setStep("texting");
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Something went wrong";
         setError(msg);
@@ -668,6 +723,48 @@ export default function JourneyOnboardingFlow({
 
   if (step === "upgrade") {
     return <OnboardingUpgradeClient personalization={upgradePersonalization} />;
+  }
+
+  if (step === "texting") {
+    return shell(
+      <>
+        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: BLUE }}>
+          Your journey is ready ✓
+        </p>
+        {heading(textingVerified ? "You're all set to text 华华!" : "Want to practice Mandarin by text?")}
+        {subcopy(
+          textingVerified
+            ? "Check your messages for a hello from 华华, and text back in Chinese anytime."
+            : "华华 can text with you in Mandarin between lessons. It's optional, and you can change it anytime in Account settings.",
+        )}
+        <div className="mt-6 text-left">
+          <SmsPhoneSetup
+            source="onboarding"
+            onStateChange={handleTextingState}
+            onVerified={() => setTextingVerified(true)}
+          />
+        </div>
+        {textingVerified ? (
+          <button
+            type="button"
+            onClick={() => finishOnboarding("verified")}
+            className={`mt-8 ${BTN_PRIMARY}`}
+            style={primaryBtnStyle}
+          >
+            Go to my journey →
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => finishOnboarding("skipped")}
+            className="mt-6 w-full text-center text-sm font-medium underline underline-offset-2"
+            style={{ color: MUTED }}
+          >
+            Skip for now
+          </button>
+        )}
+      </>,
+    );
   }
 
   if (step === "level") {

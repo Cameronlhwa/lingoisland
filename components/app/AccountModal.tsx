@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { cardBaseClass } from "@/components/app/ui/styles";
+import SmsPhoneSetup from "@/components/sms/SmsPhoneSetup";
 import { useTTS } from "@/contexts/TTSContext";
 import { useAnalytics } from "@/lib/posthog/client";
 import { PROFILE_LEVEL_OPTIONS } from "@/lib/levelBands";
@@ -885,6 +886,19 @@ export default function AccountModal({
                     </optgroup>
                   ))}
                 </select>
+              </div>
+
+              <div className="flex flex-col gap-3 border-t border-gray-100 pt-6">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Texting Practice
+                  </h3>
+                  <p className="text-xs text-gray-600">
+                    Practice Mandarin by text with 华华, your AI texting buddy.
+                    Optional, and you can pause or disconnect anytime.
+                  </p>
+                </div>
+                <SmsPhoneSetup source="account_settings" />
               </div>
 
               <div className="flex flex-col gap-4 border-t border-gray-100 pt-6">
