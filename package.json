@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test:pronunciation": "node --import tsx --test tests/pronunciation/*.test.ts",
     "gen:island-library": "tsx scripts/generateIslandLibrary.ts",
     "gen:cedict": "tsx scripts/buildCompactCedict.mts",
     "backfill:island-covers": "tsx scripts/backfillIslandCovers.ts",

@@ -45,8 +45,8 @@ export default function ToneTestClient() {
   const recorder = useRef<PcmRecorderHandle | null>(null);
   const maxSeconds = mode === "word" ? 20 : 90;
   const normalized = useMemo(
-    () => (result ? normalizeSpeechSuperResult(result) : null),
-    [result],
+    () => (result ? normalizeSpeechSuperResult(result, referenceText) : null),
+    [result, referenceText],
   );
   const overallScore = normalized?.overall ?? null;
   const characters = normalized?.characters ?? [];

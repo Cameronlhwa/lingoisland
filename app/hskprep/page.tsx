@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
+import { nunito } from "../fonts/nunito";
 import Nav from "@/components/landing/Nav";
 import Footer from "@/components/landing/Footer";
 import FadeSectionObserver from "@/components/landing/FadeSectionObserver";
@@ -18,13 +18,6 @@ import {
   HSK_FEATURE_HIGHLIGHTS,
   HSK_FAQ_ITEMS,
 } from "@/lib/hskprep-content";
-
-const nunito = Nunito({
-  weight: ["700", "800"],
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-home-display",
-});
 
 const siteUrl = getSiteUrl();
 const pageUrl = `${siteUrl}/hskprep`;
