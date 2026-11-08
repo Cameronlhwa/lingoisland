@@ -1,4 +1,5 @@
 import type { SpeechSuperResult } from "@/lib/speechsuper/client";
+import { spokenTonesForText, type CharacterTones } from "@/lib/pronunciation/surfacePinyin";
 
 export type PhonemeScore = {
   role: "initial" | "final" | "other";
@@ -145,9 +146,31 @@ function characterScoreValue(
   return tone ?? overall;
 }
 
-function extractCharacters(value: SpeechSuperResult | null): CharacterScore[] {
+/**
+ * Walks the reference text alongside SpeechSuper's words so each scored
+ * character can be matched with its spoken tone from our sandhi rules.
+ */
+function toneCursor(tones: CharacterTones[]) {
+  let position = 0;
+  return (hanzi: string): CharacterTones | null => {
+    for (let index = position; index < tones.length; index += 1) {
+      if (tones[index].hanzi === hanzi) {
+        position = index + 1;
+        return tones[index];
+      }
+    }
+    return null;
+  };
+}
+
+function extractCharacters(value: SpeechSuperResult | null, referenceText?: string): CharacterScore[] {
   const words = speechResult(value)?.words;
   if (!Array.isArray(words)) return [];
+  const hanziOf = (item: unknown) =>
+    item && typeof item === "object" && typeof (item as Record<string, unknown>).word === "string"
+      ? ((item as Record<string, unknown>).word as string)
+      : "";
+  const nextTones = toneCursor(spokenTonesForText(referenceText?.trim() || words.map(hanziOf).join("")));
   return words.flatMap((item) => {
     if (!item || typeof item !== "object") return [];
     const word = item as Record<string, unknown>;
@@ -157,7 +180,16 @@ function extractCharacters(value: SpeechSuperResult | null): CharacterScore[] {
 
     const syllable = firstNormalizedSyllable(word);
     const citationTone = toneNumber(syllable?.tone ?? word.tone);
-    const spokenTone = toneNumber(syllable?.tone_sandhi) ?? citationTone;
+    const reported = toneNumber(syllable?.tone_sandhi);
+    // SpeechSuper often omits tone_sandhi (for 不 before a 4th tone, for example).
+    // Fill it in from the same rules the practice prompt uses, but only when we
+    // agree on the dictionary tone, so a different reading is never overridden.
+    const ours = nextTones(hanzi);
+    const fromRules =
+      ours && ours.spokenTone !== null && ours.citationTone === citationTone && ours.spokenTone !== citationTone
+        ? ours.spokenTone
+        : null;
+    const spokenTone = reported ?? fromRules ?? citationTone;
     const sandhiApplied =
       spokenTone !== null && citationTone !== null && spokenTone !== citationTone;
 
@@ -186,7 +218,7 @@ function extractCharacters(value: SpeechSuperResult | null): CharacterScore[] {
  * internal error codes it carries) never has to be re-parsed twice, and is
  * never forwarded to the client verbatim from the production route.
  */
-export function normalizeSpeechSuperResult(raw: SpeechSuperResult): NormalizedScore {
+export function normalizeSpeechSuperResult(raw: SpeechSuperResult, referenceText?: string): NormalizedScore {
   const metrics = speechResult(raw);
   return {
     overall: asNumber(metrics?.overall),
@@ -194,6 +226,6 @@ export function normalizeSpeechSuperResult(raw: SpeechSuperResult): NormalizedSc
     tone: asNumber(metrics?.tone),
     fluency: asNumber(metrics?.fluency),
     rhythm: asNumber(metrics?.rhythm),
-    characters: extractCharacters(raw),
+    characters: extractCharacters(raw, referenceText),
   };
 }
