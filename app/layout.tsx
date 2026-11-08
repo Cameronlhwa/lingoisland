@@ -1,19 +1,12 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { nunito } from "./fonts/nunito";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import { TTSProvider } from "@/contexts/TTSContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { PostHogPageView } from "@/components/PostHogPageView";
 import JourneyRouteTransition from "@/components/landing/JourneyRouteTransition";
-
-const nunito = Nunito({
-  weight: ["600", "700", "800"],
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-home-display",
-});
 
 const GOOGLE_ADS_ID = "AW-18080739460";
 
