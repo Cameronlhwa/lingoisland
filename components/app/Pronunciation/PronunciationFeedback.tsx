@@ -75,22 +75,18 @@ export default function PronunciationFeedback({
 
       {result.characters.length > 0 && (
         <div className="flex flex-wrap justify-center gap-1.5">
-          {result.characters.map((character, index) => {
-            const weak = character.score !== null && character.score < 80;
-            return (
-              <span
-                key={`${character.hanzi}-${index}`}
-                className="rounded-xl px-2.5 py-1.5 text-base font-bold"
-                style={scoreTierStyle(character.score)}
-                title={character.pinyin ?? undefined}
-              >
-                {character.hanzi}
-                {weak && character.pinyin ? (
-                  <span className="ml-1 text-xs font-medium opacity-80">{character.pinyin}</span>
-                ) : null}
-              </span>
-            );
-          })}
+          {result.characters.map((character, index) => (
+            <span
+              key={`${character.hanzi}-${index}`}
+              className="flex min-w-[2.75rem] flex-col items-center rounded-xl px-2 py-1.5"
+              style={scoreTierStyle(character.score)}
+            >
+              <span className="text-base font-bold leading-tight">{character.hanzi}</span>
+              {character.pinyin ? (
+                <span className="mt-0.5 text-[11px] font-medium leading-none opacity-80">{character.pinyin}</span>
+              ) : null}
+            </span>
+          ))}
         </div>
       )}
 

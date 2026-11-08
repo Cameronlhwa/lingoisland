@@ -125,7 +125,7 @@ export async function POST(
       audio: new Blob([bytes], { type: "audio/wav" }),
     });
 
-    const normalized = normalizeSpeechSuperResult(raw);
+    const normalized = normalizeSpeechSuperResult(raw, item.hanzi);
     const overall = normalized.overall;
     const likelySilent = overall === null || overall < SILENT_SCORE_THRESHOLD;
 

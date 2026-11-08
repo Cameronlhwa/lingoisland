@@ -123,7 +123,7 @@ export async function POST(request: Request) {
       audio: new Blob([await audio.arrayBuffer()], { type: "audio/wav" }),
     });
 
-    const normalized = normalizeSpeechSuperResult(raw);
+    const normalized = normalizeSpeechSuperResult(raw, targetText.trim());
     const weakSyllables = weakSyllablesFromCharacters(normalized.characters);
 
     const { count: attemptCount } = await supabase

@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "test:sms": "node --import tsx --test tests/sms/*.test.ts",
+    "test:pronunciation": "node --import tsx --test tests/pronunciation/*.test.ts",
     "gen:island-library": "tsx scripts/generateIslandLibrary.ts",
     "gen:cedict": "tsx scripts/buildCompactCedict.mts",
     "backfill:island-covers": "tsx scripts/backfillIslandCovers.ts",

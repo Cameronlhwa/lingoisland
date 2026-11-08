@@ -87,6 +87,32 @@ export function surfacePinyinForText(
   return out.replace(/[a-zA-Zà-üÀ-Ü]/, (ch) => ch.toUpperCase());
 }
 
+export type CharacterTones = { hanzi: string; citationTone: number | null; spokenTone: number | null };
+
+/**
+ * Per-character dictionary and spoken tones, using the same rules as
+ * surfacePinyinForText (不/一 sandhi, then third-tone sandhi). Neutral tones
+ * and punctuation are null and break third-tone runs.
+ */
+export function spokenTonesForText(hanzi: string): CharacterTones[] {
+  const text = hanzi.trim();
+  if (!text) return [];
+  // "spaced" keeps one array entry per character, so entries line up with the text.
+  const options = { toneType: "num", type: "array", nonZh: "spaced" } as const;
+  const citation = pinyin(text, { ...options, toneSandhi: false });
+  const withYiBu = pinyin(text, { ...options, toneSandhi: true });
+  if (!Array.isArray(citation) || !Array.isArray(withYiBu) || citation.length !== withYiBu.length) return [];
+
+  const toneOf = (token: unknown) => {
+    const syllable = typeof token === "string" ? parseNumberedSyllable(token) : null;
+    return syllable && syllable.tone >= 1 && syllable.tone <= 4 ? syllable.tone : null;
+  };
+  const chars = Array.from(text);
+  if (chars.length !== citation.length) return [];
+  const spoken = applyThirdToneSandhi(withYiBu.map(toneOf));
+  return chars.map((char, index) => ({ hanzi: char, citationTone: toneOf(citation[index]), spokenTone: spoken[index] }));
+}
+
 export function withSurfaceDrillPinyin<
   T extends {
     wordHanzi: string;
