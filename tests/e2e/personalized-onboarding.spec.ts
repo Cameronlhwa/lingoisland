@@ -113,6 +113,8 @@ async function profile(
 async function calibrate(page: Page) {
   const questionCounter = (position: number) =>
     page.getByTestId("onboarding-step").getByText(`Question ${position} of 5`);
+  await heading(page, /like you learn with LingoIsland/);
+  await page.getByTestId("social-proof-continue").click();
   await heading(page, "Let’s personalize your starting point");
   await page.getByTestId("calibration-start").click();
   await expect(page.getByTestId("calibration-feedback")).toHaveCount(0);
@@ -225,12 +227,45 @@ for (const viewport of VIEWPORTS) {
     test("4. returning learner resumes where they left off", async ({ page }) => {
       await setup(page);
       await profile(page, { goal: "heritage", interests: ["family_conversations"], level: "few_words" });
-      await heading(page, "Let’s personalize your starting point");
+      await heading(page, "Heritage learners like you learn with LingoIsland");
       await page.reload();
-      await heading(page, "Let’s personalize your starting point");
+      await heading(page, "Heritage learners like you learn with LingoIsland");
       await page.getByRole("button", { name: "Back" }).click();
       await heading(page, "How does your Mandarin feel right now?");
       await expect(page.getByTestId("level-few_words")).toHaveAttribute("aria-pressed", "true");
+    });
+
+    test("reviews before the quiz show the site rating and match the learner", async ({ page }, testInfo) => {
+      await setup(page);
+      await profile(page, { goal: "work", interests: ["finance"], level: "few_words" });
+      await heading(page, "Professionals like you learn with LingoIsland");
+      await expect(page.getByTestId("site-rating")).toContainText("Rated 4.7 out of 5");
+      await expect(page.getByText("Based on reviews from LingoIsland learners on our website.", { exact: true })).toBeVisible();
+      await expect(page.getByText(/App Store|Google Play/)).toHaveCount(0);
+      const reviews = page.getByTestId("social-proof-review");
+      await expect(reviews).toHaveCount(3);
+      await expect(reviews.first()).toContainText("Finance professional");
+      await expect(reviews.first().getByTestId("social-proof-reason")).toHaveText("Also learning for work");
+      await expect(page.getByText("Traveler", { exact: true })).toHaveCount(0);
+      await page.screenshot({ path: testInfo.outputPath(`reviews-${viewport.name}.png`), fullPage: true });
+      const axe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
+      expect(axe.violations.map((violation) => violation.id)).toEqual([]);
+
+      await page.getByTestId("social-proof-continue").click();
+      await heading(page, "Let’s personalize your starting point");
+      await page.getByRole("button", { name: "Back" }).click();
+      await heading(page, "Professionals like you learn with LingoIsland");
+      await page.getByRole("button", { name: "Back" }).click();
+      await heading(page, "How does your Mandarin feel right now?");
+    });
+
+    test("a traveler sees the traveler review first", async ({ page }) => {
+      await setup(page);
+      await profile(page, { goal: "travel", interests: ["restaurants"], level: "new" });
+      await heading(page, "Travelers like you learn with LingoIsland");
+      const first = page.getByTestId("social-proof-review").first();
+      await expect(first).toContainText("Traveler");
+      await expect(first.getByTestId("social-proof-reason")).toHaveText("Also learning for travel");
     });
 
     test("calibration advances automatically and lets learners revise answers", async ({ page }) => {

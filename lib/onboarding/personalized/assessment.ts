@@ -88,15 +88,18 @@ function shuffle<T>(items: readonly T[], random: () => number): T[] {
 
 type Slot = { role: AssessmentRole; level: InternalLevel; topic: AssessmentTopic | null; maxDifficulty?: number };
 
-/** Targets per position relative to the claimed level. */
+/**
+ * Targets per position relative to the claimed level. Nothing is above the
+ * claim: the hardest question sits at it, so a perfect score confirms the
+ * claim and never raises it.
+ */
 export function assessmentSlots(claimed: InternalLevel, topic: TopicFamily): Slot[] {
   const L = claimed;
   return [
     { role: "warmup", level: clampLevel(L - 2), topic: null, maxDifficulty: 2 },
-    { role: "representative", level: L, topic: null },
+    { role: "representative", level: clampLevel(L - 1), topic: null },
     { role: "interest", level: clampLevel(L - 1), topic },
-    // Absolute beginners get the gentlest HSK 1 items as their stretch question.
-    { role: "diagnostic", level: clampLevel(L + 1), topic: null, maxDifficulty: L === 0 ? 1 : undefined },
+    { role: "diagnostic", level: L, topic: null },
     { role: "confidence", level: clampLevel(L - 1), topic: null, maxDifficulty: 2 },
   ];
 }

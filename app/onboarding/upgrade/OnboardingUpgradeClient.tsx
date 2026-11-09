@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import OnboardingPaywall, { type PaywallActivation } from "@/components/Onboarding/OnboardingPaywall";
+import { MUTED, Shell } from "@/components/Onboarding/personalized/ui";
 import OnboardingCheckoutAuth, {
   CheckoutHandoff,
 } from "@/components/Onboarding/OnboardingCheckoutAuth";
@@ -194,12 +195,11 @@ export default function OnboardingUpgradeClient({
 
   if ((!ready || !snapshot || subscriptionLoading) && !holdCheckout) {
     return (
-      <div
-        className="flex min-h-screen items-center justify-center text-[#5A7A90]"
-        style={{ background: "rgba(214, 238, 248, 0.92)" }}
-      >
-        Loading your journey…
-      </div>
+      <Shell>
+        <p className="py-10 text-center text-[15px]" style={{ color: MUTED }} role="status">
+          {personalization ? "Loading your plan…" : "Loading your journey…"}
+        </p>
+      </Shell>
     );
   }
 

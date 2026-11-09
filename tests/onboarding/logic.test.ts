@@ -10,7 +10,7 @@ import {
   selectAssessment,
   type AssessmentItem,
 } from "../../lib/onboarding/personalized/assessment";
-import { BUILD_MIN_MS, BUILD_MIN_MS_REDUCED, BUILD_STAGES, buildingState } from "../../lib/onboarding/personalized/building";
+import { BUILD_MIN_MS, BUILD_MIN_MS_REDUCED, BUILD_STAGES, LAST_STAGE_EXTRA_MS, buildingState } from "../../lib/onboarding/personalized/building";
 import {
   emptyAnswers,
   canVisit,
@@ -44,6 +44,8 @@ import {
 import { presentQuestion } from "../../lib/onboarding/personalized/presentation";
 import { isPronunciationWord, needsToneSupport, pronunciationWords, toneSupportFrom } from "../../lib/onboarding/personalized/pronunciation";
 import { getQuestion, QUESTION_BANK } from "../../lib/onboarding/personalized/questionBank";
+import { matchReviews, SITE_RATING, socialProofTitle } from "../../lib/onboarding/personalized/socialProof";
+import { LEARNER_TESTIMONIALS } from "../../lib/landing-content";
 import { MESSAGING_CONSENT_VERSION, SMS_CONSENT_VERSION, messagingDisclosure, resolveConsent } from "../../lib/sms/consent";
 
 const NOW = new Date("2026-11-07T12:00:00Z");
@@ -106,6 +108,47 @@ describe("level mapping", () => {
   });
 });
 
+describe("reviews before calibration", () => {
+  const learner = (goal: OnboardingAnswers["goal"]["primary"], interests: string[], selfReport: OnboardingAnswers["level"]["selfReport"]) => ({
+    ...emptyAnswers(),
+    goal: { primary: goal, secondary: null, otherText: null },
+    interests: { keys: interests, custom: null },
+    level: { selfReport },
+  });
+
+  it("puts the closest review first and explains why it was picked", () => {
+    const work = matchReviews(learner("work", ["finance"], "few_words"));
+    assert.deepEqual(work.map((review) => review.testimonial.role), ["Finance professional", "Business and heritage learner", "Medical professional"]);
+    assert.equal(work[0].reason, "Also learning for work");
+
+    const travel = matchReviews(learner("travel", ["restaurants"], "new"));
+    assert.equal(travel[0].testimonial.role, "Traveler");
+    assert.equal(travel[0].reason, "Also learning for travel");
+
+    const heritage = matchReviews(learner("heritage", ["family_conversations"], "simple_sentences"));
+    assert.equal(heritage[0].testimonial.role, "Business and heritage learner");
+  });
+
+  it("falls back to a shared interest, and to no reason when nothing matches", () => {
+    const medicine = matchReviews(learner("everyday", ["medicine"], "new"));
+    assert.equal(medicine[0].testimonial.role, "Medical professional");
+    assert.equal(medicine[0].reason, "Also interested in medicine");
+    const other = matchReviews(learner("other", [], "new"));
+    assert.equal(other.length, 3);
+    assert.ok(other.every((review) => review.reason === null));
+  });
+
+  it("only shows real website reviews and the 4.7 rating", () => {
+    assert.equal(SITE_RATING, 4.7);
+    const quotes = new Set(LEARNER_TESTIMONIALS.map((testimonial) => testimonial.quote));
+    for (const goal of ["work", "school", "heritage", "travel", "everyday", "other"] as const) {
+      for (const review of matchReviews(learner(goal, [], "basic_conversations"))) assert.ok(quotes.has(review.testimonial.quote));
+    }
+    assert.equal(socialProofTitle("work"), "Professionals like you learn with LingoIsland");
+    assert.equal(socialProofTitle("school"), "Learners like you learn with LingoIsland");
+  });
+});
+
 describe("question selection", () => {
   it("selects exactly five unique questions in the required order", () => {
     for (let claimed = 0; claimed <= 6; claimed += 1) {
@@ -117,14 +160,21 @@ describe("question selection", () => {
     }
   });
 
-  it("targets two below, at, one below, one above, and one below the claimed level", () => {
+  it("targets two below, one below, one below, at, and one below the claimed level", () => {
     const slots = assessmentSlots(3, "work");
-    assert.deepEqual(slots.map((slot) => slot.level), [1, 3, 2, 4, 2]);
+    assert.deepEqual(slots.map((slot) => slot.level), [1, 2, 2, 3, 2]);
+  });
+
+  it("never asks a question above the claimed level", () => {
+    for (let claimed = 0; claimed <= 6; claimed += 1) {
+      const items = selectAssessment({ claimedLevel: claimed as 0, topic: "work", seed: `cap-${claimed}` });
+      assert.ok(items.every((item) => getQuestion(item.questionId)!.level <= claimed), `claimed ${claimed}`);
+    }
   });
 
   it("clamps targets at the lowest and highest levels", () => {
-    assert.deepEqual(assessmentSlots(0, "work").map((slot) => slot.level), [0, 0, 0, 1, 0]);
-    assert.deepEqual(assessmentSlots(6, "work").map((slot) => slot.level), [4, 6, 5, 6, 5]);
+    assert.deepEqual(assessmentSlots(0, "work").map((slot) => slot.level), [0, 0, 0, 0, 0]);
+    assert.deepEqual(assessmentSlots(6, "work").map((slot) => slot.level), [4, 5, 5, 6, 5]);
     const top = selectAssessment({ claimedLevel: 6, topic: "work", seed: "top" });
     assert.ok(top.every((item) => getQuestion(item.questionId)!.level >= 4));
   });
@@ -160,10 +210,10 @@ describe("question selection", () => {
 describe("placement", () => {
   const items = selectAssessment({ claimedLevel: 3, topic: "work", seed: "place" });
 
-  it("raises one level only when everything is right including the stretch question", () => {
+  it("confirms the claim on a perfect score instead of raising it", () => {
     const placement = scoreAssessment({ claimedLevel: 3, items, answers: answerAll(items, () => true) });
-    assert.equal(placement.rule, "raise_one");
-    assert.equal(placement.provisionalLevel, 4);
+    assert.equal(placement.rule, "confirm");
+    assert.equal(placement.provisionalLevel, 3);
     assert.equal(placement.weightedScore, 1);
   });
 
@@ -364,9 +414,11 @@ describe("pronunciation", () => {
 
 describe("plan building timing", () => {
   it("checks one stage at a time and finishes after the designed duration", () => {
-    const perStage = BUILD_MIN_MS / BUILD_STAGES.length;
+    const perStage = (BUILD_MIN_MS - LAST_STAGE_EXTRA_MS) / BUILD_STAGES.length;
     assert.equal(buildingState(0, true).completedStages, 0);
     assert.equal(buildingState(perStage + 1, true).completedStages, 1);
+    assert.equal(buildingState(perStage * 2 + 1, true).completedStages, 2);
+    assert.equal(buildingState(BUILD_MIN_MS - 1, true).completedStages, 2);
     assert.equal(buildingState(BUILD_MIN_MS - 1, true).done, false);
     assert.deepEqual(buildingState(BUILD_MIN_MS, true), { completedStages: 3, done: true, waitingOnServer: false });
   });

@@ -59,6 +59,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
   const [step, setStep] = useState<StepId>("goal");
   const [account, setAccount] = useState<Account>({ kind: "guest", firstName: null });
   const [announcement, setAnnouncement] = useState("");
+  const [calibrationWide, setCalibrationWide] = useState(false);
 
   const stateRef = useRef<OnboardingState | null>(null);
   const stepRef = useRef<StepId>("goal");
@@ -324,7 +325,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
     announce,
   };
 
-  const wide = step === "plan" || step === "commitment";
+  const wide = step === "plan" || step === "commitment" || (step === "calibration" && calibrationWide);
 
   return (
     <Shell wide={wide}>
@@ -333,7 +334,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
         {step === "goal" ? <GoalStep {...props} /> : null}
         {step === "interests" ? <InterestsStep {...props} /> : null}
         {step === "level" ? <LevelStep {...props} /> : null}
-        {step === "calibration" ? <CalibrationStep {...props} /> : null}
+        {step === "calibration" ? <CalibrationStep {...props} onWideChange={setCalibrationWide} /> : null}
         {step === "pronunciation" ? <PronunciationStep {...props} ensureSession={ensureSession} /> : null}
         {step === "availability" ? <AvailabilityStep {...props} /> : null}
         {step === "building" ? <BuildingStep {...props} serverWork={buildPlan} /> : null}

@@ -252,28 +252,49 @@ export const LANDING_COMPARE = {
   ],
 };
 
-export type LearnerTestimonial = { quote: string; role: string };
+export type LearnerTestimonial = {
+  quote: string;
+  role: string;
+  /**
+   * What this learner had in common with others, so onboarding can show the
+   * closest reviews first. Keys match onboarding goal and interest keys;
+   * levels use the onboarding 0 (pre-HSK) to 6 scale.
+   */
+  match?: { goals?: string[]; interests?: string[]; levels?: number[] };
+};
 
 export const LEARNER_TESTIMONIALS: LearnerTestimonial[] = [
   {
     quote:
       "I spoke some Mandarin at home growing up, but I still struggled with clients from China. LingoIsland helped me focus on the business vocabulary I actually needed, and I now feel much more confident building connections.",
     role: "Business and heritage learner",
+    match: {
+      goals: ["work", "heritage"],
+      interests: ["clients", "networking", "meetings", "family_conversations"],
+      levels: [1, 2, 3, 4],
+    },
   },
   {
     quote:
       "I have little time to study, so focusing on common business and banking vocabulary made a huge difference. My conversations with Chinese clients now feel more natural and productive.",
     role: "Finance professional",
+    match: { goals: ["work"], interests: ["finance", "clients", "meetings", "sales"] },
   },
   {
     quote:
       "As a doctor, I do not need every Mandarin word. I need the right medical terms for my patients. LingoIsland gave me a focused plan built around the vocabulary I use at work.",
     role: "Medical professional",
+    match: { goals: ["work", "school"], interests: ["medicine", "science"] },
   },
   {
     quote:
       "LingoIsland helped me prepare for China with vocabulary for airports, subways, restaurants, and attractions. Speaking with locals made the entire trip more rewarding.",
     role: "Traveler",
+    match: {
+      goals: ["travel"],
+      interests: ["restaurants", "transportation", "sightseeing", "meeting_locals", "hotels", "shopping"],
+      levels: [0, 1, 2],
+    },
   },
 ];
 

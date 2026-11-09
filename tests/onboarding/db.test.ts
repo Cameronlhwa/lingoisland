@@ -88,7 +88,7 @@ describe("onboarding progress persistence", () => {
     assert.equal(row.primary_goal, "work");
     assert.equal(row.secondary_goal, "travel");
     assert.equal(row.self_reported_level, 3);
-    assert.equal(row.provisional_level, 4);
+    assert.equal(row.provisional_level, 3);
     assert.equal(row.minutes_per_day, 15);
     assert.equal(row.days_per_week, 3);
     assert.equal(row.custom_interest, "Board games");
@@ -217,7 +217,7 @@ describe("authorization", () => {
       );
     });
     const { rows } = await ctx.db.query<{ provisional_level: number }>("select provisional_level from onboarding_progress where user_id = $1", [owner]);
-    assert.equal(rows[0].provisional_level, 4);
+    assert.equal(rows[0].provisional_level, 3);
   });
 
   it("returns unauthorized without a signed-in user and denies the anon role", async () => {

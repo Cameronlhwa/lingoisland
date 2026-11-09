@@ -12,6 +12,7 @@ import {
 import { claimedLevel, topicFamily } from "@/lib/onboarding/personalized/flow";
 import { WRITING_SYSTEMS, type WritingSystem } from "@/lib/onboarding/personalized/huahua";
 import { presentQuestion } from "@/lib/onboarding/personalized/presentation";
+import { SocialProofIntro } from "./SocialProofIntro";
 import type { StepProps } from "./stepTypes";
 import { CARD_BORDER, GREEN, MUTED, NAVY, PrimaryButton, SKY_PALE, StepFrame } from "./ui";
 
@@ -64,12 +65,28 @@ function WritingToggle({ value, onChange }: { value: WritingSystem; onChange: (v
   );
 }
 
-export function CalibrationStep({ state, update, next, back, progress, track, announce }: StepProps) {
+export function CalibrationStep({
+  state,
+  update,
+  next,
+  back,
+  progress,
+  track,
+  announce,
+  onWideChange,
+}: StepProps & { onWideChange?: (wide: boolean) => void }) {
   const calibration = state.answers.calibration;
   const started = calibration.items.length === ASSESSMENT_LENGTH;
   const answeredCount = calibration.answers.length;
   const [currentIndex, setCurrentIndex] = useState(() => Math.min(answeredCount, ASSESSMENT_LENGTH - 1));
+  const [showReviews, setShowReviews] = useState(!started);
   const questionHeadingRef = useRef<HTMLHeadingElement>(null);
+  const reviewsVisible = showReviews && !started;
+
+  useEffect(() => {
+    onWideChange?.(reviewsVisible);
+  }, [onWideChange, reviewsVisible]);
+  useEffect(() => () => onWideChange?.(false), [onWideChange]);
 
   const item = started ? calibration.items[currentIndex] : null;
   const question = useMemo(
@@ -125,13 +142,20 @@ export function CalibrationStep({ state, update, next, back, progress, track, an
     back?.();
   };
 
+  if (reviewsVisible) {
+    return (
+      <SocialProofIntro answers={state.answers} progress={progress} onBack={back} onContinue={() => setShowReviews(false)} />
+    );
+  }
+
   if (!started) {
     return (
       <StepFrame
+        key="calibration-intro"
         title="Let’s personalize your starting point"
         subtitle="Answer five quick questions so we can match your learning plan to you."
         progress={progress}
-        onBack={back}
+        onBack={() => setShowReviews(true)}
       >
         <WritingToggle
           value={calibration.writingSystem}
