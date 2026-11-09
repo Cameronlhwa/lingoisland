@@ -302,7 +302,12 @@ describe("STOP, START, and HELP", () => {
     const learner = await activeLearner();
     const help = await deliverWebhook(ctx, inbound(learner.phone, "HELP"));
     assert.equal(help.outcome, "help_sent");
-    assert.deepEqual(conversationTo(learner.phone).map((m) => m.body), [SMS_HELP_MESSAGE]);
+    assert.deepEqual(
+      ctx.provider.sent.filter((m) => m.to === learner.phone && m.body.startsWith("LingoIsland Mandarin practice")).map((m) => m.body),
+      [SMS_HELP_MESSAGE],
+    );
+    assert.doesNotMatch(SMS_HELP_MESSAGE, /\bAI\b|artificial intelligence/i);
+    assert.match(SMS_HELP_MESSAGE, /ourlingoisland@gmail\.com/);
 
     const stranger = nextPhone();
     const unknown = await deliverWebhook(ctx, inbound(stranger, "help"));

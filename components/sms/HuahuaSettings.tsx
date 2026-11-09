@@ -436,7 +436,7 @@ export default function HuahuaSettings() {
 
       <Section
         title="Your number"
-        description="华华 is an AI practice partner. Pause, change, or disconnect your number anytime."
+        description="Practice Mandarin with 华华. Pause, change, or disconnect your number anytime."
       >
         <SmsPhoneSetup source="account_settings" onStateChange={handlePhoneState} onVerified={() => void load()} />
       </Section>

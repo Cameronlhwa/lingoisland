@@ -1,4 +1,4 @@
-export type CorrectionMode = "gentle" | "coach" | "hint_first" | "conversation_only";
+export type CorrectionMode = "gentle" | "balanced" | "coach" | "hint_first" | "conversation_only" | "auto";
 
 export const CORRECTION_MODES: readonly {
   key: CorrectionMode;
@@ -12,6 +12,13 @@ export const CORRECTION_MODES: readonly {
     description: "Huahua naturally repeats the correct version without stopping the chat.",
     prompt:
       "Corrections (gentle): if the learner makes a meaningful mistake, naturally reuse the correct form in your reply (a recast). Fix at most one thing and don't lecture.",
+  },
+  {
+    key: "balanced",
+    label: "Balanced",
+    description: "Natural recasts for small slips, a short note for mistakes that matter.",
+    prompt:
+      "Corrections (balanced): recast small slips naturally in your reply. For a mistake that changes the meaning, add one short, friendly note with the corrected phrase. Never more than one note per message.",
   },
   {
     key: "coach",
@@ -33,6 +40,13 @@ export const CORRECTION_MODES: readonly {
     description: "No corrections, just keep the conversation going.",
     prompt:
       "Corrections (off): do not correct mistakes. Keep the conversation flowing; only ask for clarification if the meaning is unclear.",
+  },
+  {
+    key: "auto",
+    label: "Adjust automatically",
+    description: "Huahua adapts how much it corrects to how you are doing.",
+    prompt:
+      "Corrections (adaptive): for beginners or when the learner seems unsure, recast gently without stopping the chat. When the learner is writing confidently or repeats the same mistake, add one short, clear correction.",
   },
 ];
 

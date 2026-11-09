@@ -142,11 +142,12 @@ async function handleInbound(deps: SmsProcessorDeps, event: SmsWebhookEvent) {
     p_occurred_at: event.occurredAt,
     p_keyword: keyword,
     p_raw_payload: event.raw ?? null,
+    p_channel: message.channel ?? "sms",
   });
 
   switch (result.outcome) {
     case "unknown_number":
-      if (keyword === "help") return sendHelpToUnknown(deps, from, to);
+      if (keyword === "help") return sendHelpToUnknown(deps, from, to, message.channel ?? "sms");
       return "ignored_unknown_number";
     case "help":
       return sendFixed(deps, result, from, "help", SMS_HELP_MESSAGE, false);
@@ -165,13 +166,18 @@ async function handleInbound(deps: SmsProcessorDeps, event: SmsWebhookEvent) {
   }
 }
 
-async function sendHelpToUnknown(deps: SmsProcessorDeps, from: string, to: string) {
+async function sendHelpToUnknown(deps: SmsProcessorDeps, from: string, to: string, channel: "sms" | "whatsapp") {
   const limit = await consumeSmsRateLimits(deps.rpc, deps.config.secret, [
     { name: "help:phone:day", identifier: from, ...SMS_LIMITS.helpPerPhoneDay },
   ]);
   if (!limit.allowed) return "help_rate_limited";
   try {
-    await deps.provider.send({ to: from, from: to, body: SMS_HELP_MESSAGE });
+    // The sender just messaged us, so a WhatsApp reply is inside the 24-hour window.
+    await deps.provider.send(
+      channel === "whatsapp"
+        ? { to: from, body: SMS_HELP_MESSAGE, channel: "whatsapp" }
+        : { to: from, from: to, body: SMS_HELP_MESSAGE },
+    );
     return "help_sent_unknown";
   } catch (error) {
     logSmsError("help reply failed", error, { phone: maskPhoneNumber(from) });

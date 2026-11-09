@@ -39,7 +39,7 @@ export function crisisMessage(countryCode: string | null | undefined) {
     countryCode === "US" || countryCode === "CA"
       ? "Please call or text 988 (Suicide & Crisis Lifeline) to talk to someone now, or call 911 if you're in danger."
       : "Please contact your local emergency number or a crisis line to talk to someone now.";
-  return `LingoIsland: I'm an AI practice partner and can't help in a crisis, but you deserve support right now. ${local}`;
+  return `LingoIsland: I can't provide crisis support, but you deserve support right now. ${local}`;
 }
 
 export const CREDENTIALS_MESSAGE =

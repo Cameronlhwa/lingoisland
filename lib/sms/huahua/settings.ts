@@ -4,6 +4,7 @@ import { clock, loadHuahuaContext } from "./context";
 import { isCorrectionMode } from "./correction";
 import { isPersonaKey } from "./personas";
 import { summarizeUsage } from "./plans";
+import { isScaffoldingPreference } from "./scaffolding";
 import type {
   HuahuaOverview,
   HuahuaPreferencesPatch,
@@ -66,6 +67,11 @@ export async function getHuahuaOverview(deps: SmsPhoneDeps, userId: string): Pro
       autoAdjust: prefs.auto_adjust,
       deliveryWindows: prefs.delivery_windows,
       timezone: ctx.timezone,
+      consentScheduled: prefs.consent_scheduled,
+      consentJourney: prefs.consent_journey,
+      writingSystem: prefs.writing_system,
+      quietStart: prefs.quiet_start,
+      quietEnd: prefs.quiet_end,
     },
     usage: summarizeUsage(ctx.plan, usageRow?.used_segments ?? 0, ctx.period.end),
     threads: raw?.threads ?? [],
@@ -99,8 +105,29 @@ export function validatePreferencesPatch(input: Record<string, unknown>, allowed
     patch.correction_mode = body.correctionMode;
   }
   if ("scaffolding" in body) {
-    if (body.scaffolding !== "auto" && body.scaffolding !== "more" && body.scaffolding !== "less") bad("Invalid support level.");
+    if (!isScaffoldingPreference(body.scaffolding)) bad("Invalid support level.");
     patch.scaffolding = body.scaffolding;
+  }
+  for (const [key, column] of [
+    ["consentScheduled", "consent_scheduled"],
+    ["consentJourney", "consent_journey"],
+  ] as const) {
+    if (key in body) {
+      if (typeof body[key] !== "boolean") bad("Invalid setting.");
+      patch[column] = body[key];
+    }
+  }
+  if ("writingSystem" in body) {
+    if (body.writingSystem !== "simplified" && body.writingSystem !== "traditional") bad("Pick Simplified or Traditional.");
+    patch.writing_system = body.writingSystem;
+  }
+  if ("quietStart" in body || "quietEnd" in body) {
+    const valid = (value: unknown) => Number.isInteger(value) && (value as number) >= 0 && (value as number) < 1440;
+    if (!valid(body.quietStart) || !valid(body.quietEnd) || body.quietStart === body.quietEnd) {
+      bad("Pick a quiet hours start and end time.");
+    }
+    patch.quiet_start = body.quietStart;
+    patch.quiet_end = body.quietEnd;
   }
   if ("daysPerWeek" in body) {
     const days = Number(body.daysPerWeek);

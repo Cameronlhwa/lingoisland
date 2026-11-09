@@ -8,6 +8,7 @@ import {
   PAUSED_BY_TEXT_MESSAGE,
   RESUME_OFFER,
   RESUMED_BY_TEXT_MESSAGE,
+  SUPPORT_MESSAGE,
   usageExhaustedMessage,
   usageWarningMessage,
 } from "../messages";
@@ -26,6 +27,8 @@ import { classifyInboundSafety, CREDENTIALS_MESSAGE, crisisMessage, ensureAiDisc
 import { effectiveLevel, supportFor, type LanguageMode } from "./scaffolding";
 import { effectiveOpenersPerWeek, reducedFrequency } from "./schedule";
 import { fallbackReply } from "./fallbacks";
+import { writingSystemConverter } from "./openers";
+import { advancePreview, isPreviewOpen, loadPreviewProfile, previewPreferencePatch, readPreviewState, type PreviewState } from "./preview";
 import { produceTurn } from "./turn";
 import { buildWordSignals, type ComfortSignal, type Vocab } from "./wordComfort";
 
@@ -39,6 +42,7 @@ type ThreadSession = {
   language?: LanguageMode;
   difficulty?: number;
   correction?: "conversation_only" | "coach";
+  preview?: PreviewState;
 };
 
 type Thread = {
@@ -65,7 +69,13 @@ type LastOutbound = {
   metadata: { pinyin?: string | null; translation?: string | null; target_vocab?: Vocab[] } | null;
 } | null;
 
-export type InboundContact = { id: string; user_id: string; status: string; display_name: string | null };
+export type InboundContact = {
+  id: string;
+  user_id: string;
+  status: string;
+  display_name: string | null;
+  paused_reason?: string | null;
+};
 
 type Turnout = {
   deps: HuahuaDeps;
@@ -177,6 +187,8 @@ async function handleAccountCommand(t: Turnout, parsed: ParsedCommand): Promise<
     }
     case "keep":
       return outcomeOf("kept_texts", await sendExempt(t, "notice", KEEP_TEXTS_MESSAGE));
+    case "support":
+      return outcomeOf("support_sent", await sendExempt(t, "notice", SUPPORT_MESSAGE));
     case "less": {
       const next = reducedFrequency(effectiveOpenersPerWeek(t.ctx.preferences));
       await rpc("sms_reduce_frequency", { p_user_id: t.ctx.userId, p_openers_per_week: next, p_now: t.now.toISOString() });
@@ -336,6 +348,7 @@ async function modelTurn(
         includeTranslation: support.includeTranslation,
         maxSegments,
         beginner: level <= 2,
+        convert: writingSystemConverter(ctx.preferences),
       });
       let body = composed.body;
       if (t.contact.status === "paused") {
@@ -393,6 +406,39 @@ async function modelTurn(
 }
 
 /**
+ * One step of the free onboarding preview. Unmetered and outside the AI rate
+ * limits; the preview itself caps the exchange at a few messages. State only
+ * advances once the reply is actually sent, so a retry repeats the same step.
+ */
+async function handlePreviewTurn(t: Turnout, state: PreviewState) {
+  const profile = await loadPreviewProfile(t.deps, t.ctx.userId);
+  const step = advancePreview(state, t.body, profile, t.now);
+  if (!step.reply) return "preview_ignored";
+  if (step.state.stage === "done") {
+    const patch = previewPreferencePatch(step.state);
+    if (Object.keys(patch).length > 0) {
+      await t.deps.rpc("sms_update_preferences", { p_user_id: t.ctx.userId, p_patch: patch });
+    }
+  }
+  const sent = await sendTrackedSms(t.deps, {
+    contactId: t.contact.id,
+    idempotencyKey: idempotencyKey(t),
+    kind: "preview",
+    requireActive: true,
+    from: t.from,
+    body: step.reply.body,
+    quickReplies: step.reply.quickReplies,
+  });
+  if (sent.status === "sent") {
+    await updateThread(t, sent.messageId, { kind: "preview", stage: step.state.stage }, {
+      session: { preview: step.state },
+      close: step.finished,
+    });
+  }
+  return outcomeOf(`preview_${step.outcome}`, sent);
+}
+
+/**
  * Replies to a learner's text. Order: safety, commands, rate limits, then the
  * model. Runs from the webhook background task and the retry cron, so every
  * step is idempotent (one reply per inbound message).
@@ -432,10 +478,22 @@ export async function respondToInbound(
     controlPending: Boolean(attach.control_sent_at),
   });
 
+  // Paused after unanswered invitations: any reply other than PAUSE turns practice back on.
+  if (input.contact.status === "paused" && input.contact.paused_reason === "no_response" && parsed?.command.type !== "pause") {
+    await deps.rpc("sms_set_paused", { p_user_id: ctx.userId, p_paused: false });
+    t.contact = { ...t.contact, status: "active", paused_reason: null };
+    if (parsed?.command.type === "resume") {
+      return outcomeOf("resumed_by_text", await sendExempt(t, "notice", RESUMED_BY_TEXT_MESSAGE));
+    }
+  }
+
   if (parsed) {
     const handled = await handleAccountCommand(t, parsed);
     if (handled) return handled;
   }
+
+  const preview = attach.thread.origin === "preview" ? readPreviewState(session.preview) : null;
+  if (isPreviewOpen(preview)) return handlePreviewTurn(t, preview);
 
   const limit = await consumeSmsRateLimits(deps.rpc, deps.config.secret, [
     { name: "ai:contact:hour", identifier: input.contact.id, ...SMS_LIMITS.aiRepliesPerContactHour },

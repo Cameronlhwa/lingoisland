@@ -12,6 +12,12 @@ type Props = {
   onStateChange?: (state: SmsPhoneState) => void;
   /** Called after a number is verified and active. */
   onVerified?: (state: SmsPhoneState) => void;
+  /** "deferred": skip the generic welcome text (onboarding sends its own preview). */
+  welcome?: "default" | "deferred";
+  /** Replaces the built-in number form, e.g. when onboarding collects the number itself. */
+  onChangeNumber?: () => void;
+  /** Hide pause, change, and disconnect controls (they live in account settings). */
+  hideStatusActions?: boolean;
 };
 
 type View = "form" | "code" | "transfer" | "status";
@@ -83,7 +89,14 @@ function useNow(active: boolean) {
   return now;
 }
 
-export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Props) {
+export default function SmsPhoneSetup({
+  source,
+  onStateChange,
+  onVerified,
+  welcome = "default",
+  onChangeNumber,
+  hideStatusActions = false,
+}: Props) {
   const { captureEvent } = useAnalytics();
   const [state, setState] = useState<SmsPhoneState | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -229,7 +242,12 @@ export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Pro
   const verifyCode = (confirmTransfer = false) =>
     run(
       confirmTransfer ? "transfer" : "verify",
-      () => smsRequest("/api/sms/phone/verify", "POST", { code, confirmTransfer }),
+      () =>
+        smsRequest("/api/sms/phone/verify", "POST", {
+          code,
+          confirmTransfer,
+          ...(welcome === "deferred" ? { welcome } : {}),
+        }),
       {
         onSuccess: (next) => {
           captureEvent("sms_code_verified", {
@@ -283,6 +301,10 @@ export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Pro
 
   const startReplace = () => {
     captureEvent("sms_replace_started", { source, status: contact?.status ?? null });
+    if (onChangeNumber) {
+      onChangeNumber();
+      return;
+    }
     setPhone("");
     setConsent(false);
     setError(null);
@@ -376,7 +398,8 @@ export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Pro
           </p>
         ) : null}
         <label htmlFor="sms-code" className="text-sm text-gray-900">
-          Enter the 6-digit code we texted to <span className="font-medium">{pending.maskedNumber}</span>.
+          {pending.channel === "whatsapp" ? "Enter the 6-digit code we sent on WhatsApp to " : "Enter the 6-digit code we texted to "}
+          <span className="font-medium">{pending.maskedNumber}</span>.
         </label>
         {pending.expired ? (
           <p className="text-xs text-amber-700">This code expired. Send a new one.</p>
@@ -444,7 +467,11 @@ export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Pro
           </span>
         </div>
 
-        {contact.status === "active" ? (
+        {contact.status === "active" && contact.channel === "whatsapp" ? (
+          <p className="text-xs text-gray-600">
+            Message 华华 on WhatsApp anytime to practice. Reply STOP to unsubscribe.
+          </p>
+        ) : contact.status === "active" ? (
           <p className="text-xs text-gray-600">
             Text 华华 at <span className="font-medium text-gray-900">{lingoNumber}</span> anytime to practice. Reply STOP to unsubscribe.
           </p>
@@ -470,7 +497,7 @@ export default function SmsPhoneSetup({ source, onStateChange, onVerified }: Pro
 
         {messages}
 
-        {confirmDisconnect ? (
+        {hideStatusActions ? null : confirmDisconnect ? (
           <div className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
             <p className="text-xs text-gray-700">
               Disconnect {contact.maskedNumber}? 华华 will stop texting it and won&apos;t reply to it.

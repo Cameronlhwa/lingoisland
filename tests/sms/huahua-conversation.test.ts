@@ -42,10 +42,10 @@ function lastInput() {
 }
 
 describe("welcome and onboarding", () => {
-  it("welcomes a subscriber with AI disclosure and a numbered persona menu", async () => {
+  it("welcomes a subscriber without repeating the AI disclosure and includes a numbered persona menu", async () => {
     const learner = await connectLearner(ctx, { cefr: "B1" });
     const [welcome] = sentTo(ctx, learner.phone);
-    assert.ok(welcome.body.includes("AI"));
+    assert.doesNotMatch(welcome.body, /\bAI\b|artificial intelligence/i);
     assert.match(welcome.body, /1 Friend, 2 Coach, 3 Accountability, 4 Work/);
     assert.match(welcome.body, /STOP/);
     const thread = await openThread(learner.contactId);
@@ -229,6 +229,7 @@ describe("safety", () => {
     assert.equal(result.outcome, "crisis_support_sent");
     assert.equal(ctx.replies.length, calls);
     assert.match(sentTo(ctx, learner.phone).at(-1)!.body, /988/);
+    assert.doesNotMatch(sentTo(ctx, learner.phone).at(-1)!.body, /\bAI\b|artificial intelligence/i);
   });
 
   it("does not treat vocabulary questions as a crisis", async () => {

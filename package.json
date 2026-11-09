@@ -11,7 +11,9 @@
     "start": "next start",
     "lint": "next lint",
     "test:sms": "node --import tsx --test tests/sms/*.test.ts",
+    "test:onboarding": "node --import tsx --test tests/onboarding/*.test.ts",
     "test:pronunciation": "node --import tsx --test tests/pronunciation/*.test.ts",
+    "sms:cron:local": "node scripts/runSmsCronLoop.mjs",
     "gen:island-library": "tsx scripts/generateIslandLibrary.ts",
     "gen:cedict": "tsx scripts/buildCompactCedict.mts",
     "backfill:island-covers": "tsx scripts/backfillIslandCovers.ts",
@@ -62,6 +64,7 @@
     "swr": "^2.5.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@electric-sql/pglite": "^0.5.15",
     "@playwright/test": "^1.64.1",
     "@types/node": "^20.0.0",

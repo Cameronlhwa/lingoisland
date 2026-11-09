@@ -1,8 +1,13 @@
 // Fixed (non-AI) SMS copy. Keep verification codes GSM-7 so they fit in a
 // single segment.
 
+export const SUPPORT_EMAIL = "ourlingoisland@gmail.com";
+
 export const SMS_HELP_MESSAGE =
-  "LingoIsland Mandarin texting practice. Msg frequency varies. Msg & data rates may apply. Manage it in Account settings at lingoisland.com. Reply STOP to unsubscribe.";
+  `LingoIsland Mandarin practice with Huahua. Msg frequency varies. Msg & data rates may apply. Help: ${SUPPORT_EMAIL}. Reply PAUSE to take a break, STOP to unsubscribe.`;
+
+export const SUPPORT_MESSAGE =
+  `For help from the LingoIsland team, please email ${SUPPORT_EMAIL}. They'll get back to you there.`;
 
 export const SMS_RESUBSCRIBED_MESSAGE =
   "LingoIsland: You're resubscribed. 华华 is back! Text me in Chinese anytime. Reply STOP to unsubscribe.";
@@ -35,6 +40,10 @@ export function usageExhaustedMessage(plan: "free" | "subscriber", resetsAt: str
 
 export const CONTROL_MESSAGE =
   "华华 here 👋 Still want practice texts? Reply YES to keep them, LESS for fewer, or PAUSE to take a break. Totally fine either way!";
+
+/** Sent once after three unanswered invitations; practice messages pause right after. */
+export const FINAL_PAUSE_MESSAGE =
+  "Hi, it\u2019s Huahua from LingoIsland. I haven\u2019t heard from you, so I\u2019ll pause your Mandarin practice messages after this. If you want to continue, just reply anytime.";
 
 export const PAUSED_BY_TEXT_MESSAGE =
   "Got it, I'll stop sending practice texts. You can still text me anytime, and reply RESUME to turn them back on.";

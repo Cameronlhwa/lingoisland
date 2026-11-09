@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { before, beforeEach, describe, it } from "node:test";
-import { CONTROL_MESSAGE, RESUME_OFFER } from "../../lib/sms/messages";
+import { FINAL_PAUSE_MESSAGE, RESUME_OFFER } from "../../lib/sms/messages";
 import {
   enqueueJourneyOpener,
   evaluateGates,
@@ -251,7 +251,7 @@ describe("Journey completion trigger", () => {
 });
 
 describe("non-response rules", () => {
-  it("reduces frequency after 2 unanswered, sends one control message after 3, then auto-pauses", async () => {
+  it("reduces frequency after 2 unanswered, sends one final message after 3 and pauses, and a reply reactivates", async () => {
     const learner = await learnerWithJourney();
     const send = async (week: number) => {
       const now = wednesday(week, at(19));
@@ -279,21 +279,43 @@ describe("non-response rules", () => {
     assert.equal((await prefs()).unanswered_openers, 1);
     assert.equal(await send(2), "opener_sent");
     assert.equal((await prefs()).openers_per_week, 2, "3/week → 2/week");
-    assert.equal(await send(3), "control_sent");
-    assert.equal(sentTo(ctx, learner.phone).at(-1)!.body, CONTROL_MESSAGE);
-    assert.equal(await send(4), "auto_paused");
-
-    const { rows } = await ctx.db.query<{ status: string; paused_reason: string }>(
-      "select status, paused_reason from sms_contacts where id = $1",
-      [learner.contactId],
+    assert.equal(await send(3), "final_message_sent");
+    assert.equal(sentTo(ctx, learner.phone).at(-1)!.body, FINAL_PAUSE_MESSAGE);
+    assert.equal(
+      FINAL_PAUSE_MESSAGE,
+      "Hi, it\u2019s Huahua from LingoIsland. I haven\u2019t heard from you, so I\u2019ll pause your Mandarin practice messages after this. If you want to continue, just reply anytime.",
     );
-    assert.deepEqual(rows[0], { status: "paused", paused_reason: "no_response" });
-    assert.equal(await send(5), "contact_paused");
+
+    const status = async () =>
+      (
+        await ctx.db.query<{ status: string; paused_reason: string | null }>(
+          "select status, paused_reason from sms_contacts where id = $1",
+          [learner.contactId],
+        )
+      ).rows[0];
+    assert.deepEqual(await status(), { status: "paused", paused_reason: "no_response" });
+    assert.equal(await send(4), "contact_paused");
+    const sentBefore = sentTo(ctx, learner.phone).length;
 
     const reply = await deliverWebhook(ctx, inboundText(learner.phone, "我回来了"));
     assert.equal(reply.outcome, "replied");
+    assert.equal((await status()).status, "active");
+    assert.equal(sentTo(ctx, learner.phone).length, sentBefore + 1);
+    assert.ok(!sentTo(ctx, learner.phone).at(-1)!.body.includes(RESUME_OFFER));
+    const after = await prefs();
+    assert.equal(after.unanswered_openers, 0);
+    assert.equal(after.control_sent_at, null);
+    assert.ok(!/miss|sad|disappoint/i.test(FINAL_PAUSE_MESSAGE), "no guilt");
+  });
+
+  it("still asks paused-by-choice learners before resuming", async () => {
+    const learner = await learnerWithJourney();
+    await ctx.rpc("sms_set_paused", { p_user_id: learner.userId, p_paused: true });
+    const reply = await deliverWebhook(ctx, inboundText(learner.phone, "你好"));
+    assert.equal(reply.outcome, "replied");
     assert.ok(sentTo(ctx, learner.phone).at(-1)!.body.includes(RESUME_OFFER));
-    assert.ok(!/miss|sad|disappoint/i.test(CONTROL_MESSAGE), "no guilt");
+    const { rows } = await ctx.db.query<{ status: string }>("select status from sms_contacts where id = $1", [learner.contactId]);
+    assert.equal(rows[0].status, "paused");
   });
 
   it("only sends one opener per thread and resets the count when the learner replies", async () => {
@@ -319,7 +341,7 @@ describe("non-response rules", () => {
     assert.equal(rows[0].outcome, "answered");
   });
 
-  it("keeps texts coming when the learner answers the control message", async () => {
+  it("keeps texts coming when the learner answers the final message", async () => {
     const learner = await learnerWithJourney();
     await ctx.db.query(
       "update sms_preferences set unanswered_openers = 3 where user_id = $1",
@@ -335,7 +357,7 @@ describe("non-response rules", () => {
       p_journey_island_id: null,
     });
     const result = await runDueJobs(ctx.deps);
-    assert.equal(result.outcomes.control_sent, 1);
+    assert.equal(result.outcomes.final_message_sent, 1);
     const keep = await deliverWebhook(ctx, inboundText(learner.phone, "keep"));
     assert.equal(keep.outcome, "kept_texts");
     const { rows } = await ctx.db.query<{ unanswered_openers: number; control_sent_at: Date | null }>(
@@ -343,6 +365,8 @@ describe("non-response rules", () => {
       [learner.userId],
     );
     assert.deepEqual(rows[0], { unanswered_openers: 0, control_sent_at: null });
+    const contact = await ctx.db.query<{ status: string }>("select status from sms_contacts where id = $1", [learner.contactId]);
+    assert.equal(contact.rows[0].status, "active");
   });
 });
 

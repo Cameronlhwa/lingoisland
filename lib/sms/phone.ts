@@ -55,12 +55,13 @@ export type PhoneParseResult =
 
 /**
  * Parses learner input (national or international format) into E.164 and
- * checks it against the countries we can text.
+ * checks it against the countries we can message ("any" for WhatsApp
+ * without a country allow-list).
  */
 export function parsePhoneForSms(
   input: string,
   country: string | undefined,
-  supportedCountries: readonly string[],
+  supportedCountries: readonly string[] | "any",
 ): PhoneParseResult {
   const trimmed = (input || "").trim();
   if (!trimmed || trimmed.length > 32) return { ok: false, reason: "invalid" };
@@ -75,7 +76,7 @@ export function parsePhoneForSms(
     return { ok: false, reason: "invalid" };
   }
 
-  if (!supportedCountries.includes(parsed.country)) {
+  if (supportedCountries !== "any" && !supportedCountries.includes(parsed.country)) {
     return { ok: false, reason: "unsupported_country" };
   }
 

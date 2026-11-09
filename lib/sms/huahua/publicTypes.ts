@@ -15,7 +15,7 @@ export type HuahuaWord = {
 
 export type HuahuaThreadSummary = {
   id: string;
-  origin: "welcome" | "opener" | "control" | "inbound";
+  origin: "welcome" | "opener" | "control" | "inbound" | "preview";
   started_at: string;
   status: "open" | "closed";
   messages: Array<{ direction: "inbound" | "outbound"; body: string; at: string }>;
@@ -32,6 +32,11 @@ export type HuahuaPreferencesPublic = {
   autoAdjust: boolean;
   deliveryWindows: Array<{ start: number; end: number }>;
   timezone: string;
+  consentScheduled: boolean;
+  consentJourney: boolean;
+  writingSystem: "simplified" | "traditional";
+  quietStart: number;
+  quietEnd: number;
 };
 
 export type HuahuaUsagePublic = {
@@ -75,6 +80,11 @@ export type HuahuaPreferencesPatch = Partial<{
   autoAdjust: boolean;
   deliveryWindows: Array<{ start: number; end: number }>;
   timezone: string;
+  consentScheduled: boolean;
+  consentJourney: boolean;
+  writingSystem: "simplified" | "traditional";
+  quietStart: number;
+  quietEnd: number;
 }>;
 
 /** GET /api/sms/huahua when texting isn't set up on this deployment. */

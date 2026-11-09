@@ -15,7 +15,7 @@ function learnerName(metadata: Record<string, unknown> | undefined) {
   return null;
 }
 
-/** POST /api/sms/phone/verify { code, confirmTransfer? } */
+/** POST /api/sms/phone/verify { code, confirmTransfer?, welcome?: "deferred" } */
 export async function POST(request: Request) {
   const { user, response } = await requireSmsUser(request, { mutation: true });
   if (!user) return response;
@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       confirmTransfer: body.confirmTransfer,
       displayName: learnerName(user.user_metadata),
       languageLevel: typeof profile?.cefr_level === "string" ? profile.cefr_level : null,
+      welcome: body.welcome === "deferred" ? "deferred" : "default",
     });
 
     if (!result.alreadyVerified) {
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
           replaced: result.replaced,
           transferred: result.transferred,
           country: result.state.contact?.countryCode ?? null,
+          channel: result.state.contact?.channel ?? "sms",
         },
       }).catch(() => {});
     }

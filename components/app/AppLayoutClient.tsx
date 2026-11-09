@@ -27,6 +27,7 @@ import {
   markJourneyOnboardingComplete,
 } from "@/lib/onboarding/journeyOnboardingGate";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
+import { isActivationPending } from "@/lib/onboarding/personalized/storage";
 import {
   buildUpgradePageUrl,
   clearUpgradePending,
@@ -108,6 +109,8 @@ function OnboardingRedirect() {
       // Let CheckoutSuccessHandler settle the successful purchase on /app
       // before evaluating whether this account needs onboarding.
       if (params.get("checkout") === "success") return;
+      // A purchased or saved personalized plan is being applied; Pro accounts must not be bounced away.
+      if (pathname.startsWith("/app/onboarding") && params.get("activate") === "1") return;
     }
 
     const onOnboardingPage = pathname.startsWith("/app/onboarding");
@@ -224,6 +227,12 @@ function CheckoutSuccessHandler() {
     if (isHskHome) {
       window.history.replaceState({}, "", "/hsk/app");
       router.refresh();
+      return;
+    }
+
+    // Personalized onboarding: apply the committed plan (level, goal, first Journey).
+    if (isActivationPending()) {
+      router.replace("/app/onboarding?activate=1&purchased=1");
       return;
     }
 

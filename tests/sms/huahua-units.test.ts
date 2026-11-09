@@ -6,7 +6,13 @@ import {
   interestSmsCountries,
   SMS_COUNTRIES,
 } from "../../lib/sms/countries";
-import { buildSystemPrompt, validateTurn, TurnValidationError, type HuahuaTurnInput } from "../../lib/sms/huahua/ai";
+import {
+  buildSystemPrompt,
+  createDeepSeekTurnGenerator,
+  validateTurn,
+  TurnValidationError,
+  type HuahuaTurnInput,
+} from "../../lib/sms/huahua/ai";
 import { parseCommand } from "../../lib/sms/huahua/commands";
 import { composeSms, pinyinFor } from "../../lib/sms/huahua/compose";
 import { CORRECTION_MODES, getCorrectionMode } from "../../lib/sms/huahua/correction";
@@ -163,8 +169,8 @@ describe("personas and correction modes", () => {
     assert.equal(getPersona("nonsense").key, "friendly_friend");
   });
 
-  it("defines four correction modes with gentle as the default", () => {
-    assert.deepEqual(CORRECTION_MODES.map((mode) => mode.key), ["gentle", "coach", "hint_first", "conversation_only"]);
+  it("defines the correction modes with gentle as the default", () => {
+    assert.deepEqual(CORRECTION_MODES.map((mode) => mode.key), ["gentle", "balanced", "coach", "hint_first", "conversation_only", "auto"]);
     assert.equal(getCorrectionMode(null).key, "gentle");
   });
 
@@ -230,6 +236,28 @@ describe("safety", () => {
 });
 
 describe("structured output", () => {
+  it("uses the current DeepSeek SMS model by default", async () => {
+    let requestedModel = "";
+    let requestedThinking: unknown;
+    const generate = createDeepSeekTurnGenerator({
+      apiKey: "test-key",
+      fetchImpl: async (_url, init) => {
+        const body = JSON.parse(String(init?.body));
+        requestedModel = body.model;
+        requestedThinking = body.thinking;
+        return new Response(
+          JSON.stringify({ choices: [{ message: { content: JSON.stringify({ message: "你好" }) } }] }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      },
+    });
+
+    await generate(turnInput());
+
+    assert.equal(requestedModel, "deepseek-flash");
+    assert.deepEqual(requestedThinking, { type: "disabled" });
+  });
+
   it("validates the model's JSON at runtime", () => {
     assert.throws(() => validateTurn("text"), TurnValidationError);
     assert.throws(() => validateTurn({ message: "你好" }), TurnValidationError, "safety is required");

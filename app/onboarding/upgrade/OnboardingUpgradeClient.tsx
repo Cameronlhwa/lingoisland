@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import OnboardingPaywall from "@/components/Onboarding/OnboardingPaywall";
+import OnboardingPaywall, { type PaywallActivation } from "@/components/Onboarding/OnboardingPaywall";
 import OnboardingCheckoutAuth, {
   CheckoutHandoff,
 } from "@/components/Onboarding/OnboardingCheckoutAuth";
-import { useOnboardingCheckout } from "@/hooks/useOnboardingCheckout";
+import { useOnboardingCheckout, type OnboardingCheckoutOptions } from "@/hooks/useOnboardingCheckout";
 import {
   type CheckoutPlan,
   type OnboardingUpgradeSnapshot,
@@ -38,9 +38,19 @@ type JourneyPersonalization = Omit<
 
 export default function OnboardingUpgradeClient({
   personalization,
+  activation,
+  checkoutOptions,
+  authReturnPath,
+  onProceed,
 }: {
   /** Answers collected before checkout; no journey needs to be generated. */
   personalization?: JourneyPersonalization;
+  /** Personalized onboarding: present checkout as activating the saved plan. */
+  activation?: PaywallActivation;
+  checkoutOptions?: OnboardingCheckoutOptions;
+  /** Where Google sign-in returns to before resuming checkout. */
+  authReturnPath?: string;
+  onProceed?: () => void;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -121,7 +131,9 @@ export default function OnboardingUpgradeClient({
       topic: "Your journey",
       plan: urlPlan ?? "monthly",
     },
+    checkoutOptions,
   );
+  const proRedirectPath = checkoutOptions?.proRedirectPath ?? "/app";
 
   useEffect(() => {
     if (checkout.redirecting) return;
@@ -130,8 +142,8 @@ export default function OnboardingUpgradeClient({
     clearUpgradePending();
     // Existing Pro accounts often switch away from the guest user that owned
     // this island — send them to the app home, not a possibly inaccessible island.
-    router.replace("/app");
-  }, [checkout.redirecting, isPro, subscriptionLoading, router]);
+    router.replace(proRedirectPath);
+  }, [checkout.redirecting, isPro, subscriptionLoading, router, proRedirectPath]);
 
   useEffect(() => {
     if (!ready || !snapshot) return;
@@ -141,12 +153,13 @@ export default function OnboardingUpgradeClient({
   }, [ready, snapshot, searchParams, urlPlan, checkout.setPlan]);
 
   const returnPath = useMemo(() => {
+    if (authReturnPath) return authReturnPath;
     if (personalization) return "/onboarding/upgrade";
     if (!snapshot) return "/onboarding/upgrade";
     return snapshot.islandId
       ? buildUpgradePageUrl(snapshot.islandId)
       : "/onboarding/upgrade";
-  }, [personalization, snapshot]);
+  }, [authReturnPath, personalization, snapshot]);
 
   const runAutoCheckout = useCallback(async () => {
     if (!snapshot || autoCheckoutStarted.current) return;
@@ -156,12 +169,12 @@ export default function OnboardingUpgradeClient({
     const pro = await fetchIsPro();
     if (pro) {
       clearUpgradePending();
-      router.replace("/app");
+      router.replace(proRedirectPath);
       return;
     }
 
     await checkout.proceedToCheckout();
-  }, [checkout, router, snapshot]);
+  }, [checkout, router, snapshot, proRedirectPath]);
 
   useEffect(() => {
     if (!ready || !snapshot || !autoCheckout || subscriptionLoading || isPro) {
@@ -210,10 +223,14 @@ export default function OnboardingUpgradeClient({
         timeLabel={snapshot.timeLabel}
         billingInterval={checkout.plan}
         onBillingIntervalChange={checkout.setPlan}
-        onProceedCheckout={() => void checkout.proceedToCheckout()}
+        onProceedCheckout={() => {
+          onProceed?.();
+          void checkout.proceedToCheckout();
+        }}
         checkoutLoading={checkout.checkoutLoading}
         checkoutError={checkout.error}
         fullPage
+        activation={activation}
       />
       {checkout.authOpen ? (
         <OnboardingCheckoutAuth

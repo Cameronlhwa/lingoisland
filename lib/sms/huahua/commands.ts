@@ -16,7 +16,8 @@ export type HuahuaCommand =
   | { type: "pause" }
   | { type: "resume" }
   | { type: "keep" }
-  | { type: "less" };
+  | { type: "less" }
+  | { type: "support" };
 
 export type ParsedCommand = {
   command: HuahuaCommand;
@@ -53,6 +54,14 @@ const BASE: Record<string, HuahuaCommand> = {
   "pause texts": { type: "pause" },
   resume: { type: "resume" },
   "resume texts": { type: "resume" },
+  support: { type: "support" },
+  human: { type: "support" },
+  "talk to a human": { type: "support" },
+  "real person": { type: "support" },
+  "contact support": { type: "support" },
+  "customer support": { type: "support" },
+  "customer service": { type: "support" },
+  客服: { type: "support" },
 };
 
 const CONTROL_REPLIES: Record<string, HuahuaCommand> = {

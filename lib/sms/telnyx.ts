@@ -9,6 +9,8 @@ import {
 } from "./types";
 
 const TELNYX_API_URL = "https://api.telnyx.com/v2/messages";
+const TELNYX_WHATSAPP_URL = "https://api.telnyx.com/v2/messages/whatsapp";
+const WHATSAPP_BUTTON_TITLE_MAX = 20;
 const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
 const WEBHOOK_TOLERANCE_SECONDS = 5 * 60;
 const SEND_TIMEOUT_MS = 10_000;
@@ -22,11 +24,22 @@ type TelnyxEnvelope = {
     occurred_at?: string;
     payload?: {
       id?: string;
+      type?: string;
       direction?: string;
-      from?: { phone_number?: string };
-      to?: Array<{ phone_number?: string; status?: string }>;
+      from?: { phone_number?: string } | string;
+      to?: Array<{ phone_number?: string; status?: string }> | string;
       text?: string;
       errors?: Array<{ code?: string | number; title?: string }>;
+      body?: {
+        from?: string;
+        type?: string;
+        text?: { body?: string };
+        interactive?: {
+          button_reply?: { id?: string; title?: string };
+          list_reply?: { id?: string; title?: string };
+        };
+        button?: { payload?: string; text?: string };
+      };
     };
   };
 };
@@ -76,24 +89,99 @@ function toDeliveryErrors(
   }));
 }
 
+/** Request body for Telnyx's WhatsApp endpoint (text, reply buttons, or template). */
+export function buildWhatsAppPayload(input: SendSmsInput, from: string) {
+  if (input.template) {
+    const components: Array<Record<string, unknown>> = [];
+    if (input.template.bodyParams?.length) {
+      components.push({
+        type: "body",
+        parameters: input.template.bodyParams.map((text) => ({ type: "text", text })),
+      });
+    }
+    (input.template.quickReplyPayloads ?? []).forEach((payload, index) => {
+      components.push({
+        type: "button",
+        sub_type: "quick_reply",
+        index: String(index),
+        parameters: [{ type: "payload", payload }],
+      });
+    });
+    if (input.template.urlButtonParam) {
+      components.push({
+        type: "button",
+        sub_type: "url",
+        index: "0",
+        parameters: [{ type: "text", text: input.template.urlButtonParam }],
+      });
+    }
+    return {
+      from,
+      to: input.to,
+      whatsapp_message: {
+        type: "template",
+        template: {
+          name: input.template.name,
+          language: { policy: "deterministic", code: input.template.language },
+          components,
+        },
+      },
+    };
+  }
+  if (input.quickReplies?.length) {
+    return {
+      from,
+      to: input.to,
+      whatsapp_message: {
+        type: "interactive",
+        interactive: {
+          type: "button",
+          body: { text: input.body },
+          action: {
+            buttons: input.quickReplies.slice(0, 3).map((reply) => ({
+              type: "reply",
+              reply: { id: reply.id, title: reply.title.slice(0, WHATSAPP_BUTTON_TITLE_MAX) },
+            })),
+          },
+        },
+      },
+    };
+  }
+  return { from, to: input.to, whatsapp_message: { type: "text", text: { body: input.body } } };
+}
+
+function withPlus(value: string | undefined) {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return trimmed.startsWith("+") ? trimmed : `+${trimmed}`;
+}
+
 export class TelnyxSmsProvider implements SmsProvider {
   readonly name = "telnyx";
 
   async send(input: SendSmsInput): Promise<SendSmsResult> {
     const apiKey = process.env.TELNYX_API_KEY?.trim();
-    const from = input.from || process.env.TELNYX_FROM_NUMBER?.trim();
+    const whatsapp = input.channel === "whatsapp";
+    const from = input.from || (whatsapp
+      ? process.env.TELNYX_WHATSAPP_FROM_NUMBER?.trim()
+      : process.env.TELNYX_FROM_NUMBER?.trim());
     if (!apiKey) throw new SmsSendError("TELNYX_API_KEY is not configured", { notSent: true });
-    if (!from) throw new SmsSendError("TELNYX_FROM_NUMBER is not configured", { notSent: true });
+    if (!from) {
+      throw new SmsSendError(
+        whatsapp ? "TELNYX_WHATSAPP_FROM_NUMBER is not configured" : "TELNYX_FROM_NUMBER is not configured",
+        { notSent: true },
+      );
+    }
 
     let response: Response;
     try {
-      response = await fetch(TELNYX_API_URL, {
+      response = await fetch(whatsapp ? TELNYX_WHATSAPP_URL : TELNYX_API_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ from, to: input.to, text: input.body }),
+        body: JSON.stringify(whatsapp ? buildWhatsAppPayload(input, from) : { from, to: input.to, text: input.body }),
         signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
       });
     } catch (error) {
@@ -157,8 +245,22 @@ export class TelnyxSmsProvider implements SmsProvider {
 
     if (!data?.id) throw new Error("Telnyx webhook is missing an event id");
 
-    const from = message?.from?.phone_number;
-    const to = message?.to?.[0]?.phone_number;
+    const channel = message?.type?.toUpperCase() === "WHATSAPP" ? "whatsapp" : "sms";
+    const fromField = message?.from;
+    const toField = message?.to;
+    const from = withPlus(
+      typeof fromField === "string" ? fromField : fromField?.phone_number ?? message?.body?.from,
+    );
+    const toEntry = Array.isArray(toField) ? toField[0] : undefined;
+    const to = withPlus(typeof toField === "string" ? toField : toEntry?.phone_number);
+    const reply = message?.body?.interactive?.button_reply ?? message?.body?.interactive?.list_reply;
+    const body =
+      message?.text ??
+      message?.body?.text?.body ??
+      reply?.id ??
+      message?.body?.button?.payload ??
+      message?.body?.button?.text ??
+      "";
 
     return {
       id: data.id,
@@ -171,9 +273,10 @@ export class TelnyxSmsProvider implements SmsProvider {
               direction: message.direction === "inbound" ? "inbound" : "outbound",
               from,
               to,
-              body: message.text || "",
-              status: message.to?.[0]?.status,
+              body,
+              status: toEntry?.status,
               errors: toDeliveryErrors(message.errors),
+              channel,
             }
           : undefined,
       raw: envelope,

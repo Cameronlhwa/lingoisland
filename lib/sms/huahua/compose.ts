@@ -50,11 +50,14 @@ export function composeSms(input: {
   includeTranslation: boolean;
   maxSegments: number;
   beginner?: boolean;
+  /** Writing-system conversion applied to the Chinese text (pinyin is read from the original). */
+  convert?: (text: string) => string;
 }): ComposedSms {
-  const message = cleanModelText(input.message);
-  const hasChinese = containsChinese(message);
+  const original = cleanModelText(input.message);
+  const hasChinese = containsChinese(original);
   const pinyinLine =
-    input.includePinyin && hasChinese ? cleanModelText(input.pinyin || "") || pinyinFor(message) : "";
+    input.includePinyin && hasChinese ? cleanModelText(input.pinyin || "") || pinyinFor(original) : "";
+  const message = input.convert && hasChinese ? input.convert(original) : original;
   const translation = input.includeTranslation ? cleanModelText(input.translation || "") : "";
   const translationLine = translation ? `(${translation.replace(/^\(|\)$/g, "")})` : "";
 

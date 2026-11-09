@@ -894,7 +894,7 @@ export default function AccountModal({
                     Texting Practice
                   </h3>
                   <p className="text-xs text-gray-600">
-                    Practice Mandarin by text with 华华, your AI texting buddy.
+                    Practice Mandarin by text with 华华, your Mandarin texting buddy.
                     Optional, and you can pause or disconnect anytime.
                   </p>
                 </div>
@@ -1301,7 +1301,7 @@ export default function AccountModal({
                         <div className="flex items-start gap-2">
                           <span className="text-green-600">✓</span>
                           <span className="text-sm text-gray-700">
-                            24/7 AI tutor with corrections
+                            24/7 Mandarin tutor with corrections
                           </span>
                         </div>
                       </div>

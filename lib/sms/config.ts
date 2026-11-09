@@ -3,9 +3,25 @@ import { isE164 } from "./phone";
 
 export type SmsRateLimit = { bucket: string; max: number; windowSeconds: number };
 
+export type WhatsAppConfig = {
+  /** WhatsApp is switched on and has a sender plus the templates it needs. */
+  enabled: boolean;
+  fromNumber: string | null;
+  /** Meta-approved templates (names), required outside the 24-hour window. */
+  templates: {
+    verification: string | null;
+    previewIntro: string | null;
+    practiceInvite: string | null;
+  };
+  templateLanguage: string;
+  /** Empty means every country libphonenumber recognizes. */
+  supportedCountries: string[];
+};
+
 export type SmsConfig = {
   /** All provider credentials and secrets are present. */
   enabled: boolean;
+  whatsapp: WhatsAppConfig;
   /** HMAC secret for verification codes and rate-limit bucket keys. */
   secret: string;
   supportedCountries: string[];
@@ -62,8 +78,29 @@ export function getSmsConfig(env: NodeJS.ProcessEnv = process.env): SmsConfig {
       ? Boolean(env.TELNYX_API_KEY?.trim() && env.TELNYX_PUBLIC_KEY?.trim() && fromNumber)
       : false;
 
+  const enabled = providerConfigured && secret.length >= MIN_SECRET_LENGTH;
+  const whatsappFrom = env.TELNYX_WHATSAPP_FROM_NUMBER?.trim() || null;
+  const verificationTemplate = env.TELNYX_WHATSAPP_VERIFICATION_TEMPLATE?.trim() || null;
+  const whatsapp: WhatsAppConfig = {
+    enabled:
+      enabled &&
+      env.WHATSAPP_ENABLED === "true" &&
+      Boolean(whatsappFrom && isE164(whatsappFrom)) &&
+      Boolean(verificationTemplate),
+    fromNumber: whatsappFrom && isE164(whatsappFrom) ? whatsappFrom : null,
+    templates: {
+      verification: verificationTemplate,
+      previewIntro: env.TELNYX_WHATSAPP_PREVIEW_TEMPLATE?.trim() || null,
+      practiceInvite: env.TELNYX_WHATSAPP_INVITE_TEMPLATE?.trim() || null,
+    },
+    templateLanguage: env.TELNYX_WHATSAPP_TEMPLATE_LANGUAGE?.trim() || "en",
+    supportedCountries: parseList(env.WHATSAPP_SUPPORTED_COUNTRIES).map((code) => code.toUpperCase()),
+  };
+  if (whatsapp.fromNumber) ownNumbers.add(whatsapp.fromNumber);
+
   return {
-    enabled: providerConfigured && secret.length >= MIN_SECRET_LENGTH,
+    enabled,
+    whatsapp,
     secret,
     supportedCountries: enabledSmsCountryCodes(countries),
     ownNumbers,

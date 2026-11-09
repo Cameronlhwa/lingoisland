@@ -1085,3 +1085,10 @@
     min-height: max(min(100vh, 63vw), 62.5vw);
   }
 }
+
+/* Personalized onboarding: the commitment card settles in once when sealed. */
+@keyframes commitment-seal {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.025); }
+  100% { transform: scale(1); }
+}

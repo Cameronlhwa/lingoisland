@@ -13,7 +13,7 @@ import {
   type HuahuaPlan,
   type SubscriptionRow,
 } from "./plans";
-import { hskLevelFrom, type HskLevel, type ScaffoldingPreference } from "./scaffolding";
+import { hskLevelFrom, isScaffoldingPreference, type HskLevel, type ScaffoldingPreference } from "./scaffolding";
 import { defaultTimeZoneForCountry, resolveTimeZone, windowsOrDefault, type DeliveryWindow } from "./schedule";
 
 export type HuahuaDeps = {
@@ -40,6 +40,8 @@ export type RawContact = {
   verified_at: string | null;
   consent_at: string | null;
   paused_reason: string | null;
+  channel?: "sms" | "whatsapp" | null;
+  last_inbound_at?: string | null;
 };
 
 export type HuahuaPreferences = {
@@ -55,6 +57,12 @@ export type HuahuaPreferences = {
   unanswered_openers: number;
   frequency_reduced_at: string | null;
   control_sent_at: string | null;
+  consent_scheduled: boolean;
+  consent_journey: boolean;
+  writing_system: "simplified" | "traditional";
+  /** Minutes after local midnight; proactive texts wait until quiet_end. */
+  quiet_start: number;
+  quiet_end: number;
 };
 
 export const DEFAULT_PREFERENCES: HuahuaPreferences = {
@@ -70,7 +78,17 @@ export const DEFAULT_PREFERENCES: HuahuaPreferences = {
   unanswered_openers: 0,
   frequency_reduced_at: null,
   control_sent_at: null,
+  consent_scheduled: true,
+  consent_journey: true,
+  writing_system: "simplified",
+  quiet_start: 21 * 60,
+  quiet_end: 8 * 60,
 };
+
+function minutesOr(value: unknown, fallback: number) {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 0 && n < 1440 ? n : fallback;
+}
 
 type RawContext = {
   contact: RawContact | null;
@@ -100,10 +118,15 @@ export function normalizePreferences(raw: Partial<HuahuaPreferences> | null): Hu
     ...prefs,
     persona: isPersonaKey(prefs.persona) ? prefs.persona : DEFAULT_PERSONA,
     correction_mode: isCorrectionMode(prefs.correction_mode) ? prefs.correction_mode : DEFAULT_CORRECTION_MODE,
-    scaffolding: prefs.scaffolding === "more" || prefs.scaffolding === "less" ? prefs.scaffolding : "auto",
+    scaffolding: isScaffoldingPreference(prefs.scaffolding) ? prefs.scaffolding : "auto",
     preferred_days: Array.isArray(prefs.preferred_days) ? prefs.preferred_days.map(Number) : [],
     delivery_windows: windowsOrDefault(prefs.delivery_windows),
     unanswered_openers: Number(prefs.unanswered_openers) || 0,
+    consent_scheduled: prefs.consent_scheduled !== false,
+    consent_journey: prefs.consent_journey !== false,
+    writing_system: prefs.writing_system === "traditional" ? "traditional" : "simplified",
+    quiet_start: minutesOr(prefs.quiet_start, DEFAULT_PREFERENCES.quiet_start),
+    quiet_end: minutesOr(prefs.quiet_end, DEFAULT_PREFERENCES.quiet_end),
   };
 }
 

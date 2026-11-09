@@ -8,9 +8,9 @@ import type { HskLevel } from "./scaffolding";
 import { resolveTimeZone, defaultTimeZoneForCountry } from "./schedule";
 
 /**
- * Level-appropriate welcome sent after verification and consent. Discloses
- * that Huahua is an AI. Subscribers can pick a persona by number; free
- * learners get the default persona and a short practice chat.
+ * Level-appropriate welcome sent after verification and consent. Subscribers
+ * can pick a persona by number; free learners get the default persona and a
+ * short practice chat.
  */
 export function buildWelcomeMessage(input: { level: HskLevel; subscribed: boolean }) {
   const menu = input.subscribed
@@ -19,7 +19,7 @@ export function buildWelcomeMessage(input: { level: HskLevel; subscribed: boolea
 
   if (input.level <= 2) {
     return [
-      "LingoIsland: Hi! I'm 华华 (Huahua), your AI Mandarin practice partner.",
+      "LingoIsland: Hi! I'm 华华 (Huahua), your Mandarin practice partner.",
       "你好！(Nǐ hǎo! Hello!)",
       menu,
       "Reply HELP for help, STOP to opt out.",
@@ -27,13 +27,13 @@ export function buildWelcomeMessage(input: { level: HskLevel; subscribed: boolea
   }
   if (input.level <= 4) {
     return [
-      "LingoIsland: Hi! I'm 华华 (Huahua), your AI Mandarin practice partner. 很高兴认识你！",
+      "LingoIsland: Hi! I'm 华华 (Huahua), your Mandarin practice partner. 很高兴认识你！",
       menu,
       "Reply HELP for help, STOP to opt out.",
     ].join("\n");
   }
   return [
-    "LingoIsland: 你好！我是华华，你的AI中文练习伙伴 (Huahua, an AI practice partner). 很高兴认识你！",
+    "LingoIsland: 你好！我是华华，你的中文练习伙伴 (Huahua, your Mandarin practice partner). 很高兴认识你！",
     menu,
     "Reply HELP for help, STOP to opt out.",
   ].join("\n");

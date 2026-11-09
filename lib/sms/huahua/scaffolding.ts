@@ -2,7 +2,12 @@
 // how much pinyin/English support goes with it.
 
 export type HskLevel = 1 | 2 | 3 | 4 | 5 | 6;
-export type ScaffoldingPreference = "auto" | "more" | "less";
+/** more = Chinese, pinyin, and English; on_request = help only when asked; less = mostly Chinese. */
+export type ScaffoldingPreference = "auto" | "more" | "less" | "on_request";
+
+export function isScaffoldingPreference(value: unknown): value is ScaffoldingPreference {
+  return value === "auto" || value === "more" || value === "less" || value === "on_request";
+}
 export type LanguageMode = "balanced" | "english" | "chinese";
 
 export type ScaffoldRule = {
@@ -102,6 +107,10 @@ export function supportFor(level: HskLevel, preference: ScaffoldingPreference, s
   if (preference === "more") {
     includePinyin = level <= 4 || includePinyin;
     includeTranslation = true;
+  } else if (preference === "on_request") {
+    // Help arrives when the learner texts PINYIN or ENGLISH (session flags below).
+    includePinyin = false;
+    includeTranslation = false;
   } else if (preference === "less") {
     includePinyin = false;
     includeTranslation = false;

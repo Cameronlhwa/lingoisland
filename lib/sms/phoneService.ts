@@ -6,7 +6,7 @@ import {
   verificationCodeMatches,
 } from "./codes";
 import { SMS_LIMITS, type SmsConfig } from "./config";
-import { SMS_CONSENT_VERSION, isSmsConsentSource } from "./consent";
+import { SMS_CONSENT_VERSION, isMessagingChannel, isSmsConsentSource, resolveConsent, type MessagingChannel } from "./consent";
 import { describeSmsError, logSmsError } from "./log";
 import { sendHuahuaWelcome } from "./huahua/welcome";
 import { verificationCodeMessage } from "./messages";
@@ -46,6 +46,7 @@ type RawContact = {
   user_id: string;
   phone_number: string;
   status: SmsContactStatus;
+  channel?: MessagingChannel | null;
   verified_at: string | null;
   consent_at: string | null;
   welcome_sent_at: string | null;
@@ -60,6 +61,7 @@ type RawContact = {
 type RawPending = {
   id: string;
   phone_number: string;
+  channel?: MessagingChannel | null;
   expires_at: string;
   attempt_count: number;
   send_count: number;
@@ -72,10 +74,17 @@ type RawState = { contact: RawContact | null; pending: RawPending | null };
 const FAILED_DELIVERY_STATUSES = new Set(["send_failed", "sending_failed", "delivery_failed"]);
 const RECENT_VERIFICATION_MS = 15 * 60 * 1000;
 
-function requireEnabled(config: SmsConfig) {
+function requireEnabled(config: SmsConfig, channel: MessagingChannel = "sms") {
   if (!config.enabled) {
     throw new SmsPhoneError("sms_unavailable", 503, "Texting practice is temporarily unavailable.");
   }
+  if (channel === "whatsapp" && !config.whatsapp.enabled) {
+    throw new SmsPhoneError("whatsapp_unavailable", 503, "WhatsApp practice isn't available yet.");
+  }
+}
+
+function channelOf(value: unknown): MessagingChannel {
+  return value === "whatsapp" ? "whatsapp" : "sms";
 }
 
 function rateLimited(retryAfterSeconds: number) {
@@ -116,9 +125,14 @@ export function toPublicState(config: SmsConfig, raw: RawState, now = Date.now()
       .filter((country): country is { code: string; dialCode: string } => Boolean(country.dialCode)),
     consentVersion: SMS_CONSENT_VERSION,
     lingoNumber: config.fromNumber ? formatPhoneNumber(config.fromNumber) : null,
+    whatsapp: {
+      available: config.enabled && config.whatsapp.enabled,
+      supportedCountries: [...config.whatsapp.supportedCountries],
+    },
     contact: contact
       ? {
           status: contact.status,
+          channel: channelOf(contact.channel),
           maskedNumber: maskPhoneNumber(contact.phone_number),
           countryCode: parsePhoneNumberFromString(contact.phone_number)?.country ?? null,
           verifiedAt: contact.verified_at,
@@ -134,6 +148,7 @@ export function toPublicState(config: SmsConfig, raw: RawState, now = Date.now()
     pending: pending
       ? {
           maskedNumber: maskPhoneNumber(pending.phone_number),
+          channel: channelOf(pending.channel),
           expiresAt: pending.expires_at,
           expired: new Date(pending.expires_at).getTime() <= now,
           attemptsRemaining: Math.max(config.maxVerifyAttempts - pending.attempt_count, 0),
@@ -154,12 +169,26 @@ async function sendVerificationCode(
   verificationId: string,
   phoneNumber: string,
   code: string,
+  channel: MessagingChannel = "sms",
 ) {
   try {
-    const sent = await deps.provider.send({
-      to: phoneNumber,
-      body: verificationCodeMessage(code, deps.config.codeTtlMinutes),
-    });
+    const body = verificationCodeMessage(code, deps.config.codeTtlMinutes);
+    const sent = await deps.provider.send(
+      channel === "whatsapp"
+        ? {
+            to: phoneNumber,
+            body,
+            channel: "whatsapp",
+            // Business-initiated WhatsApp messages must use an approved authentication template.
+            template: {
+              name: deps.config.whatsapp.templates.verification ?? "",
+              language: deps.config.whatsapp.templateLanguage,
+              bodyParams: [code],
+              urlButtonParam: code,
+            },
+          }
+        : { to: phoneNumber, body },
+    );
     await deps.rpc("sms_record_verification_send", {
       p_verification_id: verificationId,
       p_provider_message_id: sent.id,
@@ -177,9 +206,17 @@ async function sendVerificationCode(
     throw new SmsPhoneError(
       "send_failed",
       502,
-      "We couldn't text that number. Check it and try again.",
+      channel === "whatsapp"
+        ? "We couldn't send a WhatsApp code to that number. Check it and try again."
+        : "We couldn't text that number. Check it and try again.",
     );
   }
+}
+
+/** Countries a number may be verified in for this channel. */
+export function countriesForChannel(config: SmsConfig, channel: MessagingChannel): readonly string[] | "any" {
+  if (channel === "sms") return config.supportedCountries;
+  return config.whatsapp.supportedCountries.length > 0 ? config.whatsapp.supportedCountries : "any";
 }
 
 export async function startVerification(
@@ -189,15 +226,23 @@ export async function startVerification(
     ip: string | null;
     country: unknown;
     phoneNumber: unknown;
-    consent: unknown;
+    consent?: unknown;
     consentVersion: unknown;
+    consentScheduled?: unknown;
+    consentJourney?: unknown;
+    channel?: unknown;
     source: unknown;
   },
 ) {
-  requireEnabled(deps.config);
+  if (input.channel !== undefined && !isMessagingChannel(input.channel)) {
+    throw new SmsPhoneError("bad_request", 400, "Invalid request.");
+  }
+  const channel = channelOf(input.channel);
+  requireEnabled(deps.config, channel);
 
-  if (input.consent !== true || input.consentVersion !== SMS_CONSENT_VERSION) {
-    throw new SmsPhoneError("consent_required", 400, "Please agree to receive texts first.");
+  const consent = resolveConsent(input);
+  if (!consent.ok) {
+    throw new SmsPhoneError("consent_required", 400, "Please choose which practice messages you want first.");
   }
   if (!isSmsConsentSource(input.source)) {
     throw new SmsPhoneError("bad_request", 400, "Invalid request.");
@@ -206,13 +251,16 @@ export async function startVerification(
   const parsed = parsePhoneForSms(
     typeof input.phoneNumber === "string" ? input.phoneNumber : "",
     typeof input.country === "string" ? input.country : undefined,
-    deps.config.supportedCountries,
+    countriesForChannel(deps.config, channel),
   );
   if (!parsed.ok) {
     const messages = {
       invalid: "That doesn't look like a valid phone number.",
-      unsupported_country: "Texting practice isn't available in that country yet.",
-      not_mobile: "Please use a mobile number that can receive texts.",
+      unsupported_country:
+        channel === "sms"
+          ? "Texting practice isn't available in that country yet. WhatsApp may be available instead."
+          : "WhatsApp practice isn't available in that country yet.",
+      not_mobile: "Please use a mobile number that can receive messages.",
     } as const;
     const code = parsed.reason === "invalid" ? "invalid_phone" : parsed.reason;
     throw new SmsPhoneError(code, 400, messages[parsed.reason]);
@@ -236,11 +284,20 @@ export async function startVerification(
     }),
     p_expires_at: new Date(Date.now() + deps.config.codeTtlMinutes * 60_000).toISOString(),
     p_consent_source: input.source,
-    p_consent_version: SMS_CONSENT_VERSION,
+    p_consent_version: consent.version,
+    p_channel: channel,
+    p_consent_scheduled: consent.scheduled,
+    p_consent_journey: consent.journey,
   });
 
   if (started.status === "started" && started.id) {
-    await sendVerificationCode(deps, started.id, parsed.e164, code);
+    await sendVerificationCode(deps, started.id, parsed.e164, code, channel);
+  } else if (started.status === "already_active") {
+    // Same verified number and channel: just record the newly chosen consents.
+    await deps.rpc("sms_update_preferences", {
+      p_user_id: input.userId,
+      p_patch: { consent_scheduled: consent.scheduled, consent_journey: consent.journey },
+    });
   }
 
   return {
@@ -254,10 +311,9 @@ export async function resendVerification(
   deps: SmsPhoneDeps,
   input: { userId: string; ip: string | null },
 ) {
-  requireEnabled(deps.config);
-
   const raw = await loadRawState(deps, input.userId);
   const pending = raw.pending;
+  requireEnabled(deps.config, channelOf(pending?.channel));
   if (!pending) {
     throw new SmsPhoneError("no_pending", 404, "Start again by entering your phone number.");
   }
@@ -312,7 +368,7 @@ export async function resendVerification(
     throw new SmsPhoneError("no_pending", 404, "Start again by entering your phone number.");
   }
 
-  await sendVerificationCode(deps, resent.id, pending.phone_number, code);
+  await sendVerificationCode(deps, resent.id, pending.phone_number, code, channelOf(pending.channel));
   return { state: await getPhoneState(deps, input.userId) };
 }
 
@@ -324,6 +380,8 @@ export async function verifyPhoneCode(
     confirmTransfer: unknown;
     displayName?: string | null;
     languageLevel?: string | null;
+    /** "deferred": onboarding sends its own preview later instead of the generic welcome. */
+    welcome?: "default" | "deferred";
   },
 ) {
   requireEnabled(deps.config);
@@ -428,7 +486,7 @@ export async function verifyPhoneCode(
     throw new SmsPhoneError("no_pending", 404, "Start again by entering your phone number.");
   }
 
-  if (completed.needs_welcome && completed.contact?.id) {
+  if (completed.needs_welcome && completed.contact?.id && input.welcome !== "deferred") {
     await sendWelcome(deps, input.userId, completed.contact.id);
   }
 

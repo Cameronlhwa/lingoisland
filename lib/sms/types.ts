@@ -1,9 +1,32 @@
 export type SmsDirection = "inbound" | "outbound";
 
+export type MessageChannel = "sms" | "whatsapp";
+
+export type QuickReply = { id: string; title: string };
+
+/** A Meta-approved WhatsApp template. Only sent when `channel` is "whatsapp". */
+export type WhatsAppTemplate = {
+  name: string;
+  language: string;
+  bodyParams?: string[];
+  /** Quick-reply button payloads, in button order. */
+  quickReplyPayloads?: string[];
+  /** Copy-code / URL button parameter (authentication templates). */
+  urlButtonParam?: string;
+  /** What the approved template says, stored as the message body for history. */
+  displayBody?: string;
+};
+
 export type SendSmsInput = {
   to: string;
   body: string;
   from?: string;
+  /** Defaults to "sms". */
+  channel?: MessageChannel;
+  /** WhatsApp only: send this template instead of free-form text. */
+  template?: WhatsAppTemplate;
+  /** WhatsApp only: up to 3 reply buttons on a free-form message. */
+  quickReplies?: QuickReply[];
 };
 
 export type SendSmsResult = {
@@ -25,6 +48,7 @@ export type SmsWebhookMessage = {
   body: string;
   status?: string;
   errors?: SmsDeliveryError[];
+  channel?: MessageChannel;
 };
 
 export type SmsWebhookEvent = {

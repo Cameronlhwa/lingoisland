@@ -16,8 +16,15 @@ export type SmsPhoneState = {
   consentVersion: string;
   /** LingoIsland's public sending number, for "text START to …". */
   lingoNumber: string | null;
+  /** WhatsApp practice is configured on this deployment. */
+  whatsapp: {
+    available: boolean;
+    /** Empty list means any country. */
+    supportedCountries: string[];
+  };
   contact: {
     status: SmsContactStatus;
+    channel: "sms" | "whatsapp";
     maskedNumber: string;
     countryCode: string | null;
     verifiedAt: string | null;
@@ -32,6 +39,7 @@ export type SmsPhoneState = {
   } | null;
   pending: {
     maskedNumber: string;
+    channel: "sms" | "whatsapp";
     expiresAt: string;
     expired: boolean;
     attemptsRemaining: number;
@@ -46,6 +54,7 @@ export type SmsPhoneErrorCode =
   | "forbidden"
   | "bad_request"
   | "sms_unavailable"
+  | "whatsapp_unavailable"
   | "consent_required"
   | "invalid_phone"
   | "unsupported_country"

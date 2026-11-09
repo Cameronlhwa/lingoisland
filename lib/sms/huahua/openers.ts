@@ -1,14 +1,17 @@
+import { convertToTraditional } from "../../utils/chinese-converter";
 import { getSmsCountry, segmentLimitForCountry } from "../countries";
 import { describeSmsError, logSmsError } from "../log";
-import { CONTROL_MESSAGE } from "../messages";
+import { FINAL_PAUSE_MESSAGE } from "../messages";
 import { sendTrackedSms } from "../outbound";
 import type { SmsRpc } from "../rpc";
+import type { WhatsAppTemplate } from "../types";
 import type { HuahuaTurnInput } from "./ai";
 import { composeSms, pinyinFor } from "./compose";
 import { clock, loadHuahuaContext, meterFor, type HuahuaContext, type HuahuaDeps } from "./context";
 import { fallbackOpener } from "./fallbacks";
 import {
   effectiveOpenersPerWeek,
+  effectiveWindows,
   isWithinWindow,
   localDateKey,
   localDayStart,
@@ -31,7 +34,25 @@ export const RECENT_UNANSWERED_HOURS = 48;
 /** Wait this long after the learner's last text before starting a new conversation. */
 export const ACTIVE_CONVERSATION_HOURS = 3;
 export const REDUCE_AFTER_UNANSWERED = 2;
+/** After this many unanswered invitations Huahua sends one final message and pauses. */
 export const CONTROL_AFTER_UNANSWERED = 3;
+
+/** Chinese text in the learner's chosen writing system. */
+export function writingSystemConverter(prefs: { writing_system?: string }) {
+  return prefs.writing_system === "traditional" ? convertToTraditional : undefined;
+}
+
+/** Practice invitations outside WhatsApp's 24-hour window must use an approved template. */
+export function inviteTemplate(deps: HuahuaDeps): WhatsAppTemplate | null {
+  const name = deps.config.whatsapp?.templates.practiceInvite;
+  return name
+    ? {
+        name,
+        language: deps.config.whatsapp.templateLanguage,
+        displayBody: "Hi, it\u2019s Huahua from LingoIsland! Want to practice a little Mandarin today? Reply anytime.",
+      }
+    : null;
+}
 
 type Job = {
   id: string;
@@ -154,11 +175,16 @@ export function evaluateGates(input: {
   if (!contact.verified_at || !contact.consent_at) return { action: "skip", reason: "no_consent" };
   if (contact.status !== "active") return { action: "skip", reason: `contact_${contact.status}` };
   if (!ctx.plan.proactiveOpeners) return { action: "skip", reason: "not_subscribed" };
-  const country = getSmsCountry(ctx.countryCode);
-  if (!country?.enabled || !country.outbound) return { action: "skip", reason: "country_disabled" };
+  if (job.kind === "scheduled_opener" && !ctx.preferences.consent_scheduled) return { action: "skip", reason: "no_scheduled_consent" };
+  if (job.kind === "journey_opener" && !ctx.preferences.consent_journey) return { action: "skip", reason: "no_journey_consent" };
+  if (contact.channel !== "whatsapp") {
+    const country = getSmsCountry(ctx.countryCode);
+    if (!country?.enabled || !country.outbound) return { action: "skip", reason: "country_disabled" };
+  }
 
   const tz = ctx.timezone;
-  const windows = ctx.preferences.delivery_windows;
+  const windows = effectiveWindows(ctx.preferences);
+  if (windows.length === 0) return { action: "skip", reason: "no_window" };
   const perWeek = effectiveOpenersPerWeek(ctx.preferences);
   if (perWeek <= 0) return { action: "skip", reason: "frequency_off" };
 
@@ -282,8 +308,13 @@ export async function processOpenerJob(deps: HuahuaDeps, job: Job): Promise<stri
       idempotencyKey: `control:${job.id}`,
       kind: "control",
       requireActive: true,
-      body: CONTROL_MESSAGE,
+      body: FINAL_PAUSE_MESSAGE,
     });
+    if (sent.status === "skipped" && sent.reason === "whatsapp_window_closed") {
+      await deps.rpc("sms_auto_pause", { p_contact_id: contact.id });
+      await finishJob(deps.rpc, job.id, "skipped", "paused_without_message");
+      return "paused_without_message";
+    }
     if (sent.status === "sent") {
       const thread = await deps.rpc<{ id: string } | null>("sms_open_thread", {
         p_contact_id: contact.id,
@@ -303,8 +334,10 @@ export async function processOpenerJob(deps: HuahuaDeps, job: Job): Promise<stri
           p_now: now.toISOString(),
         });
       }
-      await finishJob(deps.rpc, job.id, "sent", "control_sent", { messageId: sent.messageId });
-      return "control_sent";
+      // The final message says practice pauses after it; any reply reactivates.
+      await deps.rpc("sms_auto_pause", { p_contact_id: contact.id });
+      await finishJob(deps.rpc, job.id, "sent", "final_message_sent", { messageId: sent.messageId });
+      return "final_message_sent";
     }
     await finishJob(deps.rpc, job.id, sent.status === "failed" ? "failed" : "skipped", `control_${sent.status}`);
     return `control_${sent.status}`;
@@ -356,6 +389,7 @@ export async function processOpenerJob(deps: HuahuaDeps, job: Job): Promise<stri
     kind: "opener",
     requireActive: true,
     meter: meterFor(ctx),
+    whatsappTemplate: inviteTemplate(deps),
     body: async () => {
       const fallback = fallbackOpener({ level: ctx.level, vocab, journeyName });
       const result = await produceTurn(deps.generateTurn, input, {
@@ -372,6 +406,7 @@ export async function processOpenerJob(deps: HuahuaDeps, job: Job): Promise<stri
         includeTranslation: support.includeTranslation,
         maxSegments,
         beginner: ctx.level <= 2,
+        convert: writingSystemConverter(ctx.preferences),
       });
       captured.vocab = turn.targetVocab.length > 0 ? turn.targetVocab : vocab;
       captured.metadata = {
@@ -475,6 +510,7 @@ export async function planScheduledOpeners(deps: HuahuaDeps, options: { batchSiz
 async function planForUser(deps: HuahuaDeps, userId: string, now: Date) {
   const ctx = await loadHuahuaContext(deps, userId, now);
   if (!ctx.contact || ctx.contact.status !== "active" || !ctx.plan.proactiveOpeners) return false;
+  if (!ctx.preferences.consent_scheduled) return false;
   const tz = ctx.timezone;
   const today = localParts(now, tz);
   if (!plannedOpenerDays(ctx.preferences).includes(today.weekday)) return false;
@@ -487,7 +523,9 @@ async function planForUser(deps: HuahuaDeps, userId: string, now: Date) {
   if (stats.open_jobs > 0 || stats.day_count > 0) return false;
   if (stats.week_count >= effectiveOpenersPerWeek(ctx.preferences)) return false;
 
-  const at = nextDeliveryTime({ now, tz, windows: ctx.preferences.delivery_windows, allowedDays: [today.weekday] });
+  const windows = effectiveWindows(ctx.preferences);
+  if (windows.length === 0) return false;
+  const at = nextDeliveryTime({ now, tz, windows, allowedDays: [today.weekday] });
   if (!at || localDateKey(at, tz) !== localDateKey(now, tz)) return false;
 
   const result = await deps.rpc<{ created: boolean }>("sms_enqueue_job", {

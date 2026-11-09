@@ -1,7 +1,8 @@
 import { describeSmsError } from "./log";
 import type { SmsRpc } from "./rpc";
 import { estimateSmsSegments } from "./segments";
-import { SmsSendError, type SmsProvider } from "./types";
+import { SmsSendError, type MessageChannel, type QuickReply, type SendSmsInput, type SmsProvider, type WhatsAppTemplate } from "./types";
+import { planWhatsAppSend } from "./whatsapp";
 
 export type OutboundKind =
   | "reply"
@@ -15,7 +16,8 @@ export type OutboundKind =
   | "command"
   | "notice"
   | "safety"
-  | "persona";
+  | "persona"
+  | "preview";
 
 export type MeterSpec = {
   userId: string;
@@ -66,7 +68,7 @@ type ChargeResult = {
  * the allowance is used up the text is not sent ("blocked").
  */
 export async function sendTrackedSms(
-  deps: { rpc: SmsRpc; provider: SmsProvider },
+  deps: { rpc: SmsRpc; provider: SmsProvider; now?: () => Date },
   input: {
     contactId: string;
     idempotencyKey: string;
@@ -76,6 +78,10 @@ export async function sendTrackedSms(
     body: string | ((contact: Record<string, unknown>) => Promise<string | PreparedBody>);
     from?: string;
     meter?: MeterSpec;
+    /** WhatsApp: template to use outside the 24-hour window (else nothing is sent). */
+    whatsappTemplate?: WhatsAppTemplate | null;
+    /** WhatsApp: reply buttons inside the window. SMS shows them as text already in the body. */
+    quickReplies?: QuickReply[];
   },
 ): Promise<TrackedSendResult> {
   const claim = await deps.rpc<ClaimResult>("sms_claim_outbound", {
@@ -91,11 +97,30 @@ export async function sendTrackedSms(
     return { status: "skipped", reason: claim?.reason ?? "not_claimed" };
   }
   const messageId = claim.message_id;
+  const channel: MessageChannel = claim.contact?.channel === "whatsapp" ? "whatsapp" : "sms";
+
+  let template: WhatsAppTemplate | undefined;
+  if (channel === "whatsapp") {
+    const plan = planWhatsAppSend({
+      lastInboundAt: (claim.contact?.last_inbound_at as string | null | undefined) ?? null,
+      now: deps.now ? deps.now() : new Date(),
+      template: input.whatsappTemplate,
+    });
+    if (plan.mode === "skip") {
+      await completeOutbound(deps.rpc, messageId, { status: "skipped", error: plan.reason });
+      return { status: "skipped", reason: plan.reason };
+    }
+    if (plan.mode === "template") template = plan.template;
+  }
 
   let body: string;
   let exempt = false;
   try {
-    const prepared = typeof input.body === "string" ? input.body : await input.body(claim.contact ?? {});
+    const prepared = template
+      ? template.displayBody ?? `[${template.name}]`
+      : typeof input.body === "string"
+        ? input.body
+        : await input.body(claim.contact ?? {});
     body = typeof prepared === "string" ? prepared : prepared.body;
     exempt = typeof prepared === "string" ? false : Boolean(prepared.exempt);
   } catch (error) {
@@ -133,7 +158,15 @@ export async function sendTrackedSms(
   }
 
   try {
-    const sent = await sendWithRetry(deps.provider, { to: claim.phone_number, body, from: input.from });
+    const sent = await sendWithRetry(deps.provider, {
+      to: claim.phone_number,
+      body,
+      // The SMS sender number is meaningless on WhatsApp.
+      from: channel === "sms" ? input.from : undefined,
+      channel,
+      template,
+      quickReplies: channel === "whatsapp" && !template ? input.quickReplies : undefined,
+    });
     await completeOutbound(deps.rpc, messageId, {
       body,
       providerMessageId: sent.id,
@@ -158,10 +191,7 @@ export async function sendTrackedSms(
   }
 }
 
-async function sendWithRetry(
-  provider: SmsProvider,
-  input: { to: string; body: string; from?: string },
-) {
+async function sendWithRetry(provider: SmsProvider, input: SendSmsInput) {
   try {
     return await provider.send(input);
   } catch (error) {

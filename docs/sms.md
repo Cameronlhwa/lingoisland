@@ -18,6 +18,7 @@ Deployment, Telnyx configuration, cron, and country rollout steps are in
    - `supabase/migrations/20261103_000001_sms_prototype.sql`
    - `supabase/migrations/20261104_000001_sms_phone_verification.sql`
    - `supabase/migrations/20261106_000001_sms_huahua_phase2.sql`
+   - `supabase/migrations/20261107_000001_personalized_onboarding.sql`
 2. Add the SMS variables from `.env.example` (server-only; never prefix them
    with `NEXT_PUBLIC_`). Texting stays hidden in the UI until
    `TELNYX_API_KEY`, `TELNYX_PUBLIC_KEY`, `TELNYX_FROM_NUMBER`, and
@@ -46,6 +47,11 @@ Tests:
   and an injected clock. No network, Supabase project, or secrets.
 - `npx playwright test tests/e2e/huahua-settings.spec.ts`: Texting page and
   onboarding step against mocked routes.
+- `npm run test:onboarding`: personalized onboarding logic plus its RPCs and
+  row-level security on PGlite.
+- `npx playwright test tests/e2e/personalized-onboarding.spec.ts`: the full
+  onboarding flow at mobile, tablet, and desktop widths with mocked APIs,
+  including axe accessibility checks and an analytics privacy check.
 
 PGlite is a single connection, so the "concurrent" tests interleave calls
 rather than running them truly in parallel. Row locks and unique constraints
@@ -53,12 +59,23 @@ carry the real concurrency guarantees.
 
 ## Learner flow
 
-- **Onboarding** (`/app/onboarding`): after the journey is created, an
-  optional "practice by text" step appears. After verification, the learner
-  picks a texting style and correction mode (`HuahuaOnboardingStyle`).
-  Skipping, or any SMS problem, never blocks the journey. The step is skipped
-  automatically if SMS is not configured or the learner already has an active
-  number.
+- **Personalized onboarding** (`/onboarding/journey` and `/app/onboarding`,
+  `components/Onboarding/personalized/`): after the plan preview, 华华 is
+  introduced and the learner can connect a number. The channel (SMS or
+  WhatsApp) is offered from the number's country and is never switched
+  silently. Scheduled practice and Journey messages are consented to
+  separately. Verification reuses `SmsPhoneSetup`, including the secure
+  transfer for a number on another account. Then the learner sets quiet
+  hours on the web (default 9 PM to 8 AM; the script comes from the
+  calibration step) and 华华 asks about support, corrections, and frequency
+  in the free preview chat (`lib/sms/huahua/preview.ts`). Learners who skip
+  messaging keep the defaults for their level and can change them later on
+  the Texting page. Skipping, or any messaging problem, never blocks the plan.
+- **Legacy onboarding** (`?islandId=`, `?resume=texting`, `?track=hsk`):
+  after the journey is created, an optional "practice by text" step appears.
+  After verification, the learner picks a texting style and correction mode
+  (`HuahuaOnboardingStyle`). The step is skipped automatically if SMS is not
+  configured or the learner already has an active number.
 - **Texting page** (`/app/huahua`, sidebar "Texting"): number setup, texting
   style, pinyin/English help, schedule (subscribers), usage meter, words from
   chats, recent conversations, and deleting history. If SMS isn't configured

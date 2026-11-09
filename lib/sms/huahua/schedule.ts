@@ -176,6 +176,40 @@ export function windowsOrDefault(input: unknown) {
   return normalizeWindows(input) ?? DEFAULT_WINDOWS;
 }
 
+const MIN_WINDOW_MINUTES = 15;
+
+/**
+ * Delivery windows with the learner's quiet hours removed. Quiet hours can
+ * only narrow the windows (which already sit inside 8:00–21:00); they never
+ * widen them. Replies to the learner's own texts are not affected.
+ */
+export function applyQuietHours(windows: DeliveryWindow[], quietStart: number, quietEnd: number): DeliveryWindow[] {
+  if (quietStart === quietEnd) return windows;
+  const allowed: DeliveryWindow[] =
+    quietStart > quietEnd
+      ? [{ start: quietEnd, end: quietStart }]
+      : [
+          { start: 0, end: quietStart },
+          { start: quietEnd, end: 24 * 60 },
+        ];
+  const result: DeliveryWindow[] = [];
+  windows.forEach((window) => {
+    allowed.forEach((range) => {
+      const start = Math.max(window.start, range.start);
+      const end = Math.min(window.end, range.end);
+      if (end - start >= MIN_WINDOW_MINUTES) result.push({ start, end });
+    });
+  });
+  return result.sort((a, b) => a.start - b.start);
+}
+
+export function effectiveWindows(prefs: { delivery_windows: DeliveryWindow[]; quiet_start?: number; quiet_end?: number }) {
+  return applyQuietHours(
+    prefs.delivery_windows,
+    prefs.quiet_start ?? QUIET_HOURS_START,
+    prefs.quiet_end ?? QUIET_HOURS_END,
+  );
+}
 export function isWithinWindow(now: Date, tz: string, windows: DeliveryWindow[]) {
   const { minutes } = localParts(now, tz);
   return windows.some((window) => minutes >= window.start && minutes < window.end);

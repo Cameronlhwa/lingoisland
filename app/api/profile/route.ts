@@ -308,7 +308,7 @@ export async function PATCH(request: Request) {
     let profile: ProfileRow | null = upserted.data as ProfileRow | null
     let error = upserted.error
 
-    if (error && updates.timezone !== undefined && error.message?.includes('timezone')) {
+    if (error && error.message?.includes('timezone')) {
       const { timezone: _ignored, ...withoutTimeZone } = updates
       const retry = await supabase
         .from('user_profiles')

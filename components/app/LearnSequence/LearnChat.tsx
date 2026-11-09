@@ -55,7 +55,13 @@ function toPinyinLine(text: string): string {
   }).trim();
 }
 
-function PracticeWordStrip({ words }: { words: LearnWord[] }) {
+function PracticeWordStrip({
+  words,
+  usedWordIds,
+}: {
+  words: LearnWord[];
+  usedWordIds: Set<string>;
+}) {
   const { convertText } = useCharacterSet();
 
   return (
@@ -67,7 +73,12 @@ function PracticeWordStrip({ words }: { words: LearnWord[] }) {
         {words.map((w) => (
           <div key={w.id} className="group relative">
             <div
-              className="cursor-default rounded-full border border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] px-3.5 py-1.5 text-sm font-bold text-[var(--lingo-navy)] transition-colors group-hover:bg-white"
+              data-used={usedWordIds.has(w.id) || undefined}
+              className={`cursor-default rounded-full border px-3.5 py-1.5 text-sm font-bold transition-colors ${
+                usedWordIds.has(w.id)
+                  ? "border-[var(--lingo-teal)] bg-[var(--lingo-teal)] text-white"
+                  : "border-[var(--lingo-accent-border)] bg-[var(--lingo-sky-pale)] text-[var(--lingo-navy)] group-hover:bg-white"
+              }`}
             >
               {convertText(w.hanzi)}
             </div>
@@ -170,6 +181,20 @@ function LearnChatB1Plus({
       (a, b) => (a.position ?? 999) - (b.position ?? 999),
     );
   }, [allIslandWords, words]);
+
+  const usedWordIds = useMemo(() => {
+    const userText = messages
+      .filter((m) => m.role === "user")
+      .map((m) => m.content)
+      .join("\n");
+    const used = new Set<string>();
+    words.forEach((w) => {
+      if (userText.includes(w.hanzi) || userText.includes(convertText(w.hanzi))) {
+        used.add(w.id);
+      }
+    });
+    return used;
+  }, [messages, words, convertText]);
 
   const wordPayload = words.map((w) => ({
     hanzi: w.hanzi,
@@ -342,7 +367,7 @@ function LearnChatB1Plus({
         )}
       </div>
 
-      <PracticeWordStrip words={words} />
+      <PracticeWordStrip words={words} usedWordIds={usedWordIds} />
 
       <div className="mb-3 flex justify-center gap-2">
         <button

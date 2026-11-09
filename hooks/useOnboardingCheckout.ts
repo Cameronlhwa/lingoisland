@@ -14,8 +14,20 @@ import {
   invalidateSubscriptionCache,
 } from "@/hooks/useSubscription";
 
-export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
+export type OnboardingCheckoutOptions = {
+  /** Same-site path Stripe returns to when checkout is canceled. */
+  cancelPath?: string;
+  /** Runs right before Checkout opens (for example, to save onboarding progress). Errors are ignored. */
+  beforeCheckout?: () => Promise<void>;
+  /** Where an account that already has Pro goes instead of Checkout. */
+  proRedirectPath?: string;
+};
+
+export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot, options: OnboardingCheckoutOptions = {}) {
   const supabase = createClient();
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+  const proPath = options.proRedirectPath ?? "/app";
   const pendingPlanRef = useRef<CheckoutPlan>(snapshot.plan);
   const [plan, setPlan] = useState<CheckoutPlan>(snapshot.plan);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -35,6 +47,8 @@ export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
       setError(null);
       writeUpgradeSnapshot({ ...snapshot, plan: interval });
       try {
+        await optionsRef.current.beforeCheckout?.().catch(() => undefined);
+        const cancelPath = optionsRef.current.cancelPath;
         const res = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -42,6 +56,7 @@ export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
             interval,
             cancelContext: "onboarding",
             islandId: snapshot.islandId,
+            ...(cancelPath ? { cancelPath: `${cancelPath}${cancelPath.includes("?") ? "&" : "?"}plan=${interval}` } : {}),
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -52,7 +67,7 @@ export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
         }
         if (res.status === 409) {
           clearUpgradePending();
-          window.location.href = "/app";
+          window.location.href = optionsRef.current.proRedirectPath ?? "/app";
           return;
         }
         if (!res.ok || !data?.url) {
@@ -90,12 +105,12 @@ export function useOnboardingCheckout(snapshot: OnboardingUpgradeSnapshot) {
     const pro = await fetchIsPro();
     if (pro) {
       clearUpgradePending();
-      window.location.href = "/app";
+      window.location.href = proPath;
       return;
     }
 
     await startCheckout(plan);
-  }, [plan, snapshot, startCheckout, supabase]);
+  }, [plan, proPath, snapshot, startCheckout, supabase]);
 
   const onAuthComplete = useCallback(async () => {
     setRedirecting(true);

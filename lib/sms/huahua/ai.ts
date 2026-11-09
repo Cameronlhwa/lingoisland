@@ -195,6 +195,7 @@ export function createDeepSeekTurnGenerator(
   options: {
     apiKey?: string;
     baseUrl?: string;
+    model?: string;
     timeoutMs?: number;
     fetchImpl?: typeof fetch;
   } = {},
@@ -203,6 +204,7 @@ export function createDeepSeekTurnGenerator(
     const apiKey = options.apiKey ?? process.env.DEEPSEEK_API_KEY?.trim();
     if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not configured");
     const base = (options.baseUrl ?? process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com").replace(/\/$/, "");
+    const model = options.model ?? (process.env.DEEPSEEK_MODEL?.trim() || "deepseek-flash");
     const doFetch = options.fetchImpl ?? fetch;
 
     const messages = [
@@ -220,7 +222,8 @@ export function createDeepSeekTurnGenerator(
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model,
+        thinking: { type: "disabled" },
         temperature: 0.7,
         max_tokens: 500,
         response_format: { type: "json_object" },
