@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import { Check, Clock, MessageCircle, Sparkles, Target } from "lucide-react";
 import { ONBOARDING_EVENTS } from "@/lib/onboarding/personalized/analytics";
 import {
@@ -21,7 +20,6 @@ import {
   PrimaryButton,
   SKY_PALE,
   StepFrame,
-  TextButton,
   usePrefersReducedMotion,
 } from "./ui";
 
@@ -261,85 +259,6 @@ export function PlanStep({ state, next, back, progress, track }: StepProps) {
       >
         Continue
       </PrimaryButton>
-    </StepFrame>
-  );
-}
-
-function ChatExample() {
-  return (
-    <figure
-      className="overflow-hidden rounded-2xl"
-      style={{ border: `1px solid ${CARD_BORDER}` }}
-    >
-      <Image
-        src="/onboarding/huahua-chat-demo.jpg"
-        alt="A phone showing a text chat with Huahua. Huahua asks 你好！你今天吃什么？ (Hi! What are you eating today?), the learner replies 我吃米饭。 (I’m eating rice.), and Huahua answers 很好！米饭很好吃。 (Great! Rice is tasty.), each with pinyin and English."
-        width={1024}
-        height={576}
-        sizes="(min-width: 640px) 512px, 100vw"
-        className="h-auto w-full"
-        priority
-      />
-    </figure>
-  );
-}
-
-export function HuahuaIntroStep({
-  next,
-  back,
-  progress,
-  track,
-  onSkip,
-}: StepProps & { onSkip: () => void }) {
-  const viewedRef = useRef(false);
-  useEffect(() => {
-    if (viewedRef.current) return;
-    viewedRef.current = true;
-    track(ONBOARDING_EVENTS.huahuaIntroViewed);
-  }, [track]);
-
-  const points = [
-    "Adapts to your Mandarin level and the topics you care about",
-    "You choose pinyin, English, corrections, and how often Huahua messages",
-    "Pause or stop anytime",
-  ];
-
-  return (
-    <StepFrame
-      title="Meet Huahua, your Mandarin practice buddy"
-      subtitle="Your Journeys help you learn useful Mandarin. Huahua helps you use it naturally between lessons, right from your messages."
-      progress={progress}
-      onBack={back}
-    >
-      <ChatExample />
-      <ul className="mt-5 flex flex-col gap-2.5">
-        {points.map((point) => (
-          <li
-            key={point}
-            className="flex items-start gap-2.5 text-[15px] leading-snug"
-            style={{ color: NAVY }}
-          >
-            <Check
-              size={18}
-              strokeWidth={3}
-              className="mt-0.5 shrink-0"
-              style={{ color: GREEN }}
-              aria-hidden
-            />
-            {point}
-          </li>
-        ))}
-      </ul>
-      <PrimaryButton
-        className="mt-8"
-        onClick={() => next()}
-        data-testid="huahua-setup"
-      >
-        Set up Huahua
-      </PrimaryButton>
-      <TextButton className="mt-2" onClick={onSkip} data-testid="huahua-skip">
-        Maybe later
-      </TextButton>
     </StepFrame>
   );
 }

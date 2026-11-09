@@ -60,17 +60,12 @@ carry the real concurrency guarantees.
 ## Learner flow
 
 - **Personalized onboarding** (`/onboarding/journey` and `/app/onboarding`,
-  `components/Onboarding/personalized/`): after the plan preview, 华华 is
-  introduced and the learner can connect a number. The channel (SMS or
-  WhatsApp) is offered from the number's country and is never switched
-  silently. Scheduled practice and Journey messages are consented to
-  separately. Verification reuses `SmsPhoneSetup`, including the secure
-  transfer for a number on another account. Then the learner sets quiet
-  hours on the web (default 9 PM to 8 AM; the script comes from the
-  calibration step) and 华华 asks about support, corrections, and frequency
-  in the free preview chat (`lib/sms/huahua/preview.ts`). Learners who skip
-  messaging keep the defaults for their level and can change them later on
-  the Texting page. Skipping, or any messaging problem, never blocks the plan.
+  `components/Onboarding/personalized/`): this flow never asks for a phone
+  number. The plan preview leads straight to the commitment and the paywall.
+  Learners keep the 华华 defaults for their level and connect a number later
+  on the Texting page. The phone and texting step ids stay in `STEP_ORDER`
+  only so saved progress from the phone version still parses; a saved
+  learner on one of them resumes at the next step that is shown.
 - **Legacy onboarding** (`?islandId=`, `?resume=texting`, `?track=hsk`):
   after the journey is created, an optional "practice by text" step appears.
   After verification, the learner picks a texting style and correction mode

@@ -148,12 +148,15 @@ export function isSimulatedMessaging(answers: OnboardingAnswers) {
   return answers.messaging.status === "simulated";
 }
 
+/**
+ * Phone and texting steps. They stay in STEP_ORDER so progress saved by the
+ * phone version still parses, but this flow never shows them.
+ */
+const MESSAGING_STEPS: readonly StepId[] = ["huahua", "messaging", "huahua_prefs", "preview"];
+
 /** Steps that apply to this learner, in order. */
-export function stepsFor(answers: OnboardingAnswers): StepId[] {
-  return STEP_ORDER.filter((step) => {
-    if (step === "huahua_prefs" || step === "preview") return hasMessaging(answers);
-    return true;
-  });
+export function stepsFor(_answers: OnboardingAnswers): StepId[] {
+  return STEP_ORDER.filter((step) => !MESSAGING_STEPS.includes(step));
 }
 
 export function isStepComplete(step: StepId, state: OnboardingState): boolean {

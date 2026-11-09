@@ -13,6 +13,7 @@ import {
 import { BUILD_MIN_MS, BUILD_MIN_MS_REDUCED, BUILD_STAGES, buildingState } from "../../lib/onboarding/personalized/building";
 import {
   emptyAnswers,
+  canVisit,
   initialState,
   isStepComplete,
   markCompleted,
@@ -32,7 +33,6 @@ import {
 import { normalizeCustomText } from "../../lib/onboarding/personalized/goals";
 import { defaultHuahuaPrefs, parseHuahuaPrefs, toSmsPreferencePatch } from "../../lib/onboarding/personalized/huahua";
 import { SELF_REPORT_OPTIONS, cefrForLevel, hskForLevel, levelForSelfReport } from "../../lib/onboarding/personalized/levels";
-import { channelEligibility, isChannelAllowed } from "../../lib/onboarding/personalized/messaging";
 import {
   buildPlan,
   defaultSupportStyle,
@@ -293,38 +293,7 @@ describe("plan", () => {
   });
 });
 
-describe("messaging eligibility and consent", () => {
-  const config = { smsEnabled: true, smsCountries: ["US", "CA"], whatsappEnabled: true, whatsappCountries: [] as string[] };
-
-  it("offers SMS and WhatsApp where SMS is supported, with no forced recommendation", () => {
-    const result = channelEligibility({ ...config, country: "US" });
-    assert.equal(result.recommendation, "choose");
-    assert.deepEqual(result.options, [
-      { channel: "sms", recommended: false },
-      { channel: "whatsapp", recommended: false },
-    ]);
-  });
-
-  it("recommends WhatsApp where SMS is unsupported, based on the number's country", () => {
-    const result = channelEligibility({ ...config, country: "gb" });
-    assert.equal(result.smsSupported, false);
-    assert.equal(result.recommendation, "whatsapp");
-    assert.deepEqual(result.options, [{ channel: "whatsapp", recommended: true }]);
-    assert.equal(isChannelAllowed(result, "sms"), false);
-  });
-
-  it("lets the learner continue without messaging when nothing is available", () => {
-    const result = channelEligibility({ ...config, whatsappEnabled: false, country: "GB" });
-    assert.equal(result.recommendation, "none");
-    assert.equal(result.options.length, 0);
-    assert.equal(channelEligibility({ ...config, country: null }).recommendation, "none");
-  });
-
-  it("respects a WhatsApp country allow-list", () => {
-    const result = channelEligibility({ ...config, whatsappCountries: ["MX"], country: "GB" });
-    assert.equal(result.whatsappAvailable, false);
-  });
-
+describe("messaging consent", () => {
   it("requires at least one onboarding consent and the current version", () => {
     assert.deepEqual(resolveConsent({ consentVersion: MESSAGING_CONSENT_VERSION, consentScheduled: true, consentJourney: false }), {
       ok: true,
@@ -420,20 +389,35 @@ describe("flow state and resume", () => {
     assert.equal(resumeStep(partial), "level");
   });
 
-  it("puts the building, plan, and Huahua intro steps behind completion events", () => {
+  it("puts the building and plan steps behind completion events", () => {
     const state: OnboardingState = { ...initialState(NOW), answers: completedAnswers() };
     assert.equal(resumeStep(state), "building");
     const built = markCompleted(markCompleted(state, "building", NOW), "plan", NOW);
-    assert.equal(resumeStep(built), "huahua");
+    assert.equal(resumeStep(built), "commitment");
   });
 
-  it("skips Huahua preferences and the preview without messaging", () => {
-    const answers = completedAnswers({ messaging: { channel: "none", status: "skipped" } });
-    assert.ok(!stepsFor(answers).includes("huahua_prefs"));
-    assert.equal(nextStep("messaging", answers), "commitment");
-    const verified = completedAnswers({ messaging: { channel: "sms", status: "verified" } });
-    assert.equal(nextStep("messaging", verified), "huahua_prefs");
-    assert.equal(previousStep("plan", verified), "availability");
+  it("never shows the phone or texting steps and goes from the plan to the commitment", () => {
+    for (const messaging of [
+      { channel: null, status: "not_started" },
+      { channel: "sms", status: "verified" },
+    ] as const) {
+      const answers = completedAnswers({ messaging });
+      const steps = stepsFor(answers);
+      for (const hidden of ["huahua", "messaging", "huahua_prefs", "preview"] as const) {
+        assert.ok(!steps.includes(hidden), hidden);
+      }
+      assert.equal(nextStep("plan", answers), "commitment");
+      assert.equal(previousStep("commitment", answers), "plan");
+    }
+  });
+
+  it("resumes progress saved on a phone step at the next step that is shown", () => {
+    let state: OnboardingState = { ...initialState(NOW), answers: completedAnswers({ messaging: { channel: "sms", status: "verified" } }) };
+    for (const step of ["building", "plan", "huahua", "messaging"] as const) {
+      state = markCompleted(state, step, NOW);
+    }
+    assert.equal(resumeStep(state), "commitment");
+    assert.equal(canVisit("messaging", state), false);
   });
 
   it("rebuilds the plan after an earlier answer changes", () => {
