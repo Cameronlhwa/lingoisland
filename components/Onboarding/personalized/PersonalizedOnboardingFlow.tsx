@@ -39,7 +39,7 @@ import {
 } from "@/lib/onboarding/personalized/storage";
 import { CalibrationStep } from "./CalibrationStep";
 import { PaywallStep, type FlowMode } from "./PaywallStep";
-import { BuildingStep, CommitmentStep, PlanStep, ReflectStep } from "./PlanSteps";
+import { BuildingStep, CommitmentStep, ReflectStep } from "./PlanSteps";
 import { currentInsight, insightKey, templateInsight } from "@/lib/onboarding/personalized/insight";
 import { parseInsight } from "@/lib/onboarding/personalized/insightTypes";
 import { ExperienceStep, LearningPainStep, ReviewsStep, UsingPainStep } from "./PainSteps";
@@ -52,18 +52,21 @@ const SAVE_DEBOUNCE_MS = 600;
 const SAVE_RETRY_MIN_MS = 2_000;
 const SAVE_RETRY_MAX_MS = 30_000;
 const SAVE_MAX_RETRIES = 6;
+/** Blocks a second tap from completing the next step when Continue sits in the same spot. */
+const NAV_LOCK_MS = 450;
 
 type Account = { kind: AccountKind; firstName: string | null };
 
 export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { captureEvent } = useAnalytics();
+  const { captureEvent, identify } = useAnalytics();
 
   const [state, setState] = useState<OnboardingState | null>(null);
   const [step, setStep] = useState<StepId>("goal");
   const [account, setAccount] = useState<Account>({ kind: "guest", firstName: null });
   const [announcement, setAnnouncement] = useState("");
+  const [navReady, setNavReady] = useState(true);
 
   const stateRef = useRef<OnboardingState | null>(null);
   const stepRef = useRef<StepId>("goal");
@@ -74,8 +77,18 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
   const unmountedRef = useRef(false);
   const recordedAttemptsRef = useRef<Set<string>>(new Set());
   const initRef = useRef(false);
+  const navLockUntilRef = useRef(0);
 
   accountRef.current = account;
+
+  useEffect(() => {
+    if (navReady) return;
+    const remaining = Math.max(0, navLockUntilRef.current - Date.now());
+    const timer = window.setTimeout(() => {
+      if (!unmountedRef.current) setNavReady(true);
+    }, remaining || NAV_LOCK_MS);
+    return () => window.clearTimeout(timer);
+  }, [navReady, step]);
 
   const track = useCallback(
     (event: OnboardingEventName, properties?: Record<string, unknown>) => trackOnboarding(captureEvent, event, properties),
@@ -230,6 +243,9 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
   const goTo = useCallback(
     (target: StepId, from: OnboardingState) => {
       stepRef.current = target;
+      // Lock immediately so a second tap can't complete the newly mounted step.
+      navLockUntilRef.current = Date.now() + NAV_LOCK_MS;
+      setNavReady(false);
       setStep(target);
       setAnnouncement("");
       apply(markStarted(from, target, new Date()));
@@ -247,6 +263,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
 
   const advance = useCallback(
     (patch?: Partial<OnboardingAnswers>) => {
+      if (Date.now() < navLockUntilRef.current) return;
       const current = stateRef.current;
       if (!current) return;
       const now = new Date();
@@ -263,6 +280,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
   );
 
   const back = useCallback(() => {
+    if (Date.now() < navLockUntilRef.current) return;
     const current = stateRef.current;
     if (!current) return;
     const target = previousStep(stepRef.current, current.answers);
@@ -355,6 +373,18 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
         onBeforeCheckout={async () => {
           markActivationPending();
           await saveNow(true);
+          // The Stripe webhook records checkout_completed under the user's id.
+          // Link this browser (which saw the experiment flags) to that id first,
+          // so experiments can count the purchase. Never blocks checkout.
+          try {
+            const { data } = await createClient().auth.getUser();
+            if (data.user && !data.user.is_anonymous) identify(data.user.id);
+          } catch {
+            // Analytics only.
+          }
+        }}
+        onClose={() => {
+          void saveNow().finally(() => router.push(mode === "app" ? "/app" : "/"));
         }}
         onNotNow={() => {
           void saveNow().finally(() => router.push(mode === "app" ? "/app/onboarding?activate=1" : "/"));
@@ -374,12 +404,18 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
     jumpTo,
   };
 
-  const wide = step === "plan" || step === "commitment" || step === "reviews" || step === "reflect";
+  const wide = step === "reflect" ? "xl" : step === "commitment" || step === "reviews";
 
   return (
     <Shell wide={wide}>
       <LiveRegion message={announcement} />
-      <div key={step} data-step={step} data-testid="onboarding-step">
+      <div
+        key={step}
+        data-step={step}
+        data-testid="onboarding-step"
+        data-nav-ready={navReady ? "true" : "false"}
+        style={navReady ? undefined : { pointerEvents: "none" }}
+      >
         {step === "goal" ? <GoalStep {...props} /> : null}
         {step === "interests" ? <InterestsStep {...props} /> : null}
         {step === "level" ? <LevelStep {...props} /> : null}
@@ -392,7 +428,6 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
         {step === "availability" ? <AvailabilityStep {...props} /> : null}
         {step === "building" ? <BuildingStep {...props} serverWork={buildPlan} /> : null}
         {step === "reflect" ? <ReflectStep {...props} /> : null}
-        {step === "plan" ? <PlanStep {...props} /> : null}
         {step === "commitment" ? (
           <CommitmentStep
             {...props}

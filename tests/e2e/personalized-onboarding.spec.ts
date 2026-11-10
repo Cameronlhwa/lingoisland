@@ -129,10 +129,10 @@ async function pains(page: Page, level: string) {
 
 const PRONUNCIATION_HEADING = /Check your tones in 20 seconds|Say your first word in Mandarin/;
 
-/** After the building screen: confirm the reflection to reach the plan. */
+/** After the building screen: confirm the reflection to reach commitment. */
 async function confirmReflection(page: Page) {
-  await heading(page, "Did we get this right?");
-  await page.getByTestId("reflect-confirm").click();
+  await heading(page, /^From .+ in \d+ weeks$/);
+  await page.getByTestId("reflect-confirm").filter({ visible: true }).click();
 }
 
 async function calibrate(page: Page, { beginner = false }: { beginner?: boolean } = {}) {
@@ -180,14 +180,12 @@ async function toPlan(page: Page, input: ProfileInput) {
   await page.getByTestId("pronunciation-skip").click();
   await availability(page, input.minutes, input.days);
   await confirmReflection(page);
-  await heading(page, "Here’s your personalized plan");
+  await heading(page, "Ready to begin your Mandarin journey?");
 }
 
-/** The plan's Continue goes straight to the commitment screen. */
+/** Reflection now leads straight to the commitment screen. */
 async function toCommitment(page: Page, input: ProfileInput) {
   await toPlan(page, input);
-  await next(page);
-  await heading(page, "Ready to begin your Mandarin journey?");
 }
 
 async function analyticsEvents(page: Page) {
@@ -205,7 +203,7 @@ for (const viewport of VIEWPORTS) {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
     test.describe.configure({ timeout: 120_000 });
 
-    test("1. absolute beginner goes from the plan straight to the commitment and the paywall", async ({ page }) => {
+    test("1. absolute beginner goes from reflection to the commitment and the paywall", async ({ page }) => {
       await setup(page);
       await profile(page, { goal: "everyday", interests: ["food"], level: "new" });
       await calibrate(page, { beginner: true });
@@ -214,23 +212,15 @@ for (const viewport of VIEWPORTS) {
       await page.getByTestId("pronunciation-skip").click();
       await availability(page, "5", "3");
       await confirmReflection(page);
-      await heading(page, "Here’s your personalized plan");
-      const journeyCount = await page.getByTestId("plan-journeys").locator("li").count();
-      expect(journeyCount).toBeGreaterThanOrEqual(2);
-      expect(journeyCount).toBeLessThanOrEqual(3);
-      await next(page);
       await heading(page, "Ready to begin your Mandarin journey?");
       await page.getByTestId("commitment-cta").click();
-      await expect(page.getByRole("heading", { name: "Stop sitting out of Mandarin conversations" }).filter({ visible: true })).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("conversation-paywall")).toBeVisible({ timeout: 15_000 });
     });
 
     test("2. never asks for a phone number or calls the texting services", async ({ page }) => {
       const mocks = await setup(page, { account: "user", firstName: "Cameron" });
       await toPlan(page, { goal: "work", interests: ["meetings", "clients"], level: "basic_conversations" });
-      await expect(page.getByRole("progressbar", { name: "Onboarding progress" })).toHaveAttribute("aria-valuetext", /Step 12 of 13/);
-      await next(page);
-      await heading(page, "Ready to begin your Mandarin journey?");
-      await expect(page.getByRole("progressbar", { name: "Onboarding progress" })).toHaveAttribute("aria-valuetext", /Step 13 of 13/);
+      await expect(page.getByRole("progressbar", { name: "Onboarding progress" })).toHaveAttribute("aria-valuetext", /Step 12 of 12/);
       await expect(page.getByText(/Meet Huahua|Where should Huahua message you|phone number/i)).toHaveCount(0);
       await expect(page.locator("input[type=tel]")).toHaveCount(0);
       await expect(page.getByTestId("commitment-card")).toContainText("Practice conversations included");
@@ -249,7 +239,7 @@ for (const viewport of VIEWPORTS) {
         await heading(page, "Ready to begin your Mandarin journey?");
       }
       await page.getByRole("button", { name: "Back" }).click();
-      await heading(page, "Here’s your personalized plan");
+      await heading(page, /^From .+ in \d+ weeks$/);
     });
 
     test("4. returning learner resumes where they left off", async ({ page }) => {
@@ -305,17 +295,16 @@ for (const viewport of VIEWPORTS) {
     test("5. changing an earlier answer updates the plan", async ({ page }) => {
       await setup(page);
       await toPlan(page, { goal: "work", interests: ["sales"], level: "simple_sentences", minutes: "10", days: "3" });
-      await expect(page.getByText("10 minutes a day, 3 days a week")).toBeVisible();
       await page.getByRole("button", { name: "Back" }).click();
-      await heading(page, "Did we get this right?");
+      await heading(page, /^From .+ in \d+ weeks$/);
       await page.getByRole("button", { name: "Back" }).click();
       await heading(page, "How much time can you usually spend learning Mandarin?");
       await page.getByTestId("minutes-30").click();
       await page.getByTestId("session-short_sessions").click();
       await next(page);
       await confirmReflection(page);
-      await heading(page, "Here’s your personalized plan");
-      await expect(page.getByText(/30 minutes a day, 3 days a week/)).toBeVisible();
+      await heading(page, "Ready to begin your Mandarin journey?");
+      await expect(page.getByText(/30 minutes, 3 days a week/)).toBeVisible();
     });
 
     test("6. microphone permission denied continues without blocking", async ({ page }) => {
@@ -336,7 +325,7 @@ for (const viewport of VIEWPORTS) {
       expect(events.map((event) => event.event)).toContain("onboarding_pronunciation_denied");
     });
 
-    test("7. plan building shows each stage and moves to the plan", async ({ page }) => {
+    test("7. plan building shows each stage and moves to reflection", async ({ page }) => {
       await setup(page);
       await profile(page, { goal: "school", interests: ["presentations"], level: "simple_sentences" });
       await calibrate(page);
@@ -350,7 +339,7 @@ for (const viewport of VIEWPORTS) {
       await expect(stages.getByText("(done)")).toHaveCount(3, { timeout: 8000 });
       await heading(page, "Your personalized plan is ready!");
       await confirmReflection(page);
-      await heading(page, "Here’s your personalized plan");
+      await heading(page, "Ready to begin your Mandarin journey?");
     });
 
     test("8. reduced motion skips decorative animation and finishes sooner", async ({ page }) => {
@@ -368,7 +357,7 @@ for (const viewport of VIEWPORTS) {
         ),
       );
       expect(animated).toBe(false);
-      await heading(page, "Did we get this right?");
+      await heading(page, /^From .+ in \d+ weeks$/);
       expect(Date.now() - started).toBeLessThan(6000);
     });
 
@@ -390,28 +379,20 @@ for (const viewport of VIEWPORTS) {
       const mocks = await setup(page, { account: "user", firstName: "Cameron" });
       await toCommitment(page, { goal: "work", interests: ["meetings"], level: "basic_conversations", minutes: "10", days: "5" });
       await page.getByTestId("commitment-cta").click();
-      await expect(page.getByRole("heading", { name: "Stop sitting out of Mandarin conversations at work" }).filter({ visible: true })).toBeVisible({ timeout: 15_000 });
-      await expect(page.getByText("10 minutes a day, 5 days a week. Built around meetings.").filter({ visible: true }).first()).toBeVisible();
-      await expect(page.getByTestId("paywall-review").filter({ visible: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Mandarin that fits your workday." }).filter({ visible: true })).toBeVisible({ timeout: 15_000 });
+      const card = page.getByTestId("conversation-paywall");
+      await expect(card.getByTestId("conversation-comparison")).toContainText("LingoIsland");
+      await expect(card.getByTestId("conversation-comparison")).toContainText(/meeting|progress/i);
+      await expect(card.getByRole("list", { name: "Membership benefits" }).getByRole("listitem")).toHaveCount(2);
+      await expect(card).toContainText("Billed monthly. Cancel anytime.");
       await expect(page.getByText(/Huahua|Journeys/).filter({ visible: true })).toHaveCount(0);
-      if (isMobile(page)) {
-        await expect(page.getByText("Your plan is saved, even if you close this page.").filter({ visible: true }).first()).toBeVisible();
-      } else {
-        await expect(page.getByTestId("desktop-paywall-lessons")).toBeVisible();
-        const billingSelector = page.getByTestId("desktop-billing-selector");
-        await expect(billingSelector.getByRole("button", { name: "Monthly" })).toHaveAttribute("aria-pressed", "true");
-        await billingSelector.getByRole("button", { name: "Annual · Save 33%" }).click();
-        await expect(billingSelector.getByRole("button", { name: "Annual · Save 33%" })).toHaveAttribute("aria-pressed", "true");
-        await expect(page.getByText("Annual membership").filter({ visible: true })).toBeVisible();
-        await expect(page.getByText("$79.99 billed yearly").filter({ visible: true })).toBeVisible();
-      }
       const committed = mocks.savedStates.find(
         (state) => (state.answers as { commitment?: { committedAt?: string } })?.commitment?.committedAt,
       );
       expect(committed).toBeTruthy();
       expect((committed?.answers as { commitment: { name: unknown } }).commitment.name).toBe("Cameron");
       await page.reload();
-      await expect(page.getByRole("heading", { name: "Stop sitting out of Mandarin conversations at work" }).filter({ visible: true })).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByRole("heading", { name: "Mandarin that fits your workday." }).filter({ visible: true })).toBeVisible({ timeout: 15_000 });
     });
 
     test("11. no sensitive data reaches logs or analytics", async ({ page }) => {
@@ -436,7 +417,6 @@ for (const viewport of VIEWPORTS) {
         "onboarding_calibration_completed",
         "onboarding_pronunciation_skipped",
         "onboarding_reflection_confirmed",
-        "onboarding_plan_viewed",
         "onboarding_commitment_completed",
       ]) {
         expect(names).toContain(name);
@@ -488,9 +468,12 @@ for (const viewport of VIEWPORTS) {
       await expect(page.getByTestId("goal-work")).toBeFocused();
       await page.keyboard.press("Enter");
       await expect(page.getByTestId("goal-work")).toHaveAttribute("aria-pressed", "true");
-      await expect(page.getByTestId("secondary-goal-other")).toHaveCount(0);
+      await expect(page.getByText("Anything else? (optional)")).toHaveCount(0);
       const focusRing = await page.getByTestId("goal-work").evaluate((element) => getComputedStyle(element).outlineStyle);
       expect(focusRing).not.toBe("none");
+      await page.getByTestId("goal-travel").click();
+      await expect(page.getByTestId("goal-travel")).toHaveAttribute("aria-pressed", "true");
+      await expect(page.getByTestId("goal-work")).toHaveAttribute("aria-pressed", "true");
 
       const axe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
       expect(axe.violations.map((violation) => violation.id)).toEqual([]);
@@ -523,14 +506,10 @@ for (const viewport of VIEWPORTS) {
       await page.getByRole("button", { name: "Skip for now" }).click();
       await availability(page, "10", "3");
       await expect(page.getByRole("status").filter({ hasText: /done|ready/ }).first()).toBeAttached({ timeout: 8000 });
-      await heading(page, "Did we get this right?");
+      await heading(page, /^From .+ in \d+ weeks$/);
       const reflectAxe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
       expect(reflectAxe.violations.map((violation) => violation.id)).toEqual([]);
-      await page.getByTestId("reflect-confirm").click();
-      await heading(page, "Here’s your personalized plan");
-      const planAxe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
-      expect(planAxe.violations.map((violation) => violation.id)).toEqual([]);
-      await next(page);
+      await page.getByTestId("reflect-confirm").filter({ visible: true }).click();
       await heading(page, "Ready to begin your Mandarin journey?");
       await expect(page.locator("h1")).toBeFocused();
       const commitAxe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
@@ -553,9 +532,6 @@ for (const viewport of VIEWPORTS) {
       await page.getByTestId("pronunciation-skip").click();
       await availability(page, "10", "5");
       await confirmReflection(page);
-      await heading(page, "Here’s your personalized plan");
-      await page.screenshot({ path: testInfo.outputPath(`plan-${viewport.name}.png`), fullPage: true });
-      await next(page);
       await heading(page, "Ready to begin your Mandarin journey?");
       await page.screenshot({ path: testInfo.outputPath(`commitment-${viewport.name}.png`), fullPage: true });
     });

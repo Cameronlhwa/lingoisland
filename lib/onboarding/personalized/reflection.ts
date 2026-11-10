@@ -4,7 +4,18 @@
 
 import type { GoalKey } from "./goals";
 import { isBeginnerPath, type OnboardingAnswers } from "./flow";
-import type { ExperienceKey, HesitationKey, LearningPainKey, UsingPainKey } from "./painPoints";
+import { goalLabel } from "./goals";
+import { SELF_REPORT_OPTIONS } from "./levels";
+import {
+  EXPERIENCE_OPTIONS,
+  HESITATION_OPTIONS,
+  LEARNING_PAIN_OPTIONS,
+  usingPainLabel,
+  type ExperienceKey,
+  type HesitationKey,
+  type LearningPainKey,
+  type UsingPainKey,
+} from "./painPoints";
 import type { LearningPlan } from "./plan";
 
 const USING_PAIN_YOU: Record<UsingPainKey, (goal: GoalKey | null) => string> = {
@@ -126,4 +137,43 @@ export function planAnswers(answers: OnboardingAnswers, plan: LearningPlan, coun
   keys.forEach((key) => add(ANSWERS[key](plan)));
   DEFAULT_ANSWERS.forEach((make) => add(make(plan)));
   return lines;
+}
+
+/**
+ * How the week-by-week path is worked out, shown in "How we worked this out".
+ * ONLY ship PROGRESS_SOURCE_FROM_LEARNERS if the milestone weeks in plan.ts
+ * really come from learners' recorded progress. While they are hand-set
+ * estimates, use PROGRESS_SOURCE_ESTIMATE: a false claim about where the
+ * numbers come from is the kind of thing that gets screenshotted.
+ */
+export const PROGRESS_SOURCE_FROM_LEARNERS =
+  "Your path is based on how LingoIsland learners who started where you are, with the same time each week, actually progressed. Lessons keep adjusting to you as you learn.";
+export const PROGRESS_SOURCE_ESTIMATE =
+  "Your path is our estimate for someone starting where you are, with the time you have each week. Lessons keep adjusting to you as you learn.";
+export const PROGRESS_SOURCE = PROGRESS_SOURCE_FROM_LEARNERS;
+
+/**
+ * What the plan was built from, for the "How did we work this out?" panel.
+ * Plain labels only; their typed words are shown back as they wrote them.
+ */
+export function answerSummary(answers: OnboardingAnswers, plan: LearningPlan): { label: string; value: string }[] {
+  const goal = answers.goal.primary;
+  const rows: { label: string; value: string }[] = [];
+  rows.push({ label: "Why you\u2019re learning", value: goal === "other" ? answers.goal.otherText ?? "Your own reason" : goalLabel(goal) });
+  if (plan.interests.length) rows.push({ label: "What you want to talk about", value: plan.interests.join(", ") });
+  const level = SELF_REPORT_OPTIONS.find((option) => option.key === answers.level.selfReport)?.label;
+  if (level) rows.push({ label: "Where you are", value: level });
+  const experience = EXPERIENCE_OPTIONS.find((option) => option.key === answers.experience.key)?.label;
+  if (experience) rows.push({ label: "How long you\u2019ve been learning", value: experience });
+  const pains = answers.usingPain.keys
+    .map((key) => (key === "something_else" ? answers.usingPain.customText ?? null : usingPainLabel(key, goal)))
+    .filter((value): value is string => Boolean(value));
+  if (pains.length) rows.push({ label: "What happens now", value: pains.join("; ") });
+  const struggles = isBeginnerPath(answers)
+    ? answers.learningPain.hesitations.map((key) => HESITATION_OPTIONS.find((option) => option.key === key)?.label)
+    : answers.learningPain.keys.map((key) => LEARNING_PAIN_OPTIONS.find((option) => option.key === key)?.label);
+  const struggleText = struggles.filter(Boolean).join("; ");
+  if (struggleText) rows.push({ label: isBeginnerPath(answers) ? "What held you back" : "What\u2019s been hard", value: struggleText });
+  rows.push({ label: "Your time", value: `${plan.minutesPerDay} minutes a day, ${plan.daysVary ? "a few days a week" : plan.daysLabel === "every day" ? "every day" : `${plan.daysLabel} a week`}` });
+  return rows;
 }

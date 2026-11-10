@@ -5,7 +5,10 @@
 import { isBeginnerPath, type OnboardingAnswers } from "./flow";
 import type { UsingPainKey } from "./painPoints";
 import type { LearningPlan } from "./plan";
-import { planAnswers } from "./reflection";
+import { fixesFor } from "./fixes";
+import { buildGap, type Gap } from "./gap";
+import { currentInsight, templateInsight } from "./insight";
+import { buildRoadmap } from "./roadmap";
 import { matchReviews } from "./socialProof";
 
 const PAIN_HEADLINES: Partial<Record<UsingPainKey, string>> = {
@@ -38,8 +41,20 @@ export function paywallSubline(plan: LearningPlan): string {
   return `${plan.minutesPerDay} minutes a day, ${days}.${focus}`;
 }
 
-export function paywallBenefits(answers: OnboardingAnswers, plan: LearningPlan): string[] {
-  return planAnswers(answers, plan, 3);
+/** Titles only: the paywall is skimmed, not read. The details live on the plan screens. */
+export function paywallBenefits(answers: OnboardingAnswers, plan: LearningPlan): { title: string; detail: string }[] {
+  return fixesFor(answers, plan, 3).map(({ title }) => ({ title, detail: "" }));
+}
+
+/** The same "today -> week N" gap as the reflection screen, as one small bar. */
+export function paywallGap(answers: OnboardingAnswers, plan: LearningPlan): Gap {
+  const insight = currentInsight(answers) ?? templateInsight(answers, plan);
+  return buildGap(answers, insight, buildRoadmap(answers, plan));
+}
+
+/** Beginners don't know what "HSK 1" means; tell them in plain words instead. */
+export function paywallLevelChip(answers: OnboardingAnswers): string | undefined {
+  return isBeginnerPath(answers) ? "Starting from scratch" : undefined;
 }
 
 export function paywallReview(answers: OnboardingAnswers): { quote: string; role: string } | null {

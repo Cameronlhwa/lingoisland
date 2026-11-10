@@ -70,7 +70,7 @@ describe("model output checks", () => {
     ["names an app", { missing: "Sounds like Duolingo let you down. What's been missing is speaking practice built around family." }],
     ["says we", { goal: "We will get you joining family conversations with confidence soon." }],
     ["uses an exclamation mark", { now: "You can't talk with your grandparents yet, and it really hurts!" }],
-    ["is too long", { now: "word ".repeat(40).trim() }],
+    ["is too long", { now: "word ".repeat(45).trim() }],
     ["includes Chinese characters", { goal: "Saying 你好 to your grandparents with more confidence and ease." }],
     ["skips the missing-ingredient sentence", { missing: "Sounds like you know more than you say out loud to your family." }],
     ["has a missing field", { goal: undefined }],

@@ -137,10 +137,8 @@ async function toCommitment(page: Page) {
   await page.getByTestId("minutes-10").click();
   await page.getByTestId("days-5").click();
   await page.getByTestId("continue").click();
-  await heading(page, "Did we get this right?");
-  await page.getByTestId("reflect-confirm").click();
-  await heading(page, "Here’s your personalized plan");
-  await page.getByTestId("continue").click();
+  await heading(page, /^From .+ in \d+ weeks$/);
+  await page.getByTestId("reflect-confirm").filter({ visible: true }).click();
   await heading(page, "Ready to begin your Mandarin journey?");
   await page.getByLabel("Your first name").fill("Cameron");
 }
@@ -152,12 +150,9 @@ async function toPaywall(page: Page) {
 }
 
 function paywallCta(page: Page) {
-  return page.getByRole("button", { name: /^(Start my plan|Activate my plan|Start my Mandarin plan)/ }).filter({ visible: true }).first();
+  return page.getByRole("button", { name: /^(Start learning Mandarin|Start my plan|Activate my plan|Start my Mandarin plan)/ }).filter({ visible: true }).first();
 }
 
-function annualButton(page: Page) {
-  return page.getByRole("button", { name: /^Annual/ }).filter({ visible: true }).first();
-}
 
 for (const viewport of [
   { name: "mobile", width: 390, height: 844 },
@@ -170,8 +165,8 @@ for (const viewport of [
     test("a signed-in learner reaches Stripe Checkout with the chosen plan, and canceling returns to the paywall", async ({ page }) => {
       const mocks = await setup(page, { signedIn: true });
       await toPaywall(page);
-      await annualButton(page).click();
-      await expect(annualButton(page)).toHaveAttribute("aria-pressed", "true");
+      await page.goto("/onboarding/journey?resume=paywall&plan=yearly");
+      await expect(page.getByTestId("conversation-price")).toContainText("$79.99 billed yearly");
       await paywallCta(page).click();
 
       await page.waitForURL(STRIPE_URL, { timeout: 15_000 });
@@ -190,9 +185,45 @@ for (const viewport of [
 
       await page.goto(String(mocks.checkoutBodies[0].cancelPath));
       await expect(paywallCta(page)).toBeVisible({ timeout: 15_000 });
-      await expect(annualButton(page)).toHaveAttribute("aria-pressed", "true");
+      await expect(page.getByTestId("conversation-price")).toContainText("$79.99 billed yearly");
       expect(await page.evaluate(() => localStorage.getItem("lingo_onboarding_activate_v1"))).toBe("1");
       expect(mocks.checkoutBodies).toHaveLength(1);
+    });
+
+    test("monthly offer uses the saved answers, survives reload and reaches checkout", async ({ page }) => {
+      const mocks = await setup(page, { signedIn: true });
+      await toPaywall(page);
+      const card = page.getByTestId("conversation-paywall");
+      await expect(card.getByRole("heading", { name: "Mandarin that fits your workday." })).toBeVisible();
+      await expect(card.getByTestId("conversation-comparison")).toContainText("LingoIsland");
+      await expect(card.getByTestId("conversation-comparison")).toContainText("Typical apps");
+      await expect(card.getByRole("list", { name: "Membership benefits" }).getByRole("listitem")).toHaveCount(2);
+      await expect(card.getByRole("list", { name: "Membership benefits" })).toContainText(/meeting|ready|progress|stick|minutes/i);
+      await expect(card).toContainText("$9.99");
+      await expect(card).toContainText("Monthly plan");
+      await expect(card).toContainText("Billed monthly. Cancel anytime.");
+      await page.getByTestId("plan-yearly").click();
+      await expect(page.getByTestId("conversation-price")).toContainText("$79.99 billed yearly");
+      await page.getByTestId("plan-monthly").click();
+      await expect(page.getByTestId("conversation-price")).toContainText("Billed monthly. Cancel anytime.");
+      await expect(page.getByTestId("desktop-paywall-gap")).toHaveCount(0);
+      await expect(page.getByTestId("paywall-review")).toHaveCount(0);
+      await page.reload();
+      await expect(card.getByTestId("conversation-comparison")).toContainText("LingoIsland");
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await page.screenshot({ path: `test-results/payment-${viewport.name}.png`, fullPage: true });
+      await paywallCta(page).click();
+      await page.waitForURL(STRIPE_URL);
+      expect(mocks.checkoutBodies).toEqual([{ interval: "monthly", cancelContext: "onboarding", cancelPath: "/onboarding/journey?canceled=1&plan=monthly" }]);
+    });
+
+    test("closing the offer with X goes home", async ({ page }) => {
+      const mocks = await setup(page);
+      await toPaywall(page);
+      await page.getByRole("button", { name: "Close payment offer" }).click();
+      await page.waitForURL((url) => url.pathname === "/");
+      await expect(page.getByTestId("conversation-paywall")).toHaveCount(0);
+      expect(mocks.checkoutBodies).toEqual([]);
     });
 
     test("an account that already has Pro skips checkout and goes to plan activation", async ({ page }) => {

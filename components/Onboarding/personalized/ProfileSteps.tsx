@@ -7,6 +7,8 @@ import {
   CUSTOM_TEXT_MAX,
   GOALS,
   INTERESTS_BY_GOAL,
+  LET_US_DECIDE_KEY,
+  LET_US_DECIDE_OPTION,
   interestOptionsFor,
   normalizeCustomText,
   type GoalKey,
@@ -36,17 +38,39 @@ import {
 const INPUT =
   "w-full min-h-[48px] rounded-xl border bg-white px-4 py-3 text-[15px] focus:outline-none focus-visible:ring-2";
 
+const GOAL_LIMIT_MESSAGE = "Pick up to two reasons.";
+
 export function GoalStep({ state, update, next, back, progress, track }: StepProps) {
   const { primary, secondary, otherText } = state.answers.goal;
   const [text, setText] = useState(otherText ?? "");
+  const [error, setError] = useState<string | null>(null);
   const showOther = primary === "other" || secondary === "other";
+  const selected = (key: GoalKey) => primary === key || secondary === key;
 
-  const choosePrimary = (key: GoalKey) => {
-    update({ goal: { primary: key, secondary: secondary === key ? null : secondary, otherText: key === "other" || secondary === "other" ? otherText : null } });
-  };
-  const toggleSecondary = (key: GoalKey) => {
-    const nextSecondary = secondary === key ? null : key;
-    update({ goal: { primary, secondary: nextSecondary, otherText: primary === "other" || nextSecondary === "other" ? otherText : null } });
+  const toggle = (key: GoalKey) => {
+    let nextPrimary = primary;
+    let nextSecondary = secondary;
+    if (primary === key) {
+      nextPrimary = secondary;
+      nextSecondary = null;
+    } else if (secondary === key) {
+      nextSecondary = null;
+    } else if (!primary) {
+      nextPrimary = key;
+    } else if (!secondary) {
+      nextSecondary = key;
+    } else {
+      setError(GOAL_LIMIT_MESSAGE);
+      return;
+    }
+    setError(null);
+    update({
+      goal: {
+        primary: nextPrimary,
+        secondary: nextSecondary,
+        otherText: nextPrimary === "other" || nextSecondary === "other" ? otherText : null,
+      },
+    });
   };
 
   const submit = () => {
@@ -59,7 +83,7 @@ export function GoalStep({ state, update, next, back, progress, track }: StepPro
   return (
     <StepFrame
       title="Why do you want to learn Mandarin?"
-      subtitle="Pick your main reason. You can add a second one if you like."
+      subtitle="Pick up to two."
       progress={progress}
       onBack={back}
     >
@@ -68,32 +92,13 @@ export function GoalStep({ state, update, next, back, progress, track }: StepPro
           <OptionCard
             key={goal.key}
             testId={`goal-${goal.key}`}
-            selected={primary === goal.key}
-            onSelect={() => choosePrimary(goal.key)}
+            selected={selected(goal.key)}
+            onSelect={() => toggle(goal.key)}
             title={goal.label}
             description={goal.description}
-            badge={primary === goal.key ? "Main reason" : undefined}
           />
         ))}
       </div>
-
-      {primary ? (
-        <div className="mt-6">
-          <SectionLabel id="secondary-goal-label">Anything else? (optional)</SectionLabel>
-          <div role="group" aria-labelledby="secondary-goal-label" className="mt-2.5 flex flex-wrap gap-2">
-            {GOALS.filter((goal) => goal.key !== primary && goal.key !== "other").map((goal) => (
-              <ChipButton
-                key={goal.key}
-                testId={`secondary-goal-${goal.key}`}
-                selected={secondary === goal.key}
-                onToggle={() => toggleSecondary(goal.key)}
-              >
-                {goal.label}
-              </ChipButton>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {showOther ? (
         <div className="mt-6">
@@ -112,6 +117,7 @@ export function GoalStep({ state, update, next, back, progress, track }: StepPro
         </div>
       ) : null}
 
+      <FieldError message={error} />
       <PrimaryButton className="mt-8" disabled={!primary} onClick={submit} data-testid="continue">
         Continue
       </PrimaryButton>
@@ -125,15 +131,31 @@ export function InterestsStep({ state, update, next, back, progress, track }: St
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const lettingUsDecide = keys.includes(LET_US_DECIDE_KEY);
 
   const options: InterestOption[] = [];
   [...interestOptionsFor(primary, keys), ...(secondary ? INTERESTS_BY_GOAL[secondary] : [])].forEach((option) => {
+    if (option.key === LET_US_DECIDE_KEY) return;
     if (!options.some((existing) => existing.key === option.key)) options.push(option);
   });
 
   const toggle = (key: string) => {
-    const nextKeys = keys.includes(key) ? keys.filter((item) => item !== key) : [...keys, key];
+    if (key === LET_US_DECIDE_KEY) {
+      update({
+        interests: {
+          keys: lettingUsDecide ? [] : [LET_US_DECIDE_KEY],
+          custom: null,
+        },
+      });
+      setAdding(false);
+      setDraft("");
+      setError(null);
+      return;
+    }
+    const withoutDecide = keys.filter((item) => item !== LET_US_DECIDE_KEY);
+    const nextKeys = withoutDecide.includes(key) ? withoutDecide.filter((item) => item !== key) : [...withoutDecide, key];
     update({ interests: { keys: nextKeys, custom } });
+    setError(null);
   };
 
   const addCustom = () => {
@@ -143,7 +165,7 @@ export function InterestsStep({ state, update, next, back, progress, track }: St
       return;
     }
     setError(null);
-    update({ interests: { keys, custom: normalized } });
+    update({ interests: { keys: keys.filter((item) => item !== LET_US_DECIDE_KEY), custom: normalized } });
     setDraft("");
     setAdding(false);
   };
@@ -151,14 +173,19 @@ export function InterestsStep({ state, update, next, back, progress, track }: St
   const ready = keys.length > 0 || Boolean(custom);
   const submit = () => {
     if (!ready) return;
-    track(ONBOARDING_EVENTS.interestsSelected, { interests: keys, interest_count: keys.length + (custom ? 1 : 0), has_custom_interest: Boolean(custom) });
+    track(ONBOARDING_EVENTS.interestsSelected, {
+      interests: keys,
+      interest_count: keys.includes(LET_US_DECIDE_KEY) ? 0 : keys.length + (custom ? 1 : 0),
+      has_custom_interest: Boolean(custom),
+      let_us_decide: keys.includes(LET_US_DECIDE_KEY),
+    });
     next();
   };
 
   return (
     <StepFrame
       title="Which situations do you want to handle first?"
-      subtitle="Pick at least one. Your lessons and practice conversations will focus on these."
+      subtitle="Pick at least one, or let us choose for you."
       progress={progress}
       onBack={back}
     >
@@ -168,6 +195,13 @@ export function InterestsStep({ state, update, next, back, progress, track }: St
             {option.label}
           </ChipButton>
         ))}
+        <ChipButton
+          testId={`interest-${LET_US_DECIDE_KEY}`}
+          selected={lettingUsDecide}
+          onToggle={() => toggle(LET_US_DECIDE_KEY)}
+        >
+          {LET_US_DECIDE_OPTION.label}
+        </ChipButton>
         {custom ? (
           <span
             className="inline-flex min-h-[44px] items-center gap-1 rounded-full pl-4 pr-1 text-sm font-semibold"
@@ -184,7 +218,7 @@ export function InterestsStep({ state, update, next, back, progress, track }: St
             </button>
           </span>
         ) : null}
-        {!custom && !adding ? (
+        {!custom && !adding && !lettingUsDecide ? (
           <button
             type="button"
             onClick={() => setAdding(true)}
@@ -247,15 +281,27 @@ export function LevelStep({ state, update, next, back, progress, track }: StepPr
       progress={progress}
       onBack={back}
     >
-      <div role="group" aria-labelledby="onboarding-step-title" className="grid gap-2.5">
+      <div role="group" aria-labelledby="onboarding-step-title" className="grid gap-2">
         {SELF_REPORT_OPTIONS.map((option) => (
           <OptionCard
             key={option.key}
+            compact
             testId={`level-${option.key}`}
             selected={selected === option.key}
             onSelect={() => update({ level: { selfReport: option.key } })}
             title={option.label}
-            description={option.description}
+            description={
+              option.example ? (
+                <>
+                  {option.description}
+                  <span className="text-[#9AA8B5]"> · </span>
+                  <span lang="zh-Hans">{option.example.hanzi}</span>
+                  <span className="text-[#9AA8B5]"> · {option.example.gloss}</span>
+                </>
+              ) : (
+                option.description
+              )
+            }
           />
         ))}
       </div>

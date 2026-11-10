@@ -27,7 +27,7 @@ describe("pain-first step order", () => {
   it("asks experience, pains and reviews before the quiz for learners", () => {
     const steps = stepsFor(withLevel("few_words"));
     assert.deepEqual(steps.slice(0, 8), ["goal", "interests", "level", "experience", "using_pain", "learning_pain", "reviews", "calibration"]);
-    assert.ok(steps.indexOf("reflect") === steps.indexOf("building") + 1 && steps.indexOf("plan") === steps.indexOf("reflect") + 1);
+    assert.ok(steps.indexOf("reflect") === steps.indexOf("building") + 1 && steps.indexOf("commitment") === steps.indexOf("reflect") + 1);
   });
 
   it("skips the experience question and the quiz for complete beginners, but keeps pronunciation", () => {
@@ -239,7 +239,7 @@ describe("reflection and plan answers", () => {
     const reflection = reflectionFor(answers, plan);
     assert.equal(reflection.struggleLabel, "What\u2019s held you back");
     assert.equal(reflection.struggle, "You weren\u2019t sure you\u2019d have time.");
-    assert.match(reflection.goal, /in about \d+ to \d+ weeks\.$/);
+    assert.match(reflection.goal, /in about 12 weeks\.$/);
     assert.equal(planAnswers(answers, plan)[0], "10-minute lessons that fit your week");
   });
 });
@@ -287,7 +287,7 @@ describe("paywall copy", () => {
     const { planFor } = await import("../../lib/onboarding/personalized/flow");
     for (const keys of [["forget_words", "tones"], ["plateau", "no_practice"], ["not_relevant", "freeze_speaking"]] as const) {
       const answers = withLevel("simple_sentences", { learningPain: { keys: [...keys], hesitations: [] }, availability: { minutes: "15", days: "5", session: null } });
-      for (const line of paywallBenefits(answers, planFor(answers))) assert.doesNotMatch(line, /Huahua|Journey|Island/);
+      for (const benefit of paywallBenefits(answers, planFor(answers))) assert.doesNotMatch(`${benefit.title} ${benefit.detail}`, /Huahua|Journey|Island/);
     }
   });
 });

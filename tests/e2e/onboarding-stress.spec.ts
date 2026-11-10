@@ -238,13 +238,8 @@ const STEPS: Step[] = [
   },
   {
     name: "reflect",
-    heading: "Did we get this right?",
-    act: async (page, press) => press(page.getByTestId("reflect-confirm")),
-  },
-  {
-    name: "plan",
-    heading: "Here’s your personalized plan",
-    act: async (page, press) => press(page.getByTestId("continue")),
+    heading: /^From .+ in \d+ weeks$/,
+    act: async (page, press) => press(page.getByTestId("reflect-confirm").filter({ visible: true })),
   },
   {
     name: "commitment",
@@ -257,10 +252,7 @@ const STEPS: Step[] = [
 ];
 
 function paywallCta(page: Page) {
-  return page.getByRole("button", { name: /^(Start my plan|Activate my plan|Start my Mandarin plan|Starting checkout)/ }).filter({ visible: true }).first();
-}
-function planButton(page: Page, name: RegExp) {
-  return page.getByRole("button", { name }).filter({ visible: true }).first();
+  return page.getByRole("button", { name: /^(Start learning Mandarin|Start my plan|Activate my plan|Start my Mandarin plan|Starting checkout)/ }).filter({ visible: true }).first();
 }
 
 async function walk(page: Page, options: { press?: Press; from?: string; until?: string; each?: (step: Step) => Promise<void> } = {}) {
@@ -268,6 +260,8 @@ async function walk(page: Page, options: { press?: Press; from?: string; until?:
   for (const step of STEPS.slice(first)) {
     if (step.name === options.until) return;
     await heading(page, step.heading, 20_000);
+    // Wait out the nav lock so a real Continue isn't blocked after the previous step.
+    await expect(page.getByTestId("onboarding-step")).toHaveAttribute("data-nav-ready", "true", { timeout: 5_000 });
     await options.each?.(step);
     await step.act(page, options.press ?? click);
   }
@@ -374,13 +368,11 @@ for (const viewport of VIEWPORTS) {
       expect(mocks.checkoutBodies).toHaveLength(1);
     });
 
-    test("switching plans rapidly checks out the last plan picked", async ({ page }) => {
+    test("a resumed annual offer displays and charges the same interval", async ({ page }) => {
       const mocks = await setup(page, { signedIn: true });
       await toPaywall(page);
-      for (let index = 0; index < 15; index += 1) {
-        await planButton(page, index % 2 === 0 ? /^Annual/ : /^Monthly/).click({ delay: 0 });
-      }
-      await expect(planButton(page, /^Annual/)).toHaveAttribute("aria-pressed", "true");
+      await page.goto("/onboarding/journey?resume=paywall&plan=yearly");
+      await expect(page.getByTestId("conversation-price")).toContainText("$79.99 billed yearly");
       await paywallCta(page).click();
       await page.waitForURL(STRIPE_URL, { timeout: 15_000 });
       expect(mocks.checkoutBodies[0]?.interval).toBe("yearly");
@@ -412,7 +404,7 @@ for (const viewport of VIEWPORTS) {
       ] as const) {
         await page.goto(`/onboarding/journey?${query}`);
         await expect(paywallCta(page), query).toBeVisible({ timeout: 15_000 });
-        await expect(planButton(page, /^Annual/), query).toHaveAttribute("aria-pressed", annual ? "true" : "false");
+        await expect(page.getByTestId("conversation-price"), query).toContainText(annual ? "$79.99 billed yearly" : "Billed monthly.");
       }
       expect(mocks.checkoutBodies).toEqual([]);
       expect(mocks.pageErrors).toEqual([]);
@@ -563,7 +555,7 @@ test.describe("stress: saved data and network", () => {
     await page.goto("/onboarding/journey");
     await walk(page, { until: "reflect" });
     const started = Date.now();
-    await heading(page, "Did we get this right?", 12_000);
+    await heading(page, /^From .+ in \d+ weeks$/, 12_000);
     test.info().annotations.push({ type: "building to reflection", description: `${Date.now() - started} ms` });
   });
 
