@@ -228,8 +228,13 @@ export function PlanStep({ state, next, back, progress, track }: StepProps) {
       </dl>
 
       <h2 className="mt-6 text-[15px] font-bold" style={{ color: NAVY }}>
-        Your first lessons
+        {plan.journeysHeading}
       </h2>
+      {plan.journeysNote ? (
+        <p className="mt-1 text-sm leading-relaxed" style={{ color: MUTED }} data-testid="plan-journeys-note">
+          {plan.journeysNote}
+        </p>
+      ) : null}
       <ol className="mt-2 flex flex-col gap-2" data-testid="plan-journeys">
         {plan.journeys.map((journey, index) => (
           <li

@@ -339,9 +339,43 @@ describe("plan", () => {
     const plan = buildPlan({ goal: "work", interestKeys: ["meetings", "clients", "sales", "finance"], provisionalLevel: 3, minutes: "10", days: "5" });
     assert.equal(plan.journeys.length, 3);
     assert.equal(plan.journeys[0].title, "Speaking up in meetings");
+    assert.equal(plan.journeysHeading, "Your first lessons");
+    assert.equal(plan.journeysNote, null);
     const sparse = buildPlan({ goal: "everyday", interestKeys: [], provisionalLevel: 0, minutes: "5", days: "2" });
     assert.ok(sparse.journeys.length >= 2 && sparse.journeys.length <= 3);
     assert.equal(sparse.benefit, "Start with small, useful steps without feeling overwhelmed.");
+  });
+
+  it("keeps first lessons on-goal instead of padding with daily routine", () => {
+    const plan = buildPlan({
+      goal: "heritage",
+      interestKeys: ["family_conversations"],
+      provisionalLevel: 2,
+      minutes: "10",
+      days: "3",
+    });
+    assert.equal(plan.journeys[0].title, "Catching up with family");
+    assert.ok(plan.journeys.every((journey) => journey.key !== "everyday_life"));
+    assert.deepEqual(
+      plan.journeys.map((journey) => journey.key),
+      ["family_conversations", "food"],
+    );
+    assert.match(plan.journeys[1].title, /food/i);
+  });
+
+  it("is honest with absolute beginners who want an advanced topic", () => {
+    const plan = buildPlan({
+      goal: "work",
+      interestKeys: ["finance"],
+      provisionalLevel: 0,
+      minutes: "10",
+      days: "5",
+    });
+    assert.equal(plan.journeysHeading, "What your lessons will teach you");
+    assert.match(plan.journeysNote ?? "", /foundations.*finance/i);
+    assert.equal(plan.journeys[0].title, "Greeting people at work");
+    assert.equal(plan.journeys[1].title, "Numbers and money words you'll need for finance");
+    assert.ok(!plan.journeys.some((journey) => /budgets/i.test(journey.title)));
   });
 
   it("normalizes custom interests", () => {

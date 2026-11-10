@@ -255,6 +255,8 @@ export const LANDING_COMPARE = {
 export type LearnerTestimonial = {
   quote: string;
   role: string;
+  /** Capybara icon under public/, used as the review avatar. */
+  image: string;
   /**
    * What this learner had in common with others, so onboarding can show the
    * closest reviews first. Keys match onboarding goal and interest keys;
@@ -271,6 +273,7 @@ export const LEARNER_TESTIMONIALS: LearnerTestimonial[] = [
     quote:
       "I spoke some Mandarin at home growing up, but I still struggled with clients from China. LingoIsland helped me focus on the business vocabulary I actually needed, and I now feel much more confident building connections.",
     role: "Business and heritage learner",
+    image: "/characters/capybara-profile.png",
     match: {
       goals: ["work", "heritage"],
       interests: ["clients", "networking", "meetings", "family_conversations"],
@@ -283,6 +286,7 @@ export const LEARNER_TESTIMONIALS: LearnerTestimonial[] = [
     quote:
       "I have little time to study, so focusing on common business and banking vocabulary made a huge difference. My conversations with Chinese clients now feel more natural and productive.",
     role: "Finance professional",
+    image: "/characters/capybara-finance.png",
     match: {
       goals: ["work"],
       interests: ["finance", "clients", "meetings", "sales"],
@@ -294,6 +298,7 @@ export const LEARNER_TESTIMONIALS: LearnerTestimonial[] = [
     quote:
       "As a doctor, I do not need every Mandarin word. I need the right medical terms for my patients. LingoIsland gave me a focused plan built around the vocabulary I use at work.",
     role: "Medical professional",
+    image: "/characters/capybara-medical.png",
     match: {
       goals: ["work", "school"],
       interests: ["medicine", "science"],
@@ -305,6 +310,7 @@ export const LEARNER_TESTIMONIALS: LearnerTestimonial[] = [
     quote:
       "LingoIsland helped me prepare for China with vocabulary for airports, subways, restaurants, and attractions. Speaking with locals made the entire trip more rewarding.",
     role: "Traveler",
+    image: "/characters/capybara-traveler.png",
     match: {
       goals: ["travel"],
       interests: ["restaurants", "transportation", "sightseeing", "meeting_locals", "hotels", "shopping"],

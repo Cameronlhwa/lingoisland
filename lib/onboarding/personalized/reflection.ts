@@ -32,7 +32,7 @@ const LEARNING_PAIN_YOU: Record<LearningPainKey, string> = {
   not_relevant: "Lessons weren\u2019t about things you actually need.",
   freeze_speaking: "You recognize words but freeze when speaking.",
   plateau: "You\u2019ve stopped improving.",
-  inconsistent: "It\u2019s hard to stay consistent with your schedule.",
+  inconsistent: "You don\u2019t have enough time.",
   no_practice: "You have no one to practise with.",
   tones: "Tones and pronunciation feel tricky.",
 };

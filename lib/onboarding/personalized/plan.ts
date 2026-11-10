@@ -148,55 +148,159 @@ export function formatRange([low, high]: [number, number]): string {
 
 export type JourneySuggestion = { key: string; title: string; minutes: number };
 
-const JOURNEYS: Record<string, { title: string; beginner: string }> = {
-  clients: { title: "Building rapport with clients", beginner: "Greeting a client" },
-  finance: { title: "Talking about numbers and budgets", beginner: "Numbers and prices at work" },
-  meetings: { title: "Speaking up in meetings", beginner: "Introducing yourself in a meeting" },
-  networking: { title: "Small talk at networking events", beginner: "Saying who you are and what you do" },
-  sales: { title: "Presenting a product", beginner: "Describing what your company does" },
-  technology: { title: "Talking about tech at work", beginner: "Everyday tech words" },
-  entrepreneurship: { title: "Pitching your idea", beginner: "Talking about your business" },
-  school_life: { title: "A day on campus", beginner: "Classroom basics" },
-  presentations: { title: "Giving a short presentation", beginner: "Introducing your topic" },
-  science: { title: "Explaining a science idea", beginner: "Science words you see in class" },
-  engineering: { title: "Describing how things work", beginner: "Tools and projects" },
-  medicine: { title: "Talking about health", beginner: "At the doctor" },
-  current_events: { title: "Chatting about the news", beginner: "What happened today" },
-  family_conversations: { title: "Catching up with family", beginner: "Greeting your family" },
-  food: { title: "Talking about food you love", beginner: "Ordering your favorite dish" },
-  traditions: { title: "Holidays and traditions", beginner: "Holiday greetings" },
-  childhood: { title: "Sharing childhood memories", beginner: "Talking about when you were young" },
-  everyday_life: { title: "Your daily routine", beginner: "Talking about your day" },
-  restaurants: { title: "Ordering at a restaurant", beginner: "Ordering food and drinks" },
-  transportation: { title: "Getting around the city", beginner: "Taking a taxi" },
-  hotels: { title: "Checking in at a hotel", beginner: "Asking for your room" },
-  shopping: { title: "Shopping and bargaining", beginner: "Asking how much it costs" },
-  sightseeing: { title: "Asking for directions while sightseeing", beginner: "Finding your way" },
-  meeting_locals: { title: "Making friends with locals", beginner: "Introducing yourself" },
-  friends: { title: "Making plans with friends", beginner: "Saying hi to a friend" },
-  entertainment: { title: "Movies, shows, and music", beginner: "Saying what you like to watch" },
-  hobbies: { title: "Talking about your hobbies", beginner: "Saying what you enjoy" },
-  relationships: { title: "Talking about the people in your life", beginner: "Describing people you know" },
+type JourneyEntry = { title: string; beginner: string; /** Absolute beginners: honest on-ramp, not the full topic. */ foundation?: string };
+
+const JOURNEYS: Record<string, JourneyEntry> = {
+  clients: { title: "Building rapport with clients", beginner: "Greeting a client", foundation: "Greeting people at work" },
+  finance: {
+    title: "Talking about numbers and budgets",
+    beginner: "Numbers and prices at work",
+    foundation: "Numbers and money words you'll need for finance",
+  },
+  meetings: { title: "Speaking up in meetings", beginner: "Introducing yourself in a meeting", foundation: "Saying who you are at work" },
+  networking: { title: "Small talk at networking events", beginner: "Saying who you are and what you do", foundation: "Introducing yourself" },
+  sales: { title: "Presenting a product", beginner: "Describing what your company does", foundation: "Talking about what you do" },
+  technology: { title: "Talking about tech at work", beginner: "Everyday tech words", foundation: "Simple tech words you will use later" },
+  entrepreneurship: { title: "Pitching your idea", beginner: "Talking about your business", foundation: "Saying what your idea is about" },
+  school_life: { title: "A day on campus", beginner: "Classroom basics", foundation: "Classroom basics" },
+  presentations: { title: "Giving a short presentation", beginner: "Introducing your topic", foundation: "Introducing a simple topic" },
+  science: { title: "Explaining a science idea", beginner: "Science words you see in class", foundation: "Simple words for how things work" },
+  engineering: { title: "Describing how things work", beginner: "Tools and projects", foundation: "Words for tools and projects" },
+  medicine: { title: "Talking about health", beginner: "At the doctor", foundation: "Body and health basics" },
+  current_events: { title: "Chatting about the news", beginner: "What happened today", foundation: "Talking about your day" },
+  family_conversations: { title: "Catching up with family", beginner: "Greeting your family", foundation: "Greeting your family" },
+  food: { title: "Talking about food you love", beginner: "Ordering your favorite dish", foundation: "Food words with family" },
+  traditions: { title: "Holidays and traditions", beginner: "Holiday greetings", foundation: "Holiday greetings" },
+  childhood: { title: "Sharing childhood memories", beginner: "Talking about when you were young", foundation: "Talking about family" },
+  everyday_life: { title: "Your daily routine", beginner: "Talking about your day", foundation: "Talking about your day" },
+  restaurants: { title: "Ordering at a restaurant", beginner: "Ordering food and drinks", foundation: "Ordering food and drinks" },
+  transportation: { title: "Getting around the city", beginner: "Taking a taxi", foundation: "Asking for a ride" },
+  hotels: { title: "Checking in at a hotel", beginner: "Asking for your room", foundation: "Useful hotel phrases" },
+  shopping: { title: "Shopping and bargaining", beginner: "Asking how much it costs", foundation: "Asking how much it costs" },
+  sightseeing: { title: "Asking for directions while sightseeing", beginner: "Finding your way", foundation: "Finding your way" },
+  meeting_locals: { title: "Making friends with locals", beginner: "Introducing yourself", foundation: "Introducing yourself" },
+  friends: { title: "Making plans with friends", beginner: "Saying hi to a friend", foundation: "Saying hi to a friend" },
+  entertainment: { title: "Movies, shows, and music", beginner: "Saying what you like to watch", foundation: "Saying what you like" },
+  hobbies: { title: "Talking about your hobbies", beginner: "Saying what you enjoy", foundation: "Saying what you enjoy" },
+  relationships: { title: "Talking about the people in your life", beginner: "Describing people you know", foundation: "Talking about people you know" },
 };
 
-export function firstJourneys(input: { interestKeys: readonly string[]; customInterest?: string | null; level: number; minutesPerDay: number }): JourneySuggestion[] {
-  const beginner = isBeginnerLevel(input.level);
-  const minutes = Math.min(input.minutesPerDay, beginner ? 10 : 20);
+/** Topics that need real Mandarin foundations before the named subject is realistic. */
+const NEEDS_FOUNDATION = new Set([
+  "finance",
+  "science",
+  "engineering",
+  "medicine",
+  "entrepreneurship",
+  "technology",
+  "current_events",
+  "presentations",
+  "sales",
+]);
+
+/** Extra lessons that stay on-goal when the learner only picked one interest. */
+const GOAL_FALLBACKS: Record<GoalKey, readonly string[]> = {
+  work: ["meetings", "clients", "networking"],
+  school: ["school_life", "presentations", "current_events"],
+  heritage: ["family_conversations", "food", "traditions", "childhood"],
+  travel: ["restaurants", "transportation", "meeting_locals"],
+  everyday: ["friends", "food", "hobbies"],
+  other: ["friends", "food", "hobbies"],
+};
+
+const GOAL_OPENERS: Record<GoalKey, { key: string; title: string; covers: readonly string[] }> = {
+  work: { key: "work_open", title: "Greeting people at work", covers: ["clients", "meetings", "networking"] },
+  school: { key: "school_open", title: "Classroom basics", covers: ["school_life"] },
+  heritage: { key: "family_open", title: "Greeting your family", covers: ["family_conversations"] },
+  travel: { key: "travel_open", title: "Useful first travel phrases", covers: ["meeting_locals", "restaurants"] },
+  everyday: { key: "everyday_open", title: "Saying hello and introducing yourself", covers: ["friends", "relationships"] },
+  other: { key: "everyday_open", title: "Saying hello and introducing yourself", covers: ["friends", "relationships"] },
+};
+
+function titleFor(key: string, level: number): string | null {
+  const entry = JOURNEYS[key];
+  if (!entry) return null;
+  if (level <= 0) return entry.foundation ?? entry.beginner;
+  if (level <= 2 && NEEDS_FOUNDATION.has(key)) return entry.beginner;
+  if (isBeginnerLevel(level)) return entry.beginner;
+  return entry.title;
+}
+
+function customTitle(custom: string, level: number): string {
+  const trimmed = custom.trim();
+  if (level <= 1) return `Words and phrases for ${trimmed}`;
+  if (level <= 2 && trimmed.length > 0) return `Getting ready to talk about ${trimmed}`;
+  return `Talking about ${trimmed}`;
+}
+
+export function journeysPresentation(
+  level: number,
+  interestKeys: readonly string[],
+  customInterest?: string | null,
+): { heading: string; note: string | null } {
+  const advanced = interestKeys.some((key) => NEEDS_FOUNDATION.has(key)) || Boolean(customInterest && level <= 2);
+  const focus = interestKeys.map((key) => getInterest(key)?.label.toLowerCase()).find(Boolean) ?? (customInterest ? customInterest.trim().toLowerCase() : null);
+  if (level <= 1) {
+    return {
+      heading: "What your lessons will teach you",
+      note: focus && advanced
+        ? `We start with the foundations, then build toward ${focus}.`
+        : "We start with small, useful steps that match where you are.",
+    };
+  }
+  if (level <= 2 && advanced && focus) {
+    return {
+      heading: "What your lessons will teach you",
+      note: `Your early lessons build the Mandarin you will need for ${focus}.`,
+    };
+  }
+  return { heading: "Your first lessons", note: null };
+}
+
+export function firstJourneys(input: {
+  goal: GoalKey | null;
+  interestKeys: readonly string[];
+  customInterest?: string | null;
+  level: number;
+  minutesPerDay: number;
+}): JourneySuggestion[] {
+  const level = clampLevel(input.level);
+  const goal = input.goal ?? "everyday";
+  const minutes = Math.min(input.minutesPerDay, level <= 1 ? 10 : 20);
   const picks: JourneySuggestion[] = [];
+  const used = new Set<string>();
+
+  const push = (key: string, title: string) => {
+    if (used.has(key) || picks.length >= 3) return;
+    used.add(key);
+    picks.push({ key, title, minutes });
+  };
+
+  // Absolute beginners always get a gentle opener before any advanced topic.
+  if (level === 0) {
+    const opener = GOAL_OPENERS[goal];
+    if (!opener.covers.some((key) => input.interestKeys.includes(key))) {
+      push(opener.key, opener.title);
+    }
+  }
+
   input.interestKeys.forEach((key) => {
-    const entry = JOURNEYS[key];
-    if (!entry || picks.length >= 3) return;
-    picks.push({ key, title: beginner ? entry.beginner : entry.title, minutes });
+    const title = titleFor(key, level);
+    if (title) push(key, title);
   });
   if (input.customInterest && picks.length < 3) {
-    picks.push({ key: "custom", title: `Talking about ${input.customInterest}`, minutes });
+    push("custom", customTitle(input.customInterest, level));
+  }
+
+  // Stay on-goal when only one interest was picked. Never pad with an unrelated "daily routine".
+  for (const key of GOAL_FALLBACKS[goal]) {
+    if (picks.length >= 2) break;
+    const title = titleFor(key, level);
+    if (title) push(key, title);
   }
   if (picks.length < 2) {
-    const fallback = beginner ? JOURNEYS.everyday_life.beginner : JOURNEYS.everyday_life.title;
-    if (!picks.some((pick) => pick.title === fallback)) picks.push({ key: "everyday_life", title: fallback, minutes });
-  }
-  if (picks.length < 2) {
-    picks.push({ key: "food", title: beginner ? JOURNEYS.food.beginner : JOURNEYS.food.title, minutes });
+    const title = titleFor("food", level) ?? JOURNEYS.food.beginner;
+    push("food", title);
   }
   return picks.slice(0, 3);
 }
@@ -253,6 +357,10 @@ export type LearningPlan = {
   defaultSupportStyle: SupportStyle;
   milestone: { key: MilestoneKey; text: string; range: string; weeks: [number, number] };
   journeys: JourneySuggestion[];
+  /** "Your first lessons" for ready learners; a foundations framing for beginners. */
+  journeysHeading: string;
+  /** Short honesty note under the heading when lessons are foundations first. */
+  journeysNote: string | null;
   /** Topic used for the first generated Journey. */
   journeyTopic: string;
 };
@@ -266,11 +374,13 @@ export function buildPlan(input: PlanInput): LearningPlan {
   const weeks = scaleWeeks(milestoneRule.weeks, weeklyMinutes);
   const interests = interestLabels(input.interestKeys, input.customInterest ?? null);
   const journeys = firstJourneys({
+    goal: input.goal,
     interestKeys: input.interestKeys,
     customInterest: input.customInterest,
     level,
     minutesPerDay,
   });
+  const presentation = journeysPresentation(level, input.interestKeys, input.customInterest);
   const sessionPreference = needsSessionPreference(input.minutes) ? input.sessionPreference ?? "auto" : null;
   const sessionSplit = sessionPreference === "one_session"
     ? `One ${minutesPerDay}-minute session`
@@ -306,6 +416,8 @@ export function buildPlan(input: PlanInput): LearningPlan {
     defaultSupportStyle: defaultSupportStyle(level),
     milestone: { key: milestoneRule.key, text: milestoneRule.text, range: formatRange(weeks), weeks },
     journeys,
+    journeysHeading: presentation.heading,
+    journeysNote: presentation.note,
     journeyTopic: journeys[0]?.title ?? (getInterest(input.interestKeys[0] ?? "")?.label ?? "Everyday conversations"),
   };
 }
