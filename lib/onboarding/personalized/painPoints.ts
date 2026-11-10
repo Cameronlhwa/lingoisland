@@ -197,7 +197,7 @@ export const LEARNING_PAIN_OPTIONS: readonly PainOption<LearningPainKey>[] = [
   { key: "not_relevant", label: "Lessons weren't about things I actually need" },
   { key: "freeze_speaking", label: "I recognize words but freeze when speaking" },
   { key: "plateau", label: "I've stopped improving" },
-  { key: "inconsistent", label: "It's hard to stay consistent with my schedule" },
+  { key: "inconsistent", label: "I don't have enough time" },
   { key: "no_practice", label: "I have no one to practise with" },
   { key: "tones", label: "Tones and pronunciation" },
 ];

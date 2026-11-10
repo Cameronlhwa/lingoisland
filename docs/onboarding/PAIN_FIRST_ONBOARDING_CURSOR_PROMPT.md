@@ -151,7 +151,7 @@ Plus optional free text "What's coming up?" (placeholder per goal, e.g. work: "F
 | `not_relevant` | Lessons weren't about things I actually need |
 | `freeze_speaking` | I recognize words but freeze when speaking |
 | `plateau` | I've stopped improving |
-| `inconsistent` | It's hard to stay consistent with my schedule |
+| `inconsistent` | I don't have enough time |
 | `no_practice` | I have no one to practise with |
 | `tones` | Tones and pronunciation |
 
