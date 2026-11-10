@@ -104,8 +104,8 @@ export default function Home() {
             Learn the Mandarin you{" "}
             <BrushUnderline variant="brush" color="var(--lingo-accent, #EC7D28)">
               actually need
-            </BrushUnderline>{" "}
-            in 10 minutes a day.
+            </BrushUnderline>
+            .
           </span>
         }
         subtitle="Personalized lessons for your work, studies, and real life."

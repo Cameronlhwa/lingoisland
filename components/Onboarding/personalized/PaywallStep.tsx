@@ -5,7 +5,7 @@ import OnboardingUpgradeClient from "@/app/onboarding/upgrade/OnboardingUpgradeC
 import type { PaywallActivation } from "@/components/Onboarding/OnboardingPaywall";
 import { ONBOARDING_EVENTS } from "@/lib/onboarding/personalized/analytics";
 import { hasMessaging, planFor, type OnboardingState } from "@/lib/onboarding/personalized/flow";
-import { paywallBenefits, paywallHeadline, paywallReview, paywallSubline } from "@/lib/onboarding/personalized/paywallCopy";
+import { conversationOffer } from "@/lib/onboarding/personalized/conversationOffer";
 import { getGoal } from "@/lib/onboarding/personalized/goals";
 import type { LearningPlan } from "@/lib/onboarding/personalized/plan";
 import { timingHasEvent } from "@/lib/onboarding/personalized/painPoints";
@@ -21,17 +21,10 @@ function timeLabelFor(minutes: number) {
   return `${minutes}min`;
 }
 
-export function activationCopy(plan: LearningPlan, state: OnboardingState): Omit<PaywallActivation, "onNotNow"> {
-  const benefits = paywallBenefits(state.answers, plan);
+export function activationCopy(plan: LearningPlan, state: OnboardingState): Omit<PaywallActivation, "onNotNow" | "onClose"> {
   return {
+    ...conversationOffer(state.answers, plan),
     eyebrow: "Your plan is ready",
-    headline: paywallHeadline(state.answers, plan),
-    subline: paywallSubline(plan),
-    desktopBenefits: benefits,
-    benefits: benefits.map((title) => ({ title, detail: "" })),
-    review: paywallReview(state.answers),
-    showSpeakingPractice: state.answers.pronunciation.status === "completed",
-    cta: "Start my plan",
     savedNote: "Your plan is saved, even if you close this page.",
     notNowLabel: "Not now",
   };
@@ -43,10 +36,13 @@ export function PaywallStep({
   mode,
   onBeforeCheckout,
   onNotNow,
+  onClose,
 }: Pick<StepProps, "state" | "track"> & {
   mode: FlowMode;
   onBeforeCheckout: () => Promise<void>;
   onNotNow: () => void;
+  /** X button: leave onboarding and go home. */
+  onClose: () => void;
 }) {
   const plan = useMemo(() => planFor(state.answers), [state.answers]);
   const viewedRef = useRef(false);
@@ -87,7 +83,11 @@ export function PaywallStep({
     track(ONBOARDING_EVENTS.holdPlanOpened);
     setHoldOpen(true);
   };
-  const activation: PaywallActivation = { ...activationCopy(plan, state), onNotNow: openHold };
+  const activation: PaywallActivation = {
+    ...activationCopy(plan, state),
+    onClose,
+    onNotNow: openHold,
+  };
 
   return (
     <>
@@ -100,7 +100,8 @@ export function PaywallStep({
           track(ONBOARDING_EVENTS.holdPlanSaved);
           onNotNow();
         }}
-        onSkip={onNotNow}
+        // "No thanks" keeps them on the paywall: some people close the panel and then decide to buy.
+        onSkip={() => setHoldOpen(false)}
       />
     ) : null}
     <OnboardingUpgradeClient

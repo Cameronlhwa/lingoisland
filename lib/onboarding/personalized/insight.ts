@@ -23,7 +23,7 @@ import {
 import type { LearningPlan } from "./plan";
 import { goalLine, reflectionFor } from "./reflection";
 
-export const INSIGHT_MAX_WORDS = 35;
+export const INSIGHT_MAX_WORDS = 40;
 
 // ---------------------------------------------------------------------------
 // Staleness key

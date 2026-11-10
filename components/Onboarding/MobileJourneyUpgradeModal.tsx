@@ -69,6 +69,8 @@ interface MobileJourneyUpgradeModalProps {
     onNotNow?: () => void;
     review?: { quote: string; role: string } | null;
     showSpeakingPractice?: boolean;
+    gap?: { fromLabel: string; from: string; toLabel: string; to: string };
+    levelChip?: string;
   };
 }
 
@@ -169,6 +171,20 @@ export default function MobileJourneyUpgradeModal({
         className="relative z-10 -mt-6 flex-1 shrink-0 rounded-t-[26px] bg-white px-5 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
         style={{ boxShadow: "0 -10px 30px -18px rgba(7,30,46,0.35)" }}
       >
+        {activation?.gap ? (
+          <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-1.5" data-testid="mobile-paywall-gap">
+            <div className="rounded-xl px-3 py-2" style={{ background: "rgba(217,115,90,0.08)", border: "1px solid rgba(217,115,90,0.3)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "#B5543C" }}>{activation.gap.fromLabel}</p>
+              <p className="text-[13px] font-bold leading-snug" style={{ color: BROWN }}>{activation.gap.from}</p>
+            </div>
+            <div className="flex items-center text-[18px] font-bold" style={{ color: GREEN }} aria-hidden>&rarr;</div>
+            <div className="rounded-xl px-3 py-2" style={{ background: "rgba(32,103,79,0.09)", border: "1px solid rgba(32,103,79,0.3)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: GREEN }}>{activation.gap.toLabel}</p>
+              <p className="text-[13px] font-bold leading-snug" style={{ color: BROWN }}>{activation.gap.to}</p>
+            </div>
+          </div>
+        ) : (
+        <>
         <h2 className="text-[15px] font-bold" style={{ color: BROWN }}>
           {lessonHeading}
         </h2>
@@ -219,6 +235,8 @@ export default function MobileJourneyUpgradeModal({
           </li>
           )}
         </ol>
+        </>
+        )}
 
         {activation ? (
           <ul className="mt-3 grid grid-cols-1 gap-1.5" aria-label="What activating your plan includes">
@@ -227,7 +245,10 @@ export default function MobileJourneyUpgradeModal({
                 <span aria-hidden className="mt-[3px] inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: GREEN }}>
                   ✓
                 </span>
-                <span className="font-medium">{benefit.title}</span>
+                <span>
+                  <span className="block font-bold">{benefit.title}</span>
+                  {benefit.detail ? <span className="block text-[12px]" style={{ color: MUTED_BLUE }}>{benefit.detail}</span> : null}
+                </span>
               </li>
             ))}
           </ul>

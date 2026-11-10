@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cefrToHsk, hskLabelForCefr } from "@/lib/levelBands";
 import Button from "@/components/ui/Button";
+import ConversationPaywall from "./ConversationPaywall";
 import Card from "@/components/ui/Card";
 import Chip from "@/components/ui/Chip";
 import LearningPaceChart from "@/components/Onboarding/LearningPaceChart";
@@ -121,9 +122,16 @@ const BENEFITS: {
 
 /** Frames the paywall as activating a plan the learner already built. */
 export type PaywallActivation = {
+  presentation?: "conversation";
+  illustration?: string;
+  levelNote?: string;
   eyebrow: string;
   headline: string;
   subline: string;
+  /** Compact pace callout shown on the conversation paywall. */
+  highlight?: { title: string; detail: string };
+  /** LingoIsland vs typical-apps progress comparison. */
+  comparison?: { title: string; weeks: number; lingoLabel?: string; otherLabel?: string };
   desktopEyebrow?: string;
   desktopHeadline?: string;
   desktopSubline?: string;
@@ -132,11 +140,17 @@ export type PaywallActivation = {
   cta: string;
   savedNote: string;
   notNowLabel?: string;
+  /** X close: leave the offer (usually home). Falls back to onNotNow when omitted. */
+  onClose?: () => void;
   onNotNow?: () => void;
   /** A real learner review matched to this learner; replaces the founder quote. */
   review?: { quote: string; role: string } | null;
   /** Shows the speaking-practice row only when the learner tried pronunciation. */
   showSpeakingPractice?: boolean;
+  /** "Today -> by week N" bar, the same gap the reflection screen draws. */
+  gap?: { fromLabel: string; from: string; toLabel: string; to: string };
+  /** Plain-language level chip (e.g. "Starting from scratch") instead of an HSK label. */
+  levelChip?: string;
 };
 
 type JourneyNode = {
@@ -256,6 +270,21 @@ export default function OnboardingPaywall({
     );
   };
 
+  if (activation?.presentation === "conversation") {
+    return (
+      <ConversationPaywall
+        activation={activation}
+        pricing={PLAN_PRICING}
+        billingInterval={billingInterval}
+        onBillingIntervalChange={onBillingIntervalChange}
+        fullPage={fullPage}
+        checkoutLoading={checkoutLoading}
+        checkoutError={checkoutError}
+        onProceedCheckout={onProceedCheckout}
+      />
+    );
+  }
+
   return (
     <>
       <MobileJourneyUpgradeModal
@@ -322,6 +351,19 @@ export default function OnboardingPaywall({
                 {activation.desktopSubline ?? activation.subline}
               </p>
 
+              {activation.gap ? (
+                <div className="mx-auto mt-6 grid max-w-[600px] grid-cols-[1fr_auto_1fr] items-stretch gap-2 text-left" data-testid="desktop-paywall-gap">
+                  <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(217,115,90,0.08)", border: "1px solid rgba(217,115,90,0.3)" }}>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: "#B5543C" }}>{activation.gap.fromLabel}</p>
+                    <p className="mt-0.5 text-[15px] font-bold leading-snug text-[var(--lingo-navy)]">{activation.gap.from}</p>
+                  </div>
+                  <div className="flex items-center text-[22px] font-bold text-[var(--lingo-teal)]" aria-hidden>&rarr;</div>
+                  <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(32,103,79,0.09)", border: "1px solid rgba(32,103,79,0.3)" }}>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--lingo-teal)]">{activation.gap.toLabel}</p>
+                    <p className="mt-0.5 text-[15px] font-bold leading-snug text-[var(--lingo-navy)]">{activation.gap.to}</p>
+                  </div>
+                </div>
+              ) : (
               <ol className="mx-auto mt-5 flex max-w-[500px] flex-col gap-2 text-left" aria-label={lessonHeading} data-testid="desktop-paywall-lessons">
                 {previewUnits.slice(0, 2).map((unit, index) => (
                   <li
@@ -336,12 +378,14 @@ export default function OnboardingPaywall({
                   </li>
                 ))}
               </ol>
+              )}
 
+              {activation.gap ? null : (
               <ul className="mt-5 flex flex-wrap justify-center gap-2.5" aria-label="Your personalized plan">
                 <li>
                   <Chip>
                     <BarChart3 size={14} strokeWidth={2.3} className="text-[var(--lingo-teal)]" aria-hidden />
-                    {levelChip}
+                    {activation.levelChip ?? levelChip}
                   </Chip>
                 </li>
                 <li>
@@ -359,9 +403,25 @@ export default function OnboardingPaywall({
                   </li>
                 ) : null}
               </ul>
+              )}
 
               <ul className="mx-auto mt-6 max-w-[500px] space-y-3 text-left" aria-label="Membership benefits">
-                {compactBenefits.map((benefit) => (
+                {activation.benefits.some((benefit) => benefit.detail)
+                  ? activation.benefits.map((benefit) => (
+                      <li key={benefit.title} className="flex items-start gap-3 text-[var(--lingo-navy)]">
+                        <span
+                          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                          style={{ background: "rgba(32,103,79,0.10)" }}
+                        >
+                          <Check size={16} strokeWidth={2.8} className="text-[var(--lingo-teal)]" aria-hidden />
+                        </span>
+                        <span>
+                          <span className="block text-[15px] font-bold leading-snug">{benefit.title}</span>
+                          <span className="block text-[14px] leading-snug" style={{ color: MUTED }}>{benefit.detail}</span>
+                        </span>
+                      </li>
+                    ))
+                  : compactBenefits.map((benefit) => (
                   <li key={benefit} className="flex items-center gap-3 text-[15px] font-semibold text-[var(--lingo-navy)]">
                     <span
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"

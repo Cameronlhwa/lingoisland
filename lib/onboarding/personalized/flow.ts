@@ -76,7 +76,6 @@ export const STEP_ORDER = [
   "availability",
   "building",
   "reflect",
-  "plan",
   "huahua",
   "messaging",
   "huahua_prefs",
@@ -341,7 +340,6 @@ export function updateAnswers(state: OnboardingState, patch: Partial<OnboardingA
     events = { ...events };
     delete events.building;
     delete events.reflect;
-    delete events.plan;
   }
   return { ...state, answers, events, updatedAt: now.toISOString() };
 }

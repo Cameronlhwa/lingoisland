@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import HuahuaSettings from "@/components/sms/HuahuaSettings";
+import { isHuahuaTextingUiEnabled } from "@/lib/sms/uiFlags";
 
 export const metadata: Metadata = { title: "Texting with 华华" };
 
 export default function HuahuaPage() {
+  if (!isHuahuaTextingUiEnabled()) redirect("/app");
+
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6 md:py-12">
       <header className="flex flex-col gap-2">

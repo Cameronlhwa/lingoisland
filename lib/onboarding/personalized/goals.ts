@@ -31,7 +31,7 @@ const WORK: InterestOption[] = [
   { key: "networking", label: "Networking", family: "work" },
   { key: "sales", label: "Sales", family: "work" },
   { key: "technology", label: "Technology", family: "work" },
-  { key: "entrepreneurship", label: "Entrepreneurship", family: "work" },
+  { key: "hsk_certification", label: "HSK certification", family: "work" },
 ];
 
 const SCHOOL: InterestOption[] = [
@@ -78,12 +78,31 @@ export const INTERESTS_BY_GOAL: Record<GoalKey, readonly InterestOption[]> = {
   other: EVERYDAY,
 };
 
+/** Exclusive: the learner skips picking topics and we choose from their goal. */
+export const LET_US_DECIDE_KEY = "let_us_decide";
+export const LET_US_DECIDE_OPTION: InterestOption = {
+  key: LET_US_DECIDE_KEY,
+  label: "You pick for me",
+  family: "everyday",
+};
+
+/** Concrete topics used when they choose "You pick for me". */
+export const DEFAULT_INTERESTS_BY_GOAL: Record<GoalKey, readonly string[]> = {
+  work: ["meetings", "clients", "networking"],
+  school: ["school_life", "presentations", "current_events"],
+  heritage: ["family_conversations", "food", "traditions"],
+  travel: ["restaurants", "transportation", "meeting_locals"],
+  everyday: ["friends", "food", "hobbies"],
+  other: ["friends", "food", "hobbies"],
+};
+
 const ALL_INTERESTS = new Map<string, InterestOption>();
 [WORK, SCHOOL, HERITAGE, TRAVEL, EVERYDAY].forEach((list) =>
   list.forEach((item) => {
     if (!ALL_INTERESTS.has(item.key)) ALL_INTERESTS.set(item.key, item);
   }),
 );
+ALL_INTERESTS.set(LET_US_DECIDE_KEY, LET_US_DECIDE_OPTION);
 
 export function getGoal(key: string | null | undefined): GoalOption | null {
   return GOALS.find((goal) => goal.key === key) ?? null;
@@ -144,8 +163,25 @@ export function goalPhrase(key: GoalKey | null | undefined, otherText?: string |
   return label ? label.toLowerCase() : "your goals";
 }
 
-export function interestLabels(keys: readonly string[], custom?: string | null): string[] {
-  const labels = keys.map((key) => getInterest(key)?.label).filter((label): label is string => Boolean(label));
+/**
+ * Interests used for lessons and matching. "You pick for me" expands to the
+ * defaults for their goal so the plan stays concrete.
+ */
+export function effectiveInterestKeys(goal: GoalKey | null, keys: readonly string[]): string[] {
+  if (!keys.includes(LET_US_DECIDE_KEY)) return keys.filter((key) => key !== LET_US_DECIDE_KEY);
+  return [...DEFAULT_INTERESTS_BY_GOAL[goal ?? "everyday"]];
+}
+
+export function interestLabels(keys: readonly string[], custom?: string | null, goal?: GoalKey | null): string[] {
+  if (keys.includes(LET_US_DECIDE_KEY) && !custom) {
+    return effectiveInterestKeys(goal ?? null, keys)
+      .map((key) => getInterest(key)?.label)
+      .filter((label): label is string => Boolean(label));
+  }
+  const labels = keys
+    .filter((key) => key !== LET_US_DECIDE_KEY)
+    .map((key) => getInterest(key)?.label)
+    .filter((label): label is string => Boolean(label));
   if (custom) labels.push(custom);
   return labels;
 }
@@ -160,7 +196,9 @@ export function joinList(items: readonly string[], conjunction = "and"): string 
 }
 
 export function topicFamilyFor(goal: GoalKey | null, interestKeys: readonly string[]): TopicFamily {
-  const first = interestKeys.map((key) => getInterest(key)).find(Boolean);
+  const first = effectiveInterestKeys(goal, interestKeys)
+    .map((key) => getInterest(key))
+    .find(Boolean);
   if (first) return first.family;
   return getGoal(goal)?.family ?? "everyday";
 }

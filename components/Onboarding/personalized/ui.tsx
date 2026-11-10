@@ -27,7 +27,7 @@ export function usePrefersReducedMotion() {
   return reduced;
 }
 
-export function Shell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+export function Shell({ children, wide = false }: { children: ReactNode; wide?: boolean | "xl" }) {
   return (
     <div
       className="relative flex min-h-[100dvh] flex-col items-center overflow-x-hidden px-3 py-6 sm:px-4 sm:py-10"
@@ -52,7 +52,7 @@ export function Shell({ children, wide = false }: { children: ReactNode; wide?: 
         </div>
         <main
           id="onboarding-main"
-          className={`w-full rounded-3xl bg-white p-5 sm:p-8 ${wide ? "max-w-2xl" : "max-w-xl"}`}
+          className={`w-full rounded-3xl bg-white p-5 sm:p-8 ${wide === "xl" ? "max-w-xl md:max-w-4xl" : wide ? "max-w-2xl" : "max-w-xl"}`}
           style={{ boxShadow: HSK_CARD_SHADOW }}
         >
           {children}

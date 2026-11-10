@@ -16,6 +16,7 @@ export const ONBOARDING_EVENTS = {
   holdPlanOpened: "onboarding_hold_plan_opened",
   holdPlanSaved: "onboarding_hold_plan_saved",
   insightGenerated: "onboarding_insight_generated",
+  reflectionViewed: "onboarding_reflection_viewed",
   calibrationStarted: "onboarding_calibration_started",
   calibrationAnswered: "onboarding_calibration_answered",
   calibrationCompleted: "onboarding_calibration_completed",
@@ -59,6 +60,7 @@ const ALLOWED_KEYS = new Set([
   "interests",
   "interest_count",
   "has_custom_interest",
+  "let_us_decide",
   "has_goal_other_text",
   "self_report",
   "claimed_level",
@@ -103,6 +105,7 @@ const ALLOWED_KEYS = new Set([
   "feedback",
   "insight_source",
   "has_custom_pain",
+  "chart_variant",
 ]);
 
 const SAFE_STRING = /^[A-Za-z0-9_:.-]{1,40}$/;
@@ -154,4 +157,16 @@ export function trackOnboarding(capture: CaptureFn, event: OnboardingEventName, 
     window.__lingoAnalyticsEvents.push({ event, properties: safe });
   }
   capture(event, safe);
+}
+
+/**
+ * PostHog experiment "number-graph": does showing word counts on the
+ * reflection chart help or hurt? "test" shows the numbers on the y-axis;
+ * "control" (and anyone not in the experiment) sees the same curve without
+ * them. Exposure is recorded when the reflection screen reads the flag.
+ */
+export const NUMBER_GRAPH_FLAG = "number-graph";
+
+export function showsChartNumbers(variant: string | boolean | undefined): boolean {
+  return variant === "test";
 }

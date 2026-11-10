@@ -18,6 +18,8 @@ export type SelfReportOption = {
   key: SelfReportKey;
   label: string;
   description: string;
+  /** Short Mandarin sample for this level, shown beside the description. */
+  example?: { hanzi: string; gloss: string };
   level: InternalLevel;
   /** Internal mapping only; never shown on this screen. */
   internalLabel: string;
@@ -25,11 +27,46 @@ export type SelfReportOption = {
 
 export const SELF_REPORT_OPTIONS: readonly SelfReportOption[] = [
   { key: "new", label: "I am completely new", description: "I have not studied Mandarin yet", level: 0, internalLabel: "Pre-HSK" },
-  { key: "few_words", label: "I know a few words", description: "Greetings, numbers, a handful of phrases", level: 1, internalLabel: "HSK 1" },
-  { key: "simple_sentences", label: "I can make simple sentences", description: "Short sentences about myself and my day", level: 2, internalLabel: "HSK 2" },
-  { key: "basic_conversations", label: "I can handle basic conversations", description: "Everyday exchanges with some pauses", level: 3, internalLabel: "HSK 3" },
-  { key: "familiar_topics", label: "I can discuss familiar topics", description: "Work, studies, or interests with some gaps", level: 4, internalLabel: "HSK 4" },
-  { key: "complex_topics", label: "I can discuss complex topics", description: "Opinions and abstract ideas, refining accuracy", level: 5, internalLabel: "HSK 5 or 6" },
+  {
+    key: "few_words",
+    label: "I know a few words",
+    description: "Greetings, numbers, a few phrases",
+    example: { hanzi: "你好", gloss: "hello" },
+    level: 1,
+    internalLabel: "HSK 1",
+  },
+  {
+    key: "simple_sentences",
+    label: "I can make simple sentences",
+    description: "Short lines about myself and my day",
+    example: { hanzi: "我很忙", gloss: "I'm busy" },
+    level: 2,
+    internalLabel: "HSK 2",
+  },
+  {
+    key: "basic_conversations",
+    label: "I can handle basic conversations",
+    description: "Everyday exchanges with some pauses",
+    example: { hanzi: "你觉得呢？", gloss: "What do you think?" },
+    level: 3,
+    internalLabel: "HSK 3",
+  },
+  {
+    key: "familiar_topics",
+    label: "I can discuss familiar topics",
+    description: "Work, studies, or interests with gaps",
+    example: { hanzi: "我们下周开会", gloss: "We'll meet next week" },
+    level: 4,
+    internalLabel: "HSK 4",
+  },
+  {
+    key: "complex_topics",
+    label: "I can discuss complex topics",
+    description: "Opinions and abstract ideas",
+    example: { hanzi: "从长远来看", gloss: "In the long run" },
+    level: 5,
+    internalLabel: "HSK 5 or 6",
+  },
 ];
 
 export function isSelfReportKey(value: unknown): value is SelfReportKey {

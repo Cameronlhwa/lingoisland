@@ -2,7 +2,7 @@
 // first Journeys. Server and client run the same rules so the preview,
 // commitment card, and saved plan always agree.
 
-import { getInterest, goalPhrase, interestLabels, joinList, type GoalKey } from "./goals";
+import { effectiveInterestKeys, getInterest, goalPhrase, interestLabels, joinList, type GoalKey } from "./goals";
 import { cefrForLevel, clampLevel, isBeginnerLevel, levelLabel, startingPointLabel, type InternalLevel } from "./levels";
 
 export const PLAN_VERSION = 1;
@@ -109,14 +109,17 @@ export type MilestoneKey = "beginner" | "early" | "intermediate" | "advanced" | 
 
 type MilestoneRule = { key: MilestoneKey; text: string; weeks: [number, number] };
 
+/** Fixed path length shown on the roadmap, progress chart, and paywall. */
+export const PATH_WEEKS = 12;
+
 const MILESTONES: Record<MilestoneKey, MilestoneRule> = {
   beginner: { key: "beginner", text: "handling simple introductions and everyday phrases", weeks: [8, 12] },
-  early: { key: "early", text: "holding short conversations about familiar topics", weeks: [13, 22] },
-  intermediate: { key: "intermediate", text: "talking about your work, studies, and interests with more ease", weeks: [13, 22] },
-  advanced: { key: "advanced", text: "expressing complex ideas more precisely and naturally", weeks: [17, 26] },
+  early: { key: "early", text: "holding short conversations about familiar topics", weeks: [8, 12] },
+  intermediate: { key: "intermediate", text: "talking about your work, studies, and interests with more ease", weeks: [8, 12] },
+  advanced: { key: "advanced", text: "expressing complex ideas more precisely and naturally", weeks: [8, 12] },
   business: { key: "business", text: "handling basic client and professional situations", weeks: [8, 12] },
   heritage: { key: "heritage", text: "joining simple family conversations with more confidence", weeks: [8, 12] },
-  travel: { key: "travel", text: "ordering food, getting around, and handling common travel situations", weeks: [6, 10] },
+  travel: { key: "travel", text: "ordering food, getting around, and handling common travel situations", weeks: [8, 12] },
   school: { key: "school", text: "following and joining everyday conversations about your classes", weeks: [8, 12] },
 };
 
@@ -161,7 +164,11 @@ const JOURNEYS: Record<string, JourneyEntry> = {
   networking: { title: "Small talk at networking events", beginner: "Saying who you are and what you do", foundation: "Introducing yourself" },
   sales: { title: "Presenting a product", beginner: "Describing what your company does", foundation: "Talking about what you do" },
   technology: { title: "Talking about tech at work", beginner: "Everyday tech words", foundation: "Simple tech words you will use later" },
-  entrepreneurship: { title: "Pitching your idea", beginner: "Talking about your business", foundation: "Saying what your idea is about" },
+  hsk_certification: {
+    title: "Preparing for HSK",
+    beginner: "Words and phrases that show up on HSK",
+    foundation: "Building the Mandarin you'll need for HSK",
+  },
   school_life: { title: "A day on campus", beginner: "Classroom basics", foundation: "Classroom basics" },
   presentations: { title: "Giving a short presentation", beginner: "Introducing your topic", foundation: "Introducing a simple topic" },
   science: { title: "Explaining a science idea", beginner: "Science words you see in class", foundation: "Simple words for how things work" },
@@ -191,7 +198,7 @@ const NEEDS_FOUNDATION = new Set([
   "science",
   "engineering",
   "medicine",
-  "entrepreneurship",
+  "hsk_certification",
   "technology",
   "current_events",
   "presentations",
@@ -369,18 +376,18 @@ export function buildPlan(input: PlanInput): LearningPlan {
   const level = clampLevel(input.provisionalLevel);
   const minutesPerDay = minutesFor(input.minutes);
   const daysPerWeek = daysFor(input.days);
-  const weeklyMinutes = minutesPerDay * daysPerWeek;
   const milestoneRule = MILESTONES[milestoneKeyFor(input.goal, level)];
-  const weeks = scaleWeeks(milestoneRule.weeks, weeklyMinutes);
-  const interests = interestLabels(input.interestKeys, input.customInterest ?? null);
+  const weeks: [number, number] = [PATH_WEEKS, PATH_WEEKS];
+  const resolvedInterests = effectiveInterestKeys(input.goal, input.interestKeys);
+  const interests = interestLabels(input.interestKeys, input.customInterest ?? null, input.goal);
   const journeys = firstJourneys({
     goal: input.goal,
-    interestKeys: input.interestKeys,
+    interestKeys: resolvedInterests,
     customInterest: input.customInterest,
     level,
     minutesPerDay,
   });
-  const presentation = journeysPresentation(level, input.interestKeys, input.customInterest);
+  const presentation = journeysPresentation(level, resolvedInterests, input.customInterest);
   const sessionPreference = needsSessionPreference(input.minutes) ? input.sessionPreference ?? "auto" : null;
   const sessionSplit = sessionPreference === "one_session"
     ? `One ${minutesPerDay}-minute session`
@@ -398,8 +405,7 @@ export function buildPlan(input: PlanInput): LearningPlan {
     benefit: goalBenefit(input.goal, level),
     interests,
     interestPhrase: joinList([
-      ...input.interestKeys.map((key) => getInterest(key)?.label.toLowerCase()).filter((label): label is string => Boolean(label)),
-      ...(input.customInterest ? [input.customInterest] : []),
+      ...interests.map((label) => label.toLowerCase()),
     ]),
     level,
     levelLabel: levelLabel(level),
@@ -414,7 +420,7 @@ export function buildPlan(input: PlanInput): LearningPlan {
     sessionSplit,
     support: supportRecommendation(level, input.toneSupport ?? "standard"),
     defaultSupportStyle: defaultSupportStyle(level),
-    milestone: { key: milestoneRule.key, text: milestoneRule.text, range: formatRange(weeks), weeks },
+    milestone: { key: milestoneRule.key, text: milestoneRule.text, range: `${PATH_WEEKS} weeks`, weeks },
     journeys,
     journeysHeading: presentation.heading,
     journeysNote: presentation.note,

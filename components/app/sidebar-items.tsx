@@ -13,6 +13,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { HSK_APP_LABELS } from "@/lib/hsk-app-labels";
+import { isHuahuaTextingUiEnabled } from "@/lib/sms/uiFlags";
 
 export type SidebarItem = {
   href: string;
@@ -22,7 +23,7 @@ export type SidebarItem = {
 
 const iconClass = "h-5 w-5 text-gray-700";
 
-export const sidebarItems: SidebarItem[] = [
+const islandsSidebarItems: SidebarItem[] = [
   {
     href: "/app",
     label: "Home",
@@ -80,6 +81,11 @@ export const sidebarItems: SidebarItem[] = [
     ),
   },
 ];
+
+/** Islands nav. Texting is omitted on production until Huahua is ready. */
+export const sidebarItems: SidebarItem[] = isHuahuaTextingUiEnabled()
+  ? islandsSidebarItems
+  : islandsSidebarItems.filter((item) => item.href !== "/app/huahua");
 
 export const hskSidebarItems: SidebarItem[] = [
   {

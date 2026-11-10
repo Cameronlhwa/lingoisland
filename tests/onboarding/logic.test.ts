@@ -378,6 +378,21 @@ describe("plan", () => {
     assert.ok(!plan.journeys.some((journey) => /budgets/i.test(journey.title)));
   });
 
+  it("expands 'You pick for me' into on-goal defaults", async () => {
+    const { LET_US_DECIDE_KEY, effectiveInterestKeys } = await import("../../lib/onboarding/personalized/goals");
+    assert.deepEqual(effectiveInterestKeys("travel", [LET_US_DECIDE_KEY]), ["restaurants", "transportation", "meeting_locals"]);
+    const plan = buildPlan({
+      goal: "travel",
+      interestKeys: [LET_US_DECIDE_KEY],
+      provisionalLevel: 2,
+      minutes: "10",
+      days: "3",
+    });
+    assert.ok(plan.journeys.length >= 2);
+    assert.equal(plan.journeys[0].key, "restaurants");
+    assert.ok(!plan.interests.includes("You pick for me"));
+  });
+
   it("normalizes custom interests", () => {
     assert.equal(normalizeCustomText("   basketball   games  "), "basketball games");
     assert.equal(normalizeCustomText(""), null);
@@ -483,15 +498,15 @@ describe("flow state and resume", () => {
     assert.equal(resumeStep(partial), "level");
   });
 
-  it("puts the building and plan steps behind completion events", () => {
+  it("shows the building wait before reflection, then commitment", () => {
     const state = answeredState();
     assert.equal(resumeStep(state), "building");
     assert.equal(resumeStep(markCompleted(state, "building", NOW)), "reflect");
-    const built = markCompleted(markCompleted(markCompleted(state, "building", NOW), "reflect", NOW), "plan", NOW);
+    const built = markCompleted(markCompleted(state, "building", NOW), "reflect", NOW);
     assert.equal(resumeStep(built), "commitment");
   });
 
-  it("never shows the phone or texting steps and goes from the plan to the commitment", () => {
+  it("never shows the phone or texting steps and goes from reflection to commitment", () => {
     for (const messaging of [
       { channel: null, status: "not_started" },
       { channel: "sms", status: "verified" },
@@ -501,14 +516,14 @@ describe("flow state and resume", () => {
       for (const hidden of ["huahua", "messaging", "huahua_prefs", "preview"] as const) {
         assert.ok(!steps.includes(hidden), hidden);
       }
-      assert.equal(nextStep("plan", answers), "commitment");
-      assert.equal(previousStep("commitment", answers), "plan");
+      assert.equal(nextStep("reflect", answers), "commitment");
+      assert.equal(previousStep("commitment", answers), "reflect");
     }
   });
 
   it("resumes progress saved on a phone step at the next step that is shown", () => {
     let state = answeredState({ messaging: { channel: "sms", status: "verified" } });
-    for (const step of ["building", "reflect", "plan", "huahua", "messaging"] as const) {
+    for (const step of ["building", "reflect", "huahua", "messaging"] as const) {
       state = markCompleted(state, step, NOW);
     }
     assert.equal(resumeStep(state), "commitment");
@@ -517,9 +532,9 @@ describe("flow state and resume", () => {
 
   it("rebuilds the plan after an earlier answer changes", () => {
     let state = answeredState();
-    state = markCompleted(markCompleted(markCompleted(state, "building", NOW), "reflect", NOW), "plan", NOW);
+    state = markCompleted(markCompleted(state, "building", NOW), "reflect", NOW);
     state = updateAnswers(state, { availability: { minutes: "30", days: "5", session: "auto" } }, NOW);
-    assert.equal(isStepComplete("plan", state), false);
+    assert.equal(isStepComplete("reflect", state), false);
     assert.equal(resumeStep(state), "building");
     assert.equal(planFor(state.answers).minutesPerDay, 30);
   });
