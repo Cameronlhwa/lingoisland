@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { cardBaseClass } from "@/components/app/ui/styles";
+import SmsPhoneSetup from "@/components/sms/SmsPhoneSetup";
 import { useTTS } from "@/contexts/TTSContext";
 import { useAnalytics } from "@/lib/posthog/client";
 import { PROFILE_LEVEL_OPTIONS } from "@/lib/levelBands";
@@ -887,6 +888,25 @@ export default function AccountModal({
                 </select>
               </div>
 
+              <div className="flex flex-col gap-3 border-t border-gray-100 pt-6">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Texting Practice
+                  </h3>
+                  <p className="text-xs text-gray-600">
+                    Practice Mandarin by text with 华华, your Mandarin texting buddy.
+                    Optional, and you can pause or disconnect anytime.
+                  </p>
+                </div>
+                <SmsPhoneSetup source="account_settings" />
+                <a
+                  href="/app/huahua"
+                  className="text-sm font-medium text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                >
+                  Texting style, schedule, and history
+                </a>
+              </div>
+
               <div className="flex flex-col gap-4 border-t border-gray-100 pt-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-gray-900">
@@ -1281,7 +1301,7 @@ export default function AccountModal({
                         <div className="flex items-start gap-2">
                           <span className="text-green-600">✓</span>
                           <span className="text-sm text-gray-700">
-                            24/7 AI tutor with corrections
+                            24/7 Mandarin tutor with corrections
                           </span>
                         </div>
                       </div>

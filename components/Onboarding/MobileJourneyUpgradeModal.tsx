@@ -58,6 +58,18 @@ interface MobileJourneyUpgradeModalProps {
   checkoutError: string | null;
   pricing: PaywallPlanPricing;
   fullPage: boolean;
+  activation?: {
+    eyebrow: string;
+    headline: string;
+    subline: string;
+    benefits: ReadonlyArray<{ title: string; detail: string }>;
+    cta: string;
+    savedNote: string;
+    notNowLabel?: string;
+    onNotNow?: () => void;
+    review?: { quote: string; role: string } | null;
+    showSpeakingPractice?: boolean;
+  };
 }
 
 /** Below-md presentation of OnboardingPaywall; all state lives in the parent. */
@@ -70,6 +82,7 @@ export default function MobileJourneyUpgradeModal({
   checkoutError,
   pricing,
   fullPage,
+  activation,
 }: MobileJourneyUpgradeModalProps) {
   const selected = pricing[billingInterval];
   const lessonHeading =
@@ -111,7 +124,7 @@ export default function MobileJourneyUpgradeModal({
       <section className="relative shrink-0">
         <div className="relative z-10 px-6 pt-[max(1.25rem,env(safe-area-inset-top))] text-center">
           <p className="text-[12px] font-bold" style={{ color: GREEN }}>
-            Your personalized plan is ready
+            {activation?.eyebrow ?? "Your personalized plan is ready"}
           </p>
           <h1
             className="lingo-display mx-auto mt-1.5 max-w-[22rem]"
@@ -121,13 +134,13 @@ export default function MobileJourneyUpgradeModal({
               color: BROWN,
             }}
           >
-            Turn your interests into real conversations
+            {activation?.headline ?? "Turn your interests into real conversations"}
           </h1>
           <p
             className="mx-auto mt-1.5 max-w-[20rem] text-[14px] leading-snug"
             style={{ color: MUTED_BLUE }}
           >
-            Learn the words and phrases you&apos;ll actually use.
+            {activation?.subline ?? "Learn the words and phrases you'll actually use."}
           </p>
         </div>
 
@@ -180,6 +193,7 @@ export default function MobileJourneyUpgradeModal({
               </span>
             </li>
           ))}
+          {activation && !activation.showSpeakingPractice ? null : (
           <li
             className="flex items-center gap-3 rounded-xl px-3 py-1.5"
             style={{ background: "rgba(217,115,90,0.09)" }}
@@ -203,8 +217,21 @@ export default function MobileJourneyUpgradeModal({
               Tone and pronunciation help
             </span>
           </li>
+          )}
         </ol>
 
+        {activation ? (
+          <ul className="mt-3 grid grid-cols-1 gap-1.5" aria-label="What activating your plan includes">
+            {activation.benefits.map((benefit) => (
+              <li key={benefit.title} className="flex items-start gap-2 text-[13px] leading-snug" style={{ color: BROWN }}>
+                <span aria-hidden className="mt-[3px] inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: GREEN }}>
+                  ✓
+                </span>
+                <span className="font-medium">{benefit.title}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
         <ul className="mt-3 grid grid-cols-3 gap-2">
           {BENEFITS.map(({ icon: Icon, label, color, tint }) => (
             <li key={label} className="flex flex-col items-center text-center">
@@ -228,10 +255,11 @@ export default function MobileJourneyUpgradeModal({
             </li>
           ))}
         </ul>
+        )}
 
         <div className="mt-3 flex gap-2">
           {planOption("monthly", "Monthly")}
-          {planOption("yearly", "Annual · best value")}
+          {planOption("yearly", activation ? "Annual · Save 33%" : "Annual · best value")}
         </div>
 
         <p className="mt-2.5 text-center" style={{ color: BROWN }}>
@@ -256,7 +284,7 @@ export default function MobileJourneyUpgradeModal({
           disabled={checkoutLoading}
           onClick={onProceedCheckout}
         >
-          {checkoutLoading ? "Starting checkout…" : "Start my Mandarin plan →"}
+          {checkoutLoading ? "Starting checkout…" : activation?.cta ?? "Start my Mandarin plan →"}
         </button>
         <p
           className="mt-1.5 text-center text-[12px]"
@@ -264,7 +292,38 @@ export default function MobileJourneyUpgradeModal({
         >
           {selected.note}
         </p>
+        {activation ? (
+          <>
+            <p className="mt-1 text-center text-[12px]" style={{ color: MUTED_BLUE }}>
+              {activation.savedNote}
+            </p>
+            {activation.onNotNow ? (
+              <button
+                type="button"
+                onClick={activation.onNotNow}
+                className="mx-auto mt-1 flex min-h-[44px] items-center px-3 text-[13px] font-semibold underline underline-offset-2"
+                style={{ color: MUTED_BLUE }}
+              >
+                {activation.notNowLabel ?? "Not now"}
+              </button>
+            ) : null}
+          </>
+        ) : null}
 
+        {activation?.review ? (
+          <figure
+            className="mt-5 rounded-2xl border px-4 py-3.5"
+            style={{ borderColor: "rgba(33,118,174,0.14)", background: "#FBF7F0" }}
+            data-testid="paywall-review"
+          >
+            <blockquote className="text-[13px] italic leading-relaxed" style={{ color: BROWN }}>
+              &ldquo;{activation.review.quote}&rdquo;
+            </blockquote>
+            <figcaption className="mt-2 text-[13px] font-bold" style={{ color: GREEN }}>
+              {activation.review.role}
+            </figcaption>
+          </figure>
+        ) : (
         <figure
           className="mt-5 rounded-2xl border px-4 py-3.5"
           style={{
@@ -316,6 +375,7 @@ export default function MobileJourneyUpgradeModal({
             </div>
           </figcaption>
         </figure>
+        )}
         <p
           className="mt-2.5 px-2 text-center text-[12px] leading-snug"
           style={{ color: MUTED_BLUE }}

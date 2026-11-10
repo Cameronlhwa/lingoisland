@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -10,8 +11,15 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
+import { useAnalytics } from "@/lib/posthog/client";
+import type { SmsPhoneState } from "@/lib/sms/phoneState";
 import AppLogo from "@/components/app/AppLogo";
+import SmsPhoneSetup from "@/components/sms/SmsPhoneSetup";
+import HuahuaOnboardingStyle from "@/components/sms/HuahuaOnboardingStyle";
 import OnboardingUpgradeClient from "@/app/onboarding/upgrade/OnboardingUpgradeClient";
+import OnboardingCheckoutAuth, {
+  CheckoutHandoff,
+} from "@/components/Onboarding/OnboardingCheckoutAuth";
 import { Loader2 } from "lucide-react";
 import {
   getTopicSuggestions,
@@ -19,6 +27,8 @@ import {
 } from "@/lib/onboarding/topicSuggestions";
 import {
   buildUpgradePageUrl,
+  readUpgradeSnapshot,
+  writeUpgradeSnapshot,
 } from "@/lib/onboarding/onboardingCheckoutStorage";
 import {
   HSK_CARD_SHADOW,
@@ -231,7 +241,12 @@ type Step =
   | "free-time"
   | "topic"
   | "generating"
+  | "texting"
   | "upgrade";
+
+// Set once the journey exists, so returning to /app/onboarding (e.g. after
+// switching to Messages to read a code) resumes the optional texting step.
+const TEXTING_STEP_KEY = "lingo_onboarding_texting_step";
 
 function whyKeyFromProfile(
   goal: string | null | undefined,
@@ -292,6 +307,74 @@ export default function JourneyOnboardingFlow({
   const [generatingStep, setGeneratingStep] = useState(0);
   const generateStartedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const { captureEvent } = useAnalytics();
+  const [textingVerified, setTextingVerified] = useState(false);
+  const [textingAccountReady, setTextingAccountReady] = useState<boolean | null>(null);
+  const [textingAuthOpen, setTextingAuthOpen] = useState(false);
+  const [textingRedirecting, setTextingRedirecting] = useState(false);
+  const textingDoneRef = useRef(false);
+  const textingFirstStateRef = useRef(true);
+
+  useEffect(() => {
+    if (publicSurface) return;
+    try {
+      if (sessionStorage.getItem(TEXTING_STEP_KEY) === "1") setStep("texting");
+    } catch {
+      // ignore unavailable storage
+    }
+  }, [publicSurface]);
+
+  useEffect(() => {
+    if (!publicSurface || searchParams.get("resume") !== "texting") return;
+    if (!readUpgradeSnapshot()) return;
+    setStep("texting");
+  }, [publicSurface, searchParams]);
+
+  useEffect(() => {
+    if (step !== "texting") return;
+    let cancelled = false;
+    void supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!cancelled) setTextingAccountReady(Boolean(user && !user.is_anonymous));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [step, supabase]);
+
+  const finishOnboarding = useCallback(
+    (reason: "skipped" | "verified" | "unavailable" | "already_connected") => {
+      if (textingDoneRef.current) return;
+      textingDoneRef.current = true;
+      try {
+        sessionStorage.removeItem(TEXTING_STEP_KEY);
+      } catch {
+        // ignore unavailable storage
+      }
+      if (reason === "skipped") captureEvent("sms_setup_skipped", { source: "onboarding" });
+      if (publicSurface) {
+        setStep("upgrade");
+        return;
+      }
+      router.push("/app/journey");
+    },
+    [captureEvent, publicSurface, router],
+  );
+
+  // Skip the optional step entirely when texting isn't offered or the
+  // learner already has an active number.
+  const handleTextingState = useCallback(
+    (state: SmsPhoneState) => {
+      const first = textingFirstStateRef.current;
+      textingFirstStateRef.current = false;
+      if (!first) return;
+      if (!state.available) finishOnboarding("unavailable");
+      else if (state.contact?.status === "active" && !state.pending) {
+        if (publicSurface) setTextingVerified(true);
+        else finishOnboarding("already_connected");
+      }
+    },
+    [finishOnboarding, publicSurface],
+  );
 
   const [profileLoaded, setProfileLoaded] = useState(!smartProfileSkip);
   const [needsLevel, setNeedsLevel] = useState(!smartProfileSkip);
@@ -530,7 +613,14 @@ export default function JourneyOnboardingFlow({
 
         if (data?.preview?.journey && !data.journeyId) {
           setPreviewNodes(data.preview.nodes ?? []);
-          setStep("upgrade");
+          const snapshot = {
+            v: 1 as const,
+            ...upgradePersonalization,
+            lockedIslands: data.preview.nodes ?? [],
+            plan: "monthly" as const,
+          };
+          writeUpgradeSnapshot(snapshot);
+          setStep("texting");
           return;
         }
 
@@ -546,7 +636,12 @@ export default function JourneyOnboardingFlow({
           .from("profiles")
           .update({ onboarding_complete: true })
           .eq("id", user.id);
-        router.push("/app/journey");
+        try {
+          sessionStorage.setItem(TEXTING_STEP_KEY, "1");
+        } catch {
+          // Storage unavailable (private mode); the step just won't resume.
+        }
+        setStep("texting");
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Something went wrong";
         setError(msg);
@@ -667,7 +762,94 @@ export default function JourneyOnboardingFlow({
   }
 
   if (step === "upgrade") {
-    return <OnboardingUpgradeClient personalization={upgradePersonalization} />;
+    return <OnboardingUpgradeClient personalization={publicSurface ? undefined : upgradePersonalization} />;
+  }
+
+  if (step === "texting") {
+    const textingCard = shell(
+      <>
+        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: BLUE }}>
+          {publicSurface ? "Try it on your phone" : "Your journey is ready ✓"}
+        </p>
+        {heading(
+          textingVerified
+            ? "华华 just texted you!"
+            : publicSurface
+              ? "Meet 华华, your Mandarin texting partner"
+              : "Want to practice Mandarin by text?",
+        )}
+        {subcopy(
+          textingVerified
+            ? publicSurface
+              ? "Reply from your Messages app for a short, level-matched conversation before choosing a plan."
+              : "Check your messages for a hello from 华华, and text back in Chinese anytime."
+            : publicSurface
+              ? "Try one real conversation on your phone. No payment is needed, and 华华 will match your current level."
+              : "华华 can text with you in Mandarin between lessons. It's optional, and you can change it anytime in Account settings.",
+        )}
+        {textingAccountReady === null ? (
+          <p className="mt-6 text-sm" style={{ color: MUTED }}>Loading…</p>
+        ) : textingAccountReady ? (
+          <div className="mt-6 text-left">
+            <SmsPhoneSetup
+              source="onboarding"
+              onStateChange={handleTextingState}
+              onVerified={() => setTextingVerified(true)}
+            />
+            {textingVerified && !publicSurface ? <HuahuaOnboardingStyle /> : null}
+          </div>
+        ) : (
+          <button
+            type="button"
+            data-testid="huahua-prepaywall-start"
+            onClick={() => setTextingAuthOpen(true)}
+            className={`mt-8 ${BTN_PRIMARY}`}
+            style={primaryBtnStyle}
+          >
+            Text me with 华华 →
+          </button>
+        )}
+        {textingVerified ? (
+          <button
+            type="button"
+            onClick={() => finishOnboarding("verified")}
+            className={`mt-8 ${BTN_PRIMARY}`}
+            style={primaryBtnStyle}
+          >
+            {publicSurface ? "Continue to my plan →" : "Go to my journey →"}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => finishOnboarding("skipped")}
+          className="mt-6 w-full text-center text-sm font-medium underline underline-offset-2"
+          style={{ color: MUTED }}
+        >
+          {publicSurface ? "Continue without texting" : "Skip for now"}
+        </button>
+      </>,
+    );
+    return (
+      <>
+        <div data-testid={publicSurface ? "huahua-prepaywall-intro" : undefined}>{textingCard}</div>
+        {textingAuthOpen ? (
+          <OnboardingCheckoutAuth
+            plan="monthly"
+            purpose="texting"
+            returnPath="/onboarding/journey?resume=texting"
+            onComplete={() => {
+              setTextingAuthOpen(false);
+              setTextingRedirecting(false);
+              setTextingAccountReady(true);
+            }}
+            onCancel={() => setTextingAuthOpen(false)}
+            onHandoffStart={() => setTextingRedirecting(true)}
+            onHandoffEnd={() => setTextingRedirecting(false)}
+          />
+        ) : null}
+        {textingRedirecting ? <CheckoutHandoff /> : null}
+      </>
+    );
   }
 
   if (step === "level") {

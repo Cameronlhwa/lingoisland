@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
@@ -105,10 +106,17 @@ export async function POST(request: Request) {
     const stripe = getStripe();
 
     if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: user.email ?? undefined,
-        metadata: { user_id: user.id },
-      });
+      // Concurrent requests for the same new account get the same customer
+      // instead of one each (Stripe keeps idempotency keys for 24 hours).
+      const customer = await stripe.customers.create(
+        {
+          email: user.email ?? undefined,
+          metadata: { user_id: user.id },
+        },
+        {
+          idempotencyKey: `customer-create-${user.id}-${createHash("sha256").update(user.email ?? "").digest("hex").slice(0, 16)}`,
+        },
+      );
       stripeCustomerId = customer.id;
 
       const { error: upsertError } = await supabase

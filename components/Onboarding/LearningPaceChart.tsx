@@ -142,7 +142,7 @@ export default function LearningPaceChart({
             ))}
           </div>
           <p className="mt-1.5 text-center text-[11px]" style={{ color: MUTED }}>
-            Illustrative split — study on whichever days suit you
+            Illustrative split. Study on whichever days suit you.
           </p>
         </div>
       ) : null}

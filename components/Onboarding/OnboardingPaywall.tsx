@@ -8,6 +8,7 @@ import {
   BookOpen,
   Briefcase,
   Clapperboard,
+  Check,
   Dumbbell,
   Gamepad2,
   House,
@@ -16,6 +17,7 @@ import {
   MessagesSquare,
   Music,
   Plane,
+  Route,
   Sparkles,
   Users,
   UtensilsCrossed,
@@ -117,6 +119,26 @@ const BENEFITS: {
   },
 ];
 
+/** Frames the paywall as activating a plan the learner already built. */
+export type PaywallActivation = {
+  eyebrow: string;
+  headline: string;
+  subline: string;
+  desktopEyebrow?: string;
+  desktopHeadline?: string;
+  desktopSubline?: string;
+  desktopBenefits?: ReadonlyArray<string>;
+  benefits: ReadonlyArray<{ title: string; detail: string }>;
+  cta: string;
+  savedNote: string;
+  notNowLabel?: string;
+  onNotNow?: () => void;
+  /** A real learner review matched to this learner; replaces the founder quote. */
+  review?: { quote: string; role: string } | null;
+  /** Shows the speaking-practice row only when the learner tried pronunciation. */
+  showSpeakingPractice?: boolean;
+};
+
 type JourneyNode = {
   order: number;
   name: string;
@@ -143,6 +165,7 @@ interface OnboardingPaywallProps {
   checkoutLoading?: boolean;
   checkoutError?: string | null;
   fullPage?: boolean;
+  activation?: PaywallActivation;
 }
 
 export default function OnboardingPaywall({
@@ -162,6 +185,7 @@ export default function OnboardingPaywall({
   checkoutLoading = false,
   checkoutError = null,
   fullPage = false,
+  activation,
 }: OnboardingPaywallProps) {
   const displayJourneyTitle = journeyTopic || topic;
   const levelChip = hskLabelForCefr(islandLevel) || islandLevel;
@@ -206,6 +230,10 @@ export default function OnboardingPaywall({
       ? "Your first lesson"
       : `Your first ${previewUnits.length} lessons`;
 
+  const compactGoalLabel =
+    motivationLabel?.split(" · ")[0] ?? interestChips[0] ?? "Personalized";
+  const compactBenefits =
+    activation?.desktopBenefits ?? activation?.benefits.slice(0, 3).map((benefit) => benefit.title) ?? [];
   const planButton = (interval: "monthly" | "yearly", label: string) => {
     const active = billingInterval === interval;
     return (
@@ -239,6 +267,7 @@ export default function OnboardingPaywall({
         checkoutError={checkoutError}
         pricing={PLAN_PRICING}
         fullPage={fullPage}
+        activation={activation}
       />
       <div
         className={
@@ -268,6 +297,158 @@ export default function OnboardingPaywall({
               "radial-gradient(ellipse 70% 55% at 50% 38%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.22) 45%, transparent 72%)",
           }}
         />
+        {activation ? (
+          <Card
+            hover={false}
+            padded={false}
+            className="relative z-10 my-auto w-full max-w-[760px] overflow-hidden"
+            style={{
+              borderRadius: 28,
+              boxShadow:
+                "0 22px 54px -24px rgba(7,30,46,0.38), 0 2px 8px rgba(33,118,174,0.08)",
+            }}
+          >
+            <div className="px-8 py-8 text-center lg:px-14 lg:py-10">
+              <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--lingo-teal)]">
+                {activation.desktopEyebrow ?? activation.eyebrow}
+              </p>
+              <h1
+                className="lingo-display mx-auto mt-2 max-w-[620px] text-[var(--lingo-navy)]"
+                style={{ fontSize: "clamp(34px, 4vw, 46px)", lineHeight: 1.06 }}
+              >
+                {activation.desktopHeadline ?? activation.headline}
+              </h1>
+              <p className="mx-auto mt-3 max-w-[520px] text-[16px] leading-relaxed" style={{ color: MUTED }}>
+                {activation.desktopSubline ?? activation.subline}
+              </p>
+
+              <ol className="mx-auto mt-5 flex max-w-[500px] flex-col gap-2 text-left" aria-label={lessonHeading} data-testid="desktop-paywall-lessons">
+                {previewUnits.slice(0, 2).map((unit, index) => (
+                  <li
+                    key={`${unit.name}-${index}`}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2"
+                    style={{ background: "#FBF7F0" }}
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--lingo-teal)] text-[11px] font-bold text-white">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="min-w-0 flex-1 text-[15px] font-semibold text-[var(--lingo-navy)]">{unit.name}</span>
+                  </li>
+                ))}
+              </ol>
+
+              <ul className="mt-5 flex flex-wrap justify-center gap-2.5" aria-label="Your personalized plan">
+                <li>
+                  <Chip>
+                    <BarChart3 size={14} strokeWidth={2.3} className="text-[var(--lingo-teal)]" aria-hidden />
+                    {levelChip}
+                  </Chip>
+                </li>
+                <li>
+                  <Chip>
+                    <Briefcase size={14} strokeWidth={2.3} className="text-[var(--lingo-accent)]" aria-hidden />
+                    {compactGoalLabel}
+                  </Chip>
+                </li>
+                {daysPerWeek ? (
+                  <li>
+                    <Chip>
+                      <Route size={14} strokeWidth={2.3} className="text-[#2176AE]" aria-hidden />
+                      {daysPerWeek} days/week
+                    </Chip>
+                  </li>
+                ) : null}
+              </ul>
+
+              <ul className="mx-auto mt-6 max-w-[500px] space-y-3 text-left" aria-label="Membership benefits">
+                {compactBenefits.map((benefit) => (
+                  <li key={benefit} className="flex items-center gap-3 text-[15px] font-semibold text-[var(--lingo-navy)]">
+                    <span
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                      style={{ background: "rgba(32,103,79,0.10)" }}
+                    >
+                      <Check size={16} strokeWidth={2.8} className="text-[var(--lingo-teal)]" aria-hidden />
+                    </span>
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+
+              <div
+                data-testid="desktop-billing-selector"
+                className="mx-auto mt-7 flex max-w-[620px] gap-2 rounded-[18px] border p-1.5"
+                style={{ borderColor: "var(--lingo-border)", background: "rgba(248,244,237,0.72)" }}
+                aria-label="Billing interval"
+              >
+                {planButton("monthly", "Monthly")}
+                {planButton("yearly", "Annual · Save 33%")}
+              </div>
+
+              <div
+                className="mx-auto mt-3 flex max-w-[620px] items-center justify-between gap-5 rounded-[20px] border px-6 py-5 text-left"
+                style={{ borderColor: "var(--lingo-teal)", background: "rgba(32,103,79,0.045)" }}
+              >
+                <div>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <p className="lingo-display text-[22px] leading-tight text-[var(--lingo-navy)]">
+                      {billingInterval === "yearly" ? "Annual membership" : "Monthly membership"}
+                    </p>
+                    {billingInterval === "yearly" ? (
+                      <span className="rounded-full bg-[var(--lingo-accent)] px-2.5 py-1 text-[11px] font-bold text-white">
+                        SAVE 33%
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 text-[13px]" style={{ color: MUTED }}>
+                    {selectedPlan.note}
+                  </p>
+                </div>
+                <p className="shrink-0 text-right text-[var(--lingo-navy)]">
+                  <span className="lingo-display text-[40px] leading-none">{selectedPlan.price}</span>
+                  <span className="ml-1 text-[14px]" style={{ color: MUTED }}>/month</span>
+                </p>
+              </div>
+
+              {checkoutError ? <p className="mt-4 text-sm text-red-600">{checkoutError}</p> : null}
+
+              <Button
+                className="mx-auto mt-6 w-full max-w-[620px]"
+                style={{ borderRadius: "var(--lingo-radius-control)", padding: "15px 20px" }}
+                disabled={checkoutLoading}
+                onClick={onProceedCheckout}
+              >
+                {checkoutLoading ? "Starting checkout…" : activation.cta}
+              </Button>
+              <p className="mt-2 text-[12.5px]" style={{ color: MUTED }}>
+                Secure payment • Cancel anytime
+              </p>
+              <div className="mt-3 flex min-h-[44px] items-center justify-center text-[13px] font-semibold">
+                {activation.onNotNow ? (
+                  <button
+                    type="button"
+                    onClick={activation.onNotNow}
+                    className="px-2 py-2 underline underline-offset-2"
+                    style={{ color: MUTED }}
+                  >
+                    {activation.notNowLabel ?? "Not now"}
+                  </button>
+                ) : null}
+              </div>
+              {activation.review ? (
+                <figure
+                  className="mx-auto mt-4 max-w-[620px] rounded-2xl border px-5 py-4 text-left"
+                  style={{ borderColor: "rgba(33,118,174,0.14)", background: "#FBF7F0" }}
+                  data-testid="paywall-review"
+                >
+                  <blockquote className="text-[14px] italic leading-relaxed text-[var(--lingo-navy)]">
+                    &ldquo;{activation.review.quote}&rdquo;
+                  </blockquote>
+                  <figcaption className="mt-2 text-[13px] font-bold text-[var(--lingo-teal)]">{activation.review.role}</figcaption>
+                </figure>
+              ) : null}
+            </div>
+          </Card>
+        ) : (
         <Card
           hover={false}
           padded={false}
@@ -492,6 +673,7 @@ export default function OnboardingPaywall({
             </div>
           </div>
         </Card>
+        )}
       </div>
     </>
   );

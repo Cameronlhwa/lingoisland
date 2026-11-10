@@ -9,6 +9,7 @@ import type { CheckoutPlan } from "@/lib/onboarding/onboardingCheckoutStorage";
 interface OnboardingCheckoutAuthProps {
   plan: CheckoutPlan;
   returnPath: string;
+  purpose?: "checkout" | "texting";
   onComplete: () => void;
   onCancel: () => void;
   /** Cover the page until Stripe opens, so auth state changes cannot swap screens. */
@@ -43,6 +44,7 @@ export function CheckoutHandoff() {
 export default function OnboardingCheckoutAuth({
   plan,
   returnPath,
+  purpose = "checkout",
   onComplete,
   onCancel,
   onHandoffStart,
@@ -369,8 +371,12 @@ export default function OnboardingCheckoutAuth({
           style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
           {mode === "signin"
-            ? "Sign in with your existing account. You'll continue to secure checkout, or straight into the app if you already have Pro."
-            : "Create an account to unlock your personalized plan. You'll go to secure checkout right after."}
+            ? purpose === "texting"
+              ? "Sign in with your existing account, then Huahua can text your phone."
+              : "Sign in with your existing account. You'll continue to secure checkout, or straight into the app if you already have Pro."
+            : purpose === "texting"
+              ? "Create an account so Huahua can remember your level and keep your phone number private."
+              : "Create an account to unlock your personalized plan. You'll go to secure checkout right after."}
         </p>
         <p
           className="mt-2 text-xs text-[#8AABBF]"
@@ -463,7 +469,7 @@ export default function OnboardingCheckoutAuth({
           onClick={onCancel}
           className="mt-4 w-full text-center text-xs text-[#8AABBF] hover:text-[#5A7A90]"
         >
-          Back to plan selection
+          {purpose === "texting" ? "Not now" : "Back to plan selection"}
         </button>
       </div>
     </div>

@@ -10,7 +10,7 @@ const FEATURES = [
   { emoji: "🗺️", title: "Topic Islands", desc: "Get vocab + native example sentences for any topic you care about" },
   { emoji: "📖", title: "Stories", desc: "Read short stories built from the words you're learning" },
   { emoji: "🃏", title: "Quizzes", desc: "Flashcards and drag-and-drop matching to lock in what you've learned" },
-  { emoji: "🤖", title: "AI Tutor", desc: "Ask 华华 anything — grammar, usage, pronunciation — instantly" },
+  { emoji: "💬", title: "Mandarin Tutor", desc: "Ask 华华 anything — grammar, usage, pronunciation — instantly" },
 ];
 
 function SignupPageContent() {
