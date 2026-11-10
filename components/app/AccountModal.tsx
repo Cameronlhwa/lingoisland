@@ -13,6 +13,7 @@ import {
   hasAnyProAccess,
   type ProductPlan,
 } from "@/lib/product-plans";
+import { isHuahuaTextingUiEnabled } from "@/lib/sms/uiFlags";
 import {
   DEFAULT_HSK_STANDARD,
   parseHskStandard,
@@ -888,24 +889,26 @@ export default function AccountModal({
                 </select>
               </div>
 
-              <div className="flex flex-col gap-3 border-t border-gray-100 pt-6">
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    Texting Practice
-                  </h3>
-                  <p className="text-xs text-gray-600">
-                    Practice Mandarin by text with 华华, your Mandarin texting buddy.
-                    Optional, and you can pause or disconnect anytime.
-                  </p>
+              {isHuahuaTextingUiEnabled() ? (
+                <div className="flex flex-col gap-3 border-t border-gray-100 pt-6">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-sm font-semibold text-gray-900">
+                      Texting Practice
+                    </h3>
+                    <p className="text-xs text-gray-600">
+                      Practice Mandarin by text with 华华, your Mandarin texting buddy.
+                      Optional, and you can pause or disconnect anytime.
+                    </p>
+                  </div>
+                  <SmsPhoneSetup source="account_settings" />
+                  <a
+                    href="/app/huahua"
+                    className="text-sm font-medium text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                  >
+                    Texting style, schedule, and history
+                  </a>
                 </div>
-                <SmsPhoneSetup source="account_settings" />
-                <a
-                  href="/app/huahua"
-                  className="text-sm font-medium text-gray-700 underline underline-offset-2 hover:text-gray-900"
-                >
-                  Texting style, schedule, and history
-                </a>
-              </div>
+              ) : null}
 
               <div className="flex flex-col gap-4 border-t border-gray-100 pt-6">
                 <div className="flex items-center justify-between">
