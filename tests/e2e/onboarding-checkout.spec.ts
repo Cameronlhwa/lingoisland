@@ -110,11 +110,21 @@ async function toCommitment(page: Page) {
   await heading(page, "Why do you want to learn Mandarin?");
   await page.getByTestId("goal-work").click();
   await page.getByTestId("continue").click();
-  await heading(page, "What would you like to talk about in Mandarin?");
+  await heading(page, "Which situations do you want to handle first?");
   await page.getByTestId("interest-meetings").click();
   await page.getByTestId("continue").click();
   await heading(page, "How does your Mandarin feel right now?");
   await page.getByTestId("level-few_words").click();
+  await page.getByTestId("continue").click();
+  await heading(page, "How long have you been learning Mandarin?");
+  await page.getByTestId("experience-on_and_off").click();
+  await page.getByTestId("continue").click();
+  await heading(page, "When Mandarin comes up at work, what usually happens?");
+  await page.getByTestId("pain-stay_quiet").click();
+  await page.getByTestId("timing-ongoing").click();
+  await page.getByTestId("continue").click();
+  await heading(page, "What’s been hardest about learning so far?");
+  await page.getByTestId("learning-pain-not_relevant").click();
   await page.getByTestId("continue").click();
   await page.getByTestId("social-proof-continue").click();
   await page.getByTestId("calibration-start").click();
@@ -127,6 +137,8 @@ async function toCommitment(page: Page) {
   await page.getByTestId("minutes-10").click();
   await page.getByTestId("days-5").click();
   await page.getByTestId("continue").click();
+  await heading(page, "Did we get this right?");
+  await page.getByTestId("reflect-confirm").click();
   await heading(page, "Here’s your personalized plan");
   await page.getByTestId("continue").click();
   await heading(page, "Ready to begin your Mandarin journey?");
@@ -140,7 +152,7 @@ async function toPaywall(page: Page) {
 }
 
 function paywallCta(page: Page) {
-  return page.getByRole("button", { name: /^(Activate my plan|Start my Mandarin plan)/ }).filter({ visible: true }).first();
+  return page.getByRole("button", { name: /^(Start my plan|Activate my plan|Start my Mandarin plan)/ }).filter({ visible: true }).first();
 }
 
 function annualButton(page: Page) {

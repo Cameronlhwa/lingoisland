@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOriginFromRequest } from "@/lib/utils/origin";
-import { isPronunciationWord, needsToneSupport } from "@/lib/onboarding/personalized/pronunciation";
+import { feedbackFor, isPronunciationWord, needsToneSupport } from "@/lib/onboarding/personalized/pronunciation";
 import { normalizeSpeechSuperResult } from "@/lib/pronunciation/normalizeScore";
 import { checkAndIncrementUsage } from "@/lib/pronunciation/rateLimit";
 import { scoreWithSpeechSuper } from "@/lib/speechsuper/client";
@@ -32,8 +32,8 @@ function unavailable() {
 
 /**
  * POST /api/onboarding/pronunciation (multipart: audio, targetText)
- * Optional onboarding check. Returns only whether extra tone support would
- * help; no score is returned, and the audio is never stored. Any failure is
+ * Optional onboarding check. Returns whether extra tone support would help and
+ * a coarse feedback band (plus the weakest character); no score is returned, and the audio is never stored. Any failure is
  * "unavailable" so onboarding simply continues.
  */
 export async function POST(request: Request) {
@@ -72,9 +72,13 @@ export async function POST(request: Request) {
       audio: new Blob([await audio.arrayBuffer()], { type: "audio/wav" }),
     });
     const normalized = normalizeSpeechSuperResult(raw, targetText);
+    const scores = { overall: normalized.overall, tone: normalized.tone };
+    const { feedback, weakSyllable } = feedbackFor(scores, normalized.characters, targetText);
     return NextResponse.json({
       status: "ok",
-      needsToneSupport: needsToneSupport({ overall: normalized.overall, tone: normalized.tone }),
+      needsToneSupport: needsToneSupport(scores),
+      feedback,
+      weakSyllable,
     });
   } catch {
     return unavailable();

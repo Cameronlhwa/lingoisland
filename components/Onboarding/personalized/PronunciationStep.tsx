@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, RotateCcw, Square, Volume2 } from "lucide-react";
 import { abortPcmRecording, startPcmRecording, stopPcmRecording, type PcmRecorderHandle } from "@/lib/audio/recordPcm";
 import { ONBOARDING_EVENTS } from "@/lib/onboarding/personalized/analytics";
-import { provisionalLevel, topicFamily } from "@/lib/onboarding/personalized/flow";
+import { isBeginnerPath, provisionalLevel, topicFamily } from "@/lib/onboarding/personalized/flow";
 import {
+  feedbackLine,
   pronunciationWords,
   toneSupportFrom,
+  type PronunciationFeedback,
   type PronunciationResult,
   type PronunciationStatus,
 } from "@/lib/onboarding/personalized/pronunciation";
@@ -26,7 +28,8 @@ export function PronunciationStep({
   track,
   ensureSession,
 }: StepProps & { ensureSession: () => Promise<boolean> }) {
-  const words = pronunciationWords(topicFamily(state.answers), provisionalLevel(state.answers));
+  const beginner = isBeginnerPath(state.answers);
+  const words = pronunciationWords(topicFamily(state.answers), provisionalLevel(state.answers), beginner);
   const [phase, setPhase] = useState<Phase>("offer");
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<PronunciationResult[]>([]);
@@ -80,16 +83,23 @@ export function PronunciationStep({
       body.append("targetText", word.hanzi);
       body.append("audio", audio, "word.wav");
       const response = await fetch("/api/onboarding/pronunciation", { method: "POST", body });
-      const data = (await response.json().catch(() => null)) as { status?: string; needsToneSupport?: boolean } | null;
+      const data = (await response.json().catch(() => null)) as {
+        status?: string;
+        needsToneSupport?: boolean;
+        feedback?: PronunciationFeedback;
+        weakSyllable?: string | null;
+      } | null;
       if (!response.ok || data?.status !== "ok") {
         // Scoring unavailable: keep going without blocking the learner.
         finish(results.length > 0 ? "completed" : "failed", results);
         return;
       }
-      const collected = [...results, { word: word.hanzi, needsToneSupport: Boolean(data.needsToneSupport) }];
+      const feedback = data.feedback === "great" || data.feedback === "close" || data.feedback === "retry" ? data.feedback : undefined;
+      const weakSyllable = typeof data.weakSyllable === "string" && word.hanzi.includes(data.weakSyllable) ? data.weakSyllable : null;
+      const collected = [...results, { word: word.hanzi, needsToneSupport: Boolean(data.needsToneSupport), feedback, weakSyllable }];
       setResults(collected);
       setPhase("done");
-      setStatus("Got it. Thanks!");
+      setStatus(feedbackLine(feedback, weakSyllable));
     } catch {
       finish(results.length > 0 ? "completed" : "failed", results);
     }
@@ -151,8 +161,8 @@ export function PronunciationStep({
   if (phase === "offer") {
     return (
       <StepFrame
-        title="Want to personalize your speaking practice too?"
-        subtitle="Try two quick words, or skip this for now."
+        title={beginner ? "Say your first word in Mandarin" : "Check your tones in 20 seconds"}
+        subtitle={beginner ? "It takes about 20 seconds. You can skip it." : "Say two words from your plan, or skip for now."}
         progress={progress}
         onBack={back}
       >
@@ -221,8 +231,8 @@ export function PronunciationStep({
           </p>
         ) : phase === "done" ? (
           <>
-            <p className="text-[15px] font-semibold" style={{ color: GREEN }}>
-              Got it. Thanks!
+            <p className="text-center text-[15px] font-semibold" style={{ color: GREEN }} data-testid="pronunciation-feedback">
+              {feedbackLine(results[index]?.feedback, results[index]?.weakSyllable)}
             </p>
             <div className="grid w-full gap-3 sm:grid-cols-2">
               <PrimaryButton onClick={nextWord} data-testid="pronunciation-next">

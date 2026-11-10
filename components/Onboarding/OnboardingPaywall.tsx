@@ -133,6 +133,10 @@ export type PaywallActivation = {
   savedNote: string;
   notNowLabel?: string;
   onNotNow?: () => void;
+  /** A real learner review matched to this learner; replaces the founder quote. */
+  review?: { quote: string; role: string } | null;
+  /** Shows the speaking-practice row only when the learner tried pronunciation. */
+  showSpeakingPractice?: boolean;
 };
 
 type JourneyNode = {
@@ -318,6 +322,21 @@ export default function OnboardingPaywall({
                 {activation.desktopSubline ?? activation.subline}
               </p>
 
+              <ol className="mx-auto mt-5 flex max-w-[500px] flex-col gap-2 text-left" aria-label={lessonHeading} data-testid="desktop-paywall-lessons">
+                {previewUnits.slice(0, 2).map((unit, index) => (
+                  <li
+                    key={`${unit.name}-${index}`}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2"
+                    style={{ background: "#FBF7F0" }}
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--lingo-teal)] text-[11px] font-bold text-white">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="min-w-0 flex-1 text-[15px] font-semibold text-[var(--lingo-navy)]">{unit.name}</span>
+                  </li>
+                ))}
+              </ol>
+
               <ul className="mt-5 flex flex-wrap justify-center gap-2.5" aria-label="Your personalized plan">
                 <li>
                   <Chip>
@@ -398,7 +417,7 @@ export default function OnboardingPaywall({
                 disabled={checkoutLoading}
                 onClick={onProceedCheckout}
               >
-                {checkoutLoading ? "Starting checkout…" : "Start my Mandarin plan"}
+                {checkoutLoading ? "Starting checkout…" : activation.cta}
               </Button>
               <p className="mt-2 text-[12.5px]" style={{ color: MUTED }}>
                 Secure payment • Cancel anytime
@@ -415,6 +434,18 @@ export default function OnboardingPaywall({
                   </button>
                 ) : null}
               </div>
+              {activation.review ? (
+                <figure
+                  className="mx-auto mt-4 max-w-[620px] rounded-2xl border px-5 py-4 text-left"
+                  style={{ borderColor: "rgba(33,118,174,0.14)", background: "#FBF7F0" }}
+                  data-testid="paywall-review"
+                >
+                  <blockquote className="text-[14px] italic leading-relaxed text-[var(--lingo-navy)]">
+                    &ldquo;{activation.review.quote}&rdquo;
+                  </blockquote>
+                  <figcaption className="mt-2 text-[13px] font-bold text-[var(--lingo-teal)]">{activation.review.role}</figcaption>
+                </figure>
+              ) : null}
             </div>
           </Card>
         ) : (

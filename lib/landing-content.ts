@@ -258,9 +258,12 @@ export type LearnerTestimonial = {
   /**
    * What this learner had in common with others, so onboarding can show the
    * closest reviews first. Keys match onboarding goal and interest keys;
-   * levels use the onboarding 0 (pre-HSK) to 6 scale.
+   * levels use the onboarding 0 (pre-HSK) to 6 scale. `pains` are onboarding
+   * using-pain keys and `learningPains` are learning-pain or hesitation keys
+   * (lib/onboarding/personalized/painPoints.ts). Tag only what the quote
+   * itself says; never edit a quote to fit a tag.
    */
-  match?: { goals?: string[]; interests?: string[]; levels?: number[] };
+  match?: { goals?: string[]; interests?: string[]; levels?: number[]; pains?: string[]; learningPains?: string[] };
 };
 
 export const LEARNER_TESTIMONIALS: LearnerTestimonial[] = [
@@ -272,19 +275,31 @@ export const LEARNER_TESTIMONIALS: LearnerTestimonial[] = [
       goals: ["work", "heritage"],
       interests: ["clients", "networking", "meetings", "family_conversations"],
       levels: [1, 2, 3, 4],
+      pains: ["cant_keep_going", "understand_cant_reply"],
+      learningPains: ["not_relevant"],
     },
   },
   {
     quote:
       "I have little time to study, so focusing on common business and banking vocabulary made a huge difference. My conversations with Chinese clients now feel more natural and productive.",
     role: "Finance professional",
-    match: { goals: ["work"], interests: ["finance", "clients", "meetings", "sales"] },
+    match: {
+      goals: ["work"],
+      interests: ["finance", "clients", "meetings", "sales"],
+      pains: ["cant_keep_going", "missing_opportunities"],
+      learningPains: ["inconsistent", "no_time"],
+    },
   },
   {
     quote:
       "As a doctor, I do not need every Mandarin word. I need the right medical terms for my patients. LingoIsland gave me a focused plan built around the vocabulary I use at work.",
     role: "Medical professional",
-    match: { goals: ["work", "school"], interests: ["medicine", "science"] },
+    match: {
+      goals: ["work", "school"],
+      interests: ["medicine", "science"],
+      pains: ["missing_opportunities"],
+      learningPains: ["not_relevant", "apps_felt_like_games"],
+    },
   },
   {
     quote:
@@ -294,6 +309,7 @@ export const LEARNER_TESTIMONIALS: LearnerTestimonial[] = [
       goals: ["travel"],
       interests: ["restaurants", "transportation", "sightseeing", "meeting_locals", "hotels", "shopping"],
       levels: [0, 1, 2],
+      pains: ["point_and_gesture", "cant_talk_locals", "worried_get_around"],
     },
   },
 ];

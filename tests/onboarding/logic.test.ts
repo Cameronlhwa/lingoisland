@@ -67,6 +67,9 @@ function completedAnswers(overrides: Partial<OnboardingAnswers> = {}): Onboardin
     goal: { primary: "work", secondary: null, otherText: null },
     interests: { keys: ["meetings", "clients"], custom: null },
     level: { selfReport: "basic_conversations" },
+    experience: { key: "6_to_24_months" },
+    usingPain: { keys: ["stay_quiet"], timing: "ongoing", upcomingText: null },
+    learningPain: { keys: ["not_relevant"], hesitations: [] },
     calibration: {
       attemptId: "6f1c2b9e-4a7d-4c1e-9b2a-0d3e5f7a9b1c",
       claimedLevel: 3,
@@ -79,6 +82,11 @@ function completedAnswers(overrides: Partial<OnboardingAnswers> = {}): Onboardin
     availability: { minutes: "10", days: "5", session: null },
     ...overrides,
   };
+}
+
+/** Every answer filled in and the reviews screen seen: the plan is next to build. */
+function answeredState(overrides: Partial<OnboardingAnswers> = {}): OnboardingState {
+  return markCompleted({ ...initialState(NOW), answers: completedAnswers(overrides) }, "reviews", NOW);
 }
 
 describe("level mapping", () => {
@@ -442,9 +450,10 @@ describe("flow state and resume", () => {
   });
 
   it("puts the building and plan steps behind completion events", () => {
-    const state: OnboardingState = { ...initialState(NOW), answers: completedAnswers() };
+    const state = answeredState();
     assert.equal(resumeStep(state), "building");
-    const built = markCompleted(markCompleted(state, "building", NOW), "plan", NOW);
+    assert.equal(resumeStep(markCompleted(state, "building", NOW)), "reflect");
+    const built = markCompleted(markCompleted(markCompleted(state, "building", NOW), "reflect", NOW), "plan", NOW);
     assert.equal(resumeStep(built), "commitment");
   });
 
@@ -464,8 +473,8 @@ describe("flow state and resume", () => {
   });
 
   it("resumes progress saved on a phone step at the next step that is shown", () => {
-    let state: OnboardingState = { ...initialState(NOW), answers: completedAnswers({ messaging: { channel: "sms", status: "verified" } }) };
-    for (const step of ["building", "plan", "huahua", "messaging"] as const) {
+    let state = answeredState({ messaging: { channel: "sms", status: "verified" } });
+    for (const step of ["building", "reflect", "plan", "huahua", "messaging"] as const) {
       state = markCompleted(state, step, NOW);
     }
     assert.equal(resumeStep(state), "commitment");
@@ -473,8 +482,8 @@ describe("flow state and resume", () => {
   });
 
   it("rebuilds the plan after an earlier answer changes", () => {
-    let state: OnboardingState = { ...initialState(NOW), answers: completedAnswers() };
-    state = markCompleted(markCompleted(state, "building", NOW), "plan", NOW);
+    let state = answeredState();
+    state = markCompleted(markCompleted(markCompleted(state, "building", NOW), "reflect", NOW), "plan", NOW);
     state = updateAnswers(state, { availability: { minutes: "30", days: "5", session: "auto" } }, NOW);
     assert.equal(isStepComplete("plan", state), false);
     assert.equal(resumeStep(state), "building");

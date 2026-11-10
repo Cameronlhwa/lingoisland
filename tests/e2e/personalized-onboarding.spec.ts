@@ -97,7 +97,7 @@ async function profile(
   await heading(page, "Why do you want to learn Mandarin?");
   await page.getByTestId(`goal-${input.goal}`).click();
   await next(page);
-  await heading(page, "What would you like to talk about in Mandarin?");
+  await heading(page, "Which situations do you want to handle first?");
   for (const interest of input.interests) await page.getByTestId(`interest-${interest}`).click();
   if (input.custom) {
     await page.getByRole("button", { name: "Add your own" }).click();
@@ -108,13 +108,42 @@ async function profile(
   await heading(page, "How does your Mandarin feel right now?");
   await page.getByTestId(`level-${input.level}`).click();
   await next(page);
+  await pains(page, input.level);
 }
 
-async function calibrate(page: Page) {
+/** Experience (skipped for complete beginners), using pain + timing, then learning pain or hesitation. */
+async function pains(page: Page, level: string) {
+  if (level !== "new") {
+    await heading(page, "How long have you been learning Mandarin?");
+    await page.getByTestId("experience-on_and_off").click();
+    await next(page);
+  }
+  await heading(page, /what usually happens/);
+  await page.locator("[data-testid^=pain-]").first().click();
+  await page.getByTestId("timing-ongoing").click();
+  await next(page);
+  await heading(page, /hardest about learning so far|held you back from starting/);
+  await page.locator("[data-testid^=learning-pain-], [data-testid^=hesitation-]").first().click();
+  await next(page);
+}
+
+const PRONUNCIATION_HEADING = /Check your tones in 20 seconds|Say your first word in Mandarin/;
+
+/** After the building screen: confirm the reflection to reach the plan. */
+async function confirmReflection(page: Page) {
+  await heading(page, "Did we get this right?");
+  await page.getByTestId("reflect-confirm").click();
+}
+
+async function calibrate(page: Page, { beginner = false }: { beginner?: boolean } = {}) {
   const questionCounter = (position: number) =>
     page.getByTestId("onboarding-step").getByText(`Question ${position} of 5`);
-  await heading(page, /like you learn with LingoIsland/);
+  await heading(page, /like you learn with LingoIsland|started from zero|felt stuck too/);
   await page.getByTestId("social-proof-continue").click();
+  if (beginner) {
+    await heading(page, PRONUNCIATION_HEADING);
+    return;
+  }
   await heading(page, "Let’s personalize your starting point");
   await page.getByTestId("calibration-start").click();
   await expect(page.getByTestId("calibration-feedback")).toHaveCount(0);
@@ -132,7 +161,7 @@ async function calibrate(page: Page) {
     await expect(questionCounter(index + 1)).toBeVisible();
     await page.getByTestId("calibration-choice").first().click();
   }
-  await heading(page, "Want to personalize your speaking practice too?");
+  await heading(page, PRONUNCIATION_HEADING);
 }
 
 async function availability(page: Page, minutes = "10", days = "5") {
@@ -147,10 +176,10 @@ type ProfileInput = { goal: string; interests: string[]; level: string; custom?:
 
 async function toPlan(page: Page, input: ProfileInput) {
   await profile(page, input);
-  await calibrate(page);
-  await heading(page, "Want to personalize your speaking practice too?");
+  await calibrate(page, { beginner: input.level === "new" });
   await page.getByTestId("pronunciation-skip").click();
   await availability(page, input.minutes, input.days);
+  await confirmReflection(page);
   await heading(page, "Here’s your personalized plan");
 }
 
@@ -179,9 +208,12 @@ for (const viewport of VIEWPORTS) {
     test("1. absolute beginner goes from the plan straight to the commitment and the paywall", async ({ page }) => {
       await setup(page);
       await profile(page, { goal: "everyday", interests: ["food"], level: "new" });
-      await calibrate(page);
+      await calibrate(page, { beginner: true });
+      await expect(page.getByTestId("calibration-start")).toHaveCount(0);
+      await heading(page, "Say your first word in Mandarin");
       await page.getByTestId("pronunciation-skip").click();
       await availability(page, "5", "3");
+      await confirmReflection(page);
       await heading(page, "Here’s your personalized plan");
       const journeyCount = await page.getByTestId("plan-journeys").locator("li").count();
       expect(journeyCount).toBeGreaterThanOrEqual(2);
@@ -189,23 +221,19 @@ for (const viewport of VIEWPORTS) {
       await next(page);
       await heading(page, "Ready to begin your Mandarin journey?");
       await page.getByTestId("commitment-cta").click();
-      await expect(page.getByRole("heading", {
-        name: isMobile(page)
-          ? "Activate your 5-minute Mandarin plan for everyday life"
-          : "Build useful Mandarin for everyday life",
-      })).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByRole("heading", { name: "Stop sitting out of Mandarin conversations" }).filter({ visible: true })).toBeVisible({ timeout: 15_000 });
     });
 
     test("2. never asks for a phone number or calls the texting services", async ({ page }) => {
       const mocks = await setup(page, { account: "user", firstName: "Cameron" });
       await toPlan(page, { goal: "work", interests: ["meetings", "clients"], level: "basic_conversations" });
-      await expect(page.getByRole("progressbar", { name: "Onboarding progress" })).toHaveAttribute("aria-valuetext", /Step 7 of 8/);
+      await expect(page.getByRole("progressbar", { name: "Onboarding progress" })).toHaveAttribute("aria-valuetext", /Step 12 of 13/);
       await next(page);
       await heading(page, "Ready to begin your Mandarin journey?");
-      await expect(page.getByRole("progressbar", { name: "Onboarding progress" })).toHaveAttribute("aria-valuetext", /Step 8 of 8/);
+      await expect(page.getByRole("progressbar", { name: "Onboarding progress" })).toHaveAttribute("aria-valuetext", /Step 13 of 13/);
       await expect(page.getByText(/Meet Huahua|Where should Huahua message you|phone number/i)).toHaveCount(0);
       await expect(page.locator("input[type=tel]")).toHaveCount(0);
-      await expect(page.getByTestId("commitment-card")).toContainText("Add Huahua anytime");
+      await expect(page.getByTestId("commitment-card")).toContainText("Practice conversations included");
       await page.getByTestId("commitment-cta").click();
       await expect(page.getByTestId("onboarding-step")).toHaveCount(0, { timeout: 15_000 });
       expect(phoneRequests(mocks)).toEqual([]);
@@ -231,11 +259,11 @@ for (const viewport of VIEWPORTS) {
       await page.reload();
       await heading(page, "Heritage learners like you learn with LingoIsland");
       await page.getByRole("button", { name: "Back" }).click();
-      await heading(page, "How does your Mandarin feel right now?");
-      await expect(page.getByTestId("level-few_words")).toHaveAttribute("aria-pressed", "true");
+      await heading(page, "What’s been hardest about learning so far?");
+      await expect(page.getByTestId("learning-pain-forget_words")).toHaveAttribute("aria-pressed", "true");
     });
 
-    test("reviews before the quiz show the site rating and match the learner", async ({ page }, testInfo) => {
+    test("reviews after the pain questions show the site rating and match the learner", async ({ page }, testInfo) => {
       await setup(page);
       await profile(page, { goal: "work", interests: ["finance"], level: "few_words" });
       await heading(page, "Professionals like you learn with LingoIsland");
@@ -256,21 +284,21 @@ for (const viewport of VIEWPORTS) {
       await page.getByRole("button", { name: "Back" }).click();
       await heading(page, "Professionals like you learn with LingoIsland");
       await page.getByRole("button", { name: "Back" }).click();
-      await heading(page, "How does your Mandarin feel right now?");
+      await heading(page, "What’s been hardest about learning so far?");
     });
 
     test("a traveler sees the traveler review first", async ({ page }) => {
       await setup(page);
       await profile(page, { goal: "travel", interests: ["restaurants"], level: "new" });
-      await heading(page, "Travelers like you learn with LingoIsland");
+      await heading(page, "Others who started from zero");
       const first = page.getByTestId("social-proof-review").first();
       await expect(first).toContainText("Traveler");
-      await expect(first.getByTestId("social-proof-reason")).toHaveText("Also learning for travel");
+      await expect(first.getByTestId("social-proof-reason")).toHaveText("Also wanted to talk with locals");
     });
 
     test("calibration advances automatically and lets learners revise answers", async ({ page }) => {
       await setup(page);
-      await profile(page, { goal: "everyday", interests: ["food"], level: "new" });
+      await profile(page, { goal: "everyday", interests: ["food"], level: "few_words" });
       await calibrate(page);
     });
 
@@ -279,10 +307,13 @@ for (const viewport of VIEWPORTS) {
       await toPlan(page, { goal: "work", interests: ["sales"], level: "simple_sentences", minutes: "10", days: "3" });
       await expect(page.getByText("10 minutes a day, 3 days a week")).toBeVisible();
       await page.getByRole("button", { name: "Back" }).click();
+      await heading(page, "Did we get this right?");
+      await page.getByRole("button", { name: "Back" }).click();
       await heading(page, "How much time can you usually spend learning Mandarin?");
       await page.getByTestId("minutes-30").click();
       await page.getByTestId("session-short_sessions").click();
       await next(page);
+      await confirmReflection(page);
       await heading(page, "Here’s your personalized plan");
       await expect(page.getByText(/30 minutes a day, 3 days a week/)).toBeVisible();
     });
@@ -296,7 +327,7 @@ for (const viewport of VIEWPORTS) {
         });
       });
       await profile(page, { goal: "travel", interests: ["hotels"], level: "new" });
-      await calibrate(page);
+      await calibrate(page, { beginner: true });
       await page.getByTestId("pronunciation-try").click();
       await expect(page.getByTestId("pronunciation-record")).toHaveAccessibleName(/Record yourself saying/);
       await page.getByTestId("pronunciation-record").click();
@@ -313,11 +344,12 @@ for (const viewport of VIEWPORTS) {
       await availability(page, "15", "3");
       await heading(page, "We’re adjusting your learning plan to help you learn Mandarin more efficiently.");
       const stages = page.getByTestId("building-stages");
-      for (const stage of ["Personalizing your vocabulary", "Adjusting your Mandarin level", "Building your learning plan"]) {
+      for (const stage of ["Focusing on presentations", "Matching your starting point", "Fitting it into 15 minutes, 3 days a week"]) {
         await expect(stages).toContainText(stage);
       }
       await expect(stages.getByText("(done)")).toHaveCount(3, { timeout: 8000 });
       await heading(page, "Your personalized plan is ready!");
+      await confirmReflection(page);
       await heading(page, "Here’s your personalized plan");
     });
 
@@ -336,7 +368,7 @@ for (const viewport of VIEWPORTS) {
         ),
       );
       expect(animated).toBe(false);
-      await heading(page, "Here’s your personalized plan");
+      await heading(page, "Did we get this right?");
       expect(Date.now() - started).toBeLessThan(6000);
     });
 
@@ -349,7 +381,7 @@ for (const viewport of VIEWPORTS) {
       await expect(card).toContainText("Your first milestone");
       await expect(page.getByTestId("commitment-milestone")).not.toBeEmpty();
       await expect(card).not.toContainText(/weeks|months/);
-      for (const chip of ["Work or business", "10 minutes, 5 days a week", "Add Huahua anytime"]) {
+      for (const chip of ["Work or business", "10 minutes, 5 days a week", "Practice conversations included"]) {
         await expect(card.getByRole("listitem").filter({ hasText: chip })).toBeVisible();
       }
     });
@@ -358,13 +390,14 @@ for (const viewport of VIEWPORTS) {
       const mocks = await setup(page, { account: "user", firstName: "Cameron" });
       await toCommitment(page, { goal: "work", interests: ["meetings"], level: "basic_conversations", minutes: "10", days: "5" });
       await page.getByTestId("commitment-cta").click();
+      await expect(page.getByRole("heading", { name: "Stop sitting out of Mandarin conversations at work" }).filter({ visible: true })).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText("10 minutes a day, 5 days a week. Built around meetings.").filter({ visible: true }).first()).toBeVisible();
+      await expect(page.getByTestId("paywall-review").filter({ visible: true })).toBeVisible();
+      await expect(page.getByText(/Huahua|Journeys/).filter({ visible: true })).toHaveCount(0);
       if (isMobile(page)) {
-        await expect(page.getByRole("heading", { name: "Activate your 10-minute Mandarin plan for work or business" })).toBeVisible({ timeout: 15_000 });
         await expect(page.getByText("Your plan is saved, even if you close this page.").filter({ visible: true }).first()).toBeVisible();
       } else {
-        await expect(page.getByRole("heading", { name: "Build useful Mandarin for work or business" })).toBeVisible({ timeout: 15_000 });
-        await expect(page.getByText("A focused 10-minute plan built around your goals.").filter({ visible: true }).first()).toBeVisible();
-        await expect(page.getByText("Review that adapts to your progress").filter({ visible: true }).first()).toBeVisible();
+        await expect(page.getByTestId("desktop-paywall-lessons")).toBeVisible();
         const billingSelector = page.getByTestId("desktop-billing-selector");
         await expect(billingSelector.getByRole("button", { name: "Monthly" })).toHaveAttribute("aria-pressed", "true");
         await billingSelector.getByRole("button", { name: "Annual · Save 33%" }).click();
@@ -378,11 +411,7 @@ for (const viewport of VIEWPORTS) {
       expect(committed).toBeTruthy();
       expect((committed?.answers as { commitment: { name: unknown } }).commitment.name).toBe("Cameron");
       await page.reload();
-      await expect(page.getByRole("heading", {
-        name: isMobile(page)
-          ? "Activate your 10-minute Mandarin plan for work or business"
-          : "Build useful Mandarin for work or business",
-      })).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByRole("heading", { name: "Stop sitting out of Mandarin conversations at work" }).filter({ visible: true })).toBeVisible({ timeout: 15_000 });
     });
 
     test("11. no sensitive data reaches logs or analytics", async ({ page }) => {
@@ -400,8 +429,13 @@ for (const viewport of VIEWPORTS) {
         "onboarding_goal_selected",
         "onboarding_interests_selected",
         "onboarding_level_selected",
+        "onboarding_experience_selected",
+        "onboarding_using_pain_selected",
+        "onboarding_learning_pain_selected",
+        "onboarding_reviews_viewed",
         "onboarding_calibration_completed",
         "onboarding_pronunciation_skipped",
+        "onboarding_reflection_confirmed",
         "onboarding_plan_viewed",
         "onboarding_commitment_completed",
       ]) {
@@ -418,7 +452,6 @@ for (const viewport of VIEWPORTS) {
       const mocks = await setup(page, { account: "user", failSaves: 2 });
       await profile(page, { goal: "work", interests: ["meetings"], level: "basic_conversations" });
       await calibrate(page);
-      await heading(page, "Want to personalize your speaking practice too?");
       await expect.poll(() => mocks.failedSaves).toBe(2);
       await expect
         .poll(() => {
@@ -429,7 +462,7 @@ for (const viewport of VIEWPORTS) {
         }, { timeout: 15_000 })
         .toBe(true);
       await page.reload();
-      await heading(page, "Want to personalize your speaking practice too?");
+      await heading(page, PRONUNCIATION_HEADING);
     });
 
     test("13. a signed-in learner stays signed in when progress can't be loaded", async ({ page }) => {
@@ -472,13 +505,16 @@ for (const viewport of VIEWPORTS) {
 
       await page.getByTestId("continue").focus();
       await page.keyboard.press("Enter");
-      await heading(page, "What would you like to talk about in Mandarin?");
+      await heading(page, "Which situations do you want to handle first?");
       await expect(page.locator("h1")).toBeFocused();
       await expect(page.getByRole("progressbar", { name: "Onboarding progress" })).toHaveAttribute("aria-valuetext", /Step 2 of/);
       await page.getByTestId("interest-meetings").click();
       await next(page);
       await page.getByTestId("level-simple_sentences").click();
       await next(page);
+      await pains(page, "simple_sentences");
+      const painAxe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
+      expect(painAxe.violations.map((violation) => violation.id)).toEqual([]);
       await calibrate(page);
       await page.getByTestId("pronunciation-try").click();
       const pronunciationAxe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
@@ -487,6 +523,10 @@ for (const viewport of VIEWPORTS) {
       await page.getByRole("button", { name: "Skip for now" }).click();
       await availability(page, "10", "3");
       await expect(page.getByRole("status").filter({ hasText: /done|ready/ }).first()).toBeAttached({ timeout: 8000 });
+      await heading(page, "Did we get this right?");
+      const reflectAxe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
+      expect(reflectAxe.violations.map((violation) => violation.id)).toEqual([]);
+      await page.getByTestId("reflect-confirm").click();
       await heading(page, "Here’s your personalized plan");
       const planAxe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
       expect(planAxe.violations.map((violation) => violation.id)).toEqual([]);
@@ -508,9 +548,11 @@ for (const viewport of VIEWPORTS) {
       await next(page);
       await page.getByTestId("level-basic_conversations").click();
       await next(page);
+      await pains(page, "basic_conversations");
       await calibrate(page);
       await page.getByTestId("pronunciation-skip").click();
       await availability(page, "10", "5");
+      await confirmReflection(page);
       await heading(page, "Here’s your personalized plan");
       await page.screenshot({ path: testInfo.outputPath(`plan-${viewport.name}.png`), fullPage: true });
       await next(page);

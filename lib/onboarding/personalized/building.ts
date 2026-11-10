@@ -35,3 +35,14 @@ export function buildingState(elapsedMs: number, serverDone: boolean, reducedMot
   const done = serverDone && elapsedMs >= minimum;
   return { completedStages: completed, done, waitingOnServer: !serverDone && elapsedMs >= minimum };
 }
+
+/** The three stage labels in the learner's own terms; falls back to BUILD_STAGES. */
+export function buildStageLabels(plan: { interestPhrase: string; minutesPerDay: number; daysLabel: string; daysVary: boolean } | null): string[] {
+  if (!plan) return [...BUILD_STAGES];
+  const days = plan.daysVary ? "a few days a week" : plan.daysLabel === "every day" ? "every day" : `${plan.daysLabel} a week`;
+  return [
+    plan.interestPhrase ? `Focusing on ${plan.interestPhrase}` : BUILD_STAGES[0],
+    "Matching your starting point",
+    `Fitting it into ${plan.minutesPerDay} minutes, ${days}`,
+  ];
+}

@@ -1,5 +1,5 @@
 import type { OnboardingEventName } from "@/lib/onboarding/personalized/analytics";
-import type { OnboardingAnswers, OnboardingState } from "@/lib/onboarding/personalized/flow";
+import type { OnboardingAnswers, OnboardingState, StepId } from "@/lib/onboarding/personalized/flow";
 
 export type StepProps = {
   state: OnboardingState;
@@ -10,4 +10,6 @@ export type StepProps = {
   progress: { index: number; total: number };
   track: (event: OnboardingEventName, properties?: Record<string, unknown>) => void;
   announce: (message: string) => void;
+  /** Jumps back to an earlier step the learner can already visit. */
+  jumpTo?: (step: StepId) => void;
 };

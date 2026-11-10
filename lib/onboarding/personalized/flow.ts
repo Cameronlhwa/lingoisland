@@ -40,6 +40,24 @@ import {
   type SessionPreference,
 } from "./plan";
 import { getQuestion } from "./questionBank";
+import {
+  CUSTOM_PAIN_KEY,
+  CUSTOM_PAIN_MAX,
+  NO_PAIN_KEY,
+  cleanPicks,
+  isExperienceKey,
+  isHesitationKey,
+  isLearningPainKey,
+  isTimingKey,
+  isUsingPainKey,
+  timingHasEvent,
+  type ExperienceKey,
+  type HesitationKey,
+  type LearningPainKey,
+  type TimingKey,
+  type UsingPainKey,
+} from "./painPoints";
+import { parseInsight, type InsightAnswer } from "./insightTypes";
 import type { PronunciationStatus, ToneSupport } from "./pronunciation";
 
 export const FLOW_VERSION = 1;
@@ -49,10 +67,15 @@ export const STEP_ORDER = [
   "goal",
   "interests",
   "level",
+  "experience",
+  "using_pain",
+  "learning_pain",
+  "reviews",
   "calibration",
   "pronunciation",
   "availability",
   "building",
+  "reflect",
   "plan",
   "huahua",
   "messaging",
@@ -80,6 +103,17 @@ export type OnboardingAnswers = {
   goal: { primary: GoalKey | null; secondary: GoalKey | null; otherText: string | null };
   interests: { keys: string[]; custom: string | null };
   level: { selfReport: SelfReportKey | null };
+  experience: { key: ExperienceKey | null };
+  usingPain: {
+    keys: UsingPainKey[];
+    timing: TimingKey | null;
+    upcomingText: string | null;
+    /** Their own words when they pick "Something else". */
+    customText?: string | null;
+  };
+  learningPain: { keys: LearningPainKey[]; hesitations: HesitationKey[] };
+  /** "Did we get this right?" playback, written during the building screen. */
+  insight: InsightAnswer | null;
   calibration: {
     attemptId: string | null;
     claimedLevel: InternalLevel | null;
@@ -110,6 +144,10 @@ export function emptyAnswers(): OnboardingAnswers {
     goal: { primary: null, secondary: null, otherText: null },
     interests: { keys: [], custom: null },
     level: { selfReport: null },
+    experience: { key: null },
+    usingPain: { keys: [], timing: null, upcomingText: null, customText: null },
+    learningPain: { keys: [], hesitations: [] },
+    insight: null,
     calibration: { attemptId: null, claimedLevel: null, items: [], answers: [], placement: null, writingSystem: "simplified" },
     pronunciation: { status: "not_started", toneSupport: null },
     availability: { minutes: null, days: null, session: null },
@@ -154,9 +192,23 @@ export function isSimulatedMessaging(answers: OnboardingAnswers) {
  */
 const MESSAGING_STEPS: readonly StepId[] = ["huahua", "messaging", "huahua_prefs", "preview"];
 
+/** "I am completely new": no experience question and no placement quiz. */
+export function isCompletelyNew(answers: OnboardingAnswers): boolean {
+  return answers.level.selfReport === "new";
+}
+
+/**
+ * Beginner framing (hesitation instead of learning pain, "say your first
+ * word"): completely new, or says they haven't really started.
+ */
+export function isBeginnerPath(answers: OnboardingAnswers): boolean {
+  return isCompletelyNew(answers) || answers.experience.key === "not_started";
+}
+
 /** Steps that apply to this learner, in order. */
-export function stepsFor(_answers: OnboardingAnswers): StepId[] {
-  return STEP_ORDER.filter((step) => !MESSAGING_STEPS.includes(step));
+export function stepsFor(answers: OnboardingAnswers): StepId[] {
+  const skipped: StepId[] = isCompletelyNew(answers) ? ["experience", "calibration"] : [];
+  return STEP_ORDER.filter((step) => !MESSAGING_STEPS.includes(step) && !skipped.includes(step));
 }
 
 export function isStepComplete(step: StepId, state: OnboardingState): boolean {
@@ -168,6 +220,16 @@ export function isStepComplete(step: StepId, state: OnboardingState): boolean {
       return answers.interests.keys.length > 0 || Boolean(answers.interests.custom);
     case "level":
       return answers.level.selfReport !== null;
+    case "experience":
+      return answers.experience.key !== null;
+    case "using_pain":
+      return (
+        answers.usingPain.keys.length > 0 &&
+        answers.usingPain.timing !== null &&
+        (!answers.usingPain.keys.includes(CUSTOM_PAIN_KEY) || Boolean(answers.usingPain.customText))
+      );
+    case "learning_pain":
+      return isBeginnerPath(answers) ? answers.learningPain.hesitations.length > 0 : answers.learningPain.keys.length > 0;
     case "calibration":
       return answers.calibration.placement !== null;
     case "pronunciation":
@@ -260,13 +322,25 @@ export function updateAnswers(state: OnboardingState, patch: Partial<OnboardingA
   const answers: OnboardingAnswers = { ...state.answers, ...patch };
   if (patch.level && patch.level.selfReport !== state.answers.level.selfReport) {
     answers.calibration = { ...emptyAnswers().calibration, writingSystem: state.answers.calibration.writingSystem };
+    if (patch.level.selfReport === "new") answers.experience = { key: null };
   }
   let events = state.events;
   // Upstream changes mean the plan must be rebuilt and shown again.
-  const affectsPlan = ["goal", "interests", "level", "calibration", "pronunciation", "availability"].some((key) => key in patch);
+  const affectsPlan = [
+    "goal",
+    "interests",
+    "level",
+    "experience",
+    "usingPain",
+    "learningPain",
+    "calibration",
+    "pronunciation",
+    "availability",
+  ].some((key) => key in patch);
   if (affectsPlan) {
     events = { ...events };
     delete events.building;
+    delete events.reflect;
     delete events.plan;
   }
   return { ...state, answers, events, updatedAt: now.toISOString() };
@@ -374,6 +448,26 @@ export function parseAnswers(input: unknown, timezone = "UTC"): OnboardingAnswer
 
   const level = obj(raw.level);
   base.level = { selfReport: isSelfReportKey(level.selfReport) ? level.selfReport : null };
+
+  const experience = obj(raw.experience);
+  base.experience = { key: base.level.selfReport !== "new" && isExperienceKey(experience.key) ? experience.key : null };
+
+  const usingPain = obj(raw.usingPain);
+  const timing = isTimingKey(usingPain.timing) ? usingPain.timing : null;
+  const painKeys = cleanPicks(usingPain.keys, isUsingPainKey, undefined, NO_PAIN_KEY);
+  base.usingPain = {
+    keys: painKeys,
+    customText: painKeys.includes(CUSTOM_PAIN_KEY) ? normalizeCustomText(usingPain.customText, CUSTOM_PAIN_MAX) : null,
+    timing,
+    upcomingText: timingHasEvent(timing) ? normalizeCustomText(usingPain.upcomingText, CUSTOM_TEXT_MAX) : null,
+  };
+
+  const learningPain = obj(raw.learningPain);
+  base.learningPain = {
+    keys: cleanPicks(learningPain.keys, isLearningPainKey),
+    hesitations: cleanPicks(learningPain.hesitations, isHesitationKey),
+  };
+  base.insight = parseInsight(raw.insight);
 
   const calibration = obj(raw.calibration);
   const claimed = levelForSelfReport(base.level.selfReport);

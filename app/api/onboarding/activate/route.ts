@@ -22,12 +22,31 @@ function timeLabelFor(minutes: number) {
   return "1h+";
 }
 
+/** The newest Journey created since the learner committed to this plan, if its islands were saved. */
+async function journeyGeneratedSince(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, committedAt: string) {
+  const { data: journey } = await supabase
+    .from("journeys")
+    .select("id")
+    .eq("user_id", userId)
+    .gte("created_at", committedAt)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!journey) return null;
+  const { count } = await supabase
+    .from("journey_islands")
+    .select("id", { count: "exact", head: true })
+    .eq("journey_id", journey.id);
+  return count ? (journey.id as string) : null;
+}
+
 /**
  * POST /api/onboarding/activate
  *
  * { stage: "start", state?, timezone } saves the committed plan (when the
  * browser still holds it), applies the level and goal to the profile, and
- * returns the parameters for the first Journey.
+ * returns the parameters for the first Journey, or { status: "generated", journeyId }
+ * when that Journey already exists.
  *
  * { stage: "complete", journeyId } records activation once and finishes onboarding.
  */
@@ -78,6 +97,12 @@ export async function POST(request: Request) {
     } else {
       await supabase.from("user_profiles").insert({ user_id: user.id, ...profileFields });
     }
+
+    // A Journey already generated for this plan (another tab, a reload, or a
+    // retry after "complete" failed) is reused rather than generated again.
+    const committedAt = answers.commitment.committedAt;
+    const existingJourneyId = committedAt ? await journeyGeneratedSince(supabase, user.id, committedAt) : null;
+    if (existingJourneyId) return NextResponse.json({ status: "generated", journeyId: existingJourneyId });
 
     return NextResponse.json({
       status: "ready",

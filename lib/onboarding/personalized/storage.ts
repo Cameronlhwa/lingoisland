@@ -4,6 +4,7 @@
 import { LOCAL_STORAGE_KEY, parseState, type OnboardingState } from "./flow";
 
 const ACTIVATION_KEY = "lingo_onboarding_activate_v1";
+const GENERATING_KEY = "lingo_onboarding_generating_v1";
 
 export function browserTimeZone() {
   try {
@@ -38,6 +39,34 @@ export function clearLocalState() {
   try {
     window.localStorage.removeItem(LOCAL_STORAGE_KEY);
     window.localStorage.removeItem(ACTIVATION_KEY);
+    window.localStorage.removeItem(GENERATING_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/** When this browser started generating the first Journey, so a reload or second tab waits instead of generating another. */
+export function generationStartedAt(): number | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const value = Number(window.localStorage.getItem(GENERATING_KEY));
+    return Number.isFinite(value) && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+export function markGenerationStarted(now = Date.now()) {
+  try {
+    window.localStorage.setItem(GENERATING_KEY, String(now));
+  } catch {
+    // ignore
+  }
+}
+
+export function clearGenerationStarted() {
+  try {
+    window.localStorage.removeItem(GENERATING_KEY);
   } catch {
     // ignore
   }

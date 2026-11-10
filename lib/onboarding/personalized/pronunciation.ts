@@ -1,5 +1,6 @@
-// Optional two-word pronunciation check. Results only adjust tone and pinyin
-// support; no score is ever shown or stored.
+// Optional two-word pronunciation check. Results adjust tone and pinyin
+// support behind the scenes; learners see the same neutral line whatever the
+// result, and no numeric score is ever shown or stored.
 
 import type { TopicFamily } from "./goals";
 import { clampLevel } from "./levels";
@@ -50,15 +51,27 @@ export function isPronunciationWord(hanzi: unknown): hanzi is string {
   return Object.keys(INTEREST_WORDS).some((family) => INTEREST_WORDS[family as TopicFamily].some((word) => word.hanzi === hanzi));
 }
 
-/** First an easier word tied to an interest, then one near the provisional level. */
-export function pronunciationWords(family: TopicFamily, level: number): [PronunciationWord, PronunciationWord] {
-  const representative = LEVEL_WORDS[clampLevel(level)];
+/**
+ * First an easier word tied to an interest, then one near the provisional
+ * level. Beginners start with 你好, their first Mandarin word, then a word from
+ * their topic.
+ */
+export function pronunciationWords(family: TopicFamily, level: number, beginner = false): [PronunciationWord, PronunciationWord] {
+  const representative = LEVEL_WORDS[beginner ? 0 : clampLevel(level)];
   const pool = INTEREST_WORDS[family] ?? INTEREST_WORDS.everyday;
   const easier = pool.find((word) => word.hanzi !== representative.hanzi) ?? INTEREST_WORDS.everyday[0];
-  return [easier, representative];
+  return beginner ? [representative, easier] : [easier, representative];
 }
 
-export type PronunciationResult = { word: string; needsToneSupport: boolean };
+export type PronunciationFeedback = "great" | "close" | "retry";
+
+export type PronunciationResult = {
+  word: string;
+  needsToneSupport: boolean;
+  feedback?: PronunciationFeedback;
+  /** The character that needs the most work, when one clearly does. */
+  weakSyllable?: string | null;
+};
 
 /** Extra tone and pinyin support when any attempt struggled with tones. */
 export function toneSupportFrom(results: readonly PronunciationResult[]): ToneSupport | null {
@@ -71,4 +84,32 @@ export function needsToneSupport(scores: { overall: number | null; tone: number 
   const values = [scores.overall, scores.tone].filter((value): value is number => typeof value === "number");
   if (values.length === 0) return false;
   return values.some((value) => value < 60);
+}
+
+/**
+ * Server-side: plain-language feedback from SpeechSuper scores. "great" means
+ * no extra tone support is needed; "retry" is reserved for clearly missed
+ * attempts. The weak syllable is always a character of the target word.
+ */
+export function feedbackFor(
+  scores: { overall: number | null; tone: number | null },
+  characters: readonly { hanzi: string; score: number | null }[],
+  targetText: string,
+): { feedback: PronunciationFeedback; weakSyllable: string | null } {
+  if (!needsToneSupport(scores)) return { feedback: "great", weakSyllable: null };
+  const values = [scores.overall, scores.tone].filter((value): value is number => typeof value === "number");
+  const lowest = values.length ? Math.min(...values) : 0;
+  const scored = characters.filter((character) => typeof character.score === "number" && Array.from(targetText).includes(character.hanzi));
+  const weakest = scored.sort((left, right) => (left.score as number) - (right.score as number))[0];
+  const weakSyllable = weakest && (weakest.score as number) < 60 ? weakest.hanzi : null;
+  return { feedback: lowest >= 40 ? "close" : "retry", weakSyllable };
+}
+
+/**
+ * The one line a learner sees after each word. It is the same for every
+ * result so the learner cannot tell how well they did; the result only
+ * shapes their plan behind the scenes.
+ */
+export function feedbackLine(_feedback?: PronunciationFeedback, _weakSyllable?: string | null): string {
+  return "Got it. We’ll use this to tune your speaking practice.";
 }

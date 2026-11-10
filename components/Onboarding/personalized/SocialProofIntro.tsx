@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Star } from "lucide-react";
 import type { OnboardingAnswers } from "@/lib/onboarding/personalized/flow";
-import { matchReviews, RATING_NOTE, SITE_RATING, socialProofTitle } from "@/lib/onboarding/personalized/socialProof";
+import { matchReviews, RATING_NOTE, reviewsTitle, SITE_RATING } from "@/lib/onboarding/personalized/socialProof";
 import { CARD_BORDER, FONT_DISPLAY, GREEN, MUTED, NAVY, PrimaryButton, SKY_PALE, StepFrame } from "./ui";
 
 const STAR_COLOR = "#F5A524";
@@ -62,7 +62,7 @@ export function SocialProofIntro({
   const reviews = useMemo(() => matchReviews(answers), [answers]);
 
   return (
-    <StepFrame title={socialProofTitle(answers.goal.primary)} progress={progress} onBack={onBack}>
+    <StepFrame title={reviewsTitle(answers)} progress={progress} onBack={onBack}>
       <div className="flex flex-col items-center text-center" data-testid="site-rating">
         <div className="flex items-center gap-3">
           <Laurel />

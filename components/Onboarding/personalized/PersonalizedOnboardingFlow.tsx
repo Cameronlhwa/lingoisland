@@ -9,6 +9,7 @@ import {
   canVisit,
   initialState,
   isStepId,
+  isStepComplete,
   lastCompletedStep,
   markAbandoned,
   markCompleted,
@@ -19,6 +20,7 @@ import {
   progressFor,
   provisionalLevel,
   resumeStep,
+  stepsFor,
   updateAnswers,
   type OnboardingAnswers,
   type OnboardingState,
@@ -37,7 +39,10 @@ import {
 } from "@/lib/onboarding/personalized/storage";
 import { CalibrationStep } from "./CalibrationStep";
 import { PaywallStep, type FlowMode } from "./PaywallStep";
-import { BuildingStep, CommitmentStep, PlanStep } from "./PlanSteps";
+import { BuildingStep, CommitmentStep, PlanStep, ReflectStep } from "./PlanSteps";
+import { currentInsight, insightKey, templateInsight } from "@/lib/onboarding/personalized/insight";
+import { parseInsight } from "@/lib/onboarding/personalized/insightTypes";
+import { ExperienceStep, LearningPainStep, ReviewsStep, UsingPainStep } from "./PainSteps";
 import { AvailabilityStep, GoalStep, InterestsStep, LevelStep } from "./ProfileSteps";
 import { PronunciationStep } from "./PronunciationStep";
 import type { StepProps } from "./stepTypes";
@@ -59,7 +64,6 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
   const [step, setStep] = useState<StepId>("goal");
   const [account, setAccount] = useState<Account>({ kind: "guest", firstName: null });
   const [announcement, setAnnouncement] = useState("");
-  const [calibrationWide, setCalibrationWide] = useState(false);
 
   const stateRef = useRef<OnboardingState | null>(null);
   const stepRef = useRef<StepId>("goal");
@@ -248,7 +252,11 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
       const now = new Date();
       const from = stepRef.current;
       const updated = markCompleted(patch ? updateAnswers(current, patch, now) : current, from, now);
-      const target = nextStep(from, updated.answers) ?? "paywall";
+      // Skip steps that are already answered (for example after "Change something"
+      // on the reflection), so editing one answer doesn't mean re-walking the flow.
+      const steps = stepsFor(updated.answers);
+      const ahead = steps.slice(steps.indexOf(from) + 1);
+      const target = ahead.find((candidate) => !isStepComplete(candidate, updated)) ?? nextStep(from, updated.answers) ?? "paywall";
       goTo(target, updated);
     },
     [goTo],
@@ -276,7 +284,39 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
     }
   }, [scheduleSave]);
 
+  /**
+   * Writes the "Did we get this right?" playback while the building animation
+   * plays. Falls back to the template on any failure; never throws.
+   */
+  const writeInsight = useCallback(async () => {
+    const current = stateRef.current;
+    if (!current || currentInsight(current.answers)) return;
+    const key = insightKey(current.answers);
+    let insight = null;
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      const response = await fetch("/api/onboarding/insight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers: current.answers }),
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timer));
+      const data = (await response.json().catch(() => null)) as { insight?: unknown } | null;
+      const parsed = parseInsight(data?.insight);
+      if (parsed && parsed.key === key) insight = parsed;
+    } catch {
+      // Timeout or network error: the template below stands in.
+    }
+    const latest = stateRef.current;
+    if (!latest || insightKey(latest.answers) !== key) return;
+    const final = insight ?? templateInsight(latest.answers);
+    track(ONBOARDING_EVENTS.insightGenerated, { insight_source: final.source });
+    update({ insight: final });
+  }, [track, update]);
+
   const buildPlan = useCallback(async () => {
+    await Promise.all([saveNow(), writeInsight()]);
     await saveNow();
     const current = stateRef.current;
     track(ONBOARDING_EVENTS.planGenerated, {
@@ -284,9 +324,17 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
       minutes: current?.answers.availability.minutes ?? null,
       days: current?.answers.availability.days ?? null,
     });
-  }, [saveNow, track]);
+  }, [saveNow, track, writeInsight]);
 
   const announce = useCallback((message: string) => setAnnouncement(message), []);
+
+  const jumpTo = useCallback(
+    (target: StepId) => {
+      const current = stateRef.current;
+      if (current && canVisit(target, current)) goTo(target, current);
+    },
+    [goTo],
+  );
 
   if (!state) {
     return (
@@ -323,9 +371,10 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
     progress: progressFor(step, state.answers),
     track,
     announce,
+    jumpTo,
   };
 
-  const wide = step === "plan" || step === "commitment" || (step === "calibration" && calibrationWide);
+  const wide = step === "plan" || step === "commitment" || step === "reviews" || step === "reflect";
 
   return (
     <Shell wide={wide}>
@@ -334,10 +383,15 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
         {step === "goal" ? <GoalStep {...props} /> : null}
         {step === "interests" ? <InterestsStep {...props} /> : null}
         {step === "level" ? <LevelStep {...props} /> : null}
-        {step === "calibration" ? <CalibrationStep {...props} onWideChange={setCalibrationWide} /> : null}
+        {step === "experience" ? <ExperienceStep {...props} /> : null}
+        {step === "using_pain" ? <UsingPainStep {...props} /> : null}
+        {step === "learning_pain" ? <LearningPainStep {...props} /> : null}
+        {step === "reviews" ? <ReviewsStep {...props} /> : null}
+        {step === "calibration" ? <CalibrationStep {...props} /> : null}
         {step === "pronunciation" ? <PronunciationStep {...props} ensureSession={ensureSession} /> : null}
         {step === "availability" ? <AvailabilityStep {...props} /> : null}
         {step === "building" ? <BuildingStep {...props} serverWork={buildPlan} /> : null}
+        {step === "reflect" ? <ReflectStep {...props} /> : null}
         {step === "plan" ? <PlanStep {...props} /> : null}
         {step === "commitment" ? (
           <CommitmentStep

@@ -157,8 +157,8 @@ export function InterestsStep({ state, update, next, back, progress, track }: St
 
   return (
     <StepFrame
-      title="What would you like to talk about in Mandarin?"
-      subtitle="Pick at least one. Your vocabulary and conversations will focus on these."
+      title="Which situations do you want to handle first?"
+      subtitle="Pick at least one. Your lessons and practice conversations will focus on these."
       progress={progress}
       onBack={back}
     >

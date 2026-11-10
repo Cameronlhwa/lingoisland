@@ -4,7 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAnalytics } from "@/lib/posthog/client";
 import { ONBOARDING_EVENTS, trackOnboarding } from "@/lib/onboarding/personalized/analytics";
-import { browserTimeZone, clearActivationPending, clearLocalState, readLocalState } from "@/lib/onboarding/personalized/storage";
+import { runActivation } from "@/lib/onboarding/personalized/activation";
+import {
+  browserTimeZone,
+  clearActivationPending,
+  clearGenerationStarted,
+  clearLocalState,
+  generationStartedAt,
+  markGenerationStarted,
+  readLocalState,
+} from "@/lib/onboarding/personalized/storage";
 import { FieldError, FONT_DISPLAY, MUTED, NAVY, PrimaryButton, Shell, usePrefersReducedMotion } from "./ui";
 
 type Phase = "working" | "error" | "not_committed";
@@ -45,30 +54,29 @@ export default function ActivationScreen() {
         trackOnboarding(captureEvent, ONBOARDING_EVENTS.purchaseCompleted);
       }
       const local = readLocalState();
-      const start = await postActivate({ stage: "start", state: local ?? undefined });
-      if (start.data?.status === "already_activated") {
-        clearLocalState();
-        clearActivationPending();
-        router.replace("/app/journey");
-        return;
-      }
-      if (start.status === 409) {
+      const outcome = await runActivation({
+        start: () => postActivate({ stage: "start", state: local ?? undefined }),
+        generate: async (journey) => {
+          const generate = await fetch("/api/journey/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(journey),
+          });
+          const generated = (await generate.json().catch(() => null)) as { journeyId?: string } | null;
+          return generate.ok && generated?.journeyId ? { journeyId: generated.journeyId } : { failed: true };
+        },
+        complete: async (journeyId) => (await postActivate({ stage: "complete", journeyId })).ok,
+        generationStartedAt,
+        markGenerationStarted: () => markGenerationStarted(),
+        clearGenerationStarted,
+        onGenerating: () => setMessage("Building your first Journey. This can take up to a minute…"),
+        now: () => Date.now(),
+        sleep: (ms) => new Promise((resolve) => window.setTimeout(resolve, ms)),
+      });
+      if (outcome === "not_committed") {
         setPhase("not_committed");
         return;
       }
-      if (!start.ok || !start.data?.journey) throw new Error("start_failed");
-
-      setMessage("Building your first Journey. This can take up to a minute…");
-      const generate = await fetch("/api/journey/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(start.data.journey),
-      });
-      const generated = (await generate.json().catch(() => null)) as { journeyId?: string } | null;
-      if (!generate.ok || !generated?.journeyId) throw new Error("generate_failed");
-
-      const complete = await postActivate({ stage: "complete", journeyId: generated.journeyId });
-      if (!complete.ok) throw new Error("complete_failed");
 
       clearLocalState();
       clearActivationPending();
@@ -80,7 +88,11 @@ export default function ActivationScreen() {
     }
   }, [captureEvent, router, searchParams]);
 
+  // Once per visit: later runs come only from "Try again", never from run changing identity.
+  const autoRunRef = useRef(false);
   useEffect(() => {
+    if (autoRunRef.current) return;
+    autoRunRef.current = true;
     void run();
   }, [run]);
 

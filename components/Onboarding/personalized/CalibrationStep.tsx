@@ -12,7 +12,6 @@ import {
 import { claimedLevel, topicFamily } from "@/lib/onboarding/personalized/flow";
 import { WRITING_SYSTEMS, type WritingSystem } from "@/lib/onboarding/personalized/huahua";
 import { presentQuestion } from "@/lib/onboarding/personalized/presentation";
-import { SocialProofIntro } from "./SocialProofIntro";
 import type { StepProps } from "./stepTypes";
 import { CARD_BORDER, GREEN, MUTED, NAVY, PrimaryButton, SKY_PALE, StepFrame } from "./ui";
 
@@ -73,20 +72,12 @@ export function CalibrationStep({
   progress,
   track,
   announce,
-  onWideChange,
-}: StepProps & { onWideChange?: (wide: boolean) => void }) {
+}: StepProps) {
   const calibration = state.answers.calibration;
   const started = calibration.items.length === ASSESSMENT_LENGTH;
   const answeredCount = calibration.answers.length;
   const [currentIndex, setCurrentIndex] = useState(() => Math.min(answeredCount, ASSESSMENT_LENGTH - 1));
-  const [showReviews, setShowReviews] = useState(!started);
   const questionHeadingRef = useRef<HTMLHeadingElement>(null);
-  const reviewsVisible = showReviews && !started;
-
-  useEffect(() => {
-    onWideChange?.(reviewsVisible);
-  }, [onWideChange, reviewsVisible]);
-  useEffect(() => () => onWideChange?.(false), [onWideChange]);
 
   const item = started ? calibration.items[currentIndex] : null;
   const question = useMemo(
@@ -142,12 +133,6 @@ export function CalibrationStep({
     back?.();
   };
 
-  if (reviewsVisible) {
-    return (
-      <SocialProofIntro answers={state.answers} progress={progress} onBack={back} onContinue={() => setShowReviews(false)} />
-    );
-  }
-
   if (!started) {
     return (
       <StepFrame
@@ -155,7 +140,7 @@ export function CalibrationStep({
         title="Let’s personalize your starting point"
         subtitle="Answer five quick questions so we can match your learning plan to you."
         progress={progress}
-        onBack={() => setShowReviews(true)}
+        onBack={back}
       >
         <WritingToggle
           value={calibration.writingSystem}
@@ -227,7 +212,11 @@ export function CalibrationStep({
               key={choice.id}
               type="button"
               aria-pressed={isChosen}
-              onClick={() => answer(choice.id)}
+              onClick={(event) => {
+                // The second click of a double-click lands on the next question, which the learner hasn't read.
+                if (event.detail > 1) return;
+                answer(choice.id);
+              }}
               data-testid="calibration-choice"
               className="flex min-h-[52px] w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left transition-colors hover:bg-[#F4FAFD] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
               style={{

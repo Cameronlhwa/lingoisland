@@ -4,10 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Clock, MessageCircle, Sparkles, Target } from "lucide-react";
 import { ONBOARDING_EVENTS } from "@/lib/onboarding/personalized/analytics";
 import {
-  BUILD_STAGES,
+  buildStageLabels,
   buildingState,
 } from "@/lib/onboarding/personalized/building";
-import { hasMessaging, planFor } from "@/lib/onboarding/personalized/flow";
+import { hasMessaging, isBeginnerPath, planFor } from "@/lib/onboarding/personalized/flow";
+import { currentInsight, templateInsight } from "@/lib/onboarding/personalized/insight";
+import { planAnswers } from "@/lib/onboarding/personalized/reflection";
 import { goalLabel, joinList } from "@/lib/onboarding/personalized/goals";
 import type { StepProps } from "./stepTypes";
 import {
@@ -18,16 +20,19 @@ import {
   MUTED,
   NAVY,
   PrimaryButton,
+  SecondaryButton,
   SKY_PALE,
   StepFrame,
   usePrefersReducedMotion,
 } from "./ui";
 
 export function BuildingStep({
+  state,
   next,
   serverWork,
 }: StepProps & { serverWork: () => Promise<void> }) {
   const reduced = usePrefersReducedMotion();
+  const stages = useMemo(() => buildStageLabels(planFor(state.answers)), [state.answers]);
   const [elapsed, setElapsed] = useState(0);
   const [serverDone, setServerDone] = useState(false);
   const startedRef = useRef(false);
@@ -65,7 +70,7 @@ export function BuildingStep({
   const announcement = view.done
     ? "Your personalized plan is ready!"
     : view.completedStages > 0
-      ? `${BUILD_STAGES[view.completedStages - 1]}: done`
+      ? `${stages[view.completedStages - 1]}: done`
       : "Building your plan";
 
   return (
@@ -86,7 +91,7 @@ export function BuildingStep({
         className="mx-auto mt-8 flex max-w-sm flex-col gap-3"
         data-testid="building-stages"
       >
-        {BUILD_STAGES.map((stage, index) => {
+        {stages.map((stage, index) => {
           const complete = index < view.completedStages;
           const active = !complete && index === view.completedStages;
           return (
@@ -165,6 +170,8 @@ function SummaryRow({
 
 export function PlanStep({ state, next, back, progress, track }: StepProps) {
   const plan = useMemo(() => planFor(state.answers), [state.answers]);
+  const answersList = useMemo(() => planAnswers(state.answers, plan), [state.answers, plan]);
+  const milestoneLine = `${plan.milestone.text}, in about ${plan.milestone.range}.`;
   const viewedRef = useRef(false);
   useEffect(() => {
     if (viewedRef.current) return;
@@ -221,7 +228,7 @@ export function PlanStep({ state, next, back, progress, track }: StepProps) {
       </dl>
 
       <h2 className="mt-6 text-[15px] font-bold" style={{ color: NAVY }}>
-        Your first Journeys
+        Your first lessons
       </h2>
       <ol className="mt-2 flex flex-col gap-2" data-testid="plan-journeys">
         {plan.journeys.map((journey, index) => (
@@ -248,9 +255,24 @@ export function PlanStep({ state, next, back, progress, track }: StepProps) {
           </li>
         ))}
       </ol>
+      <div className="mt-6 rounded-2xl p-4" style={{ background: SKY_PALE, border: `1px solid ${CARD_BORDER}` }} data-testid="plan-answers">
+        <p className="text-[12px] font-bold uppercase tracking-[0.12em]" style={{ color: GREEN }}>
+          How LingoIsland fixes this
+        </p>
+        <ul className="mt-2.5 flex flex-col gap-2">
+          {answersList.map((line) => (
+            <li key={line} className="flex items-start gap-2.5 text-[15px] font-semibold" style={{ color: NAVY }}>
+              <Check size={16} strokeWidth={3} className="mt-1 shrink-0" style={{ color: GREEN }} aria-hidden />
+              {line}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-sm" style={{ color: MUTED }} data-testid="plan-milestone">
+          First milestone: {milestoneLine}
+        </p>
+      </div>
       <p className="mt-4 text-sm leading-relaxed" style={{ color: MUTED }}>
-        Your starting point is a guide, not a label. Lessons and Huahua keep
-        adjusting as you learn.
+        Your starting point is a guide, not a label. Lessons keep adjusting as you learn.
       </p>
       <PrimaryButton
         className="mt-8"
@@ -296,7 +318,7 @@ export function CommitmentStep({
     ? `Huahua ${state.answers.messaging.channel === "whatsapp" ? "on WhatsApp" : "by text"}, ${
         frequency === "7" ? "every day" : frequency && frequency !== "auto" ? `${frequency} times a week` : "adjusts to you"
       }`
-    : "Add Huahua anytime";
+    : "Practice conversations included";
   const summary = [
     { icon: Target, label: goalLabel(plan.goal, state.answers.goal.otherText) },
     { icon: Clock, label: schedule },
@@ -395,8 +417,55 @@ export function CommitmentStep({
         disabled={sealed}
         data-testid="commitment-cta"
       >
-        {sealed ? "Opening your plan…" : "I’m ready, show me my plan"}
+        {sealed ? "Opening your plan…" : "I’m ready, start my plan"}
       </PrimaryButton>
+    </StepFrame>
+  );
+}
+
+export function ReflectStep({ state, next, back, progress, track, jumpTo }: StepProps) {
+  const plan = useMemo(() => planFor(state.answers), [state.answers]);
+  const insight = useMemo(() => currentInsight(state.answers) ?? templateInsight(state.answers, plan), [state.answers, plan]);
+  const rows = [
+    { label: "Right now", value: insight.now, testId: "reflect-right-now" },
+    { label: "Where you want to be", value: insight.goal, testId: "reflect-goal" },
+    { label: "What’s really in the way", value: insight.missing, testId: "reflect-missing" },
+  ];
+  const path = isBeginnerPath(state.answers) ? "beginner" : "learner";
+  return (
+    <StepFrame title="Did we get this right?" subtitle="Here’s what we heard." progress={progress} onBack={back}>
+      <dl className="flex flex-col gap-3" data-testid="reflection" data-insight-source={insight.source}>
+        {rows.map((row) => (
+          <div key={row.label} className="rounded-2xl p-4" style={{ background: SKY_PALE, border: `1px solid ${CARD_BORDER}` }}>
+            <dt className="text-[12px] font-bold uppercase tracking-[0.12em]" style={{ color: GREEN }}>
+              {row.label}
+            </dt>
+            <dd className="mt-1.5 text-[16px] font-semibold leading-snug" style={{ color: NAVY }} data-testid={row.testId}>
+              {row.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-8 grid gap-3 sm:grid-cols-[3fr_2fr]">
+        <PrimaryButton
+          data-testid="reflect-confirm"
+          onClick={() => {
+            track(ONBOARDING_EVENTS.reflectionConfirmed, { path, insight_source: insight.source });
+            next();
+          }}
+        >
+          That’s me, show me my plan
+        </PrimaryButton>
+        <SecondaryButton
+          data-testid="reflect-edit"
+          onClick={() => {
+            track(ONBOARDING_EVENTS.reflectionEdited, { insight_source: insight.source });
+            jumpTo?.("using_pain");
+          }}
+        >
+          Change something
+        </SecondaryButton>
+      </div>
     </StepFrame>
   );
 }
