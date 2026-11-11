@@ -129,6 +129,7 @@ describe("inbound texts", () => {
     const event = inbound(phone, `Hi Huahua! Connect my LingoIsland account: LI-${started.whatsappReplyConnect?.code}`) as any;
     event.data.payload.type = "WHATSAPP";
     const original = ctx.deps.config;
+    const sentBefore = ctx.provider.sent.length;
     ctx.deps.config = deps.config;
     try {
       const result = await deliverWebhook(ctx, event);
@@ -146,6 +147,8 @@ describe("inbound texts", () => {
       [userId],
     );
     assert.ok(window.rows[0].last_inbound_at, "the connection reply opens the WhatsApp service window");
+    assert.equal(ctx.provider.sent.length, sentBefore + 1, "the learner receives Huahua's welcome after connecting");
+    assert.equal(ctx.provider.sent.at(-1)?.channel, "whatsapp");
   });
 
   it("does not reply to pending (unverified) numbers", async () => {

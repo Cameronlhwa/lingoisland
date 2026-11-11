@@ -2,6 +2,7 @@ import { verificationCodeMatches } from "./codes";
 import { SMS_LIMITS, type SmsConfig } from "./config";
 import type { TurnGenerator } from "./huahua/ai";
 import { respondToInbound } from "./huahua/conversation";
+import { sendHuahuaWelcome } from "./huahua/welcome";
 import { detectSmsKeyword } from "./keywords";
 import { describeSmsError, logSmsError } from "./log";
 import { SMS_HELP_MESSAGE, SMS_RESUBSCRIBED_MESSAGE } from "./messages";
@@ -192,7 +193,11 @@ async function completeWhatsAppReplyConnect(deps: SmsProcessorDeps, phoneNumber:
     return "whatsapp_connect_invalid_code";
   }
 
-  const completed = await deps.rpc<{ status?: string }>("sms_complete_verification", {
+  const completed = await deps.rpc<{
+    status?: string;
+    contact?: { id?: string } | null;
+    needs_welcome?: boolean;
+  }>("sms_complete_verification", {
     p_user_id: pending.user_id,
     p_verification_id: pending.id,
     p_confirm_transfer: false,
@@ -205,6 +210,15 @@ async function completeWhatsAppReplyConnect(deps: SmsProcessorDeps, phoneNumber:
       p_phone_number: pending.phone_number,
       p_occurred_at: occurredAt,
     });
+    // Their inbound reply has opened WhatsApp's 24-hour service window, so
+    // welcome them immediately. This mirrors the SMS-code path and makes the
+    // reply-to-connect flow feel complete on the phone, too.
+    if (completed.needs_welcome && completed.contact?.id) {
+      const limit = await consumeSmsRateLimits(deps.rpc, deps.config.secret, [
+        { name: "welcome:user:day", identifier: pending.user_id, ...SMS_LIMITS.welcomePerUserDay },
+      ]);
+      if (limit.allowed) await sendHuahuaWelcome(deps, pending.user_id, completed.contact.id);
+    }
     return "whatsapp_connected";
   }
   return `whatsapp_connect_${completed?.status ?? "failed"}`;
