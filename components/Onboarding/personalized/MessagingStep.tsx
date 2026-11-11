@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import QRCode from "qrcode";
+// Import the browser-only renderer directly. The package root also exposes its
+// Node renderer, which makes Next attempt to bundle `fs` for this client component.
+import QRCode from "qrcode/lib/browser";
 import { Copy, ExternalLink, MessageSquareText, Smartphone } from "lucide-react";
 import SmsPhoneSetup from "@/components/sms/SmsPhoneSetup";
 import OnboardingCheckoutAuth, { CheckoutHandoff } from "@/components/Onboarding/OnboardingCheckoutAuth";
