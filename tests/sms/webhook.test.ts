@@ -106,6 +106,48 @@ describe("inbound texts", () => {
     assert.equal(ctx.provider.sent.length, before);
   });
 
+  it("connects a pending WhatsApp learner when the matching one-time message arrives", async () => {
+    const userId = await ctx.createUser();
+    const phone = nextPhone();
+    const deps = {
+      ...ctx.deps,
+      config: {
+        ...ctx.deps.config,
+        whatsapp: { ...ctx.deps.config.whatsapp, enabled: true, fromNumber: LINGO_NUMBER, otpAvailable: false },
+      },
+    };
+    const started = await startVerification(deps, {
+      userId,
+      ip: null,
+      country: "CA",
+      phoneNumber: phone,
+      consent: true,
+      consentVersion: SMS_CONSENT_VERSION,
+      source: "onboarding",
+      channel: "whatsapp",
+    });
+    const event = inbound(phone, `Hi Huahua! Connect my LingoIsland account: LI-${started.whatsappReplyConnect?.code}`) as any;
+    event.data.payload.type = "WHATSAPP";
+    const original = ctx.deps.config;
+    ctx.deps.config = deps.config;
+    try {
+      const result = await deliverWebhook(ctx, event);
+      assert.equal(result.outcome, "whatsapp_connected");
+    } finally {
+      ctx.deps.config = original;
+    }
+    const { rows } = await ctx.db.query<{ status: string; channel: string }>(
+      "select status, channel from sms_contacts where user_id = $1",
+      [userId],
+    );
+    assert.deepEqual(rows, [{ status: "active", channel: "whatsapp" }]);
+    const window = await ctx.db.query<{ last_inbound_at: string | null }>(
+      "select last_inbound_at from sms_contacts where user_id = $1",
+      [userId],
+    );
+    assert.ok(window.rows[0].last_inbound_at, "the connection reply opens the WhatsApp service window");
+  });
+
   it("does not reply to pending (unverified) numbers", async () => {
     const userId = await ctx.createUser();
     const phone = nextPhone();

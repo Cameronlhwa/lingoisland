@@ -290,7 +290,8 @@ export async function startVerification(
     p_consent_journey: consent.journey,
   });
 
-  if (started.status === "started" && started.id) {
+  const whatsappReplyConnect = channel === "whatsapp" && !deps.config.whatsapp.otpAvailable;
+  if (started.status === "started" && started.id && !whatsappReplyConnect) {
     await sendVerificationCode(deps, started.id, parsed.e164, code, channel);
   } else if (started.status === "already_active") {
     // Same verified number and channel: just record the newly chosen consents.
@@ -304,6 +305,10 @@ export async function startVerification(
     state: await getPhoneState(deps, input.userId),
     alreadyActive: started.status === "already_active",
     country: parsed.country,
+    whatsappReplyConnect:
+      started.status === "started" && whatsappReplyConnect && deps.config.whatsapp.fromNumber
+        ? { code, whatsappNumber: deps.config.whatsapp.fromNumber }
+        : null,
   };
 }
 

@@ -47,6 +47,7 @@ import { getQuestion, QUESTION_BANK } from "../../lib/onboarding/personalized/qu
 import { matchReviews, SITE_RATING, socialProofTitle } from "../../lib/onboarding/personalized/socialProof";
 import { LEARNER_TESTIMONIALS } from "../../lib/landing-content";
 import { MESSAGING_CONSENT_VERSION, SMS_CONSENT_VERSION, messagingDisclosure, resolveConsent } from "../../lib/sms/consent";
+import { channelEligibility } from "../../lib/onboarding/personalized/messaging";
 
 const NOW = new Date("2026-11-07T12:00:00Z");
 
@@ -498,36 +499,34 @@ describe("flow state and resume", () => {
     assert.equal(resumeStep(partial), "level");
   });
 
-  it("shows the building wait before reflection, then commitment", () => {
+  it("shows the building wait before reflection, then Huahua", () => {
     const state = answeredState();
     assert.equal(resumeStep(state), "building");
     assert.equal(resumeStep(markCompleted(state, "building", NOW)), "reflect");
     const built = markCompleted(markCompleted(state, "building", NOW), "reflect", NOW);
-    assert.equal(resumeStep(built), "commitment");
+    assert.equal(resumeStep(built), "huahua");
   });
 
-  it("never shows the phone or texting steps and goes from reflection to commitment", () => {
-    for (const messaging of [
-      { channel: null, status: "not_started" },
-      { channel: "sms", status: "verified" },
-    ] as const) {
-      const answers = completedAnswers({ messaging });
-      const steps = stepsFor(answers);
-      for (const hidden of ["huahua", "messaging", "huahua_prefs", "preview"] as const) {
-        assert.ok(!steps.includes(hidden), hidden);
-      }
-      assert.equal(nextStep("reflect", answers), "commitment");
-      assert.equal(previousStep("commitment", answers), "reflect");
-    }
+  it("skips Huahua preferences and the preview without messaging", () => {
+    const answers = completedAnswers({ messaging: { channel: "none", status: "skipped" } });
+    assert.ok(stepsFor(answers).includes("huahua"));
+    assert.ok(stepsFor(answers).includes("messaging"));
+    assert.ok(!stepsFor(answers).includes("huahua_prefs"));
+    assert.ok(!stepsFor(answers).includes("preview"));
+    assert.equal(nextStep("messaging", answers), "commitment");
+    assert.equal(nextStep("reflect", answers), "huahua");
+    const verified = completedAnswers({ messaging: { channel: "sms", status: "verified" } });
+    assert.equal(nextStep("messaging", verified), "huahua_prefs");
+    assert.ok(stepsFor(verified).includes("preview"));
   });
 
-  it("resumes progress saved on a phone step at the next step that is shown", () => {
+  it("resumes after completed phone steps at preferences or commitment", () => {
     let state = answeredState({ messaging: { channel: "sms", status: "verified" } });
     for (const step of ["building", "reflect", "huahua", "messaging"] as const) {
       state = markCompleted(state, step, NOW);
     }
-    assert.equal(resumeStep(state), "commitment");
-    assert.equal(canVisit("messaging", state), false);
+    assert.equal(resumeStep(state), "huahua_prefs");
+    assert.equal(canVisit("messaging", state), true);
   });
 
   it("rebuilds the plan after an earlier answer changes", () => {
@@ -605,5 +604,36 @@ describe("analytics privacy", () => {
     for (const required of ["onboarding_started", "onboarding_abandoned", "onboarding_purchase_completed", "onboarding_commitment_completed"]) {
       assert.ok(names.includes(required as (typeof names)[number]));
     }
+  });
+});
+
+describe("messaging channel eligibility", () => {
+  it("offers WhatsApp alongside SMS in every SMS-supported country", () => {
+    const eligibility = channelEligibility({
+      country: "CA",
+      smsEnabled: true,
+      smsCountries: ["CA", "US"],
+      whatsappEnabled: true,
+      // Canada is intentionally absent: SMS support should still make both channels available.
+      whatsappCountries: ["US"],
+    });
+
+    assert.equal(eligibility.smsSupported, true);
+    assert.equal(eligibility.whatsappAvailable, true);
+    assert.equal(eligibility.recommendation, "choose");
+    assert.deepEqual(eligibility.options.map((option) => option.channel), ["sms", "whatsapp"]);
+  });
+
+  it("keeps WhatsApp-only availability restricted outside SMS-supported countries", () => {
+    const eligibility = channelEligibility({
+      country: "GB",
+      smsEnabled: true,
+      smsCountries: ["CA", "US"],
+      whatsappEnabled: true,
+      whatsappCountries: ["US"],
+    });
+
+    assert.equal(eligibility.recommendation, "none");
+    assert.deepEqual(eligibility.options, []);
   });
 });

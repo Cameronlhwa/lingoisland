@@ -4,9 +4,11 @@ import { isE164 } from "./phone";
 export type SmsRateLimit = { bucket: string; max: number; windowSeconds: number };
 
 export type WhatsAppConfig = {
-  /** WhatsApp is switched on and has a sender plus the templates it needs. */
+  /** WhatsApp is switched on and has a registered sender. */
   enabled: boolean;
   fromNumber: string | null;
+  /** Whether an authentication template exists for OTP-based connection. */
+  otpAvailable: boolean;
   /** Meta-approved templates (names), required outside the 24-hour window. */
   templates: {
     verification: string | null;
@@ -85,8 +87,8 @@ export function getSmsConfig(env: NodeJS.ProcessEnv = process.env): SmsConfig {
     enabled:
       enabled &&
       env.WHATSAPP_ENABLED === "true" &&
-      Boolean(whatsappFrom && isE164(whatsappFrom)) &&
-      Boolean(verificationTemplate),
+      Boolean(whatsappFrom && isE164(whatsappFrom)),
+    otpAvailable: Boolean(verificationTemplate),
     fromNumber: whatsappFrom && isE164(whatsappFrom) ? whatsappFrom : null,
     templates: {
       verification: verificationTemplate,

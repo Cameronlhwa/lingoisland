@@ -1,3 +1,4 @@
+import { verificationCodeMatches } from "./codes";
 import { SMS_LIMITS, type SmsConfig } from "./config";
 import type { TurnGenerator } from "./huahua/ai";
 import { respondToInbound } from "./huahua/conversation";
@@ -133,6 +134,11 @@ async function handleInbound(deps: SmsProcessorDeps, event: SmsWebhookEvent) {
     return "ignored_other_number";
   }
 
+  if (message.channel === "whatsapp") {
+    const connected = await completeWhatsAppReplyConnect(deps, from, message.body, event.occurredAt);
+    if (connected) return connected;
+  }
+
   const keyword = detectSmsKeyword(message.body);
   const result = await deps.rpc<InboundResult>("sms_handle_inbound", {
     p_provider: deps.provider.name,
@@ -164,6 +170,44 @@ async function handleInbound(deps: SmsProcessorDeps, event: SmsWebhookEvent) {
     default:
       return result.outcome;
   }
+}
+
+/** A learner sends this one-time code from WhatsApp to prove they control the entered number. */
+async function completeWhatsAppReplyConnect(deps: SmsProcessorDeps, phoneNumber: string, body: string, occurredAt: string) {
+  const match = body.match(/\bLI(?:NGO)?[-\s]?CONNECT[-\s]?(\d{6})\b/i) ?? body.match(/\bLI[-\s]?(\d{6})\b/i);
+  if (!match) return null;
+
+  const pending = await deps.rpc<{
+    id?: string;
+    user_id?: string;
+    phone_number?: string;
+    code_hash?: string;
+  } | null>("sms_get_whatsapp_connect_candidate", { p_phone_number: phoneNumber });
+  if (!pending?.id || !pending.user_id || !pending.phone_number || !pending.code_hash) return "whatsapp_connect_not_pending";
+  if (!verificationCodeMatches(deps.config.secret, pending.code_hash, {
+    userId: pending.user_id,
+    phoneNumber: pending.phone_number,
+    code: match[1],
+  })) {
+    return "whatsapp_connect_invalid_code";
+  }
+
+  const completed = await deps.rpc<{ status?: string }>("sms_complete_verification", {
+    p_user_id: pending.user_id,
+    p_verification_id: pending.id,
+    p_confirm_transfer: false,
+    p_display_name: "",
+    p_language_level: "",
+  });
+  if (completed?.status === "verified" || completed?.status === "already_verified") {
+    await deps.rpc("sms_mark_whatsapp_connect_inbound", {
+      p_user_id: pending.user_id,
+      p_phone_number: pending.phone_number,
+      p_occurred_at: occurredAt,
+    });
+    return "whatsapp_connected";
+  }
+  return `whatsapp_connect_${completed?.status ?? "failed"}`;
 }
 
 async function sendHelpToUnknown(deps: SmsProcessorDeps, from: string, to: string, channel: "sms" | "whatsapp") {

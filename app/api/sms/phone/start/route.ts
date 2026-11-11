@@ -41,7 +41,11 @@ export async function POST(request: Request) {
       channel: body.channel,
       source: body.source,
     });
-    return NextResponse.json({ ...result.state, alreadyActive: result.alreadyActive });
+    return NextResponse.json({
+      ...result.state,
+      alreadyActive: result.alreadyActive,
+      whatsappReplyConnect: result.whatsappReplyConnect,
+    });
   } catch (error) {
     return smsErrorResponse(error, "POST /api/sms/phone/start");
   }

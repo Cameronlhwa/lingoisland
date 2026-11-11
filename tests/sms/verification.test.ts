@@ -103,6 +103,38 @@ describe("starting verification", () => {
     assert.ok(ttlMs > 9 * 60_000 && ttlMs <= 10 * 60_000, "expires in about 10 minutes");
   });
 
+  it("returns a reply-to-connect code for WhatsApp when no authentication template exists", async () => {
+    const userId = await ctx.createUser();
+    const phone = nextPhone();
+    const deps = {
+      ...ctx.deps,
+      config: {
+        ...ctx.deps.config,
+        whatsapp: {
+          ...ctx.deps.config.whatsapp,
+          enabled: true,
+          fromNumber: "+14165550100",
+          otpAvailable: false,
+        },
+      },
+    };
+
+    const result = await startVerification(deps, {
+      userId,
+      ip: null,
+      country: "CA",
+      phoneNumber: phone,
+      consent: true,
+      consentVersion: SMS_CONSENT_VERSION,
+      source: "onboarding",
+      channel: "whatsapp",
+    });
+
+    assert.match(result.whatsappReplyConnect?.code ?? "", /^\d{6}$/);
+    assert.equal(result.whatsappReplyConnect?.whatsappNumber, "+14165550100");
+    assert.equal(sentTo(phone).length, 0, "WhatsApp waits for the learner to start the chat");
+  });
+
   it("requires explicit consent for the current consent version", async () => {
     const userId = await ctx.createUser();
     await expectSmsError(start(userId, nextPhone(), { consent: false }), "consent_required");

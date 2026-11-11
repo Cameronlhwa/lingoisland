@@ -3,24 +3,33 @@ import { expect, test, type Page, type Route } from "@playwright/test";
 
 // Every server call is mocked: nothing here reaches Supabase, Telnyx, SpeechSuper or Stripe.
 
+type Channel = "sms" | "whatsapp";
+type VerifyMode = "ok" | "incorrect_then_ok" | "transfer";
+
 type MockOptions = {
   account?: "guest" | "user";
   firstName?: string | null;
+  smsAvailable?: boolean;
+  whatsappAvailable?: boolean;
+  eligibility?: { smsSupported: boolean; whatsappAvailable: boolean; country?: string };
+  verify?: VerifyMode;
   /** The first N progress saves fail with a database error. */
   failSaves?: number;
+  /** Sending the verification code fails at the messaging provider. */
+  sendFails?: boolean;
 };
 
 type Mocks = {
   savedStates: Array<Record<string, unknown>>;
   requests: Array<{ url: string; body: string }>;
   checkoutBodies: Array<Record<string, unknown>>;
+  verifyBodies: Array<Record<string, unknown>>;
   failedSaves: number;
 };
 
+const PHONE_INPUT = "2025550123";
+const CODE = "123456";
 const CUSTOM_INTEREST = "Zither duets";
-
-/** Endpoints the phone version of onboarding used. This flow must never call them. */
-const PHONE_ENDPOINTS = /\/api\/(sms\/|onboarding\/messaging|onboarding\/huahua-)/;
 
 const VIEWPORTS = [
   { name: "mobile", width: 390, height: 844 },
@@ -32,11 +41,53 @@ function json(route: Route, body: unknown, status = 200) {
   return route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 }
 
+function phoneState(input: { pending?: Channel | null; contact?: Channel | null }) {
+  const now = Date.now();
+  return {
+    available: true,
+    supportedCountries: [{ code: "US", dialCode: "+1" }],
+    consentVersion: "2026-11-07",
+    lingoNumber: null,
+    whatsapp: { available: true, supportedCountries: [] },
+    contact: input.contact
+      ? {
+          status: "active",
+          channel: input.contact,
+          maskedNumber: "(•••) •••-0123",
+          countryCode: "US",
+          verifiedAt: new Date(now).toISOString(),
+          consentAt: new Date(now).toISOString(),
+          welcomeSentAt: null,
+          pausedAt: null,
+          pausedReason: null,
+          optedOutAt: null,
+          disabledAt: null,
+          hasDeliveryIssue: false,
+        }
+      : null,
+    pending: input.pending
+      ? {
+          maskedNumber: "(•••) •••-0123",
+          channel: input.pending,
+          expiresAt: new Date(now + 600_000).toISOString(),
+          expired: false,
+          attemptsRemaining: 5,
+          sendsRemaining: 3,
+          resendAvailableAt: new Date(now - 1000).toISOString(),
+          deliveryFailed: false,
+        }
+      : null,
+  };
+}
+
 async function setup(page: Page, options: MockOptions = {}): Promise<Mocks> {
-  const mocks: Mocks = { savedStates: [], requests: [], checkoutBodies: [], failedSaves: 0 };
+  const mocks: Mocks = { savedStates: [], requests: [], checkoutBodies: [], verifyBodies: [], failedSaves: 0 };
   const account = options.account ?? "guest";
   let stored: Record<string, unknown> | null = null;
   let revision = 0;
+  let pending: Channel | null = null;
+  let contact: Channel | null = null;
+  let verifyCalls = 0;
 
   await page.addInitScript(() => {
     (window as unknown as { __lingoAnalyticsSpy: boolean }).__lingoAnalyticsSpy = true;
@@ -67,18 +118,71 @@ async function setup(page: Page, options: MockOptions = {}): Promise<Mocks> {
     return json(route, { status: "saved", progress: stored });
   });
   await page.route("**/api/onboarding/abandon", (route) => json(route, { status: "ok" }));
+  await page.route("**/api/onboarding/messaging/eligibility", async (route) => {
+    if (route.request().method() === "GET") {
+      return json(route, {
+        smsAvailable: options.smsAvailable ?? true,
+        whatsappAvailable: options.whatsappAvailable ?? true,
+        simulationAvailable: false,
+      });
+    }
+    const eligibility = options.eligibility ?? { smsSupported: true, whatsappAvailable: true };
+    const channels: Array<{ channel: Channel; recommended: boolean }> = [];
+    if (eligibility.smsSupported) channels.push({ channel: "sms", recommended: false });
+    if (eligibility.whatsappAvailable) channels.push({ channel: "whatsapp", recommended: !eligibility.smsSupported });
+    return json(route, {
+      valid: true,
+      country: eligibility.country ?? "US",
+      smsSupported: eligibility.smsSupported,
+      whatsappAvailable: eligibility.whatsappAvailable,
+      recommendation: !eligibility.smsSupported ? (eligibility.whatsappAvailable ? "whatsapp" : "none") : eligibility.whatsappAvailable ? "choose" : "sms",
+      options: channels,
+      simulationAvailable: false,
+    });
+  });
   await page.route("**/api/onboarding/pronunciation", (route) => json(route, { status: "ok", needsToneSupport: false }));
-  await page.route(PHONE_ENDPOINTS, (route) => json(route, { error: "Not part of this flow" }, 404));
+  await page.route("**/api/onboarding/huahua-preferences", (route) => json(route, { status: "saved" }));
+  await page.route("**/api/onboarding/huahua-preview", async (route) => {
+    if (route.request().method() === "POST") return json(route, { status: "sent", channel: contact ?? "sms" });
+    return json(route, {
+      thread: { stage: "done", open: false },
+      preferences: { support: "on_request", correction: "balanced", frequency: "3" },
+      messages: [
+        { direction: "outbound", body: "Hi! I'm Huahua, your Mandarin practice buddy from LingoIsland.", at: new Date().toISOString(), status: "delivered" },
+        { direction: "inbound", body: "1", at: new Date().toISOString(), status: "received" },
+      ],
+    });
+  });
+  await page.route("**/api/sms/phone", (route) => json(route, phoneState({ pending, contact })));
+  await page.route("**/api/sms/phone/start", async (route) => {
+    const body = route.request().postDataJSON() as { channel: Channel };
+    if (options.sendFails) {
+      return json(route, { error: "We couldn't text that number. Check it and try again.", code: "send_failed" }, 502);
+    }
+    pending = body.channel;
+    return json(route, phoneState({ pending, contact }));
+  });
+  await page.route("**/api/sms/phone/verify", async (route) => {
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    mocks.verifyBodies.push(body);
+    verifyCalls += 1;
+    const mode = options.verify ?? "ok";
+    if (mode === "incorrect_then_ok" && verifyCalls === 1) {
+      return json(route, { error: "That code isn't right.", code: "incorrect_code", attemptsRemaining: 4 }, 400);
+    }
+    if (mode === "transfer" && body.confirmTransfer !== true) {
+      return json(route, { error: "This number is connected to another account.", code: "transfer_required" }, 409);
+    }
+    contact = pending;
+    pending = null;
+    return json(route, { ...phoneState({ pending, contact }), transferred: mode === "transfer" });
+  });
   await page.route("**/api/entitlements**", (route) => json(route, { isPro: false, products: [] }));
   await page.route("**/api/stripe/checkout", async (route) => {
     mocks.checkoutBodies.push(route.request().postDataJSON() as Record<string, unknown>);
     return json(route, { error: "Mock checkout" }, 500);
   });
   return mocks;
-}
-
-function phoneRequests(mocks: Mocks) {
-  return mocks.requests.filter((request) => PHONE_ENDPOINTS.test(new URL(request.url).pathname));
 }
 
 async function heading(page: Page, name: string | RegExp) {
@@ -174,18 +278,47 @@ async function availability(page: Page, minutes = "10", days = "5") {
 
 type ProfileInput = { goal: string; interests: string[]; level: string; custom?: string; minutes?: string; days?: string };
 
+/** Through reflection, landing on the Huahua intro. */
 async function toPlan(page: Page, input: ProfileInput) {
   await profile(page, input);
   await calibrate(page, { beginner: input.level === "new" });
   await page.getByTestId("pronunciation-skip").click();
   await availability(page, input.minutes, input.days);
   await confirmReflection(page);
-  await heading(page, "Ready to begin your Mandarin journey?");
+  await heading(page, "Meet Huahua, your Mandarin practice buddy");
 }
 
-/** Reflection now leads straight to the commitment screen. */
+async function toMessaging(page: Page, input: ProfileInput) {
+  await toPlan(page, input);
+  await page.getByTestId("huahua-setup").click();
+}
+
+async function enterNumber(page: Page) {
+  await heading(page, "Where should Huahua message you?");
+  await expect(page.locator("#messaging-country option").nth(5)).toBeAttached();
+  await page.locator("#messaging-country").selectOption("US");
+  await page.getByTestId("messaging-phone").fill(PHONE_INPUT);
+  await page.getByTestId("messaging-check").click();
+}
+
+async function consentAndSend(page: Page) {
+  await expect(page.getByTestId("messaging-send-code")).toBeDisabled();
+  await page.getByTestId("consent-scheduled").check();
+  await page.getByTestId("consent-journey").check();
+  await expect(page.getByTestId("messaging-disclosure")).toContainText("Huahua is an AI");
+  await page.getByTestId("messaging-send-code").click();
+  await heading(page, "Enter your code");
+}
+
+async function enterCode(page: Page) {
+  await page.locator("#sms-code").fill(CODE);
+  await page.getByRole("button", { name: "Verify" }).click();
+}
+
 async function toCommitment(page: Page, input: ProfileInput) {
   await toPlan(page, input);
+  await page.getByTestId("huahua-skip").click();
+  await heading(page, "Ready to begin your Mandarin journey?");
 }
 
 async function analyticsEvents(page: Page) {
@@ -203,7 +336,7 @@ for (const viewport of VIEWPORTS) {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
     test.describe.configure({ timeout: 120_000 });
 
-    test("1. absolute beginner goes from reflection to the commitment and the paywall", async ({ page }) => {
+    test("1. absolute beginner goes from reflection through Huahua skip to the paywall", async ({ page }) => {
       await setup(page);
       await profile(page, { goal: "everyday", interests: ["food"], level: "new" });
       await calibrate(page, { beginner: true });
@@ -212,34 +345,43 @@ for (const viewport of VIEWPORTS) {
       await page.getByTestId("pronunciation-skip").click();
       await availability(page, "5", "3");
       await confirmReflection(page);
+      await heading(page, "Meet Huahua, your Mandarin practice buddy");
+      await page.getByTestId("huahua-skip").click();
       await heading(page, "Ready to begin your Mandarin journey?");
       await page.getByTestId("commitment-cta").click();
       await expect(page.getByTestId("conversation-paywall")).toBeVisible({ timeout: 15_000 });
     });
 
-    test("2. never asks for a phone number or calls the texting services", async ({ page }) => {
+    test("2. business learner completes SMS setup", async ({ page }, testInfo) => {
       const mocks = await setup(page, { account: "user", firstName: "Cameron" });
-      await toPlan(page, { goal: "work", interests: ["meetings", "clients"], level: "basic_conversations" });
-      await expect(page.getByRole("progressbar", { name: "Onboarding progress" })).toHaveAttribute("aria-valuetext", /Step 12 of 12/);
-      await expect(page.getByText(/Meet Huahua|Where should Huahua message you|phone number/i)).toHaveCount(0);
-      await expect(page.locator("input[type=tel]")).toHaveCount(0);
-      await expect(page.getByTestId("commitment-card")).toContainText("Practice conversations included");
-      await page.getByTestId("commitment-cta").click();
-      await expect(page.getByTestId("onboarding-step")).toHaveCount(0, { timeout: 15_000 });
-      expect(phoneRequests(mocks)).toEqual([]);
-      const saved = mocks.savedStates[mocks.savedStates.length - 1] as { answers: { messaging: { status: string } } };
-      expect(saved.answers.messaging.status).toBe("not_started");
+      await toMessaging(page, { goal: "work", interests: ["meetings", "clients"], level: "basic_conversations" });
+      await enterNumber(page);
+      await heading(page, "How should Huahua message you?");
+      await page.getByTestId("channel-sms").click();
+      await consentAndSend(page);
+      await enterCode(page);
+      await heading(page, "When should Huahua stay quiet?");
+      await expect(page.getByTestId("quiet-hours-summary")).toContainText("9:00 PM to 8:00 AM");
+      await page.screenshot({ path: testInfo.outputPath(`quiet-hours-${viewport.name}.png`), fullPage: true });
+      await next(page);
+      await heading(page, "Try a free chat with Huahua");
+      await expect(page.getByTestId("preview-live-status")).toContainText("Preview finished");
+      await next(page);
+      await heading(page, "Ready to begin your Mandarin journey?");
+      await expect(page.getByTestId("commitment-card")).toContainText("Huahua by text, 3 times a week");
+      const start = mocks.requests.find((request) => request.url.endsWith("/api/sms/phone/start"));
+      expect(JSON.parse(start?.body ?? "{}")).toMatchObject({ channel: "sms", consentScheduled: true, consentJourney: true, source: "onboarding" });
+      const saved = mocks.requests.find((request) => request.url.endsWith("/api/onboarding/huahua-preferences"));
+      expect(Object.keys(JSON.parse(saved?.body ?? "{}").prefs ?? {})).toContain("quietStart");
     });
 
-    test("3. progress saved on a phone step resumes at the commitment", async ({ page }) => {
-      await setup(page);
-      await toCommitment(page, { goal: "travel", interests: ["restaurants"], level: "few_words" });
-      for (const step of ["huahua", "messaging", "huahua_prefs", "preview"]) {
-        await page.goto(`/onboarding/journey?resume=${step}`);
-        await heading(page, "Ready to begin your Mandarin journey?");
-      }
-      await page.getByRole("button", { name: "Back" }).click();
-      await heading(page, /^From .+ in \d+ weeks$/);
+    test("3. learner without a supported channel can skip messaging", async ({ page }) => {
+      await setup(page, { account: "user", smsAvailable: false, whatsappAvailable: false });
+      await toMessaging(page, { goal: "travel", interests: ["restaurants"], level: "few_words" });
+      await heading(page, "Huahua messaging isn’t available yet");
+      await page.getByTestId("messaging-continue-unavailable").click();
+      await heading(page, "Ready to begin your Mandarin journey?");
+      await expect(page.getByTestId("commitment-card")).toContainText("Add Huahua anytime");
     });
 
     test("4. returning learner resumes where they left off", async ({ page }) => {
@@ -303,6 +445,8 @@ for (const viewport of VIEWPORTS) {
       await page.getByTestId("session-short_sessions").click();
       await next(page);
       await confirmReflection(page);
+      await heading(page, "Meet Huahua, your Mandarin practice buddy");
+      await page.getByTestId("huahua-skip").click();
       await heading(page, "Ready to begin your Mandarin journey?");
       await expect(page.getByText(/30 minutes, 3 days a week/)).toBeVisible();
     });
@@ -339,7 +483,7 @@ for (const viewport of VIEWPORTS) {
       await expect(stages.getByText("(done)")).toHaveCount(3, { timeout: 8000 });
       await heading(page, "Your personalized plan is ready!");
       await confirmReflection(page);
-      await heading(page, "Ready to begin your Mandarin journey?");
+      await heading(page, "Meet Huahua, your Mandarin practice buddy");
     });
 
     test("8. reduced motion skips decorative animation and finishes sooner", async ({ page }) => {
@@ -370,7 +514,7 @@ for (const viewport of VIEWPORTS) {
       await expect(card).toContainText("Your first milestone");
       await expect(page.getByTestId("commitment-milestone")).not.toBeEmpty();
       await expect(card).not.toContainText(/weeks|months/);
-      for (const chip of ["Work or business", "10 minutes, 5 days a week", "Practice conversations included"]) {
+      for (const chip of ["Work or business", "10 minutes, 5 days a week", "Add Huahua anytime"]) {
         await expect(card.getByRole("listitem").filter({ hasText: chip })).toBeVisible();
       }
     });

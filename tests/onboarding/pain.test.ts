@@ -27,7 +27,13 @@ describe("pain-first step order", () => {
   it("asks experience, pains and reviews before the quiz for learners", () => {
     const steps = stepsFor(withLevel("few_words"));
     assert.deepEqual(steps.slice(0, 8), ["goal", "interests", "level", "experience", "using_pain", "learning_pain", "reviews", "calibration"]);
-    assert.ok(steps.indexOf("reflect") === steps.indexOf("building") + 1 && steps.indexOf("commitment") === steps.indexOf("reflect") + 1);
+    assert.ok(steps.indexOf("reflect") === steps.indexOf("building") + 1);
+    assert.deepEqual(steps.slice(steps.indexOf("reflect"), steps.indexOf("commitment") + 1), [
+      "reflect",
+      "huahua",
+      "messaging",
+      "commitment",
+    ]);
   });
 
   it("skips the experience question and the quiz for complete beginners, but keeps pronunciation", () => {

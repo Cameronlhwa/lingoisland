@@ -13,6 +13,7 @@ import {
   lastCompletedStep,
   markAbandoned,
   markCompleted,
+  markSkipped,
   markStarted,
   mergeStates,
   nextStep,
@@ -38,8 +39,10 @@ import {
   type AccountKind,
 } from "@/lib/onboarding/personalized/storage";
 import { CalibrationStep } from "./CalibrationStep";
+import { HuahuaPreviewStep, HuahuaPrefsStep } from "./HuahuaSteps";
+import { MessagingStep } from "./MessagingStep";
 import { PaywallStep, type FlowMode } from "./PaywallStep";
-import { BuildingStep, CommitmentStep, ReflectStep } from "./PlanSteps";
+import { BuildingStep, CommitmentStep, HuahuaIntroStep, ReflectStep } from "./PlanSteps";
 import { currentInsight, insightKey, templateInsight } from "@/lib/onboarding/personalized/insight";
 import { parseInsight } from "@/lib/onboarding/personalized/insightTypes";
 import { ExperienceStep, LearningPainStep, ReviewsStep, UsingPainStep } from "./PainSteps";
@@ -302,6 +305,30 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
     }
   }, [scheduleSave]);
 
+  const skipMessaging = useCallback(
+    (reason: "skipped" | "unavailable", fromIntro = false) => {
+      const current = stateRef.current;
+      if (!current) return;
+      const now = new Date();
+      let updated = updateAnswers(current, { messaging: { channel: "none", status: reason } }, now);
+      if (fromIntro) updated = markCompleted(updated, "huahua", now);
+      updated = markSkipped(updated, "messaging", now);
+      track(ONBOARDING_EVENTS.messagingSkipped, { reason, step: fromIntro ? "huahua" : "messaging" });
+      goTo(nextStep("messaging", updated.answers) ?? "commitment", updated);
+    },
+    [goTo, track],
+  );
+
+  const refreshAccount = useCallback(async () => {
+    const remote = await fetchRemoteProgress().catch(() => null);
+    if (!remote) return;
+    accountRef.current = remote.account;
+    setAccount(remote.account);
+    const merged = mergeStates(stateRef.current, remote.state);
+    if (merged) commit(merged);
+    await saveNow();
+  }, [commit, saveNow]);
+
   /**
    * Writes the "Did we get this right?" playback while the building animation
    * plays. Falls back to the template on any failure; never throws.
@@ -404,7 +431,9 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
     jumpTo,
   };
 
-  const wide = step === "reflect" ? "xl" : step === "commitment" || step === "reviews";
+  const basePath = mode === "app" ? "/app/onboarding" : "/onboarding/journey";
+  const wide =
+    step === "reflect" ? "xl" : step === "commitment" || step === "reviews" || step === "huahua_prefs";
 
   return (
     <Shell wide={wide}>
@@ -428,6 +457,18 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
         {step === "availability" ? <AvailabilityStep {...props} /> : null}
         {step === "building" ? <BuildingStep {...props} serverWork={buildPlan} /> : null}
         {step === "reflect" ? <ReflectStep {...props} /> : null}
+        {step === "huahua" ? <HuahuaIntroStep {...props} onSkip={() => skipMessaging("skipped", true)} /> : null}
+        {step === "messaging" ? (
+          <MessagingStep
+            {...props}
+            accountKind={account.kind}
+            authReturnPath={`${basePath}?resume=messaging`}
+            onAccountReady={refreshAccount}
+            onSkip={(reason) => skipMessaging(reason)}
+          />
+        ) : null}
+        {step === "huahua_prefs" ? <HuahuaPrefsStep {...props} /> : null}
+        {step === "preview" ? <HuahuaPreviewStep {...props} /> : null}
         {step === "commitment" ? (
           <CommitmentStep
             {...props}

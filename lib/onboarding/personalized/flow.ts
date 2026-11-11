@@ -185,12 +185,6 @@ export function isSimulatedMessaging(answers: OnboardingAnswers) {
   return answers.messaging.status === "simulated";
 }
 
-/**
- * Phone and texting steps. They stay in STEP_ORDER so progress saved by the
- * phone version still parses, but this flow never shows them.
- */
-const MESSAGING_STEPS: readonly StepId[] = ["huahua", "messaging", "huahua_prefs", "preview"];
-
 /** "I am completely new": no experience question and no placement quiz. */
 export function isCompletelyNew(answers: OnboardingAnswers): boolean {
   return answers.level.selfReport === "new";
@@ -207,7 +201,11 @@ export function isBeginnerPath(answers: OnboardingAnswers): boolean {
 /** Steps that apply to this learner, in order. */
 export function stepsFor(answers: OnboardingAnswers): StepId[] {
   const skipped: StepId[] = isCompletelyNew(answers) ? ["experience", "calibration"] : [];
-  return STEP_ORDER.filter((step) => !MESSAGING_STEPS.includes(step) && !skipped.includes(step));
+  return STEP_ORDER.filter((step) => {
+    if (skipped.includes(step)) return false;
+    if (step === "huahua_prefs" || step === "preview") return hasMessaging(answers);
+    return true;
+  });
 }
 
 export function isStepComplete(step: StepId, state: OnboardingState): boolean {

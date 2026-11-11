@@ -14,6 +14,7 @@ const MIGRATIONS = [
   "20261104_000001_sms_phone_verification.sql",
   "20261106_000001_sms_huahua_phase2.sql",
   "20261107_000001_personalized_onboarding.sql",
+  "20261111_000001_whatsapp_reply_connect.sql",
 ];
 
 export const LINGO_NUMBER = "+14165550100";

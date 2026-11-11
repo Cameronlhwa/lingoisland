@@ -58,9 +58,9 @@ provider, never in the repository.
 | `SMS_OWN_NUMBERS` | No | Extra sending numbers; inbound from them is ignored |
 | `SMS_MANUAL_SEND_ENABLED` | No | Keep `false` in production |
 | `SMS_WEBHOOK_ALLOW_UNSIGNED` | No | Must be `false`; ignored in production anyway |
-| `WHATSAPP_ENABLED` | For WhatsApp | `true` to offer WhatsApp (also needs the next two) |
+| `WHATSAPP_ENABLED` | For WhatsApp | `true` to offer WhatsApp |
 | `TELNYX_WHATSAPP_FROM_NUMBER` | For WhatsApp | E.164 WhatsApp Business sender on Telnyx |
-| `TELNYX_WHATSAPP_VERIFICATION_TEMPLATE` | For WhatsApp | Approved authentication template name |
+| `TELNYX_WHATSAPP_VERIFICATION_TEMPLATE` | No | Optional approved authentication template for OTP connection |
 | `TELNYX_WHATSAPP_PREVIEW_TEMPLATE` | No | Preview intro template; without it the WhatsApp preview is skipped |
 | `TELNYX_WHATSAPP_INVITE_TEMPLATE` | No | Practice invitation outside the 24-hour window |
 | `TELNYX_WHATSAPP_TEMPLATE_LANGUAGE` | No | Template language code, default `en` |
@@ -193,20 +193,24 @@ again on the new channel.
 1. **Sender**: in Telnyx, connect a WhatsApp Business Account and register
    a sender number. Put it in `TELNYX_WHATSAPP_FROM_NUMBER`. Inbound WhatsApp
    messages arrive on the same `/api/sms/webhook`.
-2. **Templates** (Meta Business Manager, then sync in Telnyx):
-   - Verification: category Authentication, body parameter `{{1}}` is the
-     code, plus a copy-code or URL button that takes the code.
+2. **Connect**: onboarding opens a prefilled `LI-123456` WhatsApp message.
+   The learner sends it from the number they entered; the inbound webhook uses
+   that one-time code to prove ownership and opens WhatsApp's 24-hour service window.
+   The desktop screen includes a QR code and a copyable message for phone handoff.
+3. **Templates** (Meta Business Manager, then sync in Telnyx):
+   - Verification: optional category Authentication template for an OTP connection flow.
    - Preview intro: category Utility or Marketing, body parameter `{{1}}` is
      the learner's interests phrase, quick-reply buttons with payloads `yes`
      and `not now`.
    - Practice invite: no parameters. Used only when the learner hasn't
      written in the last 24 hours.
-3. **24-hour window**: inside it, 华华 sends free-form messages and reply
+4. **24-hour window**: inside it, 华华 sends free-form messages and reply
    buttons. Outside it, only the templates above are sent; without a template
    nothing is sent and the outbound row is marked `whatsapp_window_closed`.
-4. **Verify**: with `WHATSAPP_ENABLED=true`, run onboarding with a phone you
-   own, choose WhatsApp, receive the code, and confirm the preview intro
-   arrives. Until that has been done, treat WhatsApp delivery as untested.
+5. **Verify**: with `WHATSAPP_ENABLED=true`, run onboarding with a phone you
+   own, choose WhatsApp, scan the code or open WhatsApp, send the prefilled
+   message, and confirm the preview intro arrives. Until that has been done,
+   treat WhatsApp delivery as untested.
 
 ## 10. Onboarding free preview
 
