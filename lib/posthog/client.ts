@@ -59,12 +59,12 @@ export function useAnalytics() {
  *   // variant === 'control' → control group
  *   // variant === undefined → not yet loaded
  */
-export function useFeatureFlag(flagKey: string): string | boolean | undefined {
+export function useFeatureFlag(flagKey: string, enabled = true): string | boolean | undefined {
   const posthog = usePostHog()
   const [variant, setVariant] = useState<string | boolean | undefined>(undefined)
 
   useEffect(() => {
-    if (!posthog) return
+    if (!posthog || !enabled) return
 
     // onFeatureFlags fires once flags are loaded (or immediately if already loaded)
     const unsubscribe = posthog.onFeatureFlags(() => {
@@ -78,7 +78,7 @@ export function useFeatureFlag(flagKey: string): string | boolean | undefined {
     return () => {
       if (typeof unsubscribe === 'function') unsubscribe()
     }
-  }, [posthog, flagKey])
+  }, [posthog, flagKey, enabled])
 
   return variant
 }

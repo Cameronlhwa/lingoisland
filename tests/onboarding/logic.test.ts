@@ -59,7 +59,7 @@ function answerAll(items: AssessmentItem[], correct: (item: AssessmentItem) => b
 }
 
 function completedAnswers(overrides: Partial<OnboardingAnswers> = {}): OnboardingAnswers {
-  const base = emptyAnswers();
+  const base = emptyAnswers("test");
   const items = selectAssessment({ claimedLevel: 3, topic: "work", seed: "6f1c2b9e-4a7d-4c1e-9b2a-0d3e5f7a9b1c" });
   const answers = answerAll(items, () => true);
   return {
@@ -79,6 +79,13 @@ function completedAnswers(overrides: Partial<OnboardingAnswers> = {}): Onboardin
       writingSystem: "simplified",
     },
     pronunciation: { status: "skipped", toneSupport: null },
+    vocabBasic: { shownIds: ["wo", "ni", "hao", "shi", "bu", "you", "he", "shui", "cha", "kafei", "fan", "mai"], selectedIds: ["wo", "ni", "hao"], noneKnown: false },
+    vocabAdvanced: {
+      shownIds: ["taolun", "hezuo", "chenggong", "jingyan", "jihui", "fuwu", "yuding", "jiaotong", "wenhua", "guanxi", "xingqu", "jishu"],
+      selectedIds: ["taolun"],
+      noneKnown: false,
+    },
+    estimatedLevel: 3,
     availability: { minutes: "10", days: "5", session: null },
     ...overrides,
   };
@@ -118,7 +125,7 @@ describe("level mapping", () => {
 
 describe("reviews before calibration", () => {
   const learner = (goal: OnboardingAnswers["goal"]["primary"], interests: string[], selfReport: OnboardingAnswers["level"]["selfReport"]) => ({
-    ...emptyAnswers(),
+    ...emptyAnswers("test"),
     goal: { primary: goal, secondary: null, otherText: null },
     interests: { keys: interests, custom: null },
     level: { selfReport },
@@ -498,34 +505,40 @@ describe("flow state and resume", () => {
     assert.equal(resumeStep(partial), "level");
   });
 
-  it("shows the building wait before reflection, then commitment", () => {
+  it("shows the building wait before reflection, then the first lesson", () => {
     const state = answeredState();
     assert.equal(resumeStep(state), "building");
     assert.equal(resumeStep(markCompleted(state, "building", NOW)), "reflect");
     const built = markCompleted(markCompleted(state, "building", NOW), "reflect", NOW);
-    assert.equal(resumeStep(built), "commitment");
+    assert.equal(resumeStep(built), "first_lesson");
   });
 
-  it("never shows the phone or texting steps and goes from reflection to commitment", () => {
+  it("hides retired phone and quiz steps, and goes reflect → first lesson → commitment", () => {
     for (const messaging of [
       { channel: null, status: "not_started" },
       { channel: "sms", status: "verified" },
     ] as const) {
       const answers = completedAnswers({ messaging });
       const steps = stepsFor(answers);
-      for (const hidden of ["huahua", "messaging", "huahua_prefs", "preview"] as const) {
+      for (const hidden of ["huahua", "messaging", "huahua_prefs", "preview", "calibration", "pronunciation"] as const) {
         assert.ok(!steps.includes(hidden), hidden);
       }
-      assert.equal(nextStep("reflect", answers), "commitment");
-      assert.equal(previousStep("commitment", answers), "reflect");
+      assert.equal(nextStep("reflect", answers), "first_lesson");
+      assert.equal(nextStep("first_lesson", answers), "commitment");
+      assert.equal(previousStep("commitment", answers), "first_lesson");
     }
   });
 
-  it("resumes progress saved on a phone step at the next step that is shown", () => {
+  it("skips retired phone steps and resumes at commitment after the first lesson", () => {
     let state = answeredState({ messaging: { channel: "sms", status: "verified" } });
-    for (const step of ["building", "reflect", "huahua", "messaging"] as const) {
-      state = markCompleted(state, step, NOW);
-    }
+    state = markCompleted(markCompleted(state, "building", NOW), "reflect", NOW);
+    state = updateAnswers(
+      state,
+      { firstLesson: { ...state.answers.firstLesson, lessonId: "travel-beginner-order-drink", completedAt: NOW.toISOString(), phase: "complete" } },
+      NOW,
+    );
+    state = markCompleted(state, "first_lesson", NOW);
+    for (const step of ["huahua", "messaging"] as const) state = markCompleted(state, step, NOW);
     assert.equal(resumeStep(state), "commitment");
     assert.equal(canVisit("messaging", state), false);
   });
@@ -576,7 +589,8 @@ describe("flow state and resume", () => {
   it("shows progress without counting the building or paywall screens", () => {
     const answers = completedAnswers({ messaging: { channel: "sms", status: "verified" } });
     const total = progressFor("goal", answers).total;
-    assert.equal(total, stepsFor(answers).length - 2);
+    // building, paywall, and the in-lesson step are excluded from the overall meter
+    assert.equal(total, stepsFor(answers).length - 3);
     assert.equal(progressFor("building", answers).index, progressFor("availability", answers).index);
   });
 });

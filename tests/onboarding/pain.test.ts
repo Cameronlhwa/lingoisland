@@ -20,28 +20,48 @@ import { cleanPicks, isUsingPainKey, togglePick, usingPainOptionsFor, NO_PAIN_KE
 const NOW = new Date("2026-11-09T12:00:00.000Z");
 
 function withLevel(selfReport: OnboardingAnswers["level"]["selfReport"], extra: Partial<OnboardingAnswers> = {}): OnboardingAnswers {
-  return { ...emptyAnswers(), goal: { primary: "work", secondary: null, otherText: null }, interests: { keys: ["clients"], custom: null }, level: { selfReport }, ...extra };
+  return { ...emptyAnswers("test"), goal: { primary: "work", secondary: null, otherText: null }, interests: { keys: ["clients"], custom: null }, level: { selfReport }, ...extra };
 }
 
 describe("pain-first step order", () => {
-  it("asks experience, pains and reviews before the quiz for learners", () => {
+  it("asks vocab, experience, pains and reviews before availability for learners", () => {
     const steps = stepsFor(withLevel("few_words"));
-    assert.deepEqual(steps.slice(0, 8), ["goal", "interests", "level", "experience", "using_pain", "learning_pain", "reviews", "calibration"]);
-    assert.ok(steps.indexOf("reflect") === steps.indexOf("building") + 1 && steps.indexOf("commitment") === steps.indexOf("reflect") + 1);
+    assert.deepEqual(steps.slice(0, 9), [
+      "goal",
+      "interests",
+      "level",
+      "vocab_basic",
+      "vocab_advanced",
+      "experience",
+      "using_pain",
+      "learning_pain",
+      "reviews",
+    ]);
+    assert.ok(steps.indexOf("reflect") === steps.indexOf("building") + 1);
+    assert.deepEqual(steps.slice(steps.indexOf("reflect"), steps.indexOf("commitment") + 1), [
+      "reflect",
+      "first_lesson",
+      "commitment",
+    ]);
+    assert.ok(!steps.includes("calibration"));
+    assert.ok(!steps.includes("pronunciation"));
   });
 
-  it("skips the experience question and the quiz for complete beginners, but keeps pronunciation", () => {
+  it("skips experience for complete beginners, keeps both vocab screens, and hides the old quiz", () => {
     const steps = stepsFor(withLevel("new"));
     assert.ok(!steps.includes("experience"));
     assert.ok(!steps.includes("calibration"));
-    assert.ok(steps.includes("pronunciation"));
-    assert.equal(previousStep("using_pain", withLevel("new")), "level");
+    assert.ok(!steps.includes("pronunciation"));
+    assert.ok(steps.includes("vocab_basic"));
+    assert.ok(steps.includes("vocab_advanced"));
+    assert.ok(steps.includes("first_lesson"));
+    assert.equal(previousStep("using_pain", withLevel("new")), "vocab_advanced");
   });
 
-  it("keeps the quiz for people who know a few words but haven't really started", () => {
+  it("keeps beginner framing for people who know a few words but haven't really started", () => {
     const answers = withLevel("few_words", { experience: { key: "not_started" } });
-    assert.ok(stepsFor(answers).includes("calibration"));
     assert.equal(isBeginnerPath(answers), true);
+    assert.ok(!stepsFor(answers).includes("calibration"));
   });
 
   it("decides the beginner path from level or experience", () => {
@@ -65,19 +85,21 @@ describe("pain-first step order", () => {
 
   it("resumes a saved state from before this change at the first new question", () => {
     const old = { ...initialState(NOW), answers: withLevel("few_words") };
-    assert.equal(resumeStep(old), "experience");
+    assert.equal(resumeStep(old), "vocab_basic");
     const oldBeginner = { ...initialState(NOW), answers: withLevel("new") };
-    assert.equal(resumeStep(oldBeginner), "using_pain");
+    assert.equal(resumeStep(oldBeginner), "vocab_basic");
   });
 
-  it("shows the reviews and reflection steps until they are marked complete", () => {
+  it("shows the reviews step until it is marked complete, then availability", () => {
     const answers = withLevel("new", {
+      vocabBasic: { shownIds: ["wo"], selectedIds: [], noneKnown: true },
+      vocabAdvanced: { shownIds: ["taolun"], selectedIds: [], noneKnown: true, skipped: true },
       usingPain: { keys: ["stay_quiet"], timing: "ongoing", upcomingText: null },
       learningPain: { keys: [], hesitations: ["no_time"] },
     });
     const state = { ...initialState(NOW), answers };
     assert.equal(resumeStep(state), "reviews");
-    assert.equal(resumeStep(markCompleted(state, "reviews", NOW)), "pronunciation");
+    assert.equal(resumeStep(markCompleted(state, "reviews", NOW)), "availability");
   });
 
   it("clears the experience answer when the learner switches to completely new", () => {

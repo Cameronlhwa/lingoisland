@@ -18,6 +18,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       posthog.init(posthogKey, {
         api_host: posthogHost || 'https://us.i.posthog.com',
         person_profiles: 'identified_only',
+        before_send: (event) => window.location.pathname.startsWith("/admin/testing") ? null : event,
         capture_pageview: false, // We'll capture pageviews manually with usePostHog
         capture_pageleave: true,
         

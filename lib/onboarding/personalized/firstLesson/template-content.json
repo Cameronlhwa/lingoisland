@@ -1,0 +1,4011 @@
+[
+  {
+    "id": "work-1",
+    "goal": "work",
+    "tier": 1,
+    "title": "Ask for the help you actually need",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "需要",
+        "pinyin": "xūyào",
+        "meaning": "Need",
+        "hsk": 3
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "时间",
+        "pinyin": "shíjiān",
+        "meaning": "time",
+        "hsk": 2
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "帮助",
+        "pinyin": "bāngzhù",
+        "meaning": "help",
+        "hsk": 2
+      }
+    ],
+    "practice": {
+      "hanzi": "我需要时间。",
+      "meaning": "I need time.",
+      "pinyin": "Wǒ xūyào shíjiān."
+    },
+    "transfer": {
+      "hanzi": "我需要帮助。",
+      "meaning": "I need help.",
+      "pinyin": "Wǒ xūyào bāngzhù."
+    },
+    "huahua": {
+      "hanzi": "需要帮助吗？",
+      "words": [
+        {
+          "hanzi": "需要",
+          "pinyin": "xūyào",
+          "meaning": "Need",
+          "hsk": 3
+        },
+        {
+          "hanzi": "帮助",
+          "pinyin": "bāngzhù",
+          "meaning": "help",
+          "hsk": 2
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Do you need help?",
+      "pinyin": "Xūyào bāngzhù ma?"
+    },
+    "focus": [
+      "需要",
+      "帮助",
+      "时间"
+    ],
+    "scene": "You have enough time, but you are stuck on a task. Ask your colleague for help.",
+    "explanation": "我 means “I”. 需要 means “need”. Put what you need after 我需要.",
+    "closing": {
+      "hanzi": "好的，我来帮你。",
+      "meaning": "Sure, I will help you.",
+      "pinyin": "Hǎo de, wǒ lái bāng nǐ."
+    },
+    "incomingNote": "需要帮助吗？ reuses “need help”. 吗 turns it into a yes/no question. Answer with what you need."
+  },
+  {
+    "id": "work-2",
+    "goal": "work",
+    "tier": 2,
+    "title": "Set an expectation for your reply",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "回复",
+        "pinyin": "huífù",
+        "meaning": "reply",
+        "hsk": 2
+      },
+      {
+        "hanzi": "你",
+        "pinyin": "nǐ",
+        "meaning": "you",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "今天",
+        "pinyin": "jīntiān",
+        "meaning": "today",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "明天",
+        "pinyin": "míngtiān",
+        "meaning": "tomorrow",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "我今天回复你。",
+      "meaning": "I will reply today.",
+      "pinyin": "Wǒ jīntiān huífù nǐ."
+    },
+    "transfer": {
+      "hanzi": "我明天回复你。",
+      "meaning": "I will reply tomorrow.",
+      "pinyin": "Wǒ míngtiān huífù nǐ."
+    },
+    "huahua": {
+      "hanzi": "你什么时候回复？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "什么时候",
+          "pinyin": "shénme shíhou",
+          "meaning": "when",
+          "hsk": 1
+        },
+        {
+          "hanzi": "回复",
+          "pinyin": "huífù",
+          "meaning": "reply",
+          "hsk": 2
+        }
+      ],
+      "meaning": "When will you reply?",
+      "pinyin": "Nǐ shénme shíhou huífù?"
+    },
+    "focus": [
+      "回复",
+      "什么时候"
+    ],
+    "scene": "You cannot answer today and will reply tomorrow. Tell your colleague when to expect your reply.",
+    "explanation": "Put the time before 回复: 我明天回复你 means “I’ll reply to you tomorrow”.",
+    "closing": {
+      "hanzi": "好的，那明天联系。",
+      "meaning": "Okay, we will speak tomorrow.",
+      "pinyin": "Hǎo de, nà míngtiān liánxì."
+    },
+    "incomingNote": "什么时候 means “when”. It takes the time position in the question; 明天 fills that position in your answer."
+  },
+  {
+    "id": "work-3",
+    "goal": "work",
+    "tier": 3,
+    "title": "Ask for the latest deadline",
+    "prefix": [
+      {
+        "hanzi": "最晚",
+        "pinyin": "zuìwǎn",
+        "meaning": "at the latest",
+        "hsk": 3
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "给",
+        "pinyin": "gěi",
+        "meaning": "give",
+        "hsk": 2
+      },
+      {
+        "hanzi": "你",
+        "pinyin": "nǐ",
+        "meaning": "you",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "几点",
+        "pinyin": "jǐdiǎn",
+        "meaning": "what time",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "哪天",
+        "pinyin": "nǎtiān",
+        "meaning": "which day",
+        "hsk": 2
+      }
+    ],
+    "practice": {
+      "hanzi": "最晚几点给你？",
+      "meaning": "What is the latest time I should get it to you?",
+      "pinyin": "Zuìwǎn jǐdiǎn gěi nǐ?"
+    },
+    "transfer": {
+      "hanzi": "最晚哪天给你？",
+      "meaning": "What is the latest day I should get it to you?",
+      "pinyin": "Zuìwǎn nǎtiān gěi nǐ?"
+    },
+    "huahua": {
+      "hanzi": "你还有问题吗？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "还",
+          "pinyin": "hái",
+          "meaning": "still",
+          "hsk": 2
+        },
+        {
+          "hanzi": "有",
+          "pinyin": "yǒu",
+          "meaning": "have",
+          "hsk": 1
+        },
+        {
+          "hanzi": "问题",
+          "pinyin": "wèntí",
+          "meaning": "question",
+          "hsk": 2
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Do you have any other questions?",
+      "pinyin": "Nǐ hái yǒu wèntí ma?"
+    },
+    "focus": [
+      "最晚",
+      "哪天"
+    ],
+    "scene": "No due date has been given. Ask which day is the latest you can send the work, rather than asking for a clock time.",
+    "explanation": "最晚 means “at the latest”. 几点 asks for a clock time; 哪天 asks for a day.",
+    "closing": {
+      "hanzi": "最晚星期五给我就行。",
+      "meaning": "Friday at the latest is fine.",
+      "pinyin": "Zuìwǎn xīngqī wǔ gěi wǒ jiù xíng."
+    },
+    "incomingNote": "你还有问题吗？ asks whether you have another question. Your reply can be the deadline question you practised."
+  },
+  {
+    "id": "work-4",
+    "goal": "work",
+    "tier": 4,
+    "title": "Sequence your work before helping",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "先",
+        "pinyin": "xiān",
+        "meaning": "first",
+        "hsk": 3
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "再",
+        "pinyin": "zài",
+        "meaning": "then; again",
+        "hsk": 2
+      },
+      {
+        "hanzi": "帮",
+        "pinyin": "bāng",
+        "meaning": "help",
+        "hsk": 1
+      },
+      {
+        "hanzi": "你",
+        "pinyin": "nǐ",
+        "meaning": "you",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "回",
+        "pinyin": "huí",
+        "meaning": "reply to",
+        "hsk": 1
+      },
+      {
+        "hanzi": "邮件",
+        "pinyin": "yóujiàn",
+        "meaning": "email",
+        "hsk": 3
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "写",
+        "pinyin": "xiě",
+        "meaning": "write",
+        "hsk": 1
+      },
+      {
+        "hanzi": "报告",
+        "pinyin": "bàogào",
+        "meaning": "Presentation",
+        "hsk": 5
+      }
+    ],
+    "practice": {
+      "hanzi": "我先回邮件，再帮你。",
+      "meaning": "I will reply to the emails first, then help you.",
+      "pinyin": "Wǒ xiān huí yóujiàn, zài bāng nǐ."
+    },
+    "transfer": {
+      "hanzi": "我先写报告，再帮你。",
+      "meaning": "I will write the report first, then help you.",
+      "pinyin": "Wǒ xiān xiě bàogào, zài bāng nǐ."
+    },
+    "huahua": {
+      "hanzi": "现在能帮我吗？",
+      "words": [
+        {
+          "hanzi": "现在",
+          "pinyin": "xiànzài",
+          "meaning": "now",
+          "hsk": 1
+        },
+        {
+          "hanzi": "能",
+          "pinyin": "néng",
+          "meaning": "can, be able to",
+          "hsk": 1
+        },
+        {
+          "hanzi": "帮",
+          "pinyin": "bāng",
+          "meaning": "help",
+          "hsk": 1
+        },
+        {
+          "hanzi": "我",
+          "pinyin": "wǒ",
+          "meaning": "I, me",
+          "hsk": 1
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Can you help me now?",
+      "pinyin": "Xiànzài néng bāng wǒ ma?"
+    },
+    "focus": [
+      "先",
+      "再"
+    ],
+    "scene": "You must write the report first. Tell your colleague you will help afterward.",
+    "explanation": "先 marks your first task. 再 introduces what you will do afterward.",
+    "closing": {
+      "hanzi": "好，你先忙。",
+      "meaning": "Okay, take care of your work first.",
+      "pinyin": "Hǎo, nǐ xiān máng."
+    },
+    "incomingNote": "现在能帮我吗？ asks whether you can help now. Your reply explains which task comes first."
+  },
+  {
+    "id": "work-5",
+    "goal": "work",
+    "tier": 5,
+    "title": "Raise a specific concern",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "有",
+        "pinyin": "yǒu",
+        "meaning": "have",
+        "hsk": 1
+      },
+      {
+        "hanzi": "个",
+        "pinyin": "gè",
+        "meaning": "general classifier",
+        "hsk": 1
+      },
+      {
+        "hanzi": "顾虑",
+        "pinyin": "gùlǜ",
+        "meaning": "misgive; misgiving",
+        "hsk": 6
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "可能",
+        "pinyin": "kěnéng",
+        "meaning": "may",
+        "hsk": 2
+      },
+      {
+        "hanzi": "不够",
+        "pinyin": "búgòu",
+        "meaning": "not enough",
+        "hsk": 2
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "预算",
+        "pinyin": "yùsuàn",
+        "meaning": "budget",
+        "hsk": 6
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "时间",
+        "pinyin": "shíjiān",
+        "meaning": "time",
+        "hsk": 2
+      }
+    ],
+    "practice": {
+      "hanzi": "我有个顾虑，预算可能不够。",
+      "meaning": "I have one concern: the budget might not be enough.",
+      "pinyin": "Wǒ yǒu gè gùlǜ, yùsuàn kěnéng búgòu."
+    },
+    "transfer": {
+      "hanzi": "我有个顾虑，时间可能不够。",
+      "meaning": "I have one concern: we might not have enough time.",
+      "pinyin": "Wǒ yǒu gè gùlǜ, shíjiān kěnéng búgòu."
+    },
+    "huahua": {
+      "hanzi": "你觉得这个计划怎么样？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "觉得",
+          "pinyin": "juédé",
+          "meaning": "think",
+          "hsk": 2
+        },
+        {
+          "hanzi": "这个",
+          "pinyin": "zhège",
+          "meaning": "this",
+          "hsk": 1
+        },
+        {
+          "hanzi": "计划",
+          "pinyin": "jìhuà",
+          "meaning": "plan",
+          "hsk": 4
+        },
+        {
+          "hanzi": "怎么样",
+          "pinyin": "zěnmeyàng",
+          "meaning": "how about",
+          "hsk": 1
+        }
+      ],
+      "meaning": "What do you think of this plan?",
+      "pinyin": "Nǐ juéde zhège jìhuà zěnmeyàng?"
+    },
+    "focus": [
+      "顾虑",
+      "预算"
+    ],
+    "scene": "The budget is sufficient, but the deadline is too close. Raise a concern about time.",
+    "explanation": "我有个顾虑 introduces a concern. Name the concern afterward: 时间可能不够 means there may not be enough time.",
+    "closing": {
+      "hanzi": "那我们调整一下时间。",
+      "meaning": "Then let us adjust the schedule.",
+      "pinyin": "Nà wǒmen tiáozhěng yíxià shíjiān."
+    },
+    "incomingNote": "你觉得……怎么样？ asks for your view. Raise the specific concern described in your situation."
+  },
+  {
+    "id": "work-6",
+    "goal": "work",
+    "tier": 6,
+    "title": "Explain a deadline trade-off",
+    "prefix": [
+      {
+        "hanzi": "要",
+        "pinyin": "yào",
+        "meaning": "want; need",
+        "hsk": 1
+      },
+      {
+        "hanzi": "提前",
+        "pinyin": "tíqián",
+        "meaning": "in advance",
+        "hsk": 4
+      },
+      {
+        "hanzi": "就",
+        "pinyin": "jiù",
+        "meaning": "then; as a result",
+        "hsk": 2
+      },
+      {
+        "hanzi": "得",
+        "pinyin": "děi",
+        "meaning": "have to (here)",
+        "hsk": 3
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "增加",
+        "pinyin": "zēngjiā",
+        "meaning": "increase",
+        "hsk": 4
+      },
+      {
+        "hanzi": "人手",
+        "pinyin": "rénshǒu",
+        "meaning": "available staff",
+        "hsk": 5
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "缩小",
+        "pinyin": "suōxiǎo",
+        "meaning": "reduce",
+        "hsk": 5
+      },
+      {
+        "hanzi": "范围",
+        "pinyin": "fànwéi",
+        "meaning": "Range",
+        "hsk": 5
+      }
+    ],
+    "practice": {
+      "hanzi": "要提前，就得增加人手。",
+      "meaning": "To finish earlier, we would need more people.",
+      "pinyin": "Yào tíqián, jiù děi zēngjiā rénshǒu."
+    },
+    "transfer": {
+      "hanzi": "要提前，就得缩小范围。",
+      "meaning": "To finish earlier, we would need to reduce the scope.",
+      "pinyin": "Yào tíqián, jiù děi suōxiǎo fànwéi."
+    },
+    "huahua": {
+      "hanzi": "能提前完成吗？",
+      "words": [
+        {
+          "hanzi": "能",
+          "pinyin": "néng",
+          "meaning": "can, be able to",
+          "hsk": 1
+        },
+        {
+          "hanzi": "提前",
+          "pinyin": "tíqián",
+          "meaning": "in advance",
+          "hsk": 4
+        },
+        {
+          "hanzi": "完成",
+          "pinyin": "wánchéng",
+          "meaning": "complete",
+          "hsk": 3
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Can it be completed earlier?",
+      "pinyin": "Néng tíqián wánchéng ma?"
+    },
+    "focus": [
+      "人手",
+      "缩小",
+      "范围"
+    ],
+    "scene": "The deadline has moved earlier. No extra people are available; explain that the scope would need to shrink.",
+    "explanation": "要提前，就得…… connects finishing earlier with what would need to change. 人手 means available staff; 范围 means the scope of the work.",
+    "closing": {
+      "hanzi": "好，那就先缩小范围。",
+      "meaning": "Okay, then let us reduce the scope first.",
+      "pinyin": "Hǎo, nà jiù xiān suōxiǎo fànwéi."
+    },
+    "incomingNote": "能提前完成吗？ asks if the work can be finished earlier. Explain the necessary trade-off."
+  },
+  {
+    "id": "school-1",
+    "goal": "school",
+    "tier": 1,
+    "title": "Say whether you understand",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "懂",
+        "pinyin": "dǒng",
+        "meaning": "understand",
+        "hsk": 2
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "不",
+        "pinyin": "bù",
+        "meaning": "no",
+        "hsk": 1
+      },
+      {
+        "hanzi": "懂",
+        "pinyin": "dǒng",
+        "meaning": "understand",
+        "hsk": 2
+      }
+    ],
+    "practice": {
+      "hanzi": "我懂。",
+      "meaning": "I understand.",
+      "pinyin": "Wǒ dǒng."
+    },
+    "transfer": {
+      "hanzi": "我不懂。",
+      "meaning": "I do not understand.",
+      "pinyin": "Wǒ bù dǒng."
+    },
+    "huahua": {
+      "hanzi": "懂吗？",
+      "words": [
+        {
+          "hanzi": "懂",
+          "pinyin": "dǒng",
+          "meaning": "understand",
+          "hsk": 2
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Do you understand?",
+      "pinyin": "Dǒng ma?"
+    },
+    "focus": [
+      "懂",
+      "不"
+    ],
+    "scene": "The explanation did not make sense. Let the teacher know.",
+    "explanation": "我 means “I”. 懂 means “understand”. Put 不 before 懂 to say “do not understand”.",
+    "closing": {
+      "hanzi": "我换个方式解释。",
+      "meaning": "I will explain it another way.",
+      "pinyin": "Wǒ huàn gè fāngshì jiěshì."
+    },
+    "incomingNote": "懂吗？ means “Do you understand?” 吗 makes it a yes/no question. Answer with 我懂 or 我不懂."
+  },
+  {
+    "id": "school-2",
+    "goal": "school",
+    "tier": 2,
+    "title": "Ask for a repetition in the right form",
+    "prefix": [
+      {
+        "hanzi": "请",
+        "pinyin": "qǐng",
+        "meaning": "please",
+        "hsk": 1
+      },
+      {
+        "hanzi": "再",
+        "pinyin": "zài",
+        "meaning": "then; again",
+        "hsk": 2
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "一",
+        "pinyin": "yī",
+        "meaning": "one",
+        "hsk": 1
+      },
+      {
+        "hanzi": "遍",
+        "pinyin": "biàn",
+        "meaning": "one complete repetition",
+        "hsk": 2
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "写",
+        "pinyin": "xiě",
+        "meaning": "write",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "说",
+        "pinyin": "shuō",
+        "meaning": "say; speak",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "请再写一遍。",
+      "meaning": "Please write it once more.",
+      "pinyin": "Qǐng zài xiě yí biàn."
+    },
+    "transfer": {
+      "hanzi": "请再说一遍。",
+      "meaning": "Please say it once more.",
+      "pinyin": "Qǐng zài shuō yí biàn."
+    },
+    "huahua": {
+      "hanzi": "要我再说一遍吗？",
+      "words": [
+        {
+          "hanzi": "要",
+          "pinyin": "yào",
+          "meaning": "want; need",
+          "hsk": 1
+        },
+        {
+          "hanzi": "我",
+          "pinyin": "wǒ",
+          "meaning": "I, me",
+          "hsk": 1
+        },
+        {
+          "hanzi": "再",
+          "pinyin": "zài",
+          "meaning": "then; again",
+          "hsk": 2
+        },
+        {
+          "hanzi": "说",
+          "pinyin": "shuō",
+          "meaning": "say; speak",
+          "hsk": 1
+        },
+        {
+          "hanzi": "一",
+          "pinyin": "yī",
+          "meaning": "one",
+          "hsk": 1
+        },
+        {
+          "hanzi": "遍",
+          "pinyin": "biàn",
+          "meaning": "one complete repetition",
+          "hsk": 2
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Would you like me to say it again?",
+      "pinyin": "Yào wǒ zài shuō yí biàn ma?"
+    },
+    "focus": [
+      "再",
+      "遍"
+    ],
+    "scene": "You missed what the teacher said. Ask to hear it again.",
+    "explanation": "再 asks for repetition. 一遍 means one complete repetition. 请再说一遍 is “Please say it again”.",
+    "closing": {
+      "hanzi": "好，我再说一遍。",
+      "meaning": "Okay, I will say it again.",
+      "pinyin": "Hǎo, wǒ zài shuō yí biàn."
+    },
+    "incomingNote": "要我再说一遍吗？ asks whether you want the teacher to repeat it. The question reuses 再说一遍 from your reply."
+  },
+  {
+    "id": "school-3",
+    "goal": "school",
+    "tier": 3,
+    "title": "Ask for a short extension",
+    "prefix": [
+      {
+        "hanzi": "可以",
+        "pinyin": "kěyǐ",
+        "meaning": "can",
+        "hsk": 2
+      },
+      {
+        "hanzi": "晚",
+        "pinyin": "wǎn",
+        "meaning": "later",
+        "hsk": 1
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "交",
+        "pinyin": "jiāo",
+        "meaning": "hand over",
+        "hsk": 4
+      },
+      {
+        "hanzi": "吗",
+        "pinyin": "ma",
+        "meaning": "yes/no question ending",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "一",
+        "pinyin": "yī",
+        "meaning": "one",
+        "hsk": 1
+      },
+      {
+        "hanzi": "个",
+        "pinyin": "gè",
+        "meaning": "general classifier",
+        "hsk": 1
+      },
+      {
+        "hanzi": "小时",
+        "pinyin": "xiǎoshí",
+        "meaning": "hour",
+        "hsk": 2
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "一",
+        "pinyin": "yī",
+        "meaning": "one",
+        "hsk": 1
+      },
+      {
+        "hanzi": "天",
+        "pinyin": "tiān",
+        "meaning": "day",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "可以晚一个小时交吗？",
+      "meaning": "Could I hand it in an hour later?",
+      "pinyin": "Kěyǐ wǎn yí gè xiǎoshí jiāo ma?"
+    },
+    "transfer": {
+      "hanzi": "可以晚一天交吗？",
+      "meaning": "Could I hand it in a day later?",
+      "pinyin": "Kěyǐ wǎn yì tiān jiāo ma?"
+    },
+    "huahua": {
+      "hanzi": "明天能交吗？",
+      "words": [
+        {
+          "hanzi": "明天",
+          "pinyin": "míngtiān",
+          "meaning": "tomorrow",
+          "hsk": 1
+        },
+        {
+          "hanzi": "能",
+          "pinyin": "néng",
+          "meaning": "can, be able to",
+          "hsk": 1
+        },
+        {
+          "hanzi": "交",
+          "pinyin": "jiāo",
+          "meaning": "hand over",
+          "hsk": 4
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Can you hand it in tomorrow?",
+      "pinyin": "Míngtiān néng jiāo ma?"
+    },
+    "focus": [
+      "交",
+      "晚"
+    ],
+    "scene": "The assignment is due tomorrow, but you need one extra day. Request a day, not an hour.",
+    "explanation": "晚 plus a duration says how much later. 晚一天交 means to hand something in one day later.",
+    "closing": {
+      "hanzi": "可以，后天交吧。",
+      "meaning": "Yes, hand it in the day after tomorrow.",
+      "pinyin": "Kěyǐ, hòu tiān jiāo ba."
+    },
+    "incomingNote": "明天能交吗？ asks if you can hand it in tomorrow. Your reply asks for a specific extension."
+  },
+  {
+    "id": "school-4",
+    "goal": "school",
+    "tier": 4,
+    "title": "Ask for an example that helps",
+    "prefix": [
+      {
+        "hanzi": "能",
+        "pinyin": "néng",
+        "meaning": "can, be able to",
+        "hsk": 1
+      },
+      {
+        "hanzi": "举",
+        "pinyin": "jǔ",
+        "meaning": "lift",
+        "hsk": 4
+      },
+      {
+        "hanzi": "个",
+        "pinyin": "gè",
+        "meaning": "general classifier",
+        "hsk": 1
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "的",
+        "pinyin": "de",
+        "meaning": "links a description to a noun",
+        "hsk": 1
+      },
+      {
+        "hanzi": "例子",
+        "pinyin": "lìzǐ",
+        "meaning": "example",
+        "hsk": 3
+      },
+      {
+        "hanzi": "吗",
+        "pinyin": "ma",
+        "meaning": "yes/no question ending",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "简单",
+        "pinyin": "jiǎndān",
+        "meaning": "simple",
+        "hsk": 3
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "具体",
+        "pinyin": "jùtǐ",
+        "meaning": "specific",
+        "hsk": 5
+      }
+    ],
+    "practice": {
+      "hanzi": "能举个简单的例子吗？",
+      "meaning": "Could you give a simple example?",
+      "pinyin": "Néng jǔ gè jiǎndān de lìzǐ ma?"
+    },
+    "transfer": {
+      "hanzi": "能举个具体的例子吗？",
+      "meaning": "Could you give a concrete example?",
+      "pinyin": "Néng jǔ gè jùtǐ de lìzǐ ma?"
+    },
+    "huahua": {
+      "hanzi": "还有问题吗？",
+      "words": [
+        {
+          "hanzi": "还",
+          "pinyin": "hái",
+          "meaning": "still",
+          "hsk": 2
+        },
+        {
+          "hanzi": "有",
+          "pinyin": "yǒu",
+          "meaning": "have",
+          "hsk": 1
+        },
+        {
+          "hanzi": "问题",
+          "pinyin": "wèntí",
+          "meaning": "question",
+          "hsk": 2
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Any other questions?",
+      "pinyin": "Hái yǒu wèntí ma?"
+    },
+    "focus": [
+      "举",
+      "例子",
+      "具体"
+    ],
+    "scene": "The teacher is explaining the order of activities. You understand the general idea, but need a concrete example.",
+    "explanation": "举个例子 means “give an example”. 具体 asks for a concrete example; 简单 asks for a simple one.",
+    "closing": {
+      "hanzi": "比如，先吃饭，再学习，就是先后顺序。",
+      "meaning": "For example, eating first and then studying shows the order of activities.",
+      "pinyin": "Bǐrú, xiān chī fàn, zài xuéxí, jiù shì xiān hòu shùnxù."
+    },
+    "incomingNote": "还有问题吗？ means “Any other questions?” Ask for the kind of example that would help you."
+  },
+  {
+    "id": "school-5",
+    "goal": "school",
+    "tier": 5,
+    "title": "Confirm your interpretation",
+    "prefix": [
+      {
+        "hanzi": "也就是说",
+        "pinyin": "yějiùshìshuō",
+        "meaning": "in other words",
+        "hsk": 4
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "交",
+        "pinyin": "jiāo",
+        "meaning": "hand over",
+        "hsk": 4
+      },
+      {
+        "hanzi": "对",
+        "pinyin": "duì",
+        "meaning": "right; correct",
+        "hsk": 1
+      },
+      {
+        "hanzi": "吗",
+        "pinyin": "ma",
+        "meaning": "yes/no question ending",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "明天",
+        "pinyin": "míngtiān",
+        "meaning": "tomorrow",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "下周",
+        "pinyin": "xiàzhōu",
+        "meaning": "next week",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "也就是说，明天交，对吗？",
+      "meaning": "So you mean it is due tomorrow, right?",
+      "pinyin": "Yějiùshìshuō, míngtiān jiāo, duì ma?"
+    },
+    "transfer": {
+      "hanzi": "也就是说，下周交，对吗？",
+      "meaning": "So you mean it is due next week, right?",
+      "pinyin": "Yějiùshìshuō, xiàzhōu jiāo, duì ma?"
+    },
+    "huahua": {
+      "hanzi": "报告下周交。",
+      "words": [
+        {
+          "hanzi": "报告",
+          "pinyin": "bàogào",
+          "meaning": "Presentation",
+          "hsk": 5
+        },
+        {
+          "hanzi": "下周",
+          "pinyin": "xiàzhōu",
+          "meaning": "next week",
+          "hsk": 1
+        },
+        {
+          "hanzi": "交",
+          "pinyin": "jiāo",
+          "meaning": "hand over",
+          "hsk": 4
+        }
+      ],
+      "meaning": "The report is due next week.",
+      "pinyin": "Bàogào xiàzhōu jiāo."
+    },
+    "focus": [
+      "也就是说"
+    ],
+    "scene": "The teacher has said the report is due next week. Restate that deadline to confirm your interpretation.",
+    "explanation": "也就是说 introduces your restatement of what someone said. 对吗？ asks them to confirm it.",
+    "closing": {
+      "hanzi": "对，下周交就可以。",
+      "meaning": "Right, handing it in next week is fine.",
+      "pinyin": "Duì, xiàzhōu jiāo jiù kěyǐ."
+    },
+    "incomingNote": "报告下周交 says the report is due next week. Repeat that day in your confirmation."
+  },
+  {
+    "id": "school-6",
+    "goal": "school",
+    "tier": 6,
+    "title": "Qualify an academic conclusion",
+    "prefix": [
+      {
+        "hanzi": "这个",
+        "pinyin": "zhège",
+        "meaning": "this",
+        "hsk": 1
+      },
+      {
+        "hanzi": "结论",
+        "pinyin": "jiélùn",
+        "meaning": "conclusion",
+        "hsk": 5
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "适用于",
+        "pinyin": "shìyòngyú",
+        "meaning": "apply to",
+        "hsk": 5
+      },
+      {
+        "hanzi": "所有",
+        "pinyin": "suǒyǒu",
+        "meaning": "All",
+        "hsk": 4
+      },
+      {
+        "hanzi": "情况",
+        "pinyin": "qíngkuàng",
+        "meaning": "Situation",
+        "hsk": 4
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "完全",
+        "pinyin": "wánquán",
+        "meaning": "completely",
+        "hsk": 4
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "未必",
+        "pinyin": "wèibì",
+        "meaning": "not necessarily",
+        "hsk": 5
+      }
+    ],
+    "practice": {
+      "hanzi": "这个结论完全适用于所有情况。",
+      "meaning": "This conclusion fully applies to every situation.",
+      "pinyin": "Zhège jiélùn wánquán shìyòngyú suǒyǒu qíngkuàng."
+    },
+    "transfer": {
+      "hanzi": "这个结论未必适用于所有情况。",
+      "meaning": "This conclusion does not necessarily apply to every situation.",
+      "pinyin": "Zhège jiélùn wèibì shìyòngyú suǒyǒu qíngkuàng."
+    },
+    "huahua": {
+      "hanzi": "你怎么看这个结论？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "怎么",
+          "pinyin": "zěnme",
+          "meaning": "how",
+          "hsk": 1
+        },
+        {
+          "hanzi": "看",
+          "pinyin": "kàn",
+          "meaning": "look",
+          "hsk": 1
+        },
+        {
+          "hanzi": "这个",
+          "pinyin": "zhège",
+          "meaning": "this",
+          "hsk": 1
+        },
+        {
+          "hanzi": "结论",
+          "pinyin": "jiélùn",
+          "meaning": "conclusion",
+          "hsk": 5
+        }
+      ],
+      "meaning": "What do you think of this conclusion?",
+      "pinyin": "Nǐ zěnme kàn zhège jiélùn?"
+    },
+    "focus": [
+      "未必",
+      "适用于"
+    ],
+    "scene": "The evidence supports some cases, but not a universal claim. Explain that the conclusion may not apply everywhere.",
+    "explanation": "未必 means “not necessarily”. 适用于 introduces the cases a conclusion applies to.",
+    "closing": {
+      "hanzi": "对，不能把个别情况当成全部。",
+      "meaning": "Right, individual cases cannot be treated as every case.",
+      "pinyin": "Duì, bù néng bǎ gèbié qíngkuàng dàng chéng quánbù."
+    },
+    "incomingNote": "你怎么看这个结论？ asks for your view of the conclusion. Explain why it may not apply to every case."
+  },
+  {
+    "id": "heritage-1",
+    "goal": "heritage",
+    "tier": 1,
+    "title": "Express missing someone or home",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "想",
+        "pinyin": "xiǎng",
+        "meaning": "miss",
+        "hsk": 1
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "你",
+        "pinyin": "nǐ",
+        "meaning": "you",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "家",
+        "pinyin": "jiā",
+        "meaning": "home",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "我想你。",
+      "meaning": "I miss you.",
+      "pinyin": "Wǒ xiǎng nǐ."
+    },
+    "transfer": {
+      "hanzi": "我想家。",
+      "meaning": "I miss home.",
+      "pinyin": "Wǒ xiǎng jiā."
+    },
+    "huahua": {
+      "hanzi": "想家吗？",
+      "words": [
+        {
+          "hanzi": "想",
+          "pinyin": "xiǎng",
+          "meaning": "miss",
+          "hsk": 1
+        },
+        {
+          "hanzi": "家",
+          "pinyin": "jiā",
+          "meaning": "home",
+          "hsk": 1
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Do you miss home?",
+      "pinyin": "Xiǎng jiā ma?"
+    },
+    "focus": [
+      "想",
+      "家",
+      "你"
+    ],
+    "scene": "You are away from home. Tell a relative that you miss home.",
+    "explanation": "Here, 想 means “miss”. 我想你 means “I miss you”; 我想家 means “I miss home”.",
+    "closing": {
+      "hanzi": "有空就回来，我们都想你。",
+      "meaning": "Come home when you can. We all miss you.",
+      "pinyin": "Yǒukōng jiù huí lái, wǒmen dōu xiǎng nǐ."
+    },
+    "incomingNote": "想家吗？ asks whether you miss home. 吗 makes it a yes/no question."
+  },
+  {
+    "id": "heritage-2",
+    "goal": "heritage",
+    "tier": 2,
+    "title": "Tell family when you will come home",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "回",
+        "pinyin": "huí",
+        "meaning": "return",
+        "hsk": 1
+      },
+      {
+        "hanzi": "家",
+        "pinyin": "jiā",
+        "meaning": "home",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "今天",
+        "pinyin": "jīntiān",
+        "meaning": "today",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "明天",
+        "pinyin": "míngtiān",
+        "meaning": "tomorrow",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "我今天回家。",
+      "meaning": "I am coming home today.",
+      "pinyin": "Wǒ jīntiān huí jiā."
+    },
+    "transfer": {
+      "hanzi": "我明天回家。",
+      "meaning": "I am coming home tomorrow.",
+      "pinyin": "Wǒ míngtiān huí jiā."
+    },
+    "huahua": {
+      "hanzi": "你什么时候回家？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "什么时候",
+          "pinyin": "shénme shíhou",
+          "meaning": "when",
+          "hsk": 1
+        },
+        {
+          "hanzi": "回",
+          "pinyin": "huí",
+          "meaning": "return",
+          "hsk": 1
+        },
+        {
+          "hanzi": "家",
+          "pinyin": "jiā",
+          "meaning": "home",
+          "hsk": 1
+        }
+      ],
+      "meaning": "When are you coming home?",
+      "pinyin": "Nǐ shénme shíhou huí jiā?"
+    },
+    "focus": [
+      "什么时候",
+      "回"
+    ],
+    "scene": "Your return is tomorrow. Let your family know when to expect you.",
+    "explanation": "回家 means “go home” or “come home”, depending on the situation. Put the time before 回家.",
+    "closing": {
+      "hanzi": "好，明天见。",
+      "meaning": "Okay, see you tomorrow.",
+      "pinyin": "Hǎo, míngtiān jiàn."
+    },
+    "incomingNote": "什么时候 asks “when”. Reply with the day before 回家: 我明天回家."
+  },
+  {
+    "id": "heritage-3",
+    "goal": "heritage",
+    "tier": 3,
+    "title": "Learn a family cooking skill",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "想",
+        "pinyin": "xiǎng",
+        "meaning": "would like to",
+        "hsk": 1
+      },
+      {
+        "hanzi": "学",
+        "pinyin": "xué",
+        "meaning": "learn",
+        "hsk": 1
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "做",
+        "pinyin": "zuò",
+        "meaning": "do",
+        "hsk": 1
+      },
+      {
+        "hanzi": "面条",
+        "pinyin": "miàntiáo",
+        "meaning": "noodle",
+        "hsk": 2
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "包",
+        "pinyin": "bāo",
+        "meaning": "wrap; make dumplings",
+        "hsk": 3
+      },
+      {
+        "hanzi": "饺子",
+        "pinyin": "jiǎozi",
+        "meaning": "Dumplings",
+        "hsk": 4
+      }
+    ],
+    "practice": {
+      "hanzi": "我想学做面条。",
+      "meaning": "I want to learn to make noodles.",
+      "pinyin": "Wǒ xiǎng xué zuò miàntiáo."
+    },
+    "transfer": {
+      "hanzi": "我想学包饺子。",
+      "meaning": "I want to learn to make dumplings.",
+      "pinyin": "Wǒ xiǎng xué bāo jiǎozǐ."
+    },
+    "huahua": {
+      "hanzi": "你想学做什么菜？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "想",
+          "pinyin": "xiǎng",
+          "meaning": "would like to",
+          "hsk": 1
+        },
+        {
+          "hanzi": "学",
+          "pinyin": "xué",
+          "meaning": "learn",
+          "hsk": 1
+        },
+        {
+          "hanzi": "做",
+          "pinyin": "zuò",
+          "meaning": "do",
+          "hsk": 1
+        },
+        {
+          "hanzi": "什么",
+          "pinyin": "shénme",
+          "meaning": "what, why",
+          "hsk": 1
+        },
+        {
+          "hanzi": "菜",
+          "pinyin": "cài",
+          "meaning": "dish",
+          "hsk": 1
+        }
+      ],
+      "meaning": "What dish would you like to learn to make?",
+      "pinyin": "Nǐ xiǎng xué zuò shénme cài?"
+    },
+    "focus": [
+      "包",
+      "饺子"
+    ],
+    "scene": "A relative offers to teach you to cook. Say that you want to learn to make dumplings.",
+    "explanation": "学 followed by an action means “learn to do it”. 包饺子 is the usual expression for making dumplings by wrapping them.",
+    "closing": {
+      "hanzi": "好，我教你包饺子。",
+      "meaning": "Sure, I will teach you to make dumplings.",
+      "pinyin": "Hǎo, wǒ jiào nǐ bāo jiǎozǐ."
+    },
+    "incomingNote": "你想学做什么菜？ asks which dish you want to learn to make. Name the dish and action in your answer."
+  },
+  {
+    "id": "heritage-4",
+    "goal": "heritage",
+    "tier": 4,
+    "title": "Ask about their childhood",
+    "prefix": [
+      {
+        "hanzi": "你",
+        "pinyin": "nǐ",
+        "meaning": "you",
+        "hsk": 1
+      },
+      {
+        "hanzi": "小时候",
+        "pinyin": "xiǎoshíhòu",
+        "meaning": "as a child",
+        "hsk": 3
+      },
+      {
+        "hanzi": "最",
+        "pinyin": "zuì",
+        "meaning": "the most",
+        "hsk": 2
+      },
+      {
+        "hanzi": "喜欢",
+        "pinyin": "xǐhuān",
+        "meaning": "love, like",
+        "hsk": 1
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "什么",
+        "pinyin": "shénme",
+        "meaning": "what, why",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "吃",
+        "pinyin": "chī",
+        "meaning": "eat",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "玩",
+        "pinyin": "wán",
+        "meaning": "play",
+        "hsk": 2
+      }
+    ],
+    "practice": {
+      "hanzi": "你小时候最喜欢吃什么？",
+      "meaning": "What did you most like eating as a child?",
+      "pinyin": "Nǐ xiǎoshíhòu zuì xǐhuan chī shénme?"
+    },
+    "transfer": {
+      "hanzi": "你小时候最喜欢玩什么？",
+      "meaning": "What did you most like playing as a child?",
+      "pinyin": "Nǐ xiǎoshíhòu zuì xǐhuan wán shénme?"
+    },
+    "huahua": {
+      "hanzi": "今天想聊什么？",
+      "words": [
+        {
+          "hanzi": "今天",
+          "pinyin": "jīntiān",
+          "meaning": "today",
+          "hsk": 1
+        },
+        {
+          "hanzi": "想",
+          "pinyin": "xiǎng",
+          "meaning": "would like to",
+          "hsk": 1
+        },
+        {
+          "hanzi": "聊",
+          "pinyin": "liáo",
+          "meaning": "chat",
+          "hsk": 3
+        },
+        {
+          "hanzi": "什么",
+          "pinyin": "shénme",
+          "meaning": "what, why",
+          "hsk": 1
+        }
+      ],
+      "meaning": "What would you like to talk about today?",
+      "pinyin": "Jīntiān xiǎng liáo shénme?"
+    },
+    "focus": [
+      "小时候",
+      "聊"
+    ],
+    "scene": "You want to hear about a relative's childhood games or play, rather than childhood food. Ask what they liked playing.",
+    "explanation": "小时候 sets the childhood time frame. Put 什么 after 吃 or 玩 to ask what the person liked.",
+    "closing": {
+      "hanzi": "我小时候最喜欢跳绳。",
+      "meaning": "I liked skipping rope most as a child.",
+      "pinyin": "Wǒ xiǎoshíhòu zuì xǐhuan tiào shéng."
+    },
+    "incomingNote": "今天想聊什么？ asks what you want to talk about. Start a conversation by asking the childhood question you practised."
+  },
+  {
+    "id": "heritage-5",
+    "goal": "heritage",
+    "tier": 5,
+    "title": "Explain why you are quiet",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "不",
+        "pinyin": "bù",
+        "meaning": "no",
+        "hsk": 1
+      },
+      {
+        "hanzi": "是",
+        "pinyin": "shì",
+        "meaning": "be (am, is, are)",
+        "hsk": 1
+      },
+      {
+        "hanzi": "不",
+        "pinyin": "bù",
+        "meaning": "no",
+        "hsk": 1
+      },
+      {
+        "hanzi": "想",
+        "pinyin": "xiǎng",
+        "meaning": "would like to",
+        "hsk": 1
+      },
+      {
+        "hanzi": "聊",
+        "pinyin": "liáo",
+        "meaning": "chat",
+        "hsk": 3
+      },
+      {
+        "hanzi": "只是",
+        "pinyin": "zhǐshì",
+        "meaning": "it is just that",
+        "hsk": 3
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "没",
+        "pinyin": "méi",
+        "meaning": "no",
+        "hsk": 1
+      },
+      {
+        "hanzi": "时间",
+        "pinyin": "shíjiān",
+        "meaning": "time",
+        "hsk": 2
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "不",
+        "pinyin": "bù",
+        "meaning": "no",
+        "hsk": 1
+      },
+      {
+        "hanzi": "知道",
+        "pinyin": "zhīdao",
+        "meaning": "know",
+        "hsk": 2
+      },
+      {
+        "hanzi": "怎么",
+        "pinyin": "zěnme",
+        "meaning": "how",
+        "hsk": 1
+      },
+      {
+        "hanzi": "表达",
+        "pinyin": "biǎodá",
+        "meaning": "Expression",
+        "hsk": 5
+      }
+    ],
+    "practice": {
+      "hanzi": "我不是不想聊，只是没时间。",
+      "meaning": "It is not that I do not want to talk; I just do not have time.",
+      "pinyin": "Wǒ bú shì bù xiǎng liáo, zhǐshì méi shíjiān."
+    },
+    "transfer": {
+      "hanzi": "我不是不想聊，只是不知道怎么表达。",
+      "meaning": "It is not that I do not want to talk; I just do not know how to express it.",
+      "pinyin": "Wǒ bú shì bù xiǎng liáo, zhǐshì bù zhīdào zěnme biǎodá."
+    },
+    "huahua": {
+      "hanzi": "你怎么不说话？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "怎么",
+          "pinyin": "zěnme",
+          "meaning": "how",
+          "hsk": 1
+        },
+        {
+          "hanzi": "不",
+          "pinyin": "bù",
+          "meaning": "no",
+          "hsk": 1
+        },
+        {
+          "hanzi": "说话",
+          "pinyin": "shuōhuà",
+          "meaning": "talk",
+          "hsk": 2
+        }
+      ],
+      "meaning": "Why are you not saying anything?",
+      "pinyin": "Nǐ zěnme bù shuōhuà?"
+    },
+    "focus": [
+      "只是",
+      "表达"
+    ],
+    "scene": "You have time and want to talk, but cannot find the Mandarin words for what you mean. Explain that difficulty.",
+    "explanation": "不是不想聊 says that not wanting to talk is not the reason. 只是 introduces the actual reason.",
+    "closing": {
+      "hanzi": "没关系，慢慢说，我听着。",
+      "meaning": "That is okay. Take your time; I am listening.",
+      "pinyin": "Méiguānxì, màn màn shuō, wǒ tīng zhe."
+    },
+    "incomingNote": "你怎么不说话？ asks why you are quiet. Explain the difficulty described in your situation."
+  },
+  {
+    "id": "heritage-6",
+    "goal": "heritage",
+    "tier": 6,
+    "title": "Acknowledge care while keeping your choice",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "知道",
+        "pinyin": "zhīdao",
+        "meaning": "know",
+        "hsk": 2
+      },
+      {
+        "hanzi": "你",
+        "pinyin": "nǐ",
+        "meaning": "you",
+        "hsk": 1
+      },
+      {
+        "hanzi": "为",
+        "pinyin": "wèi",
+        "meaning": "for; for someone’s benefit",
+        "hsk": 3
+      },
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "好",
+        "pinyin": "hǎo",
+        "meaning": "good",
+        "hsk": 1
+      },
+      {
+        "hanzi": "但",
+        "pinyin": "dàn",
+        "meaning": "but",
+        "hsk": 3
+      },
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "想",
+        "pinyin": "xiǎng",
+        "meaning": "would like to",
+        "hsk": 1
+      },
+      {
+        "hanzi": "自己",
+        "pinyin": "zìjǐ",
+        "meaning": "Own, self",
+        "hsk": 3
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "试试",
+        "pinyin": "shìshì",
+        "meaning": "give it a try",
+        "hsk": 2
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "决定",
+        "pinyin": "juédìng",
+        "meaning": "Decision",
+        "hsk": 3
+      }
+    ],
+    "practice": {
+      "hanzi": "我知道你为我好，但我想自己试试。",
+      "meaning": "I know you want what is best for me, but I want to try it myself.",
+      "pinyin": "Wǒ zhīdào nǐ wèi wǒ hǎo, dàn wǒ xiǎng zìjǐ shìshì."
+    },
+    "transfer": {
+      "hanzi": "我知道你为我好，但我想自己决定。",
+      "meaning": "I know you want what is best for me, but I want to decide for myself.",
+      "pinyin": "Wǒ zhīdào nǐ wèi wǒ hǎo, dàn wǒ xiǎng zìjǐ juédìng."
+    },
+    "huahua": {
+      "hanzi": "你就听我的吧。",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "就",
+          "pinyin": "jiù",
+          "meaning": "then; as a result",
+          "hsk": 2
+        },
+        {
+          "hanzi": "听",
+          "pinyin": "tīng",
+          "meaning": "listen",
+          "hsk": 1
+        },
+        {
+          "hanzi": "我",
+          "pinyin": "wǒ",
+          "meaning": "I, me",
+          "hsk": 1
+        },
+        {
+          "hanzi": "的",
+          "pinyin": "de",
+          "meaning": "links a description to a noun",
+          "hsk": 1
+        },
+        {
+          "hanzi": "吧",
+          "pinyin": "ba",
+          "meaning": "suggestion or persuasion ending",
+          "hsk": 2
+        }
+      ],
+      "meaning": "Just take my advice.",
+      "pinyin": "Nǐ jiù tīng wǒ de ba."
+    },
+    "focus": [
+      "为",
+      "决定"
+    ],
+    "scene": "A relative wants to decide for you. Acknowledge their care and say you want to make the decision yourself.",
+    "explanation": "为我好 means having my best interests at heart. Acknowledge that care, then use 但 to explain your own choice.",
+    "closing": {
+      "hanzi": "好，我尊重你的决定。",
+      "meaning": "Okay, I respect your decision.",
+      "pinyin": "Hǎo, wǒ zūnzhòng nǐ de juédìng."
+    },
+    "incomingNote": "你就听我的吧 asks you to take the other person’s advice. You can acknowledge their care while keeping your decision."
+  },
+  {
+    "id": "travel-1",
+    "goal": "travel",
+    "tier": 1,
+    "title": "Order a drink by name",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "要",
+        "pinyin": "yào",
+        "meaning": "want; need",
+        "hsk": 1
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "茶",
+        "pinyin": "chá",
+        "meaning": "tea",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "咖啡",
+        "pinyin": "kāfēi",
+        "meaning": "coffee",
+        "hsk": 2
+      }
+    ],
+    "practice": {
+      "hanzi": "我要茶。",
+      "meaning": "I would like tea.",
+      "pinyin": "Wǒ yào chá."
+    },
+    "transfer": {
+      "hanzi": "我要咖啡。",
+      "meaning": "I would like coffee.",
+      "pinyin": "Wǒ yào kāfēi."
+    },
+    "huahua": {
+      "hanzi": "茶还是咖啡？",
+      "words": [
+        {
+          "hanzi": "茶",
+          "pinyin": "chá",
+          "meaning": "tea",
+          "hsk": 1
+        },
+        {
+          "hanzi": "还是",
+          "pinyin": "háishì",
+          "meaning": "or (in a choice question)",
+          "hsk": 1
+        },
+        {
+          "hanzi": "咖啡",
+          "pinyin": "kāfēi",
+          "meaning": "coffee",
+          "hsk": 2
+        }
+      ],
+      "meaning": "Tea or coffee?",
+      "pinyin": "Chá háishì kāfēi?"
+    },
+    "focus": [
+      "要",
+      "茶",
+      "咖啡"
+    ],
+    "scene": "Your friend asked for coffee. Place their order.",
+    "explanation": "我 means “I”. 要 means “want”. 我要咖啡 is a simple way to order coffee.",
+    "closing": {
+      "hanzi": "好的，一杯咖啡。",
+      "meaning": "Okay, one coffee.",
+      "pinyin": "Hǎo de, yì bēi kāfēi."
+    },
+    "incomingNote": "还是 separates choices: 茶还是咖啡？ means “Tea or coffee?” Choose the drink your friend requested."
+  },
+  {
+    "id": "travel-2",
+    "goal": "travel",
+    "tier": 2,
+    "title": "Specify no ice",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "冰",
+        "pinyin": "bīng",
+        "meaning": "ice",
+        "hsk": 1
+      },
+      {
+        "hanzi": "谢谢",
+        "pinyin": "xièxie",
+        "meaning": "thank",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "要",
+        "pinyin": "yào",
+        "meaning": "want; need",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "不",
+        "pinyin": "bù",
+        "meaning": "no",
+        "hsk": 1
+      },
+      {
+        "hanzi": "要",
+        "pinyin": "yào",
+        "meaning": "want; need",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "我要冰，谢谢。",
+      "meaning": "I would like ice, thank you.",
+      "pinyin": "Wǒ yào bīng, xièxiè."
+    },
+    "transfer": {
+      "hanzi": "我不要冰，谢谢。",
+      "meaning": "No ice for me, thank you.",
+      "pinyin": "Wǒ bú yào bīng, xièxiè."
+    },
+    "huahua": {
+      "hanzi": "要冰吗？",
+      "words": [
+        {
+          "hanzi": "要",
+          "pinyin": "yào",
+          "meaning": "want; need",
+          "hsk": 1
+        },
+        {
+          "hanzi": "冰",
+          "pinyin": "bīng",
+          "meaning": "ice",
+          "hsk": 1
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Would you like ice?",
+      "pinyin": "Yào bīng ma?"
+    },
+    "focus": [
+      "冰",
+      "不"
+    ],
+    "scene": "You need your drink without ice. Tell the server that you do not want ice.",
+    "explanation": "不要 means “do not want”. Put 冰 after it to ask for no ice. 谢谢 adds “thank you”.",
+    "closing": {
+      "hanzi": "好的，不加冰。",
+      "meaning": "Okay, no ice.",
+      "pinyin": "Hǎo de, bù jiā bīng."
+    },
+    "incomingNote": "要冰吗？ asks whether you want ice. The question reuses 要 and 冰; 吗 marks a yes/no question."
+  },
+  {
+    "id": "travel-3",
+    "goal": "travel",
+    "tier": 3,
+    "title": "Choose how to pay",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "想",
+        "pinyin": "xiǎng",
+        "meaning": "would like to",
+        "hsk": 1
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "付",
+        "pinyin": "fù",
+        "meaning": "pay",
+        "hsk": 2
+      },
+      {
+        "hanzi": "现金",
+        "pinyin": "xiànjīn",
+        "meaning": "cash",
+        "hsk": 4
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "刷卡",
+        "pinyin": "shuākǎ",
+        "meaning": "pay by card",
+        "hsk": 2
+      }
+    ],
+    "practice": {
+      "hanzi": "我想付现金。",
+      "meaning": "I would like to pay in cash.",
+      "pinyin": "Wǒ xiǎng fù xiànjīn."
+    },
+    "transfer": {
+      "hanzi": "我想刷卡。",
+      "meaning": "I would like to pay by card.",
+      "pinyin": "Wǒ xiǎng shuākǎ."
+    },
+    "huahua": {
+      "hanzi": "现金还是刷卡？",
+      "words": [
+        {
+          "hanzi": "现金",
+          "pinyin": "xiànjīn",
+          "meaning": "cash",
+          "hsk": 4
+        },
+        {
+          "hanzi": "还是",
+          "pinyin": "háishì",
+          "meaning": "or (in a choice question)",
+          "hsk": 1
+        },
+        {
+          "hanzi": "刷卡",
+          "pinyin": "shuākǎ",
+          "meaning": "pay by card",
+          "hsk": 2
+        }
+      ],
+      "meaning": "Cash or card?",
+      "pinyin": "Xiànjīn háishì shuākǎ?"
+    },
+    "focus": [
+      "现金",
+      "刷卡",
+      "付"
+    ],
+    "scene": "You have no cash with you and want to use a card. Tell the cashier your payment method.",
+    "explanation": "付现金 means “pay in cash”. 刷卡 means “pay by card”. Use 我想 before the payment method you want.",
+    "closing": {
+      "hanzi": "好的，请刷卡。",
+      "meaning": "Okay, please use your card.",
+      "pinyin": "Hǎo de, qǐng shuākǎ."
+    },
+    "incomingNote": "现金还是刷卡？ offers two payment methods. 还是 means “or” in this choice question."
+  },
+  {
+    "id": "travel-4",
+    "goal": "travel",
+    "tier": 4,
+    "title": "Ask how long a route will take",
+    "prefix": [
+      {
+        "hanzi": "坐",
+        "pinyin": "zuò",
+        "meaning": "sit",
+        "hsk": 1
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "大概",
+        "pinyin": "dàgài",
+        "meaning": "Probably",
+        "hsk": 4
+      },
+      {
+        "hanzi": "要",
+        "pinyin": "yào",
+        "meaning": "want; need",
+        "hsk": 1
+      },
+      {
+        "hanzi": "多久",
+        "pinyin": "duōjiǔ",
+        "meaning": "how long",
+        "hsk": 2
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "公交车",
+        "pinyin": "gōngjiāochē",
+        "meaning": "bus",
+        "hsk": 2
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "地铁",
+        "pinyin": "dìtiě",
+        "meaning": "metro",
+        "hsk": 3
+      }
+    ],
+    "practice": {
+      "hanzi": "坐公交车大概要多久？",
+      "meaning": "About how long does it take by bus?",
+      "pinyin": "Zuò gōngjiāochē dàgài yào duōjiǔ?"
+    },
+    "transfer": {
+      "hanzi": "坐地铁大概要多久？",
+      "meaning": "About how long does it take by subway?",
+      "pinyin": "Zuò dìtiě dàgài yào duōjiǔ?"
+    },
+    "huahua": {
+      "hanzi": "你打算怎么去？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "打算",
+          "pinyin": "dǎsuàn",
+          "meaning": "Plan",
+          "hsk": 3
+        },
+        {
+          "hanzi": "怎么",
+          "pinyin": "zěnme",
+          "meaning": "how",
+          "hsk": 1
+        },
+        {
+          "hanzi": "去",
+          "pinyin": "qù",
+          "meaning": "go",
+          "hsk": 1
+        }
+      ],
+      "meaning": "How are you planning to get there?",
+      "pinyin": "Nǐ dǎsuàn zěnme qù?"
+    },
+    "focus": [
+      "大概",
+      "多久"
+    ],
+    "scene": "You are considering the subway and need to check the journey time before choosing it.",
+    "explanation": "坐 plus a transport word names how you travel. 大概 asks for an estimate; 多久 asks how long it takes.",
+    "closing": {
+      "hanzi": "大概二十分钟。",
+      "meaning": "About twenty minutes.",
+      "pinyin": "Dàgài èr shífēn zhōng."
+    },
+    "incomingNote": "你打算怎么去？ asks how you plan to get there. Ask about the travel time for the route in your situation."
+  },
+  {
+    "id": "travel-5",
+    "goal": "travel",
+    "tier": 5,
+    "title": "Ask for a better room politely",
+    "prefix": [
+      {
+        "hanzi": "能不能",
+        "pinyin": "néng bu néng",
+        "meaning": "could you",
+        "hsk": 2
+      },
+      {
+        "hanzi": "换",
+        "pinyin": "huàn",
+        "meaning": "change",
+        "hsk": 3
+      },
+      {
+        "hanzi": "一",
+        "pinyin": "yī",
+        "meaning": "one",
+        "hsk": 1
+      },
+      {
+        "hanzi": "间",
+        "pinyin": "jiān",
+        "meaning": "classifier for rooms",
+        "hsk": 2
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "的",
+        "pinyin": "de",
+        "meaning": "links a description to a noun",
+        "hsk": 1
+      },
+      {
+        "hanzi": "房间",
+        "pinyin": "fángjiān",
+        "meaning": "room",
+        "hsk": 2
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "大",
+        "pinyin": "dà",
+        "meaning": "big",
+        "hsk": 1
+      },
+      {
+        "hanzi": "一点",
+        "pinyin": "yìdiǎn",
+        "meaning": "a little",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "安静",
+        "pinyin": "ānjìng",
+        "meaning": "Be quiet",
+        "hsk": 3
+      },
+      {
+        "hanzi": "一点",
+        "pinyin": "yìdiǎn",
+        "meaning": "a little",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "能不能换一间大一点的房间？",
+      "meaning": "Could I switch to a slightly larger room?",
+      "pinyin": "Néngbunéng huàn yì jiān dà yìdiǎn de fángjiān?"
+    },
+    "transfer": {
+      "hanzi": "能不能换一间安静一点的房间？",
+      "meaning": "Could I switch to a slightly quieter room?",
+      "pinyin": "Néngbunéng huàn yì jiān ānjìng yìdiǎn de fángjiān?"
+    },
+    "huahua": {
+      "hanzi": "房间怎么样？",
+      "words": [
+        {
+          "hanzi": "房间",
+          "pinyin": "fángjiān",
+          "meaning": "room",
+          "hsk": 2
+        },
+        {
+          "hanzi": "怎么样",
+          "pinyin": "zěnmeyàng",
+          "meaning": "how about",
+          "hsk": 1
+        }
+      ],
+      "meaning": "How is the room?",
+      "pinyin": "Fángjiān zěnmeyàng?"
+    },
+    "focus": [
+      "换",
+      "间",
+      "一点"
+    ],
+    "scene": "The room is large enough, but too noisy. Ask for a quieter room.",
+    "explanation": "换一间 asks to switch rooms. 一点 softens the requested difference: 安静一点的房间 is a slightly quieter room.",
+    "closing": {
+      "hanzi": "可以，我帮你换一间。",
+      "meaning": "Sure, I will help you switch rooms.",
+      "pinyin": "Kěyǐ, wǒ bāng nǐ huàn yì jiān."
+    },
+    "incomingNote": "房间怎么样？ asks how the room is. Explain what you want changed through your request."
+  },
+  {
+    "id": "travel-6",
+    "goal": "travel",
+    "tier": 6,
+    "title": "Request a policy exception",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "理解",
+        "pinyin": "lǐjiě",
+        "meaning": "Understand",
+        "hsk": 4
+      },
+      {
+        "hanzi": "规定",
+        "pinyin": "guīdìng",
+        "meaning": "Regulations",
+        "hsk": 4
+      },
+      {
+        "hanzi": "但",
+        "pinyin": "dàn",
+        "meaning": "but",
+        "hsk": 3
+      },
+      {
+        "hanzi": "能不能",
+        "pinyin": "néng bu néng",
+        "meaning": "could you",
+        "hsk": 2
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "改期",
+        "pinyin": "gǎiqī",
+        "meaning": "reschedule",
+        "hsk": 5
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "破例",
+        "pinyin": "pòlì",
+        "meaning": "Make an exception",
+        "hsk": 6
+      },
+      {
+        "hanzi": "退款",
+        "pinyin": "tuìkuǎn",
+        "meaning": "refund",
+        "hsk": 4
+      }
+    ],
+    "practice": {
+      "hanzi": "我理解规定，但能不能改期？",
+      "meaning": "I understand the policy, but could I change the date?",
+      "pinyin": "Wǒ lǐjiě guīdìng, dàn néngbunéng gǎiqī?"
+    },
+    "transfer": {
+      "hanzi": "我理解规定，但能不能破例退款？",
+      "meaning": "I understand the policy, but could you make an exception and refund me?",
+      "pinyin": "Wǒ lǐjiě guīdìng, dàn néngbunéng pòlì tuìkuǎn?"
+    },
+    "huahua": {
+      "hanzi": "按规定不能退款。",
+      "words": [
+        {
+          "hanzi": "按",
+          "pinyin": "àn",
+          "meaning": "according to",
+          "hsk": 4
+        },
+        {
+          "hanzi": "规定",
+          "pinyin": "guīdìng",
+          "meaning": "Regulations",
+          "hsk": 4
+        },
+        {
+          "hanzi": "不",
+          "pinyin": "bù",
+          "meaning": "no",
+          "hsk": 1
+        },
+        {
+          "hanzi": "能",
+          "pinyin": "néng",
+          "meaning": "can, be able to",
+          "hsk": 1
+        },
+        {
+          "hanzi": "退款",
+          "pinyin": "tuìkuǎn",
+          "meaning": "refund",
+          "hsk": 4
+        }
+      ],
+      "meaning": "Under the policy, it cannot be refunded.",
+      "pinyin": "Àn guīdìng bù néng tuìkuǎn."
+    },
+    "focus": [
+      "改期",
+      "破例"
+    ],
+    "scene": "You cannot take the trip or reschedule it. A refund is normally unavailable; ask whether an exception can be made.",
+    "explanation": "我理解规定 acknowledges the policy. 但 introduces your request. 破例退款 asks for a refund as an exception.",
+    "closing": {
+      "hanzi": "我帮你问问能不能申请。",
+      "meaning": "I will check whether you can request that.",
+      "pinyin": "Wǒ bāng nǐ wèn wèn néngbunéng shēnqǐng."
+    },
+    "incomingNote": "按规定不能退款 says refunds are normally unavailable. Ask whether an exception can be made."
+  },
+  {
+    "id": "everyday-1",
+    "goal": "everyday",
+    "tier": 1,
+    "title": "Share an interest",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "喜欢",
+        "pinyin": "xǐhuān",
+        "meaning": "love, like",
+        "hsk": 1
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "电影",
+        "pinyin": "diànyǐng",
+        "meaning": "movie",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "音乐",
+        "pinyin": "yīnyuè",
+        "meaning": "Music",
+        "hsk": 3
+      }
+    ],
+    "practice": {
+      "hanzi": "我喜欢电影。",
+      "meaning": "I like movies.",
+      "pinyin": "Wǒ xǐhuan diànyǐng."
+    },
+    "transfer": {
+      "hanzi": "我喜欢音乐。",
+      "meaning": "I like music.",
+      "pinyin": "Wǒ xǐhuan yīnyuè."
+    },
+    "huahua": {
+      "hanzi": "喜欢音乐吗？",
+      "words": [
+        {
+          "hanzi": "喜欢",
+          "pinyin": "xǐhuān",
+          "meaning": "love, like",
+          "hsk": 1
+        },
+        {
+          "hanzi": "音乐",
+          "pinyin": "yīnyuè",
+          "meaning": "Music",
+          "hsk": 3
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Do you like music?",
+      "pinyin": "Xǐhuan yīnyuè ma?"
+    },
+    "focus": [
+      "喜欢",
+      "音乐",
+      "电影"
+    ],
+    "scene": "You are meeting someone new. Tell them you like music.",
+    "explanation": "我 means “I”. 喜欢 means “like”. Put your interest after 我喜欢.",
+    "closing": {
+      "hanzi": "我也喜欢音乐。",
+      "meaning": "I like music too.",
+      "pinyin": "Wǒ yě xǐhuan yīnyuè."
+    },
+    "incomingNote": "喜欢音乐吗？ asks whether you like music. It reuses 喜欢音乐 and adds the question ending 吗."
+  },
+  {
+    "id": "everyday-2",
+    "goal": "everyday",
+    "tier": 2,
+    "title": "Describe your Mandarin ability honestly",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "不太",
+        "pinyin": "bútài",
+        "meaning": "not very",
+        "hsk": 2
+      },
+      {
+        "hanzi": "会",
+        "pinyin": "huì",
+        "meaning": "can",
+        "hsk": 1
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "中文",
+        "pinyin": "zhōngwén",
+        "meaning": "Chinese",
+        "hsk": 3
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "写",
+        "pinyin": "xiě",
+        "meaning": "write",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "说",
+        "pinyin": "shuō",
+        "meaning": "say; speak",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "我不太会写中文。",
+      "meaning": "I cannot write much Chinese.",
+      "pinyin": "Wǒ bútài huì xiě zhōngwén."
+    },
+    "transfer": {
+      "hanzi": "我不太会说中文。",
+      "meaning": "I cannot speak much Mandarin.",
+      "pinyin": "Wǒ bútài huì shuō zhōngwén."
+    },
+    "huahua": {
+      "hanzi": "会说中文吗？",
+      "words": [
+        {
+          "hanzi": "会",
+          "pinyin": "huì",
+          "meaning": "can",
+          "hsk": 1
+        },
+        {
+          "hanzi": "说",
+          "pinyin": "shuō",
+          "meaning": "say; speak",
+          "hsk": 1
+        },
+        {
+          "hanzi": "中文",
+          "pinyin": "zhōngwén",
+          "meaning": "Chinese",
+          "hsk": 3
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Can you speak Mandarin?",
+      "pinyin": "Huì shuō zhōngwén ma?"
+    },
+    "focus": [
+      "不太"
+    ],
+    "scene": "You want to explain that speaking Mandarin is still difficult for you, rather than claim that you cannot speak any at all.",
+    "explanation": "不太 softens the statement about limited ability. 说中文 is speaking Chinese; 写中文 is writing it.",
+    "closing": {
+      "hanzi": "没关系，我们慢慢聊。",
+      "meaning": "That is okay. We can take our time talking.",
+      "pinyin": "Méiguānxì, wǒmen màn màn liáo."
+    },
+    "incomingNote": "会说中文吗？ asks about speaking. Choose the reply about that ability."
+  },
+  {
+    "id": "everyday-3",
+    "goal": "everyday",
+    "tier": 3,
+    "title": "Suggest another time",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "今天",
+        "pinyin": "jīntiān",
+        "meaning": "today",
+        "hsk": 1
+      },
+      {
+        "hanzi": "没空",
+        "pinyin": "méikòng",
+        "meaning": "not have free time",
+        "hsk": 2
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "可以",
+        "pinyin": "kěyǐ",
+        "meaning": "can",
+        "hsk": 2
+      },
+      {
+        "hanzi": "吗",
+        "pinyin": "ma",
+        "meaning": "yes/no question ending",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "明天",
+        "pinyin": "míngtiān",
+        "meaning": "tomorrow",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "周末",
+        "pinyin": "zhōumò",
+        "meaning": "Weekend",
+        "hsk": 3
+      }
+    ],
+    "practice": {
+      "hanzi": "我今天没空，明天可以吗？",
+      "meaning": "I am busy today. Would tomorrow work?",
+      "pinyin": "Wǒ jīntiān méikòng, míngtiān kěyǐ ma?"
+    },
+    "transfer": {
+      "hanzi": "我今天没空，周末可以吗？",
+      "meaning": "I am busy today. Would the weekend work?",
+      "pinyin": "Wǒ jīntiān méikòng, zhōumò kěyǐ ma?"
+    },
+    "huahua": {
+      "hanzi": "今天有空吗？",
+      "words": [
+        {
+          "hanzi": "今天",
+          "pinyin": "jīntiān",
+          "meaning": "today",
+          "hsk": 1
+        },
+        {
+          "hanzi": "有空",
+          "pinyin": "yǒukōng",
+          "meaning": "have free time",
+          "hsk": 2
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Are you free today?",
+      "pinyin": "Jīntiān yǒukōng ma?"
+    },
+    "focus": [
+      "有空",
+      "没空"
+    ],
+    "scene": "You are busy today and tomorrow, but available at the weekend. Suggest the weekend.",
+    "explanation": "没空 means “not free”. After explaining that today does not work, suggest another time with ……可以吗？",
+    "closing": {
+      "hanzi": "可以，周末见。",
+      "meaning": "Sure, see you at the weekend.",
+      "pinyin": "Kěyǐ, zhōumò jiàn."
+    },
+    "incomingNote": "今天有空吗？ asks whether you are free today. Your reply explains the conflict and proposes another time."
+  },
+  {
+    "id": "everyday-4",
+    "goal": "everyday",
+    "tier": 4,
+    "title": "Turn experience into an invitation",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "还",
+        "pinyin": "hái",
+        "meaning": "still",
+        "hsk": 2
+      },
+      {
+        "hanzi": "没",
+        "pinyin": "méi",
+        "meaning": "no",
+        "hsk": 1
+      },
+      {
+        "hanzi": "去",
+        "pinyin": "qù",
+        "meaning": "go",
+        "hsk": 1
+      },
+      {
+        "hanzi": "过",
+        "pinyin": "guo",
+        "meaning": "marks previous experience",
+        "hsk": 2
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "你",
+        "pinyin": "nǐ",
+        "meaning": "you",
+        "hsk": 1
+      },
+      {
+        "hanzi": "去",
+        "pinyin": "qù",
+        "meaning": "go",
+        "hsk": 1
+      },
+      {
+        "hanzi": "过",
+        "pinyin": "guo",
+        "meaning": "marks previous experience",
+        "hsk": 2
+      },
+      {
+        "hanzi": "吗",
+        "pinyin": "ma",
+        "meaning": "yes/no question ending",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "要不要",
+        "pinyin": "yào bu yào",
+        "meaning": "would you like to",
+        "hsk": 2
+      },
+      {
+        "hanzi": "一起",
+        "pinyin": "yìqǐ",
+        "meaning": "together",
+        "hsk": 2
+      },
+      {
+        "hanzi": "去",
+        "pinyin": "qù",
+        "meaning": "go",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "我还没去过，你去过吗？",
+      "meaning": "I have not been yet. Have you?",
+      "pinyin": "Wǒ hái méi qù guo, nǐ qù guo ma?"
+    },
+    "transfer": {
+      "hanzi": "我还没去过，要不要一起去？",
+      "meaning": "I have not been yet. Would you like to go together?",
+      "pinyin": "Wǒ hái méi qù guo, yàobuyào yìqǐ qù?"
+    },
+    "huahua": {
+      "hanzi": "你去过那儿吗？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "去",
+          "pinyin": "qù",
+          "meaning": "go",
+          "hsk": 1
+        },
+        {
+          "hanzi": "过",
+          "pinyin": "guo",
+          "meaning": "marks previous experience",
+          "hsk": 2
+        },
+        {
+          "hanzi": "那儿",
+          "pinyin": "nàér",
+          "meaning": "there",
+          "hsk": 1
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Have you been there?",
+      "pinyin": "Nǐ qù guo nàér ma?"
+    },
+    "focus": [
+      "过",
+      "要不要"
+    ],
+    "scene": "You are discussing a particular cafe and have not been. Invite Huahua to go with you, rather than asking whether Huahua has been.",
+    "explanation": "还没去过 says you have not been yet. 要不要一起去？ turns your answer into an invitation to go together.",
+    "closing": {
+      "hanzi": "好啊，我们一起去。",
+      "meaning": "Sure, let us go together.",
+      "pinyin": "Hǎo a, wǒmen yìqǐ qù."
+    },
+    "incomingNote": "你去过那儿吗？ asks if you have been to the cafe being discussed. 过 asks about previous experience."
+  },
+  {
+    "id": "everyday-5",
+    "goal": "everyday",
+    "tier": 5,
+    "title": "Respond to reassuring news",
+    "prefix": [
+      {
+        "hanzi": "听",
+        "pinyin": "tīng",
+        "meaning": "listen",
+        "hsk": 1
+      },
+      {
+        "hanzi": "你",
+        "pinyin": "nǐ",
+        "meaning": "you",
+        "hsk": 1
+      },
+      {
+        "hanzi": "这么",
+        "pinyin": "zhème",
+        "meaning": "like this",
+        "hsk": 2
+      },
+      {
+        "hanzi": "说",
+        "pinyin": "shuō",
+        "meaning": "say; speak",
+        "hsk": 1
+      },
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "更",
+        "pinyin": "gèng",
+        "meaning": "more",
+        "hsk": 3
+      },
+      {
+        "hanzi": "担心",
+        "pinyin": "dānxīn",
+        "meaning": "Worry",
+        "hsk": 3
+      },
+      {
+        "hanzi": "了",
+        "pinyin": "le",
+        "meaning": "marks a change or completion",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "就",
+        "pinyin": "jiù",
+        "meaning": "then; as a result",
+        "hsk": 2
+      },
+      {
+        "hanzi": "放心",
+        "pinyin": "fàngxīn",
+        "meaning": "Don't worry",
+        "hsk": 3
+      },
+      {
+        "hanzi": "了",
+        "pinyin": "le",
+        "meaning": "marks a change or completion",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "听你这么说，我更担心了。",
+      "meaning": "Hearing that makes me more worried.",
+      "pinyin": "Tīng nǐ zhème shuō, wǒ gèng dānxīn le."
+    },
+    "transfer": {
+      "hanzi": "听你这么说，我就放心了。",
+      "meaning": "Hearing that puts my mind at ease.",
+      "pinyin": "Tīng nǐ zhème shuō, wǒ jiù fàngxīn le."
+    },
+    "huahua": {
+      "hanzi": "我到家了，很安全。",
+      "words": [
+        {
+          "hanzi": "我",
+          "pinyin": "wǒ",
+          "meaning": "I, me",
+          "hsk": 1
+        },
+        {
+          "hanzi": "到",
+          "pinyin": "dào",
+          "meaning": "arrive",
+          "hsk": 2
+        },
+        {
+          "hanzi": "家",
+          "pinyin": "jiā",
+          "meaning": "home",
+          "hsk": 1
+        },
+        {
+          "hanzi": "了",
+          "pinyin": "le",
+          "meaning": "marks a change or completion",
+          "hsk": 1
+        },
+        {
+          "hanzi": "很",
+          "pinyin": "hěn",
+          "meaning": "quite, very",
+          "hsk": 1
+        },
+        {
+          "hanzi": "安全",
+          "pinyin": "ānquán",
+          "meaning": "security",
+          "hsk": 4
+        }
+      ],
+      "meaning": "I am home and safe.",
+      "pinyin": "Wǒ dào jiā le, hěn ānquán."
+    },
+    "focus": [
+      "放心"
+    ],
+    "scene": "You were worried about your friend getting home. They have confirmed that they are safe; express relief.",
+    "explanation": "听你这么说 links your reaction to what the other person said. 放心 means feeling reassured or no longer worried.",
+    "closing": {
+      "hanzi": "谢谢你关心我。",
+      "meaning": "Thank you for caring about me.",
+      "pinyin": "Xièxiè nǐ guānxīn wǒ."
+    },
+    "incomingNote": "Your friend says they are home and safe. Respond with the feeling that fits that news."
+  },
+  {
+    "id": "everyday-6",
+    "goal": "everyday",
+    "tier": 6,
+    "title": "Ask for thinking space without rejecting",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "不",
+        "pinyin": "bù",
+        "meaning": "no",
+        "hsk": 1
+      },
+      {
+        "hanzi": "是",
+        "pinyin": "shì",
+        "meaning": "be (am, is, are)",
+        "hsk": 1
+      },
+      {
+        "hanzi": "反对",
+        "pinyin": "fǎnduì",
+        "meaning": "Opposition",
+        "hsk": 4
+      },
+      {
+        "hanzi": "只是",
+        "pinyin": "zhǐshì",
+        "meaning": "it is just that",
+        "hsk": 3
+      },
+      {
+        "hanzi": "想",
+        "pinyin": "xiǎng",
+        "meaning": "would like to",
+        "hsk": 1
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "先",
+        "pinyin": "xiān",
+        "meaning": "first",
+        "hsk": 3
+      },
+      {
+        "hanzi": "问",
+        "pinyin": "wèn",
+        "meaning": "ask",
+        "hsk": 2
+      },
+      {
+        "hanzi": "清楚",
+        "pinyin": "qīngchu",
+        "meaning": "clear",
+        "hsk": 3
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "再",
+        "pinyin": "zài",
+        "meaning": "then; again",
+        "hsk": 2
+      },
+      {
+        "hanzi": "考虑",
+        "pinyin": "kǎolǜ",
+        "meaning": "Consider",
+        "hsk": 4
+      },
+      {
+        "hanzi": "一下",
+        "pinyin": "yīxià",
+        "meaning": "in a short while",
+        "hsk": 2
+      }
+    ],
+    "practice": {
+      "hanzi": "我不是反对，只是想先问清楚。",
+      "meaning": "I am not against it; I just want to clarify things first.",
+      "pinyin": "Wǒ bú shì fǎnduì, zhǐshì xiǎng xiān wèn qīngchǔ."
+    },
+    "transfer": {
+      "hanzi": "我不是反对，只是想再考虑一下。",
+      "meaning": "I am not against it; I just want to think it over a little more.",
+      "pinyin": "Wǒ bú shì fǎnduì, zhǐshì xiǎng zài kǎolǜ yíxià."
+    },
+    "huahua": {
+      "hanzi": "那就这么定了？",
+      "words": [
+        {
+          "hanzi": "那",
+          "pinyin": "nà",
+          "meaning": "that; in that case",
+          "hsk": 1
+        },
+        {
+          "hanzi": "就",
+          "pinyin": "jiù",
+          "meaning": "then; as a result",
+          "hsk": 2
+        },
+        {
+          "hanzi": "这么",
+          "pinyin": "zhème",
+          "meaning": "like this",
+          "hsk": 2
+        },
+        {
+          "hanzi": "定",
+          "pinyin": "dìng",
+          "meaning": "settle",
+          "hsk": 3
+        },
+        {
+          "hanzi": "了",
+          "pinyin": "le",
+          "meaning": "marks a change or completion",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Shall we settle on that, then?",
+      "pinyin": "Nà jiù zhème dìng le?"
+    },
+    "focus": [
+      "反对",
+      "考虑"
+    ],
+    "scene": "You understand the details and are not opposed, but want more time to think before committing.",
+    "explanation": "我不是反对 prevents hesitation from sounding like rejection. 只是想 introduces what you need before agreeing.",
+    "closing": {
+      "hanzi": "好，想好了再告诉我。",
+      "meaning": "Okay, let me know when you have thought it over.",
+      "pinyin": "Hǎo, xiǎng hǎo le zài gàosù wǒ."
+    },
+    "incomingNote": "那就这么定了？ asks whether the decision is settled. Explain what you still need before committing."
+  },
+  {
+    "id": "other-1",
+    "goal": "other",
+    "tier": 1,
+    "title": "Ask for help in an unfamiliar situation",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "需要",
+        "pinyin": "xūyào",
+        "meaning": "Need",
+        "hsk": 3
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "时间",
+        "pinyin": "shíjiān",
+        "meaning": "time",
+        "hsk": 2
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "帮助",
+        "pinyin": "bāngzhù",
+        "meaning": "help",
+        "hsk": 2
+      }
+    ],
+    "practice": {
+      "hanzi": "我需要时间。",
+      "meaning": "I need time.",
+      "pinyin": "Wǒ xūyào shíjiān."
+    },
+    "transfer": {
+      "hanzi": "我需要帮助。",
+      "meaning": "I need help.",
+      "pinyin": "Wǒ xūyào bāngzhù."
+    },
+    "huahua": {
+      "hanzi": "需要帮助吗？",
+      "words": [
+        {
+          "hanzi": "需要",
+          "pinyin": "xūyào",
+          "meaning": "Need",
+          "hsk": 3
+        },
+        {
+          "hanzi": "帮助",
+          "pinyin": "bāngzhù",
+          "meaning": "help",
+          "hsk": 2
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Do you need help?",
+      "pinyin": "Xūyào bāngzhù ma?"
+    },
+    "focus": [
+      "需要",
+      "帮助",
+      "时间"
+    ],
+    "scene": "You are stuck on a task. Ask someone for help.",
+    "explanation": "我 means “I”. 需要 means “need”. Put what you need after 我需要.",
+    "closing": {
+      "hanzi": "没问题，我来帮你。",
+      "meaning": "No problem, I will help you.",
+      "pinyin": "Méi wèntí, wǒ lái bāng nǐ."
+    },
+    "incomingNote": "需要帮助吗？ offers help. It reuses 需要 and 帮助; 吗 marks a yes/no question."
+  },
+  {
+    "id": "other-2",
+    "goal": "other",
+    "tier": 2,
+    "title": "Ask for the wording or pronunciation you need",
+    "prefix": [
+      {
+        "hanzi": "这个",
+        "pinyin": "zhège",
+        "meaning": "this",
+        "hsk": 1
+      }
+    ],
+    "suffix": [],
+    "aWords": [
+      {
+        "hanzi": "怎么",
+        "pinyin": "zěnme",
+        "meaning": "how",
+        "hsk": 1
+      },
+      {
+        "hanzi": "读",
+        "pinyin": "dú",
+        "meaning": "read",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "怎么",
+        "pinyin": "zěnme",
+        "meaning": "how",
+        "hsk": 1
+      },
+      {
+        "hanzi": "说",
+        "pinyin": "shuō",
+        "meaning": "say; speak",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "这个怎么读？",
+      "meaning": "How do you pronounce this?",
+      "pinyin": "Zhège zěnme dú?"
+    },
+    "transfer": {
+      "hanzi": "这个怎么说？",
+      "meaning": "How do you say this?",
+      "pinyin": "Zhège zěnme shuō?"
+    },
+    "huahua": {
+      "hanzi": "你想问什么？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "想",
+          "pinyin": "xiǎng",
+          "meaning": "would like to",
+          "hsk": 1
+        },
+        {
+          "hanzi": "问",
+          "pinyin": "wèn",
+          "meaning": "ask",
+          "hsk": 2
+        },
+        {
+          "hanzi": "什么",
+          "pinyin": "shénme",
+          "meaning": "what, why",
+          "hsk": 1
+        }
+      ],
+      "meaning": "What would you like to ask?",
+      "pinyin": "Nǐ xiǎng wèn shénme?"
+    },
+    "focus": [
+      "怎么",
+      "读"
+    ],
+    "scene": "A text card reads “Thank you”. Ask how to say that phrase in Mandarin, rather than how to pronounce Chinese characters.",
+    "explanation": "怎么说 asks how to express a phrase. 怎么读 asks how to pronounce written Chinese.",
+    "closing": {
+      "hanzi": "可以说，谢谢你。",
+      "meaning": "You can say: thank you.",
+      "pinyin": "Kěyǐ shuō, xièxiè nǐ."
+    },
+    "incomingNote": "你想问什么？ asks what you would like to ask. Use the text card to explain which kind of help you need."
+  },
+  {
+    "id": "other-3",
+    "goal": "other",
+    "tier": 3,
+    "title": "Recover when listening fails",
+    "prefix": [
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "没",
+        "pinyin": "méi",
+        "meaning": "no",
+        "hsk": 1
+      },
+      {
+        "hanzi": "听",
+        "pinyin": "tīng",
+        "meaning": "listen",
+        "hsk": 1
+      },
+      {
+        "hanzi": "清楚",
+        "pinyin": "qīngchu",
+        "meaning": "clear",
+        "hsk": 3
+      },
+      {
+        "hanzi": "可以",
+        "pinyin": "kěyǐ",
+        "meaning": "can",
+        "hsk": 2
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "吗",
+        "pinyin": "ma",
+        "meaning": "yes/no question ending",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "写",
+        "pinyin": "xiě",
+        "meaning": "write",
+        "hsk": 1
+      },
+      {
+        "hanzi": "下来",
+        "pinyin": "xiàlái",
+        "meaning": "down; result of writing",
+        "hsk": 3
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "再",
+        "pinyin": "zài",
+        "meaning": "then; again",
+        "hsk": 2
+      },
+      {
+        "hanzi": "说",
+        "pinyin": "shuō",
+        "meaning": "say; speak",
+        "hsk": 1
+      },
+      {
+        "hanzi": "一",
+        "pinyin": "yī",
+        "meaning": "one",
+        "hsk": 1
+      },
+      {
+        "hanzi": "遍",
+        "pinyin": "biàn",
+        "meaning": "one complete repetition",
+        "hsk": 2
+      }
+    ],
+    "practice": {
+      "hanzi": "我没听清楚，可以写下来吗？",
+      "meaning": "I did not catch that. Could you write it down?",
+      "pinyin": "Wǒ méi tīng qīngchǔ, kěyǐ xiě xiàlái ma?"
+    },
+    "transfer": {
+      "hanzi": "我没听清楚，可以再说一遍吗？",
+      "meaning": "I did not catch that. Could you say it once more?",
+      "pinyin": "Wǒ méi tīng qīngchǔ, kěyǐ zài shuō yí biàn ma?"
+    },
+    "huahua": {
+      "hanzi": "听清楚了吗？",
+      "words": [
+        {
+          "hanzi": "听",
+          "pinyin": "tīng",
+          "meaning": "listen",
+          "hsk": 1
+        },
+        {
+          "hanzi": "清楚",
+          "pinyin": "qīngchu",
+          "meaning": "clear",
+          "hsk": 3
+        },
+        {
+          "hanzi": "了",
+          "pinyin": "le",
+          "meaning": "marks a change or completion",
+          "hsk": 1
+        },
+        {
+          "hanzi": "吗",
+          "pinyin": "ma",
+          "meaning": "yes/no question ending",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Did you hear it clearly?",
+      "pinyin": "Tīng qīngchǔ le ma?"
+    },
+    "focus": [
+      "清楚",
+      "遍"
+    ],
+    "scene": "You missed a spoken sentence and cannot look at a screen right now. Ask to hear it again, rather than asking for a written version.",
+    "explanation": "没听清楚 means you did not catch what was said. 再说一遍 asks for another repetition; 写下来 asks for a written version.",
+    "closing": {
+      "hanzi": "好，我再说一遍：明天上午十点见。",
+      "meaning": "Okay, I will repeat it: see you at ten tomorrow morning.",
+      "pinyin": "Hǎo, wǒ zài shuō yí biàn míng tiānshàng wǔshí diǎn jiàn. "
+    },
+    "incomingNote": "听清楚了吗？ asks whether you caught the words clearly. Your reply explains that you did not, then requests help."
+  },
+  {
+    "id": "other-4",
+    "goal": "other",
+    "tier": 4,
+    "title": "Confirm before acting",
+    "prefix": [
+      {
+        "hanzi": "你",
+        "pinyin": "nǐ",
+        "meaning": "you",
+        "hsk": 1
+      },
+      {
+        "hanzi": "的",
+        "pinyin": "de",
+        "meaning": "links a description to a noun",
+        "hsk": 1
+      },
+      {
+        "hanzi": "意思",
+        "pinyin": "yìsi",
+        "meaning": "meaning",
+        "hsk": 2
+      },
+      {
+        "hanzi": "是",
+        "pinyin": "shì",
+        "meaning": "be (am, is, are)",
+        "hsk": 1
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "再",
+        "pinyin": "zài",
+        "meaning": "then; again",
+        "hsk": 2
+      },
+      {
+        "hanzi": "来",
+        "pinyin": "lái",
+        "meaning": "come",
+        "hsk": 1
+      },
+      {
+        "hanzi": "对",
+        "pinyin": "duì",
+        "meaning": "right; correct",
+        "hsk": 1
+      },
+      {
+        "hanzi": "吗",
+        "pinyin": "ma",
+        "meaning": "yes/no question ending",
+        "hsk": 1
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "今天",
+        "pinyin": "jīntiān",
+        "meaning": "today",
+        "hsk": 1
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "明天",
+        "pinyin": "míngtiān",
+        "meaning": "tomorrow",
+        "hsk": 1
+      }
+    ],
+    "practice": {
+      "hanzi": "你的意思是，今天再来，对吗？",
+      "meaning": "You mean I should come back today, right?",
+      "pinyin": "Nǐ de yìsī shì, jīntiān zài lái, duì ma?"
+    },
+    "transfer": {
+      "hanzi": "你的意思是，明天再来，对吗？",
+      "meaning": "You mean I should come back tomorrow, right?",
+      "pinyin": "Nǐ de yìsī shì, míngtiān zài lái, duì ma?"
+    },
+    "huahua": {
+      "hanzi": "明天再来。",
+      "words": [
+        {
+          "hanzi": "明天",
+          "pinyin": "míngtiān",
+          "meaning": "tomorrow",
+          "hsk": 1
+        },
+        {
+          "hanzi": "再",
+          "pinyin": "zài",
+          "meaning": "then; again",
+          "hsk": 2
+        },
+        {
+          "hanzi": "来",
+          "pinyin": "lái",
+          "meaning": "come",
+          "hsk": 1
+        }
+      ],
+      "meaning": "Come back tomorrow.",
+      "pinyin": "Míngtiān zài lái."
+    },
+    "focus": [
+      "意思"
+    ],
+    "scene": "You have been told to return tomorrow. Check that you understood the day correctly.",
+    "explanation": "你的意思是 introduces your interpretation. 对吗？ asks whether you understood correctly.",
+    "closing": {
+      "hanzi": "对，是明天。",
+      "meaning": "Right, tomorrow.",
+      "pinyin": "Duì, shì míngtiān."
+    },
+    "incomingNote": "明天再来 means “Come back tomorrow”. Keep the same day when you check your understanding."
+  },
+  {
+    "id": "other-5",
+    "goal": "other",
+    "tier": 5,
+    "title": "Explain your priorities",
+    "prefix": [
+      {
+        "hanzi": "对",
+        "pinyin": "duì",
+        "meaning": "right; correct",
+        "hsk": 1
+      },
+      {
+        "hanzi": "我",
+        "pinyin": "wǒ",
+        "meaning": "I, me",
+        "hsk": 1
+      },
+      {
+        "hanzi": "来",
+        "pinyin": "lái",
+        "meaning": "come",
+        "hsk": 1
+      },
+      {
+        "hanzi": "说",
+        "pinyin": "shuō",
+        "meaning": "say; speak",
+        "hsk": 1
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "更",
+        "pinyin": "gèng",
+        "meaning": "more",
+        "hsk": 3
+      },
+      {
+        "hanzi": "重要",
+        "pinyin": "zhòngyào",
+        "meaning": "important",
+        "hsk": 3
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "考试",
+        "pinyin": "kǎoshì",
+        "meaning": "exam",
+        "hsk": 2
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "交流",
+        "pinyin": "jiāoliú",
+        "meaning": "Communication",
+        "hsk": 4
+      }
+    ],
+    "practice": {
+      "hanzi": "对我来说，考试更重要。",
+      "meaning": "For me, exams matter more.",
+      "pinyin": "Duì wǒ lái shuō, kǎoshì gèng zhòngyào."
+    },
+    "transfer": {
+      "hanzi": "对我来说，交流更重要。",
+      "meaning": "For me, communicating matters more.",
+      "pinyin": "Duì wǒ lái shuō, jiāoliú gèng zhòngyào."
+    },
+    "huahua": {
+      "hanzi": "你最看重什么？",
+      "words": [
+        {
+          "hanzi": "你",
+          "pinyin": "nǐ",
+          "meaning": "you",
+          "hsk": 1
+        },
+        {
+          "hanzi": "最",
+          "pinyin": "zuì",
+          "meaning": "the most",
+          "hsk": 2
+        },
+        {
+          "hanzi": "看重",
+          "pinyin": "kànzhòng",
+          "meaning": "value; attach importance to",
+          "hsk": 5
+        },
+        {
+          "hanzi": "什么",
+          "pinyin": "shénme",
+          "meaning": "what, why",
+          "hsk": 1
+        }
+      ],
+      "meaning": "What matters most to you?",
+      "pinyin": "Nǐ zuì kànzhòng shénme?"
+    },
+    "focus": [
+      "看重",
+      "交流"
+    ],
+    "scene": "You are comparing an exam course with conversation practice. Explain that communication is your priority.",
+    "explanation": "对我来说 marks your personal perspective. 更重要 says which of the two established choices matters more to you.",
+    "closing": {
+      "hanzi": "那我们就多练习交流。",
+      "meaning": "Then let us practise communicating more.",
+      "pinyin": "Nà wǒmen jiù duō liànxí jiāoliú."
+    },
+    "incomingNote": "你最看重什么？ asks what you value most. State the priority described in this practice situation."
+  },
+  {
+    "id": "other-6",
+    "goal": "other",
+    "tier": 6,
+    "title": "Propose a better approach",
+    "prefix": [
+      {
+        "hanzi": "与其",
+        "pinyin": "yǔqí",
+        "meaning": "Rather than",
+        "hsk": 5
+      }
+    ],
+    "suffix": [
+      {
+        "hanzi": "不如",
+        "pinyin": "bùrú",
+        "meaning": "not as good as",
+        "hsk": 5
+      },
+      {
+        "hanzi": "先",
+        "pinyin": "xiān",
+        "meaning": "first",
+        "hsk": 3
+      },
+      {
+        "hanzi": "弄",
+        "pinyin": "nòng",
+        "meaning": "get, make",
+        "hsk": 4
+      },
+      {
+        "hanzi": "清楚",
+        "pinyin": "qīngchu",
+        "meaning": "clear",
+        "hsk": 3
+      },
+      {
+        "hanzi": "情况",
+        "pinyin": "qíngkuàng",
+        "meaning": "Situation",
+        "hsk": 4
+      }
+    ],
+    "aWords": [
+      {
+        "hanzi": "继续",
+        "pinyin": "jìxù",
+        "meaning": "Continue",
+        "hsk": 4
+      },
+      {
+        "hanzi": "等",
+        "pinyin": "děng",
+        "meaning": "wait",
+        "hsk": 2
+      }
+    ],
+    "bWords": [
+      {
+        "hanzi": "急着",
+        "pinyin": "jízhe",
+        "meaning": "be in a hurry to",
+        "hsk": 4
+      },
+      {
+        "hanzi": "决定",
+        "pinyin": "juédìng",
+        "meaning": "Decision",
+        "hsk": 3
+      }
+    ],
+    "practice": {
+      "hanzi": "与其继续等，不如先弄清楚情况。",
+      "meaning": "Rather than keep waiting, we should first understand the situation.",
+      "pinyin": "Yǔqí jìxù děng, bùrú xiān nòng qīngchǔ qíngkuàng."
+    },
+    "transfer": {
+      "hanzi": "与其急着决定，不如先弄清楚情况。",
+      "meaning": "Rather than rush to a decision, we should first understand the situation.",
+      "pinyin": "Yǔqí jízhe juédìng, bùrú xiān nòng qīngchǔ qíngkuàng."
+    },
+    "huahua": {
+      "hanzi": "现在就决定吧？",
+      "words": [
+        {
+          "hanzi": "现在",
+          "pinyin": "xiànzài",
+          "meaning": "now",
+          "hsk": 1
+        },
+        {
+          "hanzi": "就",
+          "pinyin": "jiù",
+          "meaning": "then; as a result",
+          "hsk": 2
+        },
+        {
+          "hanzi": "决定",
+          "pinyin": "juédìng",
+          "meaning": "Decision",
+          "hsk": 3
+        },
+        {
+          "hanzi": "吧",
+          "pinyin": "ba",
+          "meaning": "suggestion or persuasion ending",
+          "hsk": 2
+        }
+      ],
+      "meaning": "Shall we decide now?",
+      "pinyin": "Xiànzài jiù juédìng ba?"
+    },
+    "focus": [
+      "与其",
+      "不如"
+    ],
+    "scene": "Someone wants an immediate decision, but key information is missing. Propose understanding the situation before rushing to decide.",
+    "explanation": "与其 introduces the less desirable approach. 不如 introduces the better alternative you propose.",
+    "closing": {
+      "hanzi": "好，我们先把情况了解清楚。",
+      "meaning": "Okay, let us understand the situation first.",
+      "pinyin": "Hǎo, wǒmen xiān bǎ qíngkuàng liǎojiě qīngchǔ."
+    },
+    "incomingNote": "现在就决定吧？ suggests deciding now. Explain why you want to understand the situation first."
+  }
+]

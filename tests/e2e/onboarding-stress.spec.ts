@@ -1,3 +1,5 @@
+import { mockMiniLessonFlag } from "./helpers/onboardingExperiment";
+import { finishFirstLesson, advanceLesson } from "./helpers/firstLesson";
 import { readFileSync } from "node:fs";
 import { expect, test, type BrowserContext, type Locator, type Page, type Route } from "@playwright/test";
 
@@ -98,6 +100,7 @@ async function setup(page: Page, options: Options = {}): Promise<Mocks> {
     if (url.pathname === "/auth/v1/user" && options.signedIn) return json(route, USER);
     return json(route, { message: "Not mocked" }, 401);
   });
+  await context.route("**/api/onboarding/first-lesson", route => route.fulfill({ json: { lesson: null } }));
   await context.route("**/api/onboarding/progress**", async (route) => {
     const request = route.request();
     if (request.method() === "GET") {
@@ -141,6 +144,7 @@ async function setup(page: Page, options: Options = {}): Promise<Mocks> {
     if (options.stripeDelayMs) await sleep(options.stripeDelayMs);
     return route.fulfill({ status: 200, contentType: "text/html", body: "<h1>Mock Stripe Checkout</h1>" });
   });
+  await mockMiniLessonFlag(page);
   return mocks;
 }
 
@@ -181,6 +185,22 @@ const STEPS: Step[] = [
     },
   },
   {
+    name: "vocab_basic",
+    heading: "Which of these words do you recognize?",
+    act: async (page, press) => {
+      await page.getByTestId("vocab-none-known").click();
+      await press(page.getByTestId("vocab-continue"));
+    },
+  },
+  {
+    name: "vocab_advanced",
+    heading: "What about these more advanced words?",
+    act: async (page, press) => {
+      await page.getByTestId("vocab-none-known").click();
+      await press(page.getByTestId("vocab-continue"));
+    },
+  },
+  {
     name: "experience",
     heading: "How long have you been learning Mandarin?",
     act: async (page, press) => {
@@ -211,23 +231,6 @@ const STEPS: Step[] = [
     act: async (page, press) => press(page.getByTestId("social-proof-continue")),
   },
   {
-    name: "calibration",
-    heading: "Let’s personalize your starting point",
-    // Double-clicks inside the quiz have their own tests below.
-    act: async (page) => {
-      await page.getByTestId("calibration-start").click();
-      for (let index = 1; index <= 5; index += 1) {
-        await expect(page.getByTestId("onboarding-step").getByText(`Question ${index} of 5`)).toBeVisible();
-        await page.getByTestId("calibration-choice").first().click();
-      }
-    },
-  },
-  {
-    name: "pronunciation",
-    heading: "Check your tones in 20 seconds",
-    act: async (page, press) => press(page.getByTestId("pronunciation-skip")),
-  },
-  {
     name: "availability",
     heading: "How much time can you usually spend learning Mandarin?",
     act: async (page, press) => {
@@ -242,8 +245,13 @@ const STEPS: Step[] = [
     act: async (page, press) => press(page.getByTestId("reflect-confirm").filter({ visible: true })),
   },
   {
+    name: "first_lesson",
+    heading: /Order your first|Reply to your first|Share an interest|Make a polite|Set a clear|Make a friendly|Adjust a reservation|Clarify a detail|Express a more|Negotiate an alternative|Raise a concern|Frame your perspective/,
+    act: async (page, press) => finishFirstLesson(page, press),
+  },
+  {
     name: "commitment",
-    heading: "Ready to begin your Mandarin journey?",
+    heading: "Ready to continue your Mandarin journey?",
     act: async (page, press) => {
       await page.getByLabel("Your first name").fill("Cameron");
       await press(page.getByTestId("commitment-cta"));
@@ -448,26 +456,16 @@ for (const viewport of VIEWPORTS) {
       expect(mocks.pageErrors).toEqual([]);
     });
 
-    for (const target of ["the Start button", "a quiz answer"] as const) {
-      test(`double-clicking ${target} doesn't answer a question the learner hasn't seen`, async ({ page }) => {
-        await setup(page);
-        await page.goto("/onboarding/journey");
-        await walk(page, { until: "calibration" });
-        await heading(page, "Let’s personalize your starting point");
-        const expected = target === "the Start button" ? 1 : 2;
-        if (target === "the Start button") {
-          await page.getByTestId("calibration-start").dblclick();
-        } else {
-          await page.getByTestId("calibration-start").click();
-          await expect(page.getByTestId("onboarding-step").getByText("Question 1 of 5")).toBeVisible();
-          await page.getByTestId("calibration-choice").first().dblclick();
-        }
-        await page.waitForTimeout(800);
-        const shown = await page.getByTestId("onboarding-step").getByText(/Question \d of 5/).first().textContent();
-        test.info().annotations.push({ type: "after the double-click", description: shown ?? "no question shown" });
-        expect(shown, "questions answered by the double-click").toBe(`Question ${expected} of 5`);
-      });
-    }
+    test("double-clicking vocab continue does not skip the advanced screen", async ({ page }) => {
+      await setup(page);
+      await page.goto("/onboarding/journey");
+      await walk(page, { until: "vocab_basic" });
+      await heading(page, "Which of these words do you recognize?");
+      await page.getByTestId("vocab-none-known").click();
+      await page.getByTestId("vocab-continue").dblclick();
+      await page.waitForTimeout(500);
+      await heading(page, "What about these more advanced words?");
+    });
 
     test("reloading on every step resumes on the same step", async ({ page }) => {
       const mocks = await setup(page);
