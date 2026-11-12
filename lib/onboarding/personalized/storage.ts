@@ -14,10 +14,10 @@ export function browserTimeZone() {
   }
 }
 
-export function readLocalState(): OnboardingState | null {
+export function readLocalState(key = LOCAL_STORAGE_KEY): OnboardingState | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    const raw = window.localStorage.getItem(key);
     if (!raw) return null;
     return parseState(JSON.parse(raw), browserTimeZone());
   } catch {
@@ -25,10 +25,10 @@ export function readLocalState(): OnboardingState | null {
   }
 }
 
-export function writeLocalState(state: OnboardingState) {
+export function writeLocalState(state: OnboardingState, key = LOCAL_STORAGE_KEY) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(key, JSON.stringify(state));
   } catch {
     // Storage full or unavailable (private mode): the flow still works, it just won't resume.
   }

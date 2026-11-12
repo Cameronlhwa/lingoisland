@@ -1,4 +1,6 @@
 "use client";
+import { useOnboardingVariant } from "./personalized/OnboardingExperiment";
+
 
 /** Compact LingoIsland vs typical-apps progress curves for the conversation paywall. */
 export default function ProgressComparisonChart({
@@ -12,8 +14,9 @@ export default function ProgressComparisonChart({
   lingoLabel?: string;
   otherLabel?: string;
 }) {
+  const miniLesson = useOnboardingVariant() === "test";
   const endLabel = weeks <= 12 ? `${weeks} weeks` : `${Math.max(1, Math.round(weeks / 4.345))} months`;
-  const aria = `${lingoLabel} progress rises much faster than ${otherLabel} from today to ${endLabel}`;
+  const aria = `Illustrative progress curves for ${lingoLabel} and ${otherLabel} from today to ${endLabel}; not a calculated prediction or measured comparison.`;
 
   return (
     <figure data-testid="conversation-comparison" className="mt-5 rounded-2xl border border-[#D7E5EE] bg-[#F7FBFD] px-3.5 pb-2.5 pt-3 text-left">
@@ -26,7 +29,7 @@ export default function ProgressComparisonChart({
 
         {/* Typical apps: slow, flattening */}
         <path
-          d="M12 108 C 70 106, 120 102, 170 98 S 250 92, 308 88"
+          d={miniLesson ? "M12 108 C 50 97, 94 90, 150 89 C 206 88, 254 88, 308 88" : "M12 108 C 70 106, 120 102, 170 98 S 250 92, 308 88"}
           fill="none"
           stroke="#9AA8B5"
           strokeWidth="3"
@@ -35,15 +38,15 @@ export default function ProgressComparisonChart({
         />
         <circle cx="308" cy="88" r="4" fill="#9AA8B5" />
 
-        {/* LingoIsland: steep, clear lift */}
+        {/* LingoIsland: gentle early rise, then an accelerating upward finish */}
         <path
-          d="M12 108 C 55 104, 95 88, 140 62 S 230 28, 308 18"
+          d={miniLesson ? "M12 108 C 64 102, 92 85, 146 75 C 200 65, 254 61, 308 18" : "M12 108 C 55 104, 95 88, 140 62 S 230 28, 308 18"}
           fill="none"
           stroke="#20674F"
           strokeWidth="4"
           strokeLinecap="round"
         />
-        <path d="M12 108 C 55 104, 95 88, 140 62 S 230 28, 308 18 L 308 112 L 12 112 Z" fill="rgba(32,103,79,0.08)" />
+        <path d={miniLesson ? "M12 108 C 64 102, 92 85, 146 75 C 200 65, 254 61, 308 18 L 308 112 L 12 112 Z" : "M12 108 C 55 104, 95 88, 140 62 S 230 28, 308 18 L 308 112 L 12 112 Z"} fill="rgba(32,103,79,0.08)" />
         <circle cx="12" cy="108" r="5" fill="#fff" stroke="#D9735A" strokeWidth="2.5" />
         <circle cx="308" cy="18" r="7" fill="#20674F" />
         <path d="M304 18 l3.2 3.2 l5.5 -6.2" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

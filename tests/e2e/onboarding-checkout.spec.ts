@@ -1,3 +1,5 @@
+import { mockMiniLessonFlag } from "./helpers/onboardingExperiment";
+import { finishFirstLesson, advanceLesson } from "./helpers/firstLesson";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page, type Route } from "@playwright/test";
 
@@ -71,6 +73,7 @@ async function setup(page: Page, options: Options = {}): Promise<Mocks> {
     if (url.pathname === "/auth/v1/user" && options.signedIn) return json(route, USER);
     return json(route, { message: "Not mocked" }, 401);
   });
+  await page.route("**/api/onboarding/first-lesson", route => route.fulfill({ json: { lesson: null } }));
   await page.route("**/api/onboarding/progress**", async (route) => {
     if (route.request().method() === "GET") {
       return json(route, {
@@ -98,6 +101,7 @@ async function setup(page: Page, options: Options = {}): Promise<Mocks> {
   await page.route("https://checkout.stripe.com/**", (route) =>
     route.fulfill({ status: 200, contentType: "text/html", body: "<h1>Mock Stripe Checkout</h1>" }),
   );
+  await mockMiniLessonFlag(page);
   return mocks;
 }
 
@@ -116,6 +120,12 @@ async function toCommitment(page: Page) {
   await heading(page, "How does your Mandarin feel right now?");
   await page.getByTestId("level-few_words").click();
   await page.getByTestId("continue").click();
+  await heading(page, "Which of these words do you recognize?");
+  await page.getByTestId("vocab-none-known").click();
+  await page.getByTestId("vocab-continue").click();
+  await heading(page, "What about these more advanced words?");
+  await page.getByTestId("vocab-none-known").click();
+  await page.getByTestId("vocab-continue").click();
   await heading(page, "How long have you been learning Mandarin?");
   await page.getByTestId("experience-on_and_off").click();
   await page.getByTestId("continue").click();
@@ -127,19 +137,14 @@ async function toCommitment(page: Page) {
   await page.getByTestId("learning-pain-not_relevant").click();
   await page.getByTestId("continue").click();
   await page.getByTestId("social-proof-continue").click();
-  await page.getByTestId("calibration-start").click();
-  for (let index = 1; index <= 5; index += 1) {
-    await expect(page.getByTestId("onboarding-step").getByText(`Question ${index} of 5`)).toBeVisible();
-    await page.getByTestId("calibration-choice").first().click();
-  }
-  await page.getByTestId("pronunciation-skip").click();
   await heading(page, "How much time can you usually spend learning Mandarin?");
   await page.getByTestId("minutes-10").click();
   await page.getByTestId("days-5").click();
   await page.getByTestId("continue").click();
   await heading(page, /^From .+ in \d+ weeks$/);
   await page.getByTestId("reflect-confirm").filter({ visible: true }).click();
-  await heading(page, "Ready to begin your Mandarin journey?");
+  await finishFirstLesson(page);
+  await heading(page, "Ready to continue your Mandarin journey?");
   await page.getByLabel("Your first name").fill("Cameron");
 }
 

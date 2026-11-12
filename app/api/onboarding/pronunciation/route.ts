@@ -1,3 +1,5 @@
+import { validLessonTarget } from "@/lib/onboarding/personalized/firstLesson/token";
+import { isLessonPronunciationTarget } from "@/lib/onboarding/personalized/firstLesson/bank";
 import { NextResponse } from "next/server";
 import { getOriginFromRequest } from "@/lib/utils/origin";
 import { feedbackFor, isPronunciationWord, needsToneSupport } from "@/lib/onboarding/personalized/pronunciation";
@@ -33,7 +35,7 @@ function unavailable() {
 /**
  * POST /api/onboarding/pronunciation (multipart: audio, targetText)
  * Optional onboarding check. Returns whether extra tone support would help and
- * a coarse feedback band (plus the weakest character); no score is returned, and the audio is never stored. Any failure is
+ * a coarse feedback band (plus the weakest character); numeric scores allow same-phrase comparisons, and the audio is never stored. Any failure is
  * "unavailable" so onboarding simply continues.
  */
 export async function POST(request: Request) {
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const targetText = form.get("targetText");
     const audio = form.get("audio");
-    if (!isPronunciationWord(targetText) || !(audio instanceof File) || audio.size === 0) {
+    if ((!isPronunciationWord(targetText) && !isLessonPronunciationTarget(targetText) && !validLessonTarget(form.get("lessonToken"), targetText, process.env.DEEPSEEK_API_KEY?.trim())) || !(audio instanceof File) || audio.size === 0) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
     if (audio.size > MAX_AUDIO_BYTES) return NextResponse.json({ error: "Recording is too long" }, { status: 413 });
@@ -67,18 +69,21 @@ export async function POST(request: Request) {
       appKey,
       secretKey,
       userId: user.id,
-      mode: Array.from(targetText).length > 1 ? "sentence" : "word",
-      referenceText: targetText,
+      mode: Array.from(targetText as string).length > 1 ? "sentence" : "word",
+      referenceText: targetText as string,
       audio: new Blob([await audio.arrayBuffer()], { type: "audio/wav" }),
     });
-    const normalized = normalizeSpeechSuperResult(raw, targetText);
+    const normalized = normalizeSpeechSuperResult(raw, targetText as string);
     const scores = { overall: normalized.overall, tone: normalized.tone };
-    const { feedback, weakSyllable } = feedbackFor(scores, normalized.characters, targetText);
+    const { feedback, weakSyllable } = feedbackFor(scores, normalized.characters, targetText as string);
     return NextResponse.json({
       status: "ok",
+      overall: normalized.overall,
+      tone: normalized.tone,
       needsToneSupport: needsToneSupport(scores),
       feedback,
       weakSyllable,
+      characters: normalized.characters.map(({ hanzi, pinyin, score, targetTone }) => ({ hanzi, pinyin, score, targetTone })),
     });
   } catch {
     return unavailable();

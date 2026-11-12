@@ -75,27 +75,42 @@ export async function startPcmRecording(): Promise<PcmRecorderHandle> {
       echoCancellation: false,
     },
   });
-  const audioContext = new AudioContext();
-  const source = audioContext.createMediaStreamSource(stream);
-  const processor = audioContext.createScriptProcessor(4096, 1, 1);
-  const chunks: Float32Array[] = [];
-  processor.onaudioprocess = (event) => {
-    chunks.push(new Float32Array(event.inputBuffer.getChannelData(0)));
-  };
-  source.connect(processor);
-  processor.connect(audioContext.destination);
-  await audioContext.resume();
-  return { stream, audioContext, source, processor, chunks };
+  let audioContext: AudioContext | null = null;
+  try {
+    audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const processor = audioContext.createScriptProcessor(4096, 1, 1);
+    const chunks: Float32Array[] = [];
+    processor.onaudioprocess = (event) => {
+      chunks.push(new Float32Array(event.inputBuffer.getChannelData(0)));
+    };
+    source.connect(processor);
+    processor.connect(audioContext.destination);
+    let resumeTimeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([
+        audioContext.resume(),
+        new Promise<never>((_, reject) => { resumeTimeout = setTimeout(() => reject(new Error("Audio input could not start.")), 5000); }),
+      ]);
+    } finally { if (resumeTimeout) clearTimeout(resumeTimeout); }
+    return { stream, audioContext, source, processor, chunks };
+  } catch (error) {
+    stream.getTracks().forEach((track) => track.stop());
+    if (audioContext) void audioContext.close();
+    throw error;
+  }
 }
 
 /** Tears down a handle from startPcmRecording() and returns the encoded WAV blob. */
 export function stopPcmRecording(handle: PcmRecorderHandle): Blob {
   handle.processor.disconnect();
   handle.source.disconnect();
-  const wav = pcmToWav(handle.chunks, handle.audioContext.sampleRate);
-  void handle.audioContext.close();
-  handle.stream.getTracks().forEach((track) => track.stop());
-  return wav;
+  try {
+    return pcmToWav(handle.chunks, handle.audioContext.sampleRate);
+  } finally {
+    void handle.audioContext.close();
+    handle.stream.getTracks().forEach((track) => track.stop());
+  }
 }
 
 /** Tears down a handle without encoding — used for unmount/error cleanup. */

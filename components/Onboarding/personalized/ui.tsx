@@ -109,6 +109,7 @@ export function StepFrame({
   children,
   eyebrow,
   titleId,
+  header,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
@@ -117,6 +118,8 @@ export function StepFrame({
   children: ReactNode;
   eyebrow?: ReactNode;
   titleId?: string;
+  /** Optional shared-frame header for embedded activities. */
+  header?: ReactNode;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -124,6 +127,7 @@ export function StepFrame({
   }, []);
   return (
     <section aria-labelledby={titleId ?? "onboarding-step-title"}>
+      {header}
       <div className="flex items-center gap-2">
         {onBack ? (
           <button

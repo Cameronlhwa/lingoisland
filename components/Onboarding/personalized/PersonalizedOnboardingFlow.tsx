@@ -38,15 +38,21 @@ import {
   type AccountKind,
 } from "@/lib/onboarding/personalized/storage";
 import { CalibrationStep } from "./CalibrationStep";
+import { PronunciationStep } from "./PronunciationStep";
+import * as ControlPlanSteps from "./ControlPlanSteps";
+import { OnboardingExperiment, OnboardingPreview, useOnboardingVariant } from "./OnboardingExperiment";
+import {PREVIEW_STORAGE_KEY} from "@/lib/testing/config";
+import { PreviewPaywall } from "./PreviewPaywall";
+import { FirstLessonStep } from "./FirstLessonStep";
 import { PaywallStep, type FlowMode } from "./PaywallStep";
-import { BuildingStep, CommitmentStep, ReflectStep } from "./PlanSteps";
+import { BuildingStep as TestBuildingStep, CommitmentStep as TestCommitmentStep, ReflectStep as TestReflectStep } from "./PlanSteps";
 import { currentInsight, insightKey, templateInsight } from "@/lib/onboarding/personalized/insight";
 import { parseInsight } from "@/lib/onboarding/personalized/insightTypes";
 import { ExperienceStep, LearningPainStep, ReviewsStep, UsingPainStep } from "./PainSteps";
 import { AvailabilityStep, GoalStep, InterestsStep, LevelStep } from "./ProfileSteps";
-import { PronunciationStep } from "./PronunciationStep";
 import type { StepProps } from "./stepTypes";
 import { LiveRegion, MUTED, Shell } from "./ui";
+import { VocabRecognitionStep } from "./VocabRecognitionStep";
 
 const SAVE_DEBOUNCE_MS = 600;
 const SAVE_RETRY_MIN_MS = 2_000;
@@ -57,7 +63,14 @@ const NAV_LOCK_MS = 450;
 
 type Account = { kind: AccountKind; firstName: string | null };
 
-export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode }) {
+export default function PersonalizedOnboardingFlow({ mode, preview = false }: { mode: FlowMode; preview?:boolean }) {
+  return preview ? <OnboardingPreview><PersonalizedOnboardingContent mode={mode} preview/></OnboardingPreview> : <OnboardingExperiment><PersonalizedOnboardingContent mode={mode}/></OnboardingExperiment>;
+}
+function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMode; preview?:boolean }) {
+  const variant = useOnboardingVariant();
+  const BuildingStep = variant === "test" ? TestBuildingStep : ControlPlanSteps.BuildingStep;
+  const CommitmentStep = variant === "test" ? TestCommitmentStep : ControlPlanSteps.CommitmentStep;
+  const ReflectStep = variant === "test" ? TestReflectStep : ControlPlanSteps.ReflectStep;
   const router = useRouter();
   const searchParams = useSearchParams();
   const { captureEvent, identify } = useAnalytics();
@@ -91,15 +104,17 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
   }, [navReady, step]);
 
   const track = useCallback(
-    (event: OnboardingEventName, properties?: Record<string, unknown>) => trackOnboarding(captureEvent, event, properties),
-    [captureEvent],
+    (event: OnboardingEventName, properties?: Record<string, unknown>) => {if (!preview) trackOnboarding(captureEvent, event, { ...properties, onboarding_variant: variant, "$feature/mini-lesson-onboarding": variant });},
+    [captureEvent, variant, preview],
   );
 
   const commit = useCallback((next: OnboardingState) => {
+    if (preview && unmountedRef.current) return;
+    next = {...next,answers:{...next.answers,onboardingVariant:variant}};
     stateRef.current = next;
     setState(next);
-    writeLocalState(next);
-  }, []);
+    writeLocalState(next, preview ? PREVIEW_STORAGE_KEY : undefined);
+  }, [variant, preview]);
 
   // ---------------------------------------------------------------------------
   // Server sync: debounced, one request at a time, merges on revision conflicts.
@@ -107,6 +122,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
 
   /** Resolves false when the server could not be reached or failed, so the caller retries. */
   const saveOnce = useCallback(async (): Promise<boolean> => {
+    if (preview) return true;
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const current = stateRef.current;
       if (!current) return true;
@@ -126,7 +142,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
       commit(merged);
     }
     return true;
-  }, [commit]);
+  }, [commit, preview]);
 
   /** Saves the latest state now. Calls are queued so each caller awaits a save that includes its changes. */
   const saveNow = useCallback(
@@ -178,21 +194,22 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
     if (initRef.current) return;
     initRef.current = true;
     void (async () => {
-      const restarting = searchParams.get("restart") === "1";
+      const restarting = !preview && searchParams.get("restart") === "1";
       if (restarting) {
         clearLocalState();
         await resetRemoteProgress().catch(() => ({ status: "error" as const }));
         router.replace("/onboarding/journey");
       }
-      const local = restarting ? null : readLocalState();
-      const remote = await fetchRemoteProgress().catch(() => null);
+      const local = restarting ? null : readLocalState(preview ? PREVIEW_STORAGE_KEY : undefined);
+      const remote = preview ? null : await fetchRemoteProgress().catch(() => null);
       const nextAccount: Account = remote?.account ?? { kind: "guest", firstName: null };
       if (remote?.activatedAt) {
         router.replace("/app");
         return;
       }
-      const merged = mergeStates(local, remote?.state ?? null) ?? initialState(new Date());
-      const requested = searchParams.get("resume");
+      const existing = mergeStates(local, remote?.state ?? null) ?? initialState(new Date(), variant);
+      const merged = {...existing,answers:{...existing.answers,onboardingVariant:variant}};
+      const requested = preview ? null : searchParams.get("resume");
       const resume = isStepId(requested) && canVisit(requested, merged) ? requested : resumeStep(merged);
       const fresh = Object.keys(merged.events).length === 0;
 
@@ -204,7 +221,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
       if (fresh) track(ONBOARDING_EVENTS.started, { mode });
       if (nextAccount.kind !== "guest") scheduleSave();
     })();
-  }, [commit, mode, router, scheduleSave, searchParams, track]);
+  }, [commit, mode, router, scheduleSave, searchParams, track, preview]);
 
   const loaded = state !== null;
   useEffect(() => {
@@ -222,7 +239,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
       const last = lastCompletedStep(current);
       track(ONBOARDING_EVENTS.abandoned, { step: currentStep, last_completed_step: last });
       commit(markAbandoned(current, currentStep, new Date()));
-      if (accountRef.current.kind !== "guest") sendAbandonBeacon(currentStep, last);
+      if (!preview && accountRef.current.kind !== "guest") sendAbandonBeacon(currentStep, last);
     };
     window.addEventListener("pagehide", onHide);
     return () => window.removeEventListener("pagehide", onHide);
@@ -288,6 +305,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
   }, [goTo]);
 
   const ensureSession = useCallback(async () => {
+    if (preview) {const {data:{user}}=await createClient().auth.getUser();if(user)return true;const {error}=await createClient().auth.signInAnonymously();return !error;}
     if (accountRef.current.kind !== "guest") return true;
     try {
       const { error } = await createClient().auth.signInAnonymously();
@@ -300,7 +318,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
     } catch {
       return false;
     }
-  }, [scheduleSave]);
+  }, [scheduleSave, preview]);
 
   /**
    * Writes the "Did we get this right?" playback while the building animation
@@ -364,6 +382,8 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
     );
   }
 
+  if (step === "paywall" && preview) return <PreviewPaywall state={state}/>;
+
   if (step === "paywall") {
     return (
       <PaywallStep
@@ -411,6 +431,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
       <LiveRegion message={announcement} />
       <div
         key={step}
+        data-onboarding-variant={variant}
         data-step={step}
         data-testid="onboarding-step"
         data-nav-ready={navReady ? "true" : "false"}
@@ -419,6 +440,8 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
         {step === "goal" ? <GoalStep {...props} /> : null}
         {step === "interests" ? <InterestsStep {...props} /> : null}
         {step === "level" ? <LevelStep {...props} /> : null}
+        {step === "vocab_basic" ? <VocabRecognitionStep {...props} band="basic" /> : null}
+        {step === "vocab_advanced" ? <VocabRecognitionStep {...props} band="advanced" /> : null}
         {step === "experience" ? <ExperienceStep {...props} /> : null}
         {step === "using_pain" ? <UsingPainStep {...props} /> : null}
         {step === "learning_pain" ? <LearningPainStep {...props} /> : null}
@@ -428,6 +451,7 @@ export default function PersonalizedOnboardingFlow({ mode }: { mode: FlowMode })
         {step === "availability" ? <AvailabilityStep {...props} /> : null}
         {step === "building" ? <BuildingStep {...props} serverWork={buildPlan} /> : null}
         {step === "reflect" ? <ReflectStep {...props} /> : null}
+        {step === "first_lesson" ? <FirstLessonStep {...props} ensureSession={ensureSession} /> : null}
         {step === "commitment" ? (
           <CommitmentStep
             {...props}

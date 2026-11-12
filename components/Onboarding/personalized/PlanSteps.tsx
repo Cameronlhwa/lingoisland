@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AudioLines, Check, Clock, Flag, ListChecks, MessageCircle, MessagesSquare, Mic, RotateCcw, Sparkles, Target, TrendingUp, Volume2 } from "lucide-react";
 import { NUMBER_GRAPH_FLAG, ONBOARDING_EVENTS, showsChartNumbers } from "@/lib/onboarding/personalized/analytics";
+import { useIsOnboardingPreview } from "./OnboardingExperiment";
 import { useFeatureFlag } from "@/lib/posthog/client";
 import {
   buildStageLabels,
@@ -228,7 +229,7 @@ export function CommitmentStep({
 
   return (
     <StepFrame
-      title="Ready to begin your Mandarin journey?"
+      title="Ready to continue your Mandarin journey?"
       progress={progress}
       onBack={sealed ? null : back}
     >
@@ -236,7 +237,12 @@ export function CommitmentStep({
         className={`relative rounded-2xl px-4 py-5 text-center sm:px-6 ${sealed && !reduced ? "motion-safe:animate-[commitment-seal_0.8s_ease-out]" : ""}`}
         style={{
           border: `2px solid ${sealed ? GREEN : CARD_BORDER}`,
-          background: sealed ? "rgba(32,103,79,0.05)" : SKY_PALE,
+          background: sealed
+            ? "linear-gradient(115deg, transparent 18%, rgba(255,255,255,0.8) 32%, transparent 54%), linear-gradient(160deg, #FFFFFF 0%, #F0FAF4 45%, #E0F0E7 100%)"
+            : "linear-gradient(115deg, transparent 18%, rgba(255,255,255,0.85) 32%, rgba(255,255,255,0.25) 43%, transparent 54%), linear-gradient(160deg, #FFFFFF 0%, #F2F9FD 45%, #E2F0F8 100%)",
+          boxShadow: sealed
+            ? "inset 0 2px 0 rgba(255,255,255,0.95), 0 10px 24px rgba(32,103,79,0.13)"
+            : "inset 0 2px 0 rgba(255,255,255,0.98), 0 10px 24px rgba(79,110,131,0.16)",
         }}
         data-testid="commitment-card"
       >
@@ -255,7 +261,12 @@ export function CommitmentStep({
             <li
               key={label}
               className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[13px] font-semibold"
-              style={{ color: NAVY, border: `1px solid ${CARD_BORDER}` }}
+              style={{
+                color: NAVY,
+                border: `1px solid ${CARD_BORDER}`,
+                background: "linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 45%, #F2F8FC 100%)",
+                boxShadow: "inset 0 1px 0 #FFFFFF, 0 2px 0 rgba(168,199,218,0.3), 0 3px 7px rgba(79,110,131,0.06)",
+              }}
             >
               <Icon size={14} strokeWidth={2.3} style={{ color: GREEN }} aria-hidden />
               {label}
@@ -272,6 +283,11 @@ export function CommitmentStep({
           </span>
         ) : null}
       </div>
+      {state.answers.firstLesson.completedAt ? (
+        <p className="mt-3 text-center text-[14px]" style={{ color: MUTED }} data-testid="commitment-lesson-note">
+          Nice work on your first lesson — seal your plan to keep going.
+        </p>
+      ) : null}
 
       <label
         htmlFor="commitment-name"
@@ -395,7 +411,8 @@ export function ReflectStep({ state, next, back, progress, track, jumpTo }: Step
   const [explainOpen, setExplainOpen] = useState(false);
   const path = isBeginnerPath(state.answers) ? "beginner" : "learner";
   // Experiment: word counts on the chart only for the "test" variant.
-  const chartVariant = useFeatureFlag(NUMBER_GRAPH_FLAG);
+  const preview = useIsOnboardingPreview();
+  const chartVariant = useFeatureFlag(NUMBER_GRAPH_FLAG, !preview);
   const showNumbers = showsChartNumbers(chartVariant);
   const chartVariantLabel = typeof chartVariant === "string" ? chartVariant : "none";
   const viewedRef = useRef(false);
@@ -419,7 +436,7 @@ export function ReflectStep({ state, next, back, progress, track, jumpTo }: Step
           next();
         }}
       >
-        I’m ready to get there
+        Start my first lesson
       </PrimaryButton>
       <TextButton className="mt-2" data-testid="reflect-explain" onClick={() => setExplainOpen(true)}>
         How did we work this out?
