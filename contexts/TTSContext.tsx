@@ -22,8 +22,14 @@ export function TTSProvider({ children }: { children: ReactNode }) {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load settings on mount
+  // Load settings on mount. Skip auth pages so unsigned visits do not burn
+  // Supabase /auth/v1/user quota before Google sign-in can finish.
   useEffect(() => {
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    if (path.startsWith("/login") || path.startsWith("/signup") || path.startsWith("/auth/")) {
+      setIsLoading(false);
+      return;
+    }
     const loadSettings = async () => {
       try {
         const response = await fetch("/api/profile");

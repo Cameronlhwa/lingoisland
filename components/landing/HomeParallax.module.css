@@ -1,0 +1,33 @@
+.scene {
+  background: #fefdf8;
+  overflow: hidden;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.bubble {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.leftBubble {
+  clip-path: inset(0 50% 0 0);
+}
+
+.rightBubble {
+  clip-path: inset(0 0 0 50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer,
+  .bubble {
+    transform: none !important;
+    will-change: auto;
+  }
+}

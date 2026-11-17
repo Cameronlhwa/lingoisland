@@ -3,6 +3,9 @@
  * Keeps the original band helpers for compatibility.
  */
 
+import { guideForTone } from "@/lib/pronunciation/soundGuides";
+import { asTone, type ToneContext } from "@/lib/pronunciation/tones";
+
 export type ScoreBand = "strong" | "close" | "rough";
 
 export function bandForScore(score: number | null): ScoreBand | null {
@@ -13,7 +16,7 @@ export function bandForScore(score: number | null): ScoreBand | null {
 const ENCOURAGEMENT: Record<ScoreBand, string[]> = {
   strong: [
     "Nice — that landed clearly.",
-    "Great match. Your tones stayed steady.",
+    "Nice work — keep practicing with the model.",
     "That sounded natural.",
   ],
   close: [
@@ -33,30 +36,16 @@ export function pickEncouragement(band: ScoreBand, seed: number): string {
   return lines[seed % lines.length];
 }
 
-const TONE_SHAPE_TIPS: Record<1 | 2 | 3 | 4, string> = {
-  1: "Keep this tone flat and steady the whole way through — no rise or fall.",
-  2: "Let this tone rise clearly from low to high, like you're asking \"huh?\"",
-  3: "Let this tone dip low first, then come back up — if it stays high, it can sound like a 2nd tone.",
-  4: "Make this tone fall sharply and quickly from high to low, like a firm command.",
-};
-
-export function toneShapeTip(targetTone: number | null): string | null {
-  if (targetTone === 1 || targetTone === 2 || targetTone === 3 || targetTone === 4) {
-    return TONE_SHAPE_TIPS[targetTone];
-  }
-  return null;
+export function toneShapeTip(targetTone: number | null, context: ToneContext = {}): string | null {
+  return guideForTone(targetTone, context)?.shortTip ?? null;
 }
 
 export function toneName(tone: number | null | undefined): string {
-  if (tone === 1) return "1st tone";
-  if (tone === 2) return "2nd tone";
-  if (tone === 3) return "3rd tone";
-  if (tone === 4) return "4th tone";
-  return "this tone";
+  return guideForTone(tone)?.title ?? "this tone";
 }
 
 export function toneGlyph(tone: number | null | undefined) {
-  return tone === 1 ? "→" : tone === 2 ? "↗" : tone === 3 ? "∨" : tone === 4 ? "↘" : "—";
+  return tone === 1 ? "→" : tone === 2 ? "↗" : tone === 3 ? "∨" : tone === 4 ? "↘" : asTone(tone) === 5 ? "·" : "—";
 }
 
 export function feedbackHeadline(band: ScoreBand | null): string {

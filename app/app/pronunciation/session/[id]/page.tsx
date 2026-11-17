@@ -12,26 +12,21 @@ import RecordButton, {
 } from "@/components/app/Pronunciation/RecordButton";
 import PronunciationFeedback from "@/components/app/Pronunciation/PronunciationFeedback";
 import type { DrillItem } from "@/lib/deepseek/generate-pronunciation-drill";
-import { withSurfaceDrillPinyin } from "@/lib/pronunciation/surfacePinyin";
+import { contextualToneTarget, withSurfaceDrillPinyin } from "@/lib/pronunciation/surfacePinyin";
 import { toneGlyph, toneShapeTip } from "@/lib/pronunciation/encouragement";
 import { primaryGuide } from "@/lib/pronunciation/soundGuides";
 import { coerceIsolateTarget, isolateForForced, type IsolateTarget } from "@/lib/pronunciation/isolateTarget";
 import AppPageLoading from "@/components/app/AppPageLoading";
+import { pronunciationSessionReturnPath } from "@/lib/pronunciation/navigation";
+import { withItemIds, resumeSession, validCheckpoint, type SessionPhase, type SessionCheckpoint } from "@/lib/pronunciation/sessionProgress";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
 
-type Phase =
-  | "sound-tip"
-  | "word-before"
-  | "word-feedback"
-  | "sentence-before"
-  | "sentence-feedback"
-  | "isolate-before"
-  | "isolate-feedback"
-  | "complete";
+type Phase = SessionPhase;
 
 type AttemptRow = {
   unit_type: string;
+  item_id?: string|null;
   target_text: string;
   overall_score: number | null;
 };
@@ -47,20 +42,6 @@ function stageLabel(phase: Phase, t: (key: string) => string): string {
   return "";
 }
 
-function resumeFromAttempts(items: DrillItem[], attempts: AttemptRow[]) {
-  const sentenceDone = new Set(
-    attempts.filter((a) => a.unit_type === "sentence").map((a) => a.target_text),
-  );
-  let idx = 0;
-  while (idx < items.length && sentenceDone.has(items[idx].sentenceHanzi)) idx += 1;
-  if (idx >= items.length) {
-    return { itemIndex: Math.max(0, items.length - 1), phase: "complete" as Phase, done: true };
-  }
-  const item = items[idx];
-  const wordDone = attempts.some((a) => a.unit_type === "word" && a.target_text === item.wordHanzi);
-  if (!wordDone) return { itemIndex: idx, phase: startingPhaseFor(item), done: false };
-  return { itemIndex: idx, phase: "sentence-before" as Phase, done: false };
-}
 
 export default function PronunciationSessionPage() {
   const params = useParams();
@@ -72,7 +53,6 @@ export default function PronunciationSessionPage() {
   const sessionId = params?.id as string;
   const journeyId = searchParams.get("journeyId");
   const journeyNodeId = searchParams.get("journeyNodeId");
-  const appBase = pathname.startsWith("/hsk/app") ? "/hsk/app" : "/app";
 
   const [loading, setLoading] = useState(true);
   const [source, setSource] = useState<string | null>(null);
@@ -84,6 +64,14 @@ export default function PronunciationSessionPage() {
   const [recordError, setRecordError] = useState<RecordError | null>(null);
   const [retryBlob, setRetryBlob] = useState<Blob | null>(null);
   const [finishing, setFinishing] = useState(false);
+  const [needsCompletion,setNeedsCompletion]=useState(false);
+  const [finishError,setFinishError]=useState<string|null>(null);
+  const [checkpointError,setCheckpointError]=useState<string|null>(null);
+  const [checkpointSaving,setCheckpointSaving]=useState(false);
+  const revisionRef=useRef(0);
+  const saveQueue=useRef<Promise<void>>(Promise.resolve());
+  const saveFailed=useRef(false);
+  const latestCheckpoint=useRef<SessionCheckpoint|null>(null);
   const [sessionSummary, setSessionSummary] = useState<{
     avgScore: number | null;
     sentenceCount: number;
@@ -97,7 +85,6 @@ export default function PronunciationSessionPage() {
 
   const recordedUrl = useRef<string | null>(null);
   const [recordedUrlState, setRecordedUrlState] = useState<string | null>(null);
-  const scoresRef = useRef<number[]>([]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -110,27 +97,20 @@ export default function PronunciationSessionPage() {
         return;
       }
       const rawItems = (data.session?.sentences ?? []) as DrillItem[];
-      const resolvedItems = rawItems.map(withSurfaceDrillPinyin);
+      const resolvedItems = withItemIds(rawItems.map(withSurfaceDrillPinyin));
       const attempts = (data.attempts ?? []) as AttemptRow[];
-      const resume = resumeFromAttempts(resolvedItems, attempts);
+      const checkpoint=validCheckpoint(data.session?.progress,resolvedItems)?data.session.progress:null;
+      const resume = resumeSession(resolvedItems, attempts, checkpoint);
+      revisionRef.current=data.session?.progress_revision??0;
       setItems(resolvedItems);
       setItemIndex(resume.itemIndex);
       setPhase(resume.phase);
       setSource(typeof data.session?.source === "string" ? data.session.source : null);
-      scoresRef.current = attempts
-        .map((a) => a.overall_score)
-        .filter((s): s is number => typeof s === "number");
-      if (resume.done) {
-        const avg =
-          scoresRef.current.length > 0
-            ? scoresRef.current.reduce((a, b) => a + b, 0) / scoresRef.current.length
-            : null;
-        setSessionSummary({
-          avgScore: avg,
-          sentenceCount: resolvedItems.length,
-          topWeak: null,
-        });
-      }
+      if(checkpoint){setWordResult(checkpoint.wordResult);setSentenceResult(checkpoint.sentenceResult);setIsolateSyllable(checkpoint.isolateSyllable);setIsolateResult(checkpoint.isolateResult);}
+      if(data.session?.status==="completed"){
+        if(data.session.summary){setSessionSummary(data.session.summary);setPhase("complete");}
+        else setNeedsCompletion(true);
+      }else if(resume.done)setNeedsCompletion(true);
       setLoading(false);
     })();
   }, [sessionId]);
@@ -150,11 +130,28 @@ export default function PronunciationSessionPage() {
     setRecordError(err);
   };
 
-  const trackScore = (result: ScoreResult) => {
-    if (typeof result.overallScore === "number") scoresRef.current.push(result.overallScore);
-  };
+  function saveCheckpoint(snapshot:SessionCheckpoint) {
+    latestCheckpoint.current=snapshot;
+    saveQueue.current=saveQueue.current.then(async()=>{
+      if(saveFailed.current)return;
+      setCheckpointSaving(true);
+      try{
+        const response=await fetch(`/api/pronunciation/session/${sessionId}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({revision:revisionRef.current,checkpoint:snapshot})});
+        const data=await response.json();if(!response.ok)throw new Error(data.error??"Could not save practice.");revisionRef.current=data.revision;setCheckpointError(null);
+      }catch(cause){saveFailed.current=true;setCheckpointError(cause instanceof Error?cause.message:"Could not save practice. Please retry.");}
+      finally{setCheckpointSaving(false);}
+    });
+  }
+  useEffect(()=>{
+    if(loading||phase==="complete"||needsCompletion||!items[itemIndex]?.itemId)return;
+    saveCheckpoint({itemId:items[itemIndex].itemId!,phase,wordResult,sentenceResult,isolateSyllable,isolateResult});
+    // Saving is serialized; a failed save stops later writes until explicit retry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[loading,phase,itemIndex,items,wordResult,sentenceResult,isolateSyllable,isolateResult,needsCompletion]);
 
   const current = items[itemIndex];
+  const focusText = current?.focusSyllable && current.wordHanzi.includes(current.focusSyllable) ? current.wordHanzi : current?.sentenceHanzi ?? "";
+  const focusModel = current?.focusSyllable ? contextualToneTarget(focusText, Array.from(focusText).indexOf(current.focusSyllable)) : null;
   const isolateTarget = isolateSyllable
     ? sentenceResult
       ? isolateForForced(sentenceResult.characters, isolateSyllable)
@@ -169,31 +166,29 @@ export default function PronunciationSessionPage() {
   }, [items.length, itemIndex, phase]);
 
   const finishSession = async () => {
+    if(finishing)return;
     setFinishing(true);
-    const scores = scoresRef.current;
-    const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
-    const lastWeak =
-      sentenceResult?.weakSyllables[0]?.syllable ??
-      wordResult?.weakSyllables[0]?.syllable ??
-      null;
-    setSessionSummary({
-      avgScore: avg,
-      sentenceCount: items.length,
-      topWeak: lastWeak,
-    });
-    setPhase("complete");
-    await fetch(`/api/pronunciation/session/${sessionId}/complete`, { method: "POST" }).catch(() => {});
-    if (journeyId && journeyNodeId) {
-      await fetch(`/api/journey/${journeyId}/complete`, {
+    setFinishError(null);
+    try{
+      await saveQueue.current;
+      if(saveFailed.current)throw new Error("Save your practice progress before finishing.");
+      const response=await fetch(`/api/pronunciation/session/${sessionId}/complete`, { method: "POST",headers:{"Content-Type":"application/json"} });
+      const data=await response.json();if(!response.ok)throw new Error(data.error??"Could not finish practice.");
+      if (journeyId && journeyNodeId) {
+        const journeyResponse=await fetch(`/api/journey/${journeyId}/complete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ journeyIslandId: journeyNodeId }),
-      }).catch(() => {});
-    }
-    setFinishing(false);
+        });
+        if(!journeyResponse.ok)throw new Error("Practice is saved, but the Journey checkpoint could not update. Retry finishing to reconnect it.");
+      }
+      setSessionSummary(data.summary);setPhase("complete");setNeedsCompletion(false);
+    }catch(cause){setFinishError(cause instanceof Error?cause.message:"Could not finish practice. Please retry.");}
+    finally{setFinishing(false);}
   };
 
   const goToNextItem = async () => {
+    if(itemIndex+1>=items.length){await finishSession();return;}
     setWordResult(null);
     setSentenceResult(null);
     setIsolateResult(null);
@@ -202,14 +197,11 @@ export default function PronunciationSessionPage() {
     if (itemIndex + 1 < items.length) {
       setItemIndex((i) => i + 1);
       setPhase(startingPhaseFor(items[itemIndex + 1]));
-    } else {
-      await finishSession();
     }
   };
 
   const leave = () => {
-    if (journeyId) router.push(`${appBase}/journey/${journeyId}`);
-    else router.push("/app/pronunciation");
+    router.push(pronunciationSessionReturnPath(pathname, journeyId));
   };
 
   if (loading) {
@@ -222,14 +214,16 @@ export default function PronunciationSessionPage() {
         <p className="text-[var(--lingo-text-muted)]">{loadError ?? convertText(t("This practice session is empty."))}</p>
         <button
           type="button"
-          onClick={() => router.push("/app/pronunciation")}
+          onClick={leave}
           className="rounded-xl bg-[var(--lingo-navy)] px-5 py-2.5 text-sm font-bold text-white"
         >
-          {convertText(t("Back to Pronunciation"))}
+          {convertText(t(journeyId ? "Back to Journey" : "Back to practice"))}
         </button>
       </div>
     );
   }
+
+  if(needsCompletion)return <div className="mx-auto max-w-xl px-5 py-12 text-center"><h1 className="lingo-display text-2xl font-bold text-[var(--lingo-navy)]">Your recordings are saved</h1><p className="mt-3 text-sm">Finish saving your summary and any Journey checkpoint.</p>{finishError&&<p role="alert" className="mt-4 text-red-700">{finishError}</p>}<button disabled={finishing} onClick={()=>void finishSession()} className="mt-6 rounded-full bg-[var(--lingo-teal)] px-5 py-3 font-bold text-white">{finishing?"Saving…":"Finish practice"}</button></div>;
 
   if (phase === "complete" && sessionSummary) {
     return (
@@ -268,7 +262,7 @@ export default function PronunciationSessionPage() {
           {!journeyId && (
             <button
               type="button"
-              onClick={() => router.push("/app/pronunciation")}
+              onClick={() => router.push("/app/pronunciation/practice")}
               className="w-full rounded-2xl border border-[var(--lingo-accent-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--lingo-navy)]"
             >
               {convertText(t("Practice weak sounds"))}
@@ -337,7 +331,10 @@ export default function PronunciationSessionPage() {
   );
 
   return (
-    <div className="mx-auto max-w-[760px] px-4 py-8 md:px-6">
+    <div className="mx-auto w-full max-w-[760px] px-4 py-4 md:px-6">
+      {checkpointSaving&&<p role="status" className="mb-3 text-xs text-[var(--lingo-text-muted)]">Saving your place…</p>}
+      {checkpointError&&<div role="alert" className="mb-4 rounded-2xl bg-red-50 p-4 text-sm text-red-700"><p>{checkpointError}</p><button className="mt-2 underline" onClick={()=>{saveFailed.current=false;if(latestCheckpoint.current)saveCheckpoint(latestCheckpoint.current);}}>Retry saving progress</button><button className="ml-4 underline" onClick={()=>window.location.reload()}>Reload saved progress</button></div>}
+      {finishError&&<div role="alert" className="mb-4 rounded-2xl bg-red-50 p-4 text-sm text-red-700"><p>{finishError}</p><button disabled={finishing} className="mt-2 underline" onClick={()=>void finishSession()}>{finishing?"Saving…":"Retry finishing practice"}</button></div>}
       {source === "weak_sounds_focus" && (
         <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700">
           {convertText(t("Focus: weak sounds"))}
@@ -360,12 +357,12 @@ export default function PronunciationSessionPage() {
       </div>
 
       <div
-        className="rounded-[32px] border border-[var(--lingo-accent-border)] bg-white p-6 sm:p-9"
+        className="rounded-[32px] border border-[var(--lingo-accent-border)] bg-white p-4 sm:p-6"
         style={{ boxShadow: "var(--lingo-shadow-card)" }}
       >
         {phase === "sound-tip" && current.focusSyllable && (
           <>
-            <div className="mb-4 flex justify-center">
+            <div className="mb-3 hidden justify-center sm:flex">
               <div className="relative h-24 w-24 overflow-hidden rounded-2xl">
                 <Image src="/pronunciation/huahua-coaching.png" alt="" fill className="object-cover" />
               </div>
@@ -373,24 +370,24 @@ export default function PronunciationSessionPage() {
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">{convertText(t("Listen first"))}</p>
             <div className="mt-4 flex items-center justify-center gap-3">
               <span className="lingo-display text-5xl font-bold text-[var(--lingo-navy)]">{convertText(current.focusSyllable)}</span>
-              <SpeakerButton text={current.focusSyllable} type="word" size="md" />
+              <SpeakerButton text={focusModel?.practiceText ?? current.wordHanzi} type="word" size="md" />
             </div>
             <p className="mt-2 text-center text-sm text-[var(--lingo-text-muted)]">
-              {current.focusPinyin}
-              {current.focusTone != null && <span className="ml-1">{toneGlyph(current.focusTone)}</span>}
+              {focusModel?.pinyin ?? current.focusPinyin}
+              {(focusModel?.targetTone ?? current.focusTone) != null && <span className="ml-1">{toneGlyph(focusModel?.targetTone ?? current.focusTone)}</span>}
             </p>
-            {toneShapeTip(current.focusTone ?? null) && (
+            {toneShapeTip(focusModel?.targetTone ?? current.focusTone ?? null, focusModel ?? {}) && (
               <div className="mt-5 flex items-start gap-2.5 rounded-2xl p-4" style={{ background: "var(--lingo-sky-pale)" }}>
                 <Lightbulb size={16} className="mt-0.5 flex-shrink-0 text-[var(--lingo-blue)]" />
                 <p className="text-sm leading-relaxed text-[var(--lingo-navy)]">
-                  {toneShapeTip(current.focusTone ?? null)}
+                  {toneShapeTip(focusModel?.targetTone ?? current.focusTone ?? null, focusModel ?? {})}
                 </p>
               </div>
             )}
             <button
               type="button"
               onClick={() => setPhase("word-before")}
-              className="mt-8 w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white"
+              className="mt-4 w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white"
               style={{ background: "var(--lingo-accent-gradient)" }}
             >
               {convertText(t("Let's practice →"))}
@@ -402,7 +399,7 @@ export default function PronunciationSessionPage() {
           <>
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">{convertText(t("Say the word"))}</p>
             <div className="mt-5 flex items-center justify-center gap-3">
-              <span className="lingo-display text-5xl font-bold text-[var(--lingo-navy)] sm:text-6xl">
+              <span className="lingo-display break-words text-4xl font-bold text-[var(--lingo-navy)] sm:text-5xl">
                 {convertText(current.wordHanzi)}
               </span>
               <SpeakerWithSpeed text={current.wordHanzi} type="word" size="md" />
@@ -421,16 +418,16 @@ export default function PronunciationSessionPage() {
               {hidden ? <Eye size={14} /> : <EyeOff size={14} />}
               {convertText(t(hidden ? "Show pinyin & translation" : "Hide pinyin & translation"))}
             </button>
-            <div className="mt-8 flex justify-center">
+            <div className="mt-4 flex justify-center">
               {!recordError && (
-                <RecordButton
+                <RecordButton compact
                   sessionId={sessionId}
+                  itemId={current.itemId}
                   unitType="word"
                   targetText={current.wordHanzi}
                   targetPinyin={current.wordPinyin}
                   onRecorded={handleRecorded}
                   onScored={(result) => {
-                    trackScore(result);
                     setWordResult(result);
                     setPhase("word-feedback");
                   }}
@@ -476,11 +473,12 @@ export default function PronunciationSessionPage() {
                 return (
                   <SpeakerButton
                     key={index}
-                    text={char}
-                    type="word"
+                    text={current.sentenceHanzi}
+                    type="sentence"
                     size="sm"
                     className="!h-auto !w-auto !rounded-lg !border-transparent !bg-transparent !px-0.5 !py-0.5 !text-3xl !font-semibold !text-[var(--lingo-navy)] hover:!bg-[var(--lingo-sky-pale)] hover:!border-transparent"
                     label={convertText(char)}
+                    ariaLabel={`${convertText(char)} — ${convertText(t("Hear sentence"))}`}
                   />
                 );
               })}
@@ -502,16 +500,16 @@ export default function PronunciationSessionPage() {
                 {convertText(t(hidden ? "Show" : "Hide"))}
               </button>
             </div>
-            <div className="mt-8 flex justify-center">
+            <div className="mt-4 flex justify-center">
               {!recordError && (
-                <RecordButton
+                <RecordButton compact
                   sessionId={sessionId}
+                  itemId={current.itemId}
                   unitType="sentence"
                   targetText={current.sentenceHanzi}
                   targetPinyin={current.sentencePinyin}
                   onRecorded={handleRecorded}
                   onScored={(result) => {
-                    trackScore(result);
                     setSentenceResult(result);
                     setPhase("sentence-feedback");
                   }}
@@ -554,7 +552,7 @@ export default function PronunciationSessionPage() {
 
         {phase === "isolate-before" && isolateTarget && (
           <>
-            <div className="mb-2 flex justify-center">
+            <div className="mb-2 hidden justify-center sm:flex">
               <div className="relative h-20 w-20 overflow-hidden rounded-2xl">
                 <Image src="/pronunciation/huahua-coaching.png" alt="" fill className="object-cover" />
               </div>
@@ -578,16 +576,17 @@ export default function PronunciationSessionPage() {
               isolateTarget.citationPinyin &&
               isolateTarget.pinyin !== isolateTarget.citationPinyin && (
                 <p className="mt-2 text-center text-xs text-[var(--lingo-text-muted)]">
-                  {isolateTarget.hanzi} is spoken as {isolateTarget.pinyin} here — not{" "}
-                  {isolateTarget.citationPinyin}.
+                  {isolateTarget.hanzi} is written {isolateTarget.citationPinyin} and spoken {isolateTarget.pinyin} here.
                 </p>
               )}
             {(() => {
               const guide = primaryGuide({
                 tone: isolateTarget.targetTone,
                 pinyin: isolateTarget.pinyin,
+                previousTone: isolateTarget.previousTone,
+                connectedSpeech: isolateTarget.connectedSpeech,
               });
-              const tip = toneShapeTip(isolateTarget.targetTone);
+              const tip = toneShapeTip(isolateTarget.targetTone, isolateTarget);
               if (!guide && !tip) return null;
               return (
                 <ol className="mx-auto mt-5 max-w-md list-decimal space-y-2 rounded-2xl p-4 pl-8 text-sm text-[var(--lingo-text)]" style={{ background: "var(--lingo-sky-pale)" }}>
@@ -597,16 +596,16 @@ export default function PronunciationSessionPage() {
                 </ol>
               );
             })()}
-            <div className="mt-8 flex justify-center">
+            <div className="mt-4 flex justify-center">
               {!recordError && (
-                <RecordButton
+                <RecordButton compact
                   sessionId={sessionId}
+                  itemId={current.itemId}
                   unitType="syllable_drill"
                   targetText={isolateTarget.practiceText}
                   targetPinyin={isolateTarget.practicePinyin ?? isolateTarget.pinyin ?? undefined}
                   onRecorded={handleRecorded}
                   onScored={(result) => {
-                    trackScore(result);
                     setIsolateResult(result);
                     setPhase("isolate-feedback");
                   }}

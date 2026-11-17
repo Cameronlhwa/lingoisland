@@ -95,6 +95,7 @@ export default function Home() {
       <Nav tone="home" ctaLabel="Build my plan" />
       <HSKHero
         backgroundImageUrl="/home/hero-cove.png"
+        parallax
         showDecorations={false}
         priorityImage
         underNav
@@ -105,7 +106,6 @@ export default function Home() {
             <BrushUnderline variant="brush" color="var(--lingo-accent, #EC7D28)">
               actually need
             </BrushUnderline>
-            .
           </span>
         }
         subtitle="Personalized lessons for your work, studies, and real life."

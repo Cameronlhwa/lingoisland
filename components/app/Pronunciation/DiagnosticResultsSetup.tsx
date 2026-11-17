@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { DAILY_MINUTES_OPTIONS, DEFAULT_DAILY_MINUTES } from "@/lib/pronunciation/sessionSizing";
 
 type WorthTag = { tag: string; label: string; score: number };
@@ -23,7 +24,7 @@ function ScoreRing({ score }: { score: number | null }) {
   const offset = circumference - (drawn ? value / 100 : 0) * circumference;
 
   return (
-    <div className="relative mx-auto h-[108px] w-[108px]">
+    <div className="relative mx-auto shrink-0 h-[72px] w-[72px] sm:h-[88px] sm:w-[88px]">
       <svg viewBox={`0 0 ${size} ${size}`} className="-rotate-90" aria-hidden>
         <circle
           cx={size / 2}
@@ -71,7 +72,7 @@ function StepCard({
   return (
     <div className="relative flex items-stretch gap-3 md:gap-4">
       <div
-        className="relative z-10 mt-6 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+        className="relative z-10 mt-4 hidden h-10 w-10 sm:flex shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
         style={{
           background: "var(--lingo-accent-gradient)",
           boxShadow: "0 6px 14px rgba(33, 118, 174, 0.28)",
@@ -80,16 +81,16 @@ function StepCard({
         {step}
       </div>
       <article
-        className="relative z-0 min-h-[155px] flex-1 overflow-hidden rounded-[20px] border bg-white"
+        className="relative z-0 min-w-0 flex-1 overflow-hidden rounded-[20px] border bg-white"
         style={{
           borderColor: "rgba(89, 198, 222, 0.38)",
           boxShadow: "0 8px 22px rgba(33, 118, 174, 0.07)",
         }}
       >
-        <div className="grid grid-cols-1 items-center gap-4 p-5 md:grid-cols-[minmax(0,280px)_minmax(0,1fr)] md:gap-4 md:py-5 md:pl-5 md:pr-6">
+        <div className="grid grid-cols-1 items-center gap-2 p-3 md:grid-cols-[minmax(0,280px)_minmax(0,1fr)] md:gap-4 md:py-5 md:pl-5 md:pr-6">
           <div className="relative z-10 flex min-w-0 flex-col justify-center">
-            <h2 className="text-[17px] font-bold leading-snug text-[var(--lingo-navy)]">{title}</h2>
-            <p className="mt-1 text-[13px] leading-relaxed text-[var(--lingo-text-muted)]">{copy}</p>
+            <h2 className="text-base font-bold leading-snug text-[var(--lingo-navy)]">{title}</h2>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--lingo-text-muted)]">{copy}</p>
             {extra ? (
               <p className="mt-0.5 text-[12px] text-[var(--lingo-text-muted)]">{extra}</p>
             ) : null}
@@ -98,7 +99,7 @@ function StepCard({
               alt=""
               width={96}
               height={96}
-              className="pointer-events-none relative z-0 mt-3 h-[88px] w-[88px] rounded-2xl object-contain md:h-[96px] md:w-[96px]"
+              className="pointer-events-none relative z-0 mt-3 hidden h-[88px] md:block w-[88px] rounded-2xl object-contain md:h-[96px] md:w-[96px]"
             />
           </div>
           <div className="relative z-10 flex w-full min-w-0 max-w-[460px] flex-col justify-center justify-self-start">
@@ -135,30 +136,22 @@ export default function DiagnosticResultsSetup({
       router.push(`/app/pronunciation/session/${data.sessionId}`);
       return;
     }
-    router.push("/app/pronunciation");
+    router.push("/app/pronunciation/practice");
   };
 
   return (
-    <div className="mx-auto w-full max-w-[920px] px-4 py-10 md:px-6 md:py-12">
-      <div className="text-center">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">
-          Your profile
-        </p>
-        <h1 className="lingo-display mt-2 text-[28px] font-bold text-[var(--lingo-navy)] md:text-[32px]">
-          Your pronunciation profile
-        </h1>
-        <div className="mt-5">
-          <ScoreRing score={overallScore} />
+    <div className="mx-auto w-full max-w-[920px] px-4 py-4 md:px-6 md:py-5">
+      <header className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">Your profile</p>
+          <h1 className="lingo-display mt-1 text-xl font-bold text-[var(--lingo-navy)] sm:text-2xl">Your pronunciation profile</h1>
+          <p className="mt-2 text-sm font-semibold text-[var(--lingo-navy)]">You already have a solid base.</p>
+          <p className="mt-1 text-xs text-[var(--lingo-text-muted)]">We’ll personalize practice around these sounds.</p>
         </div>
-        <p className="mt-3 text-sm font-semibold text-[var(--lingo-navy)]">
-          You already have a solid base.
-        </p>
-        <p className="mt-1 text-sm text-[var(--lingo-text-muted)]">
-          We&apos;ll personalize practice around these sounds.
-        </p>
-      </div>
+        <ScoreRing score={overallScore}/>
+      </header>
 
-      <div className="relative mt-8">
+      <div className="relative mt-4">
         <div
           className="pointer-events-none absolute bottom-10 left-[19px] top-10 border-l-2 border-dotted"
           style={{ borderColor: "rgba(89, 198, 222, 0.55)" }}
@@ -176,13 +169,13 @@ export default function DiagnosticResultsSetup({
                 Looking solid overall — daily practice will keep you sharp.
               </p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="grid grid-cols-3 gap-2">
                 {weaknesses.map((tag) => (
                   <li
                     key={tag.tag}
-                    className="flex h-11 items-center justify-between rounded-xl bg-[var(--lingo-sky-pale)] px-3.5"
+                    className="flex min-h-11 flex-col items-center justify-center rounded-xl py-2 bg-[var(--lingo-sky-pale)] px-3.5"
                   >
-                    <span className="truncate pr-3 text-sm font-bold text-[var(--lingo-navy)]">
+                    <span className="text-center text-xs font-bold text-[var(--lingo-navy)]">
                       {tag.label}
                     </span>
                     <span className="text-sm font-semibold tabular-nums text-[var(--lingo-text-muted)]">
@@ -201,7 +194,7 @@ export default function DiagnosticResultsSetup({
             extra="You can always change this later."
             imageSrc="/pronunciation/pronunciation-step-clock.png"
           >
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-4 gap-2">
               {DAILY_MINUTES_OPTIONS.map((option) => {
                 const selected = minutes === option;
                 return (
@@ -222,13 +215,8 @@ export default function DiagnosticResultsSetup({
             </div>
           </StepCard>
 
-          <StepCard
-            step={3}
-            title="Start personalized practice"
-            copy="Let's turn your insights into real improvement!"
-            imageSrc="/pronunciation/pronunciation-step-sprout.png"
-          >
-            <div className="w-full max-w-[400px] md:ml-10">
+          <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] z-20 rounded-2xl border border-[var(--lingo-border)] bg-white p-3 md:bottom-4">
+            <div className="w-full">
               <button
                 type="button"
                 disabled={saving}
@@ -238,11 +226,9 @@ export default function DiagnosticResultsSetup({
               >
                 {saving ? "Starting…" : "Build my personalized practice →"}
               </button>
-              <p className="mt-2 text-center text-[12px] text-[var(--lingo-text-muted)]">
-                You can always adjust your goals in settings.
-              </p>
+              <Link href="/app/pronunciation/learn" className="mt-1 flex min-h-11 items-center justify-center text-center text-sm font-semibold text-[var(--lingo-teal)] underline">Learn the tone concepts in Tone Mastery</Link>
             </div>
-          </StepCard>
+          </div>
         </div>
       </div>
     </div>

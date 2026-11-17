@@ -7,6 +7,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { WeakSoundRow } from "@/lib/pronunciation/weakSoundTypes";
 import { primaryGuide, weakSoundLabel } from "@/lib/pronunciation/soundGuides";
+import { contextualToneTargetForSound } from "@/lib/pronunciation/surfacePinyin";
+import ToneContour from "@/components/app/Pronunciation/ToneContour";
+import {lessonForTone} from "@/lib/pronunciation/course/progress";
 import SpeakerButton from "@/components/app/SpeakerButton";
 import AppPageLoading from "@/components/app/AppPageLoading";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -44,7 +47,9 @@ export default function DeepDivePage() {
     void load();
   }, [load]);
 
-  const guide = primaryGuide({ tone: row?.target_tone, pinyin: row?.pinyin });
+  const example = row?.example_sentence ?? "";
+  const context = contextualToneTargetForSound(example, row?.syllable ?? "", row?.target_tone ?? null);
+  const guide = primaryGuide({ tone: context?.targetTone ?? row?.target_tone, pinyin: row?.pinyin, previousTone: context?.previousTone, connectedSpeech: context?.connectedSpeech });
 
   const startPractice = async () => {
     setStarting(true);
@@ -82,7 +87,7 @@ export default function DeepDivePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 md:px-6">
+    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:px-6">
       <button
         type="button"
         onClick={() => router.push(from)}
@@ -91,8 +96,8 @@ export default function DeepDivePage() {
         <ArrowLeft size={13} /> {convertText(t("Back"))}
       </button>
 
-      <div className="mb-6 flex items-start gap-4">
-        <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="relative hidden h-20 w-20 flex-shrink-0 sm:block overflow-hidden rounded-2xl">
           <Image src="/pronunciation/huahua-coaching.png" alt="" fill className="object-cover" />
         </div>
         <div>
@@ -102,8 +107,10 @@ export default function DeepDivePage() {
           </h1>
           <div className="mt-2 flex items-center gap-2">
             <span className="lingo-display text-2xl font-bold text-[var(--lingo-navy)]">{convertText(row.syllable)}</span>
-            <SpeakerButton text={row.syllable} type="word" size="sm" />
+            {(context || row.target_tone !== 5) && <SpeakerButton text={context?.practiceText ?? row.syllable} type={context ? "sentence" : "word"} size="sm" ariaLabel={context ? "Hear this sound in its sentence" : "Hear isolated pronunciation"} />}
           </div>
+          {context && <p className="mt-2 text-xs text-[var(--lingo-text-muted)]">In this sentence: {context.pinyin}. Listen to the whole sentence to hear its tone in context.</p>}
+          <Link href={`/app/pronunciation/learn/${lessonForTone(context?.targetTone??row.target_tone,context?context.targetTone!==context.citationTone:false)}?returnTo=${encodeURIComponent(`/app/pronunciation/deep-dive/${row.id}?from=${encodeURIComponent(from)}`)}`} className="mt-3 inline-block text-sm font-semibold text-[var(--lingo-teal)] underline">Review this tone lesson</Link>
         </div>
       </div>
 
@@ -119,7 +126,7 @@ export default function DeepDivePage() {
             key={id}
             type="button"
             onClick={() => setTab(id)}
-            className={`rounded-full px-4 py-1.5 text-xs font-bold ${
+            className={`min-h-11 rounded-full px-4 py-2 text-xs font-bold ${
               tab === id ? "bg-white text-[var(--lingo-navy)] shadow-sm" : "text-[var(--lingo-text-muted)]"
             }`}
           >
@@ -129,7 +136,7 @@ export default function DeepDivePage() {
       </div>
 
       <div
-        className="rounded-[28px] border bg-white p-6"
+        className="rounded-[24px] border bg-white p-4 sm:p-6"
         style={{ borderColor: "var(--lingo-border)", boxShadow: "var(--lingo-shadow-card)" }}
       >
         {tab === "guide" && (
@@ -137,14 +144,14 @@ export default function DeepDivePage() {
             <h2 className="text-sm font-bold text-[var(--lingo-navy)]">{guide?.title ?? convertText(t("Mouth position"))}</h2>
             <p className="mt-2 text-sm text-[var(--lingo-text)]">{guide?.shortTip ?? "Focus on a clear tone shape."}</p>
             <div className="mt-5 flex justify-center">
-              <svg viewBox="0 0 200 120" className="h-28 w-48 text-[var(--lingo-blue)]">
+              {guide?.family.startsWith("tone") || guide?.family === "neutral" ? <ToneContour tone={context?.targetTone ?? row.target_tone} previousTone={context?.previousTone} connectedSpeech={context?.connectedSpeech} /> : <svg viewBox="0 0 200 120" className="h-28 w-48 text-[var(--lingo-blue)]">
                 <ellipse cx="100" cy="70" rx="70" ry="40" fill="var(--lingo-sky-pale)" stroke="currentColor" strokeWidth="2" />
                 <path d="M40 70 Q100 30 160 70" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 <circle cx="100" cy="55" r="8" fill="currentColor" opacity="0.35" />
                 <text x="100" y="105" textAnchor="middle" fontSize="10" fill="#66869a">
                   Tongue / pitch path
                 </text>
-              </svg>
+              </svg>}
             </div>
             <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-[var(--lingo-text)]">
               {(guide?.steps ?? ["Listen to the model", "Imitate slowly", "Put it back in a word"]).map((step) => (

@@ -149,28 +149,60 @@ export async function GET(request: NextRequest) {
 
   // Handle OAuth code exchange (Google login / linkIdentity)
   if (code) {
-    // Exchange code for session
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const hasCodeVerifier = request.cookies.getAll().some(cookie => cookie.name.includes('code-verifier') && cookie.value)
+
+    // Token endpoint is IP-rate-limited. One short retry helps when a burst just
+    // drained the bucket; hammering it makes the lockout worse.
+    let exchanged: Awaited<ReturnType<typeof supabase.auth.exchangeCodeForSession>>['data'] | null = null
+    let error: Awaited<ReturnType<typeof supabase.auth.exchangeCodeForSession>>['error'] = null
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const result = await supabase.auth.exchangeCodeForSession(code)
+      exchanged = result.data
+      error = result.error
+      if (!error) break
+      const rateLimited =
+        error.status === 429 ||
+        (error as { code?: string }).code === 'over_request_rate_limit' ||
+        /rate limit/i.test(error.message || '')
+      if (!rateLimited || attempt === 1) break
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+    }
     
-    if (error) {
+    if (error || !exchanged?.user) {
       console.error('[AUTH CALLBACK] Error exchanging code for session:', error)
       const errorUrl = new URL('/login?error=auth_failed', origin)
+      const diagnostic = (error as { code?: string } | null)?.code || error?.name || ''
+      const rateLimited =
+        error?.status === 429 ||
+        diagnostic === 'over_request_rate_limit' ||
+        /rate limit/i.test(error?.message || '')
+      if (rateLimited) {
+        errorUrl.searchParams.set('auth_reason', 'rate_limited')
+      } else if (process.env.NODE_ENV === 'development') {
+        const missingVerifier = !hasCodeVerifier
+        errorUrl.searchParams.set('auth_reason', missingVerifier ? 'missing_verifier' : 'exchange_failed')
+        if (diagnostic && /^[a-zA-Z0-9_]{1,80}$/.test(diagnostic)) errorUrl.searchParams.set('auth_detail', diagnostic)
+      }
       return NextResponse.redirect(errorUrl)
     }
 
-    // Refresh the session so that is_anonymous is updated to false after linkIdentity.
-    // Without this, the JWT may still carry is_anonymous:true until the next token refresh.
-    await supabase.auth.refreshSession()
+    // Prefer the exchanged user. A follow-up getUser() can 400 with
+    // AuthSessionMissingError if cookies are mid-write, and it burns Auth quota.
+    let user = exchanged.user
 
-    // Get the user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
+    // Ordinary Google sign-in already returns a fresh session. Refresh only
+    // when linking a guest identity left the exchanged user marked anonymous.
+    if (user.is_anonymous) {
+      const { data: refreshed } = await supabase.auth.refreshSession()
+      if (refreshed.user) user = refreshed.user
+    }
 
-    if (userError || !user) {
-      console.error('[AUTH CALLBACK] Error getting user after code exchange:', userError)
+    if (!user) {
+      console.error('[AUTH CALLBACK] No user after code exchange')
       const errorUrl = new URL('/login?error=auth_failed', origin)
+      if (process.env.NODE_ENV === 'development') {
+        errorUrl.searchParams.set('auth_reason', 'user_verification_failed')
+      }
       return NextResponse.redirect(errorUrl)
     }
 

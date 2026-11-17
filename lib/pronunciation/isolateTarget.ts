@@ -11,6 +11,8 @@ export type IsolateTarget = {
   targetTone: number | null;
   score: number | null;
   sandhiApplied: boolean;
+  previousTone?: number | null;
+  connectedSpeech?: boolean;
   citationPinyin: string | null;
   /** Phrase to say, hear, and score. Sandhi drills use the triggering pair (一个, 很好). */
   practiceText: string;
@@ -24,6 +26,8 @@ export type StoredWeakSyllable = {
   targetTone?: number | null;
   score?: number | null;
   sandhiApplied?: boolean;
+  previousTone?: number | null;
+  connectedSpeech?: boolean;
   citationPinyin?: string | null;
   practiceText?: string;
   practicePinyin?: string | null;
@@ -42,6 +46,8 @@ export function coerceIsolateTarget(stored: StoredWeakSyllable): IsolateTarget {
     targetTone: stored.targetTone ?? null,
     score: stored.score ?? null,
     sandhiApplied: Boolean(stored.sandhiApplied),
+    previousTone: stored.previousTone,
+    connectedSpeech: stored.connectedSpeech,
     citationPinyin: stored.citationPinyin ?? null,
     practiceText: stored.practiceText ?? hanzi,
     practicePinyin: stored.practicePinyin ?? stored.pinyin ?? null,
@@ -66,14 +72,16 @@ export function isolateTargetFromCharacter(
 ): IsolateTarget {
   const character = characters[index];
   const next = characters[index + 1];
+  const previous = characters[index - 1];
   const sandhi = Boolean(character.sandhiApplied);
   const pinyin = sandhi
     ? (character.pinyin ?? character.citationPinyin)
     : (character.citationPinyin ?? character.pinyin);
   const usePair = Boolean(sandhi && next && isHanzi(next.hanzi));
   const nextPinyin = usePair && next ? (next.pinyin ?? next.citationPinyin) : null;
-  const practiceText = usePair && next ? `${character.hanzi}${next.hanzi}` : character.hanzi;
-  const practicePinyin = usePair && nextPinyin ? [pinyin, nextPinyin].filter(Boolean).join(" ") : pinyin;
+  const usePrevious = character.targetTone === 5 && character.previousTone != null && previous && isHanzi(previous.hanzi);
+  const practiceText = usePrevious ? `${previous.hanzi}${character.hanzi}` : usePair && next ? `${character.hanzi}${next.hanzi}` : character.hanzi;
+  const practicePinyin = usePrevious ? [previous.pinyin ?? previous.citationPinyin, pinyin].filter(Boolean).join(" ") : usePair && nextPinyin ? [pinyin, nextPinyin].filter(Boolean).join(" ") : pinyin;
 
   return {
     syllable: character.hanzi,
@@ -84,6 +92,8 @@ export function isolateTargetFromCharacter(
       : (character.citationTone ?? character.targetTone),
     score: character.score,
     sandhiApplied: sandhi,
+    previousTone: character.previousTone,
+    connectedSpeech: usePrevious || usePair,
     citationPinyin: character.citationPinyin,
     practiceText,
     practicePinyin,

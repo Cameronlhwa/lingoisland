@@ -8,6 +8,7 @@ import { withSurfaceDrillPinyin } from "@/lib/pronunciation/surfacePinyin";
 import type { DrillSlot, RecentWord } from "@/lib/pronunciation/sessionPlan";
 
 export interface DrillItem {
+  itemId?: string;
   wordHanzi: string;
   wordPinyin: string;
   wordEnglish: string;

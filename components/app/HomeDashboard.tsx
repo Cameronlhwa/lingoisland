@@ -1,5 +1,7 @@
 "use client";
 
+import AppPage, { APP_PAGE_TITLE_CLASS } from "@/components/app/AppPage";
+
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -524,13 +526,13 @@ export default function HomeDashboard({
   const safeStageName = STAGE_NAMES[safeStage - 1];
 
   return (
-    <div className="min-h-full bg-white px-4 py-6 sm:px-6 md:px-8 md:py-7">
+    <AppPage>
       <OnboardingNudgeBanner variant="home" />
 
-      <div className="mx-auto max-w-6xl">
+      <div>
         <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="lingo-display text-[30px] leading-tight text-[var(--lingo-navy)] sm:text-[34px]">
+            <h1 className={APP_PAGE_TITLE_CLASS}>
               {timeGreeting ? `${timeGreeting}, ` : ""}
               {dashboard.firstName}
             </h1>
@@ -605,6 +607,6 @@ export default function HomeDashboard({
         onClose={() => setShowUpgradeModal(false)}
         feature={upgradeFeatureHint}
       />
-    </div>
+    </AppPage>
   );
 }

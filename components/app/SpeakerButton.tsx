@@ -14,6 +14,8 @@ interface SpeakerButtonProps {
   rate?: number;
   /** Optional visible label (e.g. a Hanzi character) instead of the speaker icon. */
   label?: ReactNode;
+  /** Describe contextual playback when the visible label is only one character. */
+  ariaLabel?: string;
 }
 
 /**
@@ -26,6 +28,7 @@ export default function SpeakerButton({
   className = "",
   rate: rateOverride,
   label,
+  ariaLabel,
 }: SpeakerButtonProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +82,7 @@ export default function SpeakerButton({
         ${className}
       `}
       title={error || (isPlaying ? "Playing..." : "Play audio")}
-      aria-label={typeof label === "string" ? `Play ${label}` : "Play pronunciation"}
+      aria-label={ariaLabel ?? (typeof label === "string" ? `Play ${label}` : "Play pronunciation")}
     >
       {label != null ? (
         <span className={isPlaying ? "animate-pulse" : ""}>{label}</span>

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import Image from "next/image";
+import HomeParallax from "@/components/landing/HomeParallax";
 import PrimaryButton from "@/components/landing/PrimaryButton";
 import BrushUnderline from "@/components/landing/BrushUnderline";
 import { Sparkle, FloatingCloud } from "@/components/landing/Decorations";
@@ -26,7 +27,10 @@ export default function HSKHero({
   priorityImage = false,
   underNav = false,
   journeyTransition = false,
+  parallax = false,
 }: {
+  /** Five-layer scroll scenery, enabled only on the homepage. */
+  parallax?: boolean;
   backgroundImageUrl?: string;
   title?: ReactNode;
   subtitle?: string;
@@ -48,7 +52,9 @@ export default function HSKHero({
       className={underNav ? "hero-scene hero-scene-under-nav" : "hero-scene"}
       style={{ position: "relative", overflow: "hidden" }}
     >
-      {priorityImage ? (
+      {parallax ? (
+        <HomeParallax />
+      ) : priorityImage ? (
         <div aria-hidden className="hero-scene-media">
           <Image
             src={backgroundImageUrl}

@@ -1,5 +1,7 @@
 "use client";
 
+import AppPage, { APP_PAGE_TITLE_CLASS } from "@/components/app/AppPage";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -150,13 +152,13 @@ export default function QuizIslandsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1120px] px-4 py-8 md:px-6">
+    <AppPage>
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
             {convertText(t("Quiz"))}
           </p>
-          <h1 className="lingo-display mt-1 max-w-xl text-3xl font-bold text-[var(--lingo-navy)] sm:text-4xl">
+          <h1 className={APP_PAGE_TITLE_CLASS}>
             {convertText(t("Small quizzes."))}
             <br />
             {convertText(t("Big progress."))}
@@ -316,6 +318,6 @@ export default function QuizIslandsPage() {
           </div>
         </div>
       )}
-    </div>
+    </AppPage>
   );
 }

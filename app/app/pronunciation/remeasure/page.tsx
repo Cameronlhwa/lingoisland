@@ -73,14 +73,14 @@ export default function RemeasurePage() {
     const biggest = compare.perTag.find((t) => (t.delta ?? 0) > 0) ?? compare.perTag[0];
 
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10">
+      <div className="mx-auto w-full max-w-2xl px-4 py-4">
         <div className="text-center">
-          <div className="relative mx-auto mb-4 h-36 w-36 overflow-hidden rounded-3xl">
+          <div className="relative mx-auto mb-3 h-20 w-20 sm:h-28 sm:w-28 overflow-hidden rounded-3xl">
             <Image src="/pronunciation/milestone-pronunciation.png" alt="" fill className="object-cover" />
           </div>
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--lingo-blue)]">{convertText(t("Progress check"))}</p>
           <h1 className="lingo-display mt-2 text-3xl font-bold text-[var(--lingo-navy)]">{convertText(t("Look how you've improved"))}</h1>
-          <div className="mt-6 flex items-end justify-center gap-3">
+          <div className="mt-3 flex items-end justify-center gap-3">
             <span className="text-2xl font-bold text-[var(--lingo-text-muted)]">
               {compare.day1Overall == null ? "—" : Math.round(compare.day1Overall)}
             </span>
@@ -95,74 +95,6 @@ export default function RemeasurePage() {
               {Math.round(compare.delta)} {convertText(t("since your first check"))}
             </p>
           )}
-        </div>
-
-        {biggest && (
-          <div
-            className="mt-8 rounded-[24px] border bg-white p-5"
-            style={{ borderColor: "var(--lingo-border)", boxShadow: "var(--lingo-shadow-card)" }}
-          >
-            <h2 className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(t("Your biggest improvement"))}</h2>
-            <p className="mt-2 text-lg font-bold text-[var(--lingo-navy)]">{biggest.label}</p>
-            <p className="text-sm text-[var(--lingo-text-muted)]">
-              {biggest.before == null ? "—" : Math.round(biggest.before)} →{" "}
-              {biggest.after == null ? "—" : Math.round(biggest.after)}
-            </p>
-          </div>
-        )}
-
-        <div className="mt-5 rounded-[24px] border bg-white p-5" style={{ borderColor: "var(--lingo-border)" }}>
-          <h2 className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(t("Full breakdown"))}</h2>
-          <div className="mt-3 space-y-2">
-            {compare.perTag.map((tag) => (
-              <div key={tag.tag} className="flex items-center justify-between rounded-xl bg-[var(--lingo-sky-pale)] px-3 py-2.5">
-                <span className="text-sm font-semibold text-[var(--lingo-navy)]">{tag.label}</span>
-                <span className="text-xs font-bold text-[var(--lingo-text-muted)]">
-                  {tag.before == null ? "—" : Math.round(tag.before)} → {tag.after == null ? "—" : Math.round(tag.after)}
-                  {tag.delta != null && (
-                    <span className="ml-2" style={{ color: tag.delta >= 0 ? "#0f766e" : "#9f1c14" }}>
-                      {tag.delta >= 0 ? "+" : ""}
-                      {Math.round(tag.delta)}
-                    </span>
-                  )}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-5 rounded-[24px] border bg-white p-5" style={{ borderColor: "var(--lingo-border)" }}>
-          <h2 className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(t("Hear the difference"))}</h2>
-          <div className="mt-3 space-y-3">
-            {compare.sentences.map((s) => (
-              <div key={s.index} className="rounded-xl bg-[var(--lingo-sky-pale)] p-3">
-                <p className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(s.hanzi)}</p>
-                <p className="text-xs text-[var(--lingo-text-muted)]">{s.pinyin}</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {s.day1AudioUrl ? (
-                    <button
-                      type="button"
-                      onClick={() => new Audio(s.day1AudioUrl!).play()}
-                      className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[var(--lingo-navy)]"
-                    >
-                      {convertText(t("Day 1"))}
-                    </button>
-                  ) : (
-                    <span className="text-xs text-[var(--lingo-text-muted)]">{convertText(t("Day 1 audio unavailable"))}</span>
-                  )}
-                  {s.remeasureAudioUrl ? (
-                    <button
-                      type="button"
-                      onClick={() => new Audio(s.remeasureAudioUrl!).play()}
-                      className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[var(--lingo-navy)]"
-                    >
-                      {convertText(t("Today"))}
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="mt-5 rounded-[24px] border bg-white p-5" style={{ borderColor: "var(--lingo-border)" }}>
@@ -180,17 +112,87 @@ export default function RemeasurePage() {
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => router.push("/app/pronunciation")}
+              onClick={() => router.push("/app/pronunciation/practice")}
               className="rounded-2xl px-4 py-2.5 text-sm font-bold text-white"
               style={{ background: "var(--lingo-accent-gradient)" }}
             >
               {convertText(t("Practice this →"))}
             </button>
-            <Link href="/app/pronunciation" className="rounded-2xl border border-[var(--lingo-accent-border)] px-4 py-2.5 text-sm font-bold text-[var(--lingo-navy)]">
-              {convertText(t("Back to pronunciation"))}
+            <Link href="/app/pronunciation/practice" className="rounded-2xl border border-[var(--lingo-accent-border)] px-4 py-2.5 text-sm font-bold text-[var(--lingo-navy)]">
+              {convertText(t("Back to practice"))}
             </Link>
           </div>
         </div>
+
+        {biggest && (
+          <div
+            className="mt-4 rounded-[24px] border bg-white p-5"
+            style={{ borderColor: "var(--lingo-border)", boxShadow: "var(--lingo-shadow-card)" }}
+          >
+            <h2 className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(t("Your biggest improvement"))}</h2>
+            <p className="mt-2 text-lg font-bold text-[var(--lingo-navy)]">{biggest.label}</p>
+            <p className="text-sm text-[var(--lingo-text-muted)]">
+              {biggest.before == null ? "—" : Math.round(biggest.before)} →{" "}
+              {biggest.after == null ? "—" : Math.round(biggest.after)}
+            </p>
+          </div>
+        )}
+
+        <details className="mt-4 rounded-[24px] border bg-white p-4" style={{ borderColor: "var(--lingo-border)" }}>
+          <summary className="min-h-11 cursor-pointer py-3 text-sm font-bold text-[var(--lingo-navy)]">{convertText(t("Full breakdown"))}</summary>
+          <div className="mt-3 space-y-2">
+            {compare.perTag.map((tag) => (
+              <div key={tag.tag} className="flex items-center justify-between rounded-xl bg-[var(--lingo-sky-pale)] px-3 py-2.5">
+                <span className="text-sm font-semibold text-[var(--lingo-navy)]">{tag.label}</span>
+                <span className="text-xs font-bold text-[var(--lingo-text-muted)]">
+                  {tag.before == null ? "—" : Math.round(tag.before)} → {tag.after == null ? "—" : Math.round(tag.after)}
+                  {tag.delta != null && (
+                    <span className="ml-2" style={{ color: tag.delta >= 0 ? "#0f766e" : "#9f1c14" }}>
+                      {tag.delta >= 0 ? "+" : ""}
+                      {Math.round(tag.delta)}
+                    </span>
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+        </details>
+
+        <details className="mt-4 rounded-[24px] border bg-white p-4" style={{ borderColor: "var(--lingo-border)" }}>
+          <summary className="min-h-11 cursor-pointer py-3 text-sm font-bold text-[var(--lingo-navy)]">{convertText(t("Hear the difference"))}</summary>
+          <div className="mt-3 space-y-3">
+            {compare.sentences.map((s) => (
+              <div key={s.index} className="rounded-xl bg-[var(--lingo-sky-pale)] p-3">
+                <p className="text-sm font-bold text-[var(--lingo-navy)]">{convertText(s.hanzi)}</p>
+                <p className="text-xs text-[var(--lingo-text-muted)]">{s.pinyin}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {s.day1AudioUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => new Audio(s.day1AudioUrl!).play()}
+                      className="min-h-11 rounded-lg bg-white px-3 py-2 text-xs font-bold text-[var(--lingo-navy)]"
+                    >
+                      {convertText(t("Day 1"))}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-[var(--lingo-text-muted)]">{convertText(t("Day 1 audio unavailable"))}</span>
+                  )}
+                  {s.remeasureAudioUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => new Audio(s.remeasureAudioUrl!).play()}
+                      className="min-h-11 rounded-lg bg-white px-3 py-2 text-xs font-bold text-[var(--lingo-navy)]"
+                    >
+                      {convertText(t("Today"))}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+
+
       </div>
     );
   }

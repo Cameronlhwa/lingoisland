@@ -13,6 +13,7 @@
     "test:sms": "node --import tsx --test tests/sms/*.test.ts",
     "test:onboarding": "node --import tsx --test tests/onboarding/*.test.ts",
     "test:pronunciation": "node --import tsx --test tests/pronunciation/*.test.ts",
+    "db:migrate:tone-course": "tsx scripts/runToneCourseMigration.ts",
     "sms:cron:local": "node scripts/runSmsCronLoop.mjs",
     "gen:island-library": "tsx scripts/generateIslandLibrary.ts",
     "gen:cedict": "tsx scripts/buildCompactCedict.mts",

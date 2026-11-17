@@ -1,0 +1,19 @@
+.lesson { overflow-wrap: anywhere; }
+.card { display: flex; flex-direction: column; gap: 1.25rem; }
+.card > * { min-width: 0; }
+.model { padding-top: .25rem; }
+.model > div:last-child { margin-top: .75rem; }
+.card svg[role="img"] { height: 4rem; }
+.instruction { display: flex; flex-direction: column; gap: .75rem; }
+.instruction figure { width: 100%; max-width: 22rem; margin-top: 0; }
+.recording { min-width: 0; }
+.response[data-compact] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: .5rem; position: sticky; bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); z-index: 20; background: white; padding: .75rem 0; border-top: 1px solid var(--lingo-border); }
+.response > div[data-recording] { margin: 0; padding: 0; border: 0; min-width: 0; }
+.response > div[data-recording] > h2 { display: none; }
+.response[data-compact] > button { margin: 0; min-height: 3rem; font-size: .75rem; line-height: 1.4; }
+.response[data-rule], .check { position: sticky; bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); z-index: 20; }
+.response[data-rule] { background: white; padding: .5rem 0; }
+@media (min-width: 768px) {
+  .response[data-compact] { bottom: 1rem; }
+  .response[data-rule], .check { bottom: 1rem; }
+}

@@ -1,3 +1,5 @@
+import { stopCelebrationSound } from "@/lib/pronunciation/celebration";
+
 /**
  * Text-to-Speech utility for playing Chinese audio
  */
@@ -32,6 +34,7 @@ export async function playTextToSpeech(
   }
 
   try {
+    stopCelebrationSound();
     // Stop any currently playing audio
     if (currentAudio) {
       currentAudio.pause()

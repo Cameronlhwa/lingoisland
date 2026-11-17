@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       needsToneSupport: needsToneSupport(scores),
       feedback,
       weakSyllable,
-      characters: normalized.characters.map(({ hanzi, pinyin, score, targetTone }) => ({ hanzi, pinyin, score, targetTone })),
+      characters: normalized.characters.map(({ hanzi, pinyin, score, targetTone, previousTone, connectedSpeech }) => ({ hanzi, pinyin, score, targetTone, previousTone, connectedSpeech })),
     });
   } catch {
     return unavailable();

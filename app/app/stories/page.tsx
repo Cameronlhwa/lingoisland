@@ -1,3 +1,4 @@
+import AppPage, { APP_PAGE_TITLE_CLASS } from "@/components/app/AppPage";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -46,13 +47,13 @@ export default async function StoriesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 py-8 md:px-6">
+    <AppPage>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
             <T k="Stories" />
           </p>
-          <h1 className="lingo-display mt-1 max-w-xl text-[34px] font-bold leading-tight text-[var(--lingo-navy)] sm:text-[40px]">
+          <h1 className={APP_PAGE_TITLE_CLASS}>
             <T k="Stories" />
           </h1>
           <p className="mt-2 max-w-lg text-sm leading-relaxed text-[var(--lingo-text-muted)]">
@@ -78,6 +79,6 @@ export default async function StoriesPage() {
         </h2>
         <StoriesList stories={stories} />
       </section>
-    </div>
+    </AppPage>
   );
 }

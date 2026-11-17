@@ -1,4 +1,4 @@
-export type PronunciationPiece = { hanzi: string; pinyin: string | null; score: number | null; targetTone: number | null };
+export type PronunciationPiece = { hanzi: string; pinyin: string | null; score: number | null; targetTone: number | null; previousTone?: number | null; connectedSpeech?: boolean };
 export function scoreNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100 ? value : null;
 }
@@ -6,7 +6,10 @@ export function parsePronunciationPieces(raw: unknown): PronunciationPiece[] {
   if (!Array.isArray(raw)) return [];
   return raw.slice(0, 100).flatMap(row => {
     if (!row || typeof row !== "object" || typeof row.hanzi !== "string" || !/^[\u3400-\u9fff]{1,20}$/.test(row.hanzi)) return [];
-    return [{hanzi:row.hanzi, pinyin:typeof row.pinyin === "string" ? row.pinyin.slice(0,100) : null, score:scoreNumber(row.score), targetTone:[1,2,3,4].includes(row.targetTone) ? row.targetTone : null}];
+    return [{hanzi:row.hanzi, pinyin:typeof row.pinyin === "string" ? row.pinyin.slice(0,100) : null, score:scoreNumber(row.score), targetTone:[1,2,3,4,5].includes(row.targetTone) ? row.targetTone : null,
+      ...(row.previousTone !== undefined ? {previousTone:[1,2,3,4,5].includes(row.previousTone) ? row.previousTone : null} : {}),
+      ...(typeof row.connectedSpeech === "boolean" ? {connectedSpeech:row.connectedSpeech} : {}),
+    }];
   });
 }
 export function alignedPronunciationPieces(text: string, raw: unknown): PronunciationPiece[] {

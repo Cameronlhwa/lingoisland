@@ -4,6 +4,7 @@
 
 import type { TopicFamily } from "./goals";
 import { clampLevel } from "./levels";
+import { surfacePinyinForText } from "@/lib/pronunciation/surfacePinyin";
 
 export type PronunciationWord = { hanzi: string; pinyin: string; english: string };
 
@@ -60,7 +61,8 @@ export function pronunciationWords(family: TopicFamily, level: number, beginner 
   const representative = LEVEL_WORDS[beginner ? 0 : clampLevel(level)];
   const pool = INTEREST_WORDS[family] ?? INTEREST_WORDS.everyday;
   const easier = pool.find((word) => word.hanzi !== representative.hanzi) ?? INTEREST_WORDS.everyday[0];
-  return beginner ? [representative, easier] : [easier, representative];
+  const spoken = (word: PronunciationWord) => ({ ...word, pinyin: surfacePinyinForText(word.hanzi) || word.pinyin });
+  return beginner ? [spoken(representative), spoken(easier)] : [spoken(easier), spoken(representative)];
 }
 
 export type PronunciationFeedback = "great" | "close" | "retry";

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1585" height="992" viewBox="0 0 1585 992">
+  <g fill="#FFFCF4" stroke="#713A13" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M350 409 C270 407 214 438 212 492 C210 544 248 573 313 577 C315 591 308 603 297 614 C319 608 332 591 339 578 C428 581 488 558 490 503 C492 446 445 409 350 409Z"/>
+    <path d="M1173 433 C1085 429 1030 457 1030 508 C1030 558 1079 583 1164 582 L1259 582 C1271 606 1289 625 1312 636 C1290 614 1281 597 1279 575 C1310 563 1328 542 1328 510 C1328 458 1276 430 1173 433Z"/>
+  </g>
+  <g fill="#713A13" font-family="'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif" font-weight="700" font-size="26" text-anchor="middle">
+    <text x="351" y="453"><tspan x="351">I want to learn</tspan><tspan x="351" dy="30">Mandarin fast.</tspan><tspan x="351" dy="30">Just the stuff</tspan><tspan x="351" dy="30">I’ll actually use.</tspan></text>
+    <text x="1179" y="483"><tspan x="1179">That’s LingoIsland!</tspan><tspan x="1179" dy="32">Lessons built</tspan><tspan x="1179" dy="32">around your life.</tspan></text>
+  </g>
+</svg>

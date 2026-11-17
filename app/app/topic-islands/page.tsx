@@ -1,5 +1,7 @@
 "use client";
 
+import AppPage, { APP_PAGE_TITLE_CLASS } from "@/components/app/AppPage";
+
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
@@ -365,13 +367,13 @@ export default function TopicIslandsPage() {
   const createLabel = t("Create Topic Island");
 
   return (
-    <div className="mx-auto max-w-[1120px] px-4 py-8 md:px-6">
+    <AppPage>
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
             {t("My Islands")}
           </p>
-          <h1 className="lingo-display mt-1 max-w-xl text-3xl font-bold text-[var(--lingo-navy)] sm:text-4xl">
+          <h1 className={APP_PAGE_TITLE_CLASS}>
             {t("Your Islands")}
           </h1>
           <p className="mt-2 max-w-lg text-sm leading-relaxed text-[var(--lingo-text-muted)]">
@@ -831,6 +833,6 @@ export default function TopicIslandsPage() {
         onClose={() => setShowUpgradeModal(false)}
         feature="Create Topic Island (monthly limit reached)"
       />
-    </div>
+    </AppPage>
   );
 }

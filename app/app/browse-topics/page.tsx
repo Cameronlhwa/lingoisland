@@ -1,5 +1,7 @@
 "use client";
 
+import AppPage, { APP_PAGE_TITLE_CLASS } from "@/components/app/AppPage";
+
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -151,12 +153,12 @@ export default function BrowseTopicsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1120px] px-4 py-8 md:px-6">
+    <AppPage>
       <div className="mb-7">
         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
           {t("Explore & Learn")}
         </p>
-        <h1 className="lingo-display mt-1 max-w-2xl text-3xl font-bold text-[var(--lingo-navy)] sm:text-4xl">
+        <h1 className={APP_PAGE_TITLE_CLASS}>
           {t("What do you want to talk about today?")}
         </h1>
         <p className="mt-2 max-w-lg text-sm leading-relaxed text-[var(--lingo-text-muted)]">
@@ -308,7 +310,7 @@ export default function BrowseTopicsPage() {
           t={t}
         />
       )}
-    </div>
+    </AppPage>
   );
 }
 
