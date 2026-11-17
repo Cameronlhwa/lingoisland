@@ -23,9 +23,10 @@ import {
 } from "@/lib/journeyMapLayout";
 
 const COMPLETED = "#29B77A";
-const CURRENT = "#FF7043";
+const CURRENT = "#20674F";
 const LOCKED_BG = "#EFF4F7";
 const LOCKED_ICON = "#63758A";
+const CURRENT_SOFT = "#E7F3EE";
 
 function isClickable(node: JourneyPathNode) {
   if (node.type === "island") return node.completed || node.current || !!node.paywalled;
@@ -46,7 +47,7 @@ function IslandArt({
   const filter = dimmed
     ? "saturate(0.72) brightness(1.03) drop-shadow(0 8px 10px rgba(15,47,67,0.16))"
     : glowing
-      ? "drop-shadow(0 0 14px rgba(255,112,67,0.8)) drop-shadow(0 8px 14px rgba(255,112,67,0.28))"
+      ? "drop-shadow(0 0 14px rgba(32,103,79,0.55)) drop-shadow(0 8px 14px rgba(32,103,79,0.22))"
       : "drop-shadow(0 8px 10px rgba(15,47,67,0.16))";
 
   return (
@@ -80,10 +81,10 @@ function IslandLabel({ node }: { node: JourneyPathNode }) {
   return (
     <div
       className="rounded-xl border bg-white px-2 py-1 text-center shadow-[0_4px_12px_rgba(15,47,67,0.14)]"
-      style={{ borderColor: node.current ? "rgba(255,112,67,0.7)" : "rgba(15,47,67,0.08)" }}
+      style={{ borderColor: node.current ? "rgba(32,103,79,0.55)" : "rgba(15,47,67,0.08)" }}
     >
       {node.type === "story" ? (
-        <span className="block text-[9px] font-bold uppercase tracking-[0.12em] text-amber-700">
+        <span className="block text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--lingo-teal)]">
           {t("Story")}
         </span>
       ) : null}
@@ -288,9 +289,9 @@ export function JourneyMap({
                 <span
                   className="flex aspect-square items-center justify-center rounded-full border border-white transition-transform duration-200 ease-out motion-reduce:transition-none motion-safe:group-hover:scale-110 motion-safe:group-focus-visible:scale-110"
                   style={{
-                    background: node.completed ? "#e9f8f1" : node.current ? "#fff1ec" : LOCKED_BG,
+                    background: node.completed ? "#e9f8f1" : node.current ? CURRENT_SOFT : LOCKED_BG,
                     boxShadow: node.current
-                      ? "0 0 0 3px rgba(255,112,67,0.45), 0 6px 14px rgba(255,112,67,0.2)"
+                      ? "0 0 0 3px rgba(32,103,79,0.35), 0 6px 14px rgba(32,103,79,0.18)"
                       : "0 4px 10px rgba(15,47,67,0.14)",
                   }}
                 >
