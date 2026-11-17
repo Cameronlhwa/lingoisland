@@ -151,21 +151,22 @@ export async function GET(request: NextRequest) {
   if (code) {
     const hasCodeVerifier = request.cookies.getAll().some(cookie => cookie.name.includes('code-verifier') && cookie.value)
 
-    // Token endpoint is IP-rate-limited. One short retry helps when a burst just
-    // drained the bucket; hammering it makes the lockout worse.
+    // Retry briefly for rate limits and flaky DNS/network (AuthRetryableFetchError).
     let exchanged: Awaited<ReturnType<typeof supabase.auth.exchangeCodeForSession>>['data'] | null = null
     let error: Awaited<ReturnType<typeof supabase.auth.exchangeCodeForSession>>['error'] = null
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       const result = await supabase.auth.exchangeCodeForSession(code)
       exchanged = result.data
       error = result.error
       if (!error) break
-      const rateLimited =
+      const retryable =
         error.status === 429 ||
+        error.status === 0 ||
+        error.name === 'AuthRetryableFetchError' ||
         (error as { code?: string }).code === 'over_request_rate_limit' ||
-        /rate limit/i.test(error.message || '')
-      if (!rateLimited || attempt === 1) break
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+        /rate limit|fetch failed|ENOTFOUND|ECONNRESET|ETIMEDOUT|network/i.test(error.message || '')
+      if (!retryable || attempt === 2) break
+      await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)))
     }
     
     if (error || !exchanged?.user) {
@@ -176,8 +177,14 @@ export async function GET(request: NextRequest) {
         error?.status === 429 ||
         diagnostic === 'over_request_rate_limit' ||
         /rate limit/i.test(error?.message || '')
+      const networkFailure =
+        error?.name === 'AuthRetryableFetchError' ||
+        error?.status === 0 ||
+        /fetch failed|ENOTFOUND|ECONNRESET|ETIMEDOUT|network/i.test(error?.message || '')
       if (rateLimited) {
         errorUrl.searchParams.set('auth_reason', 'rate_limited')
+      } else if (networkFailure) {
+        errorUrl.searchParams.set('auth_reason', 'network')
       } else if (process.env.NODE_ENV === 'development') {
         const missingVerifier = !hasCodeVerifier
         errorUrl.searchParams.set('auth_reason', missingVerifier ? 'missing_verifier' : 'exchange_failed')

@@ -71,6 +71,8 @@ function LoginPageContent() {
           setErrorMessage(
             reason === "rate_limited"
               ? "Google sign-in is temporarily rate limited. Wait about 5 minutes, then try once more. Avoid clicking Continue with Google repeatedly."
+              : reason === "network"
+              ? "Google signed you in, but this computer could not reach Supabase to finish the session (network/DNS). Check your Wi‑Fi or VPN, then try again."
               : process.env.NODE_ENV === "development" && reason === "missing_verifier"
               ? "Google returned successfully, but the sign-in verification cookie is missing. Start sign-in again in this same browser and tab."
               : process.env.NODE_ENV === "development" && reason === "exchange_failed"

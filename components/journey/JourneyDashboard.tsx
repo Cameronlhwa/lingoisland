@@ -157,7 +157,7 @@ export function JourneyDashboard({
 
             <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-4">
               <HeroStat icon={<Map size={12} />} value={islands.length} label={t("Islands")} />
-              <HeroStat icon={<BookOpen size={12} />} value={stories.length} label={t("Story checkpoints")} accent="orange" />
+              <HeroStat icon={<BookOpen size={12} />} value={stories.length} label={t("Story checkpoints")} accent="navy" />
               <HeroStat icon={<Check size={12} />} value={plannedWords} label={t("planned words")} />
               <HeroStat icon={<Lock size={12} />} value={remainingIslands} label={t("Islands left")} />
             </div>
@@ -188,7 +188,7 @@ export function JourneyDashboard({
             {t("Completed")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-orange-400" />
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--lingo-teal)" }} />
             {t("Current")}
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -231,7 +231,7 @@ function HeroStat({
   value: number;
   label: string;
   icon: ReactNode;
-  accent?: "orange";
+  accent?: "navy";
 }) {
   return (
     <div className="min-w-0">
@@ -239,8 +239,8 @@ function HeroStat({
         <span
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
           style={{
-            background: accent === "orange" ? "rgba(251,191,36,0.18)" : "rgba(66,185,180,0.16)",
-            color: accent === "orange" ? "#c2410c" : "var(--lingo-teal)",
+            background: accent === "navy" ? "rgba(95,49,25,0.12)" : "rgba(32,103,79,0.14)",
+            color: accent === "navy" ? "var(--lingo-navy)" : "var(--lingo-teal)",
           }}
         >
           {icon}
@@ -297,7 +297,7 @@ function CurrentCheckpointCard({
       className="rounded-[22px] bg-white p-5"
       style={{ border: "1px solid var(--lingo-border)", boxShadow: "var(--lingo-shadow-card)" }}
     >
-      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-orange-600">
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-teal)]">
         {currentTypeLabel(node, t)}
       </p>
       <h3 className="mt-2 text-lg font-bold leading-tight text-[var(--lingo-navy)]">
@@ -310,7 +310,7 @@ function CurrentCheckpointCard({
         type="button"
         onClick={() => onActivate(node)}
         className="mt-4 inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-colors hover:brightness-105"
-        style={{ background: "#ea580c", boxShadow: "0 8px 18px rgba(234,88,12,0.22)" }}
+        style={{ background: "var(--lingo-teal)", boxShadow: "0 8px 18px rgba(32,103,79,0.22)" }}
       >
         {currentCtaLabel(node, t)}
       </button>

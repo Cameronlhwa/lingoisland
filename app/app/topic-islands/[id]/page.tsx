@@ -1332,11 +1332,26 @@ export default function TopicIslandDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {journeyContext?.order === 1 ? (
-        <div className="sticky top-16 z-20 hidden items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:top-0 md:flex md:px-8">
+        <div
+          className="sticky top-16 z-20 hidden items-center justify-between gap-6 border-b px-4 py-3 md:top-0 md:flex md:px-8"
+          style={{ background: "var(--lingo-page-bg)", borderColor: "var(--lingo-border)" }}
+        >
           <AppLogo size="sm" />
-          <span className="rounded-full bg-teal-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-            Get 80% on a quiz to achieve the next island in the journey!
-          </span>
+          <div
+            className="flex min-w-0 items-center gap-3 rounded-2xl border px-4 py-2.5"
+            style={{ background: "var(--lingo-sky-pale)", borderColor: "var(--lingo-border)" }}
+          >
+            <span
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xs font-bold"
+              style={{ color: "var(--lingo-teal)", borderColor: "var(--lingo-teal)", background: "var(--lingo-page-bg)" }}
+              aria-hidden="true"
+            >80%</span>
+            <div className="min-w-0 text-sm leading-snug">
+              <p className="font-bold" style={{ color: "var(--lingo-navy)" }}>Your next island awaits</p>
+              <p className="mt-0.5" style={{ color: "var(--lingo-text-muted)" }}>Score 80% on a quiz to unlock it.</p>
+            </div>
+            <span className="ml-2 text-lg" style={{ color: "var(--lingo-teal)" }} aria-hidden="true">→</span>
+          </div>
         </div>
       ) : null}
       <div className="flex w-full">

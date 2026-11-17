@@ -26,13 +26,108 @@ type IslandWordRow = WordRow & {
   learned_at?: string | null;
 };
 
-function sample<T>(items: T[], count: number) {
+function sample<T>(items: T[], count: number, random: () => number = Math.random) {
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-  return copy.slice(0, count);
+  return copy.slice(0, Math.max(0, Math.min(count, copy.length)));
+}
+
+/**
+ * Pick up to `islandCount` topic islands for a daily story.
+ * Avoids locking onto the same 1–2 high-learned islands every day by:
+ * - preferring islands not used in recent daily stories when alternatives exist
+ * - sampling among learned islands (and filling from the rest) instead of a hard top-2 slice
+ */
+export function pickDailyStoryIslands({
+  eligibleIslands,
+  learnedCountByIsland,
+  recentlyUsedIslandIds = [],
+  islandCount = 2,
+  random = Math.random,
+}: {
+  eligibleIslands: IslandRow[];
+  learnedCountByIsland: Map<string, number>;
+  recentlyUsedIslandIds?: readonly string[];
+  islandCount?: number;
+  random?: () => number;
+}): IslandRow[] {
+  const count = Math.min(Math.max(islandCount, 1), eligibleIslands.length);
+  if (eligibleIslands.length === 0) return [];
+
+  const recent = new Set(recentlyUsedIslandIds);
+  const withLearned = eligibleIslands.filter(
+    (island) => (learnedCountByIsland.get(island.id) ?? 0) > 0,
+  );
+  const poolSource = withLearned.length > 0 ? withLearned : eligibleIslands;
+  const fresh = poolSource.filter((island) => !recent.has(island.id));
+  let pool = fresh.length >= count ? fresh : poolSource;
+
+  // If everything was recent and we had to fall back, still shuffle so order is not fixed.
+  const selected = sample(pool, count, random);
+
+  // Fill remaining slots from unused eligible islands when the preferred pool was tiny.
+  if (selected.length < count) {
+    const selectedIds = new Set(selected.map((island) => island.id));
+    const fillers = sample(
+      eligibleIslands.filter((island) => !selectedIds.has(island.id)),
+      count - selected.length,
+      random,
+    );
+    selected.push(...fillers);
+  }
+
+  return selected;
+}
+
+/** Spread target words across selected islands instead of only the newest learned ones. */
+export function pickDailyStoryWords({
+  selectedIslands,
+  wordsByIsland,
+  targetCount = 12,
+  random = Math.random,
+}: {
+  selectedIslands: IslandRow[];
+  wordsByIsland: Map<string, IslandWordRow[]>;
+  targetCount?: number;
+  random?: () => number;
+}): IslandWordRow[] {
+  const learnedAtMs = (word: IslandWordRow) => {
+    if (!word.learned_at) return 0;
+    const parsed = Date.parse(word.learned_at);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+
+  const perIsland = selectedIslands.map((island) => {
+    const words = [...(wordsByIsland.get(island.id) || [])].sort(
+      (a, b) => learnedAtMs(b) - learnedAtMs(a),
+    );
+    return words;
+  });
+
+  const picked: IslandWordRow[] = [];
+  const seen = new Set<string>();
+  let index = 0;
+  while (picked.length < targetCount) {
+    let added = false;
+    for (const words of perIsland) {
+      if (index >= words.length) continue;
+      const word = words[index];
+      if (!seen.has(word.id)) {
+        seen.add(word.id);
+        picked.push(word);
+        added = true;
+        if (picked.length >= targetCount) break;
+      }
+    }
+    if (!added) break;
+    index += 1;
+  }
+
+  // Light shuffle so story prompts are not always in island order.
+  return sample(picked, picked.length, random);
 }
 
 function countStoryChars(text: string) {
@@ -253,9 +348,35 @@ Rules for title and title_en:
   throw lastError || new Error("Failed to generate daily story");
 }
 
+async function loadRecentlyUsedIslandIds(
+  supabaseServerClient: SupabaseClient,
+  userId: string,
+  beforeDate: string,
+) {
+  const { data } = await supabaseServerClient
+    .from("stories")
+    .select("source_island_ids")
+    .eq("user_id", userId)
+    .eq("kind", "daily")
+    .lt("date", beforeDate)
+    .order("date", { ascending: false })
+    .limit(14);
+
+  const ids: string[] = [];
+  for (const row of data ?? []) {
+    const value = (row as { source_island_ids?: unknown }).source_island_ids;
+    if (!Array.isArray(value)) continue;
+    for (const id of value) {
+      if (typeof id === "string" && id) ids.push(id);
+    }
+  }
+  return ids;
+}
+
 async function selectDailyStoryContext({
   supabaseServerClient,
   userId,
+  date,
 }: {
   supabaseServerClient: SupabaseClient;
   userId: string;
@@ -298,11 +419,6 @@ async function selectDailyStoryContext({
   }
 
   const words = wordsResult.data as IslandWordRow[];
-  const learnedAtMs = (word: IslandWordRow) => {
-    if (!word.learned_at) return 0;
-    const parsed = Date.parse(word.learned_at);
-    return Number.isNaN(parsed) ? 0 : parsed;
-  };
   const wordsByIsland = new Map<string, IslandWordRow[]>();
   for (const word of words) {
     if (!wordsByIsland.has(word.island_id)) {
@@ -328,31 +444,24 @@ async function selectDailyStoryContext({
     );
   }
 
-  const rankedIslands = [...eligibleIslands].sort((a, b) => {
-    const learnedDiff =
-      (learnedCountByIsland.get(b.id) ?? 0) -
-      (learnedCountByIsland.get(a.id) ?? 0);
-    if (learnedDiff !== 0) return learnedDiff;
-    return 0;
-  });
-  const hasLearnedWords = rankedIslands.some(
-    (island) => (learnedCountByIsland.get(island.id) ?? 0) > 0
+  const recentlyUsedIslandIds = await loadRecentlyUsedIslandIds(
+    supabaseServerClient,
+    userId,
+    date,
   );
   const islandCount = eligibleIslands.length >= 2 ? 2 : 1;
-  const selectedIslands = hasLearnedWords
-    ? rankedIslands.slice(0, islandCount)
-    : sample(eligibleIslands, islandCount);
+  const selectedIslands = pickDailyStoryIslands({
+    eligibleIslands,
+    learnedCountByIsland,
+    recentlyUsedIslandIds,
+    islandCount,
+  });
   const islandIds = selectedIslands.map((island) => island.id);
-
-  const selectedIslandWords = selectedIslands
-    .flatMap((island) => wordsByIsland.get(island.id) || [])
-    .sort((a, b) => learnedAtMs(b) - learnedAtMs(a));
-
-  const targetCount = 12;
-  const selectedWords =
-    selectedIslandWords.length <= targetCount
-      ? selectedIslandWords
-      : selectedIslandWords.slice(0, targetCount);
+  const selectedWords = pickDailyStoryWords({
+    selectedIslands,
+    wordsByIsland,
+    targetCount: 12,
+  });
 
   const lengthChars = 140 + Math.floor(Math.random() * 40);
   const storyTopic =
