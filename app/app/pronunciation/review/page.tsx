@@ -8,6 +8,7 @@ import { ArrowLeft, MoreHorizontal, Target } from "lucide-react";
 import { scoreTier, type WeakSoundRow } from "@/lib/pronunciation/weakSoundTypes";
 import { guideForTone, primaryGuide, weakSoundLabel } from "@/lib/pronunciation/soundGuides";
 import { toneGlyph } from "@/lib/pronunciation/encouragement";
+import { contextualToneTargetForSound } from "@/lib/pronunciation/surfacePinyin";
 import AppPageLoading from "@/components/app/AppPageLoading";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCharacterSet } from "@/contexts/CharacterSetContext";
@@ -119,10 +120,10 @@ export default function WeakSoundsReviewPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 md:px-6">
       <Link
-        href="/app/pronunciation"
+        href="/app/pronunciation/practice"
         className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--lingo-text-muted)] hover:text-[var(--lingo-navy)]"
       >
-        <ArrowLeft size={13} /> {convertText(t("Pronunciation"))}
+        <ArrowLeft size={13} /> {convertText(t("Practice & review"))}
       </Link>
 
       <div className="relative mb-6 h-44 overflow-hidden rounded-[28px] sm:h-52">
@@ -170,7 +171,7 @@ export default function WeakSoundsReviewPage() {
             {convertText(t("Nothing flagged yet. Keep practicing — anything you consistently miss will show up here."))}
           </p>
           <Link
-            href="/app/pronunciation"
+            href="/app/pronunciation/practice"
             className="mt-5 rounded-2xl px-4 py-2.5 text-sm font-bold text-white"
             style={{ background: "var(--lingo-accent-gradient)" }}
           >
@@ -212,7 +213,8 @@ export default function WeakSoundsReviewPage() {
                 {visible.map((w) => {
                   const bucket = bucketFor(w);
                   const tier = scoreTier(w.last_score);
-                  const guide = primaryGuide({ tone: w.target_tone, pinyin: w.pinyin });
+                  const context = contextualToneTargetForSound(w.example_sentence ?? "", w.syllable, w.target_tone);
+                  const guide = primaryGuide({ tone: context?.targetTone ?? w.target_tone, pinyin: w.pinyin, previousTone: context?.previousTone, connectedSpeech: context?.connectedSpeech });
                   const toneTitle = guideForTone(w.target_tone)?.title;
                   return (
                     <div
@@ -270,6 +272,7 @@ export default function WeakSoundsReviewPage() {
                       <p className="mt-3 text-sm text-[var(--lingo-text)]">
                         {guide?.shortTip ?? "We'll keep an eye on this sound in your practice."}
                       </p>
+                      {context && context.targetTone !== w.target_tone && <p className="mt-1 text-xs text-[var(--lingo-text-muted)]">{w.syllable} is written {w.pinyin} and spoken {context.pinyin} in the example below.</p>}
                       <p className="mt-2 text-xs text-[var(--lingo-text-muted)]">
                         {w.consecutive_good > 0
                           ? `${w.consecutive_good} ${convertText(t(w.consecutive_good === 1 ? "good attempt in a row" : "good attempts in a row"))}`

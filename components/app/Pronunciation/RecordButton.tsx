@@ -11,9 +11,13 @@ import {
 import type { CharacterScore } from "@/lib/pronunciation/normalizeScore";
 import type { IsolateTarget } from "@/lib/pronunciation/isolateTarget";
 import { coerceIsolateTargets } from "@/lib/pronunciation/isolateTarget";
+import {stopTextToSpeech} from "@/lib/utils/tts";
+import { markFreshScore, prepareCelebrationSound, stopCelebrationSound } from "@/lib/pronunciation/celebration";
 
 export type ScoreResult = {
   attemptId: string;
+  /** Ephemeral: only a new scoring response may trigger a celebration. */
+  newlyScored?: boolean;
   overallScore: number | null;
   characters: CharacterScore[];
   weakSyllables: IsolateTarget[];
@@ -35,6 +39,9 @@ const DEFAULT_MAX_SECONDS: Record<UnitType, number> = {
   sentence: 15,
   syllable_drill: 8,
 };
+// A retry may remount the button after an error. Keep the same request identity
+// for that captured Blob so the server can return the already-saved attempt.
+const audioRequestIds = new WeakMap<Blob,string>();
 
 function classifyError(message: string, status?: number): RecordErrorKind {
   if (status === 429 || /limit reached/i.test(message)) return "rate_limit";
@@ -50,19 +57,29 @@ export default function RecordButton({
   targetText,
   targetPinyin,
   islandWordId,
+  itemId,
+  courseActivityId,
+  maxDuration,
+  onBusyChange,
   onRecorded,
   onScored,
   onError,
   disabled = false,
+  compact = false,
   /** When set, re-submit this blob instead of recording again (network retry). */
   retryBlob,
   onRetryConsumed,
 }: {
   sessionId: string;
+  compact?: boolean;
   unitType: UnitType;
   targetText: string;
   targetPinyin?: string;
   islandWordId?: string;
+  itemId?: string;
+  courseActivityId?: string;
+  maxDuration?: number;
+  onBusyChange?: (busy:boolean)=>void;
   onRecorded?: (blob: Blob) => void;
   onScored: (result: ScoreResult) => void;
   onError?: (error: RecordError) => void;
@@ -75,8 +92,10 @@ export default function RecordButton({
   const [scoring, setScoring] = useState(false);
   const recorder = useRef<PcmRecorderHandle | null>(null);
   const lastBlob = useRef<Blob | null>(null);
-  const requestIds = useRef(new WeakMap<Blob, string>());
-  const maxSeconds = DEFAULT_MAX_SECONDS[unitType];
+  const requestIds = useRef(audioRequestIds);
+  const maxSeconds = maxDuration ?? DEFAULT_MAX_SECONDS[unitType];
+  useEffect(()=>{onBusyChange?.(recording||scoring);},[recording,scoring,onBusyChange]);
+  useEffect(()=>()=>onBusyChange?.(false),[onBusyChange]);
 
   useEffect(() => {
     if (!recording) return;
@@ -108,6 +127,8 @@ export default function RecordButton({
       const form = new FormData();
       form.append("sessionId", sessionId);
       form.append("unitType", unitType);
+      if(itemId)form.append("itemId",itemId);
+      if(courseActivityId)form.append("courseActivityId",courseActivityId);
       form.append("targetText", targetText);
       if (targetPinyin) form.append("targetPinyin", targetPinyin);
       if (islandWordId) form.append("islandWordId", islandWordId);
@@ -116,19 +137,19 @@ export default function RecordButton({
       form.append("clientRequestId", requestId);
       form.append("audio", blob, "recording.wav");
 
-      const response = await fetch("/api/pronunciation/score", { method: "POST", body: form });
+      const response = await fetch(courseActivityId?"/api/pronunciation/course/score":"/api/pronunciation/score", { method: "POST", body: form });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data) {
         const message =
           typeof data?.error === "string" ? data.error : "Unable to score recording.";
         throw Object.assign(new Error(message), { status: response.status });
       }
-      onScored({
+      onScored(markFreshScore({
         attemptId: data.attemptId,
         overallScore: data.overallScore ?? null,
         characters: data.score?.characters ?? [],
         weakSyllables: coerceIsolateTargets(data.weakSyllables),
-      });
+      }));
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Unable to score recording.";
       const status = cause && typeof cause === "object" && "status" in cause ? Number((cause as { status: number }).status) : undefined;
@@ -144,6 +165,9 @@ export default function RecordButton({
 
   const start = async () => {
     if (disabled || recording || scoring) return;
+    stopTextToSpeech();
+    stopCelebrationSound();
+    prepareCelebrationSound();
     setSeconds(0);
     try {
       recorder.current = await startPcmRecording();
@@ -174,9 +198,9 @@ export default function RecordButton({
 
   if (scoring) {
     return (
-      <div className="flex flex-col items-center gap-3">
+      <div className={`flex items-center justify-center gap-3 ${compact?"":"flex-col"}`}>
         <div
-          className="relative flex h-20 w-20 items-center justify-center rounded-full text-white"
+          className={`relative flex shrink-0 items-center justify-center rounded-full text-white ${compact?"h-12 w-12":"h-20 w-20"}`}
           style={{ background: "var(--lingo-accent-gradient)" }}
         >
           <span className="absolute inset-0 animate-ping rounded-full bg-sky-300/40" />
@@ -189,11 +213,11 @@ export default function RecordButton({
 
   if (recording) {
     return (
-      <div className="flex flex-col items-center gap-3">
+      <div className={`flex items-center justify-center gap-3 ${compact?"":"flex-col"}`}>
         <button
           type="button"
           onClick={() => void stopAndSubmit()}
-          className="relative flex h-20 w-20 items-center justify-center rounded-full bg-red-500 text-white shadow-lg transition hover:bg-red-600"
+          className={`relative flex shrink-0 items-center justify-center rounded-full bg-red-500 text-white shadow-lg transition hover:bg-red-600 ${compact?"h-12 w-12":"h-20 w-20"}`}
           aria-label="Stop recording"
         >
           <span className="absolute inset-[-6px] animate-ping rounded-full bg-red-400/30" />
@@ -208,12 +232,12 @@ export default function RecordButton({
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className={`flex items-center justify-center gap-3 ${compact?"":"flex-col"}`}>
       <button
         type="button"
         onClick={() => void start()}
         disabled={disabled}
-        className="flex h-20 w-20 items-center justify-center rounded-full text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-50"
+        className={`flex shrink-0 items-center justify-center rounded-full text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-50 ${compact?"h-12 w-12":"h-20 w-20"}`}
         style={{ background: "var(--lingo-accent-gradient)", boxShadow: "0 12px 28px rgba(33,118,174,.28)" }}
         aria-label="Tap to record"
       >

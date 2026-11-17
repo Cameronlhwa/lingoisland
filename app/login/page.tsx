@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/browser";
 import { getOAuthRedirectConfig } from "@/lib/utils/oauth";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect, Suspense, type FormEvent } from "react";
+import { useState, useEffect, useRef, Suspense, type FormEvent } from "react";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -17,6 +17,8 @@ function LoginPageContent() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const googlePending = useRef(false);
+  const [isGooglePending, setIsGooglePending] = useState(false);
 
   // Handle error from URL params (e.g., from failed OAuth)
   useEffect(() => {
@@ -65,7 +67,18 @@ function LoginPageContent() {
     if (error) {
       switch (error) {
         case "auth_failed":
-          setErrorMessage("Authentication failed. Please try again.");
+          const reason = searchParams.get("auth_reason");
+          setErrorMessage(
+            reason === "rate_limited"
+              ? "Google sign-in is temporarily rate limited. Wait about 5 minutes, then try once more. Avoid clicking Continue with Google repeatedly."
+              : process.env.NODE_ENV === "development" && reason === "missing_verifier"
+              ? "Google returned successfully, but the sign-in verification cookie is missing. Start sign-in again in this same browser and tab."
+              : process.env.NODE_ENV === "development" && reason === "exchange_failed"
+                ? `Google returned successfully, but the session exchange failed (${(searchParams.get("auth_detail") || "unknown").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 80)}).`
+                : process.env.NODE_ENV === "development" && reason === "user_verification_failed"
+                  ? "The sign-in code was exchanged, but the server could not verify the signed-in user. Check the [AUTH CALLBACK] terminal error."
+                  : "Authentication failed. Please try again.",
+          );
           break;
         case "oauth_expired":
           setErrorMessage("OAuth session expired. Please sign in again.");
@@ -85,6 +98,10 @@ function LoginPageContent() {
   }, [searchParams, router, supabase]);
 
   const handleGoogleLogin = async () => {
+    if (googlePending.current) return;
+    googlePending.current = true;
+    setIsGooglePending(true);
+    try {
     setStatusMessage(null);
     setErrorMessage(null);
     const { origin, redirectTo, cookieOptions } = getOAuthRedirectConfig();
@@ -116,6 +133,13 @@ function LoginPageContent() {
     if (error) {
       console.error("Error signing in:", error);
       setErrorMessage("Failed to sign in. Please try again.");
+      googlePending.current = false;
+      setIsGooglePending(false);
+    }
+    } catch {
+      googlePending.current = false;
+      setIsGooglePending(false);
+      setErrorMessage("Could not connect to Google sign-in. Please try again.");
     }
   };
 
@@ -239,10 +263,11 @@ function LoginPageContent() {
 
         <button
           onClick={handleGoogleLogin}
+          disabled={isGooglePending}
           className="w-full rounded-full border bg-white px-6 py-4 text-base font-semibold uppercase tracking-wide text-[var(--lingo-navy)] transition-colors hover:bg-[var(--lingo-sky-pale)]"
           style={{ borderColor: "var(--lingo-border)" }}
         >
-          Continue with Google
+          {isGooglePending ? "Connecting to Google…" : "Continue with Google"}
         </button>
 
         <div className="my-8 flex items-center gap-4">

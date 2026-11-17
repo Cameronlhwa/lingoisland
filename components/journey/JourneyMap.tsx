@@ -276,7 +276,7 @@ export function JourneyMap({
                 onClick={() => {
                   if (clickable) onActivate(node);
                 }}
-                className="absolute border-0 bg-transparent p-0 outline-none enabled:cursor-pointer disabled:cursor-default focus-visible:ring-2 focus-visible:ring-white"
+                className="group absolute border-0 bg-transparent p-0 outline-none enabled:cursor-pointer disabled:cursor-default focus-visible:ring-2 focus-visible:ring-white"
                 style={{
                   left: `${position.x}%`,
                   top: `${position.y}%`,
@@ -286,7 +286,7 @@ export function JourneyMap({
                 }}
               >
                 <span
-                  className="flex aspect-square items-center justify-center rounded-full border border-white"
+                  className="flex aspect-square items-center justify-center rounded-full border border-white transition-transform duration-200 ease-out motion-reduce:transition-none motion-safe:group-hover:scale-110 motion-safe:group-focus-visible:scale-110"
                   style={{
                     background: node.completed ? "#e9f8f1" : node.current ? "#fff1ec" : LOCKED_BG,
                     boxShadow: node.current

@@ -5,6 +5,7 @@ import { normalizeSpeechSuperResult } from "@/lib/pronunciation/normalizeScore";
 import { checkAndIncrementUsage } from "@/lib/pronunciation/rateLimit";
 import { recordCharacterAttempts } from "@/lib/pronunciation/weakSoundsStore";
 import { weakSyllablesFromCharacters, coerceIsolateTargets } from "@/lib/pronunciation/isolateTarget";
+import { withItemIds } from "@/lib/pronunciation/sessionProgress";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const sessionId = form.get("sessionId");
     const unitType = form.get("unitType");
+    const itemId = form.get("itemId");
     const targetText = form.get("targetText");
     const targetPinyin = form.get("targetPinyin");
     const islandWordId = form.get("islandWordId");
@@ -77,7 +79,7 @@ export async function POST(request: Request) {
     // empty insert failure.
     const { data: session, error: sessionError } = await supabase
       .from("pronunciation_sessions")
-      .select("id")
+      .select("id, sentences, status")
       .eq("id", sessionId)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -85,6 +87,10 @@ export async function POST(request: Request) {
     if (sessionError || !session) {
       return NextResponse.json({ error: "Practice session not found" }, { status: 404 });
     }
+    const items=withItemIds(session.sentences??[]);
+    const item=items.find(value=>value.itemId===itemId);
+    const allowed = item && (unitType==="word"?targetText===item.wordHanzi:unitType==="sentence"?targetText===item.sentenceHanzi:item.sentenceHanzi.includes(targetText)||item.wordHanzi.includes(targetText));
+    if(!allowed)return NextResponse.json({error:"This recording does not match a practice item. Reload the session."},{status:400});
 
     // Idempotency: a duplicate submit (double-tap, two tabs) with the same
     // clientRequestId returns the already-scored attempt instead of paying
@@ -105,6 +111,7 @@ export async function POST(request: Request) {
         weakSyllables: coerceIsolateTargets(existingAttempt.weak_syllables),
       });
     }
+    if(session.status!=="in_progress")return NextResponse.json({error:"This session has already finished."},{status:409});
 
     const usage = await checkAndIncrementUsage(supabase, user.id);
     if (!usage.ok) {
@@ -137,6 +144,7 @@ export async function POST(request: Request) {
       .insert({
         user_id: user.id,
         session_id: sessionId,
+        item_id: item.itemId,
         unit_type: unitType,
         target_text: targetText,
         target_pinyin: typeof targetPinyin === "string" ? targetPinyin : null,

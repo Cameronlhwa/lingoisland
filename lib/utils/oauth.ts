@@ -28,8 +28,16 @@ function buildCookieOptions(origin: string) {
 }
 
 export function getOAuthRedirectConfig(): OAuthRedirectConfig {
-  const origin =
-    process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '')
+  const windowOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+  const isLocal =
+    windowOrigin.includes('localhost') ||
+    windowOrigin.includes('127.0.0.1') ||
+    windowOrigin.includes('0.0.0.0')
+  // On local machines always use the current origin so PKCE cookies and the
+  // Google redirect stay on the same host, even if SITE_URL points elsewhere.
+  const origin = isLocal
+    ? windowOrigin
+    : process.env.NEXT_PUBLIC_SITE_URL || windowOrigin
   const redirectTo = `${origin}/auth/callback`
   return {
     origin,

@@ -1,3 +1,5 @@
+import { asTone, neutralToneTip, type ToneContext } from "@/lib/pronunciation/tones";
+
 /**
  * Curated coaching copy for tones and common Mandarin initial families.
  * Used by session feedback, review tips, and deep-dive style panels.
@@ -8,6 +10,7 @@ export type SoundFamily =
   | "tone2"
   | "tone3"
   | "tone4"
+  | "neutral"
   | "retroflex"
   | "dental_sibilant"
   | "palatal"
@@ -22,7 +25,7 @@ export type SoundGuide = {
   earContrast?: { a: string; b: string; prompt: string };
 };
 
-const TONE_GUIDES: Record<1 | 2 | 3 | 4, SoundGuide> = {
+const TONE_GUIDES: Record<1 | 2 | 3 | 4 | 5, SoundGuide> = {
   1: {
     family: "tone1",
     title: "1st tone",
@@ -50,19 +53,19 @@ const TONE_GUIDES: Record<1 | 2 | 3 | 4, SoundGuide> = {
   3: {
     family: "tone3",
     title: "3rd tone",
-    shortTip: "Dip low first, then rise — the low part is the key.",
+    shortTip: "Keep this tone low. A full rise is usually unnecessary in connected speech.",
     commonMistake: "Staying too high, so it sounds like a flat or rising tone.",
     steps: [
       "Start mid-low.",
       "Drop clearly into the bottom of your range.",
-      "Then rise a little (or stay low before another 3rd tone).",
+      "In connected speech, keep it low without forcing a full rise.",
     ],
     earContrast: { a: "mǎ", b: "má", prompt: "Which one dipped low?" },
   },
   4: {
     family: "tone4",
     title: "4th tone",
-    shortTip: "Fall sharply from high to low — firm and quick.",
+    shortTip: "Let this tone fall firmly from high to low, with a quick drop.",
     commonMistake: "Trailing off softly instead of cutting down.",
     steps: [
       "Start high.",
@@ -70,6 +73,14 @@ const TONE_GUIDES: Record<1 | 2 | 3 | 4, SoundGuide> = {
       "End low — like giving a short command.",
     ],
     earContrast: { a: "mà", b: "mā", prompt: "Which one fell sharply?" },
+  },
+  5: {
+    family: "neutral",
+    title: "Neutral tone",
+    shortTip: neutralToneTip(),
+    commonMistake: "Giving it the same length and stress as a full-tone syllable.",
+    steps: ["Say the preceding syllable first.", "Make this syllable shorter and lighter.", "Let its pitch follow the preceding tone."],
+    earContrast: { a: "māma", b: "māmā", prompt: "Which second syllable is short and light?" },
   },
 };
 
@@ -112,9 +123,22 @@ const INITIAL_GUIDES: Record<"retroflex" | "dental_sibilant" | "palatal", SoundG
   },
 };
 
-export function guideForTone(tone: number | null | undefined): SoundGuide | null {
-  if (tone === 1 || tone === 2 || tone === 3 || tone === 4) return TONE_GUIDES[tone];
-  return null;
+export function guideForTone(tone: number | null | undefined, context: ToneContext = {}): SoundGuide | null {
+  const normalized = asTone(tone);
+  if (normalized === null) return null;
+  const guide = TONE_GUIDES[normalized];
+  if (normalized === 5) {
+    const shortTip = neutralToneTip(context.previousTone);
+    return { ...guide, shortTip, steps: [guide.steps[0], guide.steps[1], shortTip] };
+  }
+  if (normalized === 3 && context.connectedSpeech === false) {
+    return {
+      ...guide,
+      shortTip: "Dip low, then let the pitch rise when saying this syllable on its own.",
+      steps: ["Start mid-low.", "Dip into the low part of your comfortable range.", "Let the pitch rise when practicing the syllable on its own."],
+    };
+  }
+  return guide;
 }
 
 /** Rough initial-family detection from a pinyin syllable (e.g. "xiǎng", "zhī"). */
@@ -134,14 +158,14 @@ export function guideForPinyin(pinyin: string | null | undefined): SoundGuide | 
 export function primaryGuide(opts: {
   tone?: number | null;
   pinyin?: string | null;
-}): SoundGuide | null {
-  return guideForTone(opts.tone ?? null) ?? guideForPinyin(opts.pinyin);
+} & ToneContext): SoundGuide | null {
+  return guideForTone(opts.tone ?? null, opts) ?? guideForPinyin(opts.pinyin);
 }
 
 export function weakSoundLabel(syllable: string, pinyin: string | null, tone: number | null): string {
   const toneGuide = guideForTone(tone);
   if (toneGuide && !pinyin) return toneGuide.title;
-  if (tone != null && tone >= 1 && tone <= 4) {
+  if (asTone(tone) !== null) {
     return `${pinyin ?? syllable} · ${toneGuide?.title ?? `tone ${tone}`}`;
   }
   return pinyin ?? syllable;

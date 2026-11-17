@@ -1,5 +1,6 @@
 import type { SpeechSuperResult } from "@/lib/speechsuper/client";
 import { spokenTonesForText, type CharacterTones } from "@/lib/pronunciation/surfacePinyin";
+import { asTone } from "@/lib/pronunciation/tones";
 
 export type PhonemeScore = {
   role: "initial" | "final" | "other";
@@ -18,6 +19,9 @@ export type CharacterScore = {
   /** Dictionary/citation tone — identity for weak-sound tracking. Isolate drills use spoken form when sandhiApplied. */
   citationTone: number | null;
   sandhiApplied: boolean;
+  /** Optional for compatibility with previously saved attempts. */
+  previousTone?: number | null;
+  connectedSpeech?: boolean;
   score: number | null;
   phonemes: PhonemeScore[];
 };
@@ -41,6 +45,7 @@ const TONE_MARKS: Record<string, string[]> = {
 };
 
 function asNumber(value: unknown): number | null {
+  if (value === null || value === undefined || (typeof value !== "number" && typeof value !== "string") || (typeof value === "string" && !value.trim())) return null;
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
@@ -51,8 +56,8 @@ function speechResult(value: SpeechSuperResult | null): Record<string, unknown> 
 }
 
 function toneNumber(value: unknown): number | null {
-  const match = typeof value === "string" ? value.match(/tone([1-4])/i) : null;
-  return match ? Number(match[1]) : null;
+  const match = typeof value === "string" ? value.match(/^tone([0-5])$/i) : null;
+  return match ? asTone(Number(match[1])) : null;
 }
 
 /** Apply a 1–4 tone mark to a bare pinyin syllable (e.g. "hen" + 2 → "hén"). */
@@ -77,16 +82,20 @@ function applyToneMark(syllable: string, tone: number): string {
 function barePinyin(word: Record<string, unknown>): string | null {
   const raw = typeof word.rawpinyin === "string" ? word.rawpinyin : null;
   if (raw) {
-    const match = raw.match(/^([a-züÜv:]+)[1-5]?$/i);
+    const match = raw.match(/^([a-züÜv:]+)[0-5]?$/i);
     if (match) return match[1].toLowerCase();
   }
   if (typeof word.pinyin === "string" && word.pinyin.trim()) {
-    return word.pinyin.trim().toLowerCase().replace(/[1-5]/g, "");
+    return word.pinyin.trim().toLowerCase().replace(/[0-5]/g, "");
   }
   return null;
 }
 
 function citationPinyinFrom(word: Record<string, unknown>): string | null {
+  if (toneNumber(firstNormalizedSyllable(word)?.tone) === 5 || toneNumber(word.tone) === 5) {
+    const bare = barePinyin(word);
+    if (bare) return applyToneMark(bare, 5);
+  }
   if (typeof word.symbolpinyin === "string" && word.symbolpinyin.trim()) {
     return word.symbolpinyin.trim();
   }
@@ -179,7 +188,7 @@ function extractCharacters(value: SpeechSuperResult | null, referenceText?: stri
     if (!hanzi) return [];
 
     const syllable = firstNormalizedSyllable(word);
-    const citationTone = toneNumber(syllable?.tone ?? word.tone);
+    const citationTone = toneNumber(syllable?.tone) ?? toneNumber(word.tone);
     const reported = toneNumber(syllable?.tone_sandhi);
     // SpeechSuper often omits tone_sandhi (for 不 before a 4th tone, for example).
     // Fill it in from the same rules the practice prompt uses, but only when we
@@ -204,6 +213,8 @@ function extractCharacters(value: SpeechSuperResult | null, referenceText?: stri
         targetTone: spokenTone,
         citationTone,
         sandhiApplied,
+        previousTone: ours?.spokenTone === spokenTone ? ours.previousTone : null,
+        connectedSpeech: ours?.connectedSpeech,
         score: characterScoreValue(scores, sandhiApplied),
         phonemes: extractPhonemes(word),
       },

@@ -81,7 +81,7 @@ export async function POST(
       )
       .sort((a, b) => Number(b.position ?? 0) - Number(a.position ?? 0))[0];
 
-    if (!sourceIsland?.island_id) {
+    if (!sourceIsland?.island_id || !sourceIsland.completed_at) {
       return NextResponse.json(
         { error: "No completed island to practice yet" },
         { status: 400 },

@@ -1,5 +1,7 @@
 "use client";
 
+import AppPage, { APP_PAGE_TITLE_CLASS } from "@/components/app/AppPage";
+
 import { useEffect, useState, type ReactNode } from "react";
 import { BookOpen, Check, Lock, Map } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -90,7 +92,7 @@ export function JourneyDashboard({
     typeof why === "string" && why.trim() && why.trim().length <= 90 ? why.trim() : null;
 
   return (
-    <div className="mx-auto w-full max-w-[1220px] px-4 py-8 md:px-6">
+    <AppPage>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           {backLink ? (
@@ -105,7 +107,7 @@ export function JourneyDashboard({
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--lingo-blue)]">
             {eyebrow}
           </p>
-          <h1 className="lingo-display mt-1 max-w-xl text-[34px] font-bold leading-tight text-[var(--lingo-navy)] sm:text-[40px]">
+          <h1 className={APP_PAGE_TITLE_CLASS}>
             {convertText(title)}
           </h1>
           <p className="mt-2 text-sm text-[var(--lingo-text-muted)]">
@@ -216,7 +218,7 @@ export function JourneyDashboard({
           {toast}
         </div>
       ) : null}
-    </div>
+    </AppPage>
   );
 }
 

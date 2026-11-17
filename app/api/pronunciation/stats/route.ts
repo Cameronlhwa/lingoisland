@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { DIAGNOSTIC_ITEM_COUNT } from "@/lib/pronunciation/diagnosticBank";
+import { sessionAverage } from "@/lib/pronunciation/sessionProgress";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +49,7 @@ export async function GET() {
     supabase.from("pronunciation_profiles").select("*").eq("user_id", user.id).maybeSingle(),
     supabase
       .from("pronunciation_sessions")
-      .select("id, source, completed_at, sentences")
+      .select("id, source, completed_at, sentences, summary")
       .eq("user_id", user.id)
       .eq("status", "completed")
       .order("completed_at", { ascending: false })
@@ -89,18 +90,17 @@ export async function GET() {
   const { data: attempts } = sessionIds.length
     ? await supabase
         .from("pronunciation_attempts")
-        .select("session_id, overall_score")
+        .select("session_id, item_id, target_text, unit_type, overall_score, created_at")
         .in("session_id", sessionIds)
-    : { data: [] as { session_id: string; overall_score: number | null }[] };
+        .eq("unit_type","sentence")
+        .order("created_at",{ascending:true})
+    : { data: [] as { session_id:string; item_id:string|null;target_text:string;unit_type:string;overall_score:number|null;created_at:string }[] };
 
   const avgBySession = new Map<string, number>();
   for (const sessionId of sessionIds) {
-    const scores = (attempts ?? [])
-      .filter((a) => a.session_id === sessionId && typeof a.overall_score === "number")
-      .map((a) => a.overall_score as number);
-    if (scores.length > 0) {
-      avgBySession.set(sessionId, Math.round((scores.reduce((s, v) => s + v, 0) / scores.length) * 10) / 10);
-    }
+    const session=recentSessions.find(s=>s.id===sessionId);
+    const avg=typeof session?.summary?.avgScore==="number"?session.summary.avgScore:sessionAverage((attempts??[]).filter(a=>a.session_id===sessionId));
+    if(avg!==null)avgBySession.set(sessionId,avg);
   }
 
   const history = recentSessions.slice(0, HISTORY_LIMIT).map((s) => ({

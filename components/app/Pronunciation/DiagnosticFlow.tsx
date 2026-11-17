@@ -222,8 +222,8 @@ export default function DiagnosticFlow({
 
   if (phase === "intro") {
     return (
-      <div className="mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-xl flex-col items-center justify-center px-4 py-10 text-center md:min-h-screen">
-        <div className="relative mb-6 h-48 w-full max-w-sm overflow-hidden rounded-3xl">
+      <div className="mx-auto flex min-h-[calc(100svh-9rem)] w-full max-w-xl flex-col items-center justify-center px-4 py-5 text-center md:min-h-[100svh]">
+        <div className="relative mb-4 h-28 sm:h-40 w-full max-w-sm overflow-hidden rounded-3xl">
           <Image
             src={
               passLabel === "remeasure"
@@ -256,14 +256,14 @@ export default function DiagnosticFlow({
         <button
           type="button"
           onClick={() => void requestMic()}
-          className="mt-8 w-full max-w-sm rounded-2xl px-4 py-3.5 text-sm font-bold text-white"
+          className="mt-5 w-full max-w-sm rounded-2xl px-4 py-3.5 text-sm font-bold text-white"
           style={{ background: "var(--lingo-accent-gradient)" }}
         >
           {passLabel === "remeasure" ? "Start progress check →" : "Start assessment →"}
         </button>
         <button
           type="button"
-          onClick={() => router.push("/app/pronunciation")}
+          onClick={() => router.push("/app/pronunciation/practice")}
           className="mt-3 text-sm font-semibold text-[var(--lingo-text-muted)]"
         >
           Back
@@ -292,7 +292,7 @@ export default function DiagnosticFlow({
   }
 
   return (
-    <div className="mx-auto max-w-[720px] px-4 py-8 md:px-6">
+    <div className="mx-auto w-full max-w-[720px] px-4 py-4 md:px-6">
       <div className="mb-5 flex items-center justify-between">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--lingo-text-muted)]">
           {passLabel === "remeasure" ? "Progress check" : "Pronunciation check"} · {itemIndex + 1} of {items.length}
@@ -304,7 +304,7 @@ export default function DiagnosticFlow({
               setLeaveArmed(true);
               return;
             }
-            router.push("/app/pronunciation");
+            router.push("/app/pronunciation/practice");
           }}
           className="text-xs font-bold text-[var(--lingo-text-muted)]"
         >
@@ -327,7 +327,7 @@ export default function DiagnosticFlow({
       </div>
 
       <div
-        className="rounded-[32px] border bg-white p-6 sm:p-9"
+        className="rounded-[32px] border bg-white p-4 sm:p-6"
         style={{ borderColor: "var(--lingo-accent-border)", boxShadow: "var(--lingo-shadow-card)" }}
       >
         <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--lingo-blue)]">
@@ -351,7 +351,7 @@ export default function DiagnosticFlow({
           {hidden ? "Show help" : "Hide pinyin & translation"}
         </button>
 
-        <div className="mt-8 flex flex-col items-center gap-3">
+        <div className="mt-4 flex flex-col items-center gap-3">
           {scoring ? (
             <>
               <div

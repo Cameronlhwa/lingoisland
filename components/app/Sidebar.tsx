@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 import AppLogo from "@/components/app/AppLogo";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
@@ -32,6 +33,10 @@ export default function Sidebar({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [pronunciationOpen, setPronunciationOpen] = useState(() => pathname.startsWith("/app/pronunciation"));
+  useEffect(() => {
+    if (pathname.startsWith("/app/pronunciation")) setPronunciationOpen(true);
+  }, [pathname]);
   // Topic island opened from a journey → highlight "Journey" in the nav
   const isJourneyIsland =
     (pathname.startsWith("/app/topic-islands/") ||
@@ -226,6 +231,45 @@ export default function Sidebar({
                   {item.icon(iconClass)}
                   {convertText(t(item.label))}
                 </button>
+              );
+            }
+
+            if (item.href === "/app/pronunciation") {
+              const courseActive = pathname === "/app/pronunciation/learn" || pathname.startsWith("/app/pronunciation/learn/");
+              const options = [
+                { href: "/app/pronunciation/learn", label: "Tone Mastery", active: courseActive },
+                { href: "/app/pronunciation/practice", label: "Practice & review", active: isActive && !courseActive },
+              ];
+              return (
+                <div key={item.href}>
+                  <button
+                    type="button"
+                    className={btnClass}
+                    aria-expanded={pronunciationOpen}
+                    aria-controls="pronunciation-submenu"
+                    onClick={() => setPronunciationOpen((open) => !open)}
+                  >
+                    {item.icon(iconClass)}
+                    <span>{convertText(t(item.label))}</span>
+                    <ChevronDown size={16} aria-hidden="true" className={`ml-auto shrink-0 transition-transform ${pronunciationOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {pronunciationOpen && (
+                    <ul id="pronunciation-submenu" className="ml-5 mt-1 space-y-1 border-l border-[var(--lingo-border)] pl-3">
+                      {options.map((option) => (
+                        <li key={option.href}>
+                          <Link
+                            href={option.href}
+                            aria-current={option.active ? "page" : undefined}
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex min-h-11 items-center rounded-xl px-3 py-2 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${option.active ? "bg-[var(--lingo-sky-pale)] font-semibold text-[var(--lingo-blue)]" : "font-medium text-[var(--lingo-text-muted)] hover:bg-[var(--lingo-sky-pale)] hover:text-[var(--lingo-navy)]"}`}
+                          >
+                            {convertText(t(option.label))}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               );
             }
 
