@@ -336,8 +336,8 @@ export const FOUNDER_STRIP = {
     { label: "120K+ subs", value: "120K+ subs" },
     { label: "2M+ views", value: "2M+ views" },
   ],
-  ctaLabel: "Meet Cameron",
-  ctaHref: "/founder",
+  ctaLabel: "Meet our team",
+  ctaHref: "/team",
 };
 
 export const FOUNDER_PAGE = {
@@ -384,7 +384,7 @@ export const FOUNDER_PAGE = {
   principles: {
     title: "How I build",
     items: [
-      { title: "Real-life topics first", line: "Vocabulary you’ll actually use—not textbook filler." },
+      { title: "Real-life topics first", line: "Practical vocabulary you’ll actually use." },
       { title: "Reinforcement beats cramming", line: "Stories and review bring words back at the right time." },
       { title: "HSK level control and clarity", line: "You choose your level; content stays comprehensible." },
       { title: "Sleek UI that doesn’t feel like homework", line: "Clean, focused, minimal friction." },

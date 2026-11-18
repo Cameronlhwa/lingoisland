@@ -13,7 +13,7 @@ const LINKS = [
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#topics", label: "Topics" },
   { href: "/blog", label: "Blog" },
-  { href: "/founder", label: "Founder" },
+  { href: "/team", label: "Our Team" },
   { href: "/#faq", label: "FAQ" },
   { href: "/privacy", label: "Privacy" },
 ];
