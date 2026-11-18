@@ -138,8 +138,8 @@ export default function TopicsHubPage() {
               </Link>
             </li>
             <li>
-              <Link href="/founder" className="text-gray-700 underline hover:text-gray-900">
-                Founder
+              <Link href="/team" className="text-gray-700 underline hover:text-gray-900">
+                Our Team
               </Link>
             </li>
           </ul>

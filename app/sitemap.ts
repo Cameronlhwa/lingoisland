@@ -55,8 +55,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: getCanonicalUrl("founder"),
-      lastModified: maxMtime(["app/founder/page.tsx", "app/founder/layout.tsx"]),
+      url: getCanonicalUrl("team"),
+      lastModified: maxMtime(["app/team/page.tsx", "app/team/layout.tsx"]),
       changeFrequency: "monthly",
       priority: 0.8,
     },

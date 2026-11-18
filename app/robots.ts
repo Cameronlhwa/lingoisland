@@ -7,7 +7,7 @@ import { getSiteUrl } from "@/lib/utils/site-url";
  * ALLOW (crawlable):
  *   - /         Home, indexable
  *   - /pricing  Indexable
- *   - /founder  Indexable
+ *   - /team  Indexable
  *   - /blog     Blog hub, indexable
  *   - /blog/[slug]  Article pages, indexable
  *   - /contact  Indexable
