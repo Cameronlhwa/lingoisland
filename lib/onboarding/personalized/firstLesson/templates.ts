@@ -1,3 +1,4 @@
+import { isUpdatedPronunciationTarget } from "./curriculum";
 import content from "./template-content.json";
 import { getInterest } from "../goals";
 import type { OnboardingAnswers } from "../flow";
@@ -97,5 +98,5 @@ export function compileTemplate(plan: TemplatePlan): AuthoredLesson {
   };
 }
 export function isTemplatePronunciationTarget(text: string): boolean {
-  return CHAT_TEMPLATES.some(t => [t.practice.hanzi,t.transfer.hanzi].some(s => clean(s)===clean(text)));
+  return isUpdatedPronunciationTarget(text) || CHAT_TEMPLATES.some(t => [t.practice.hanzi,t.transfer.hanzi].some(s => clean(s)===clean(text)));
 }

@@ -1,11 +1,22 @@
 "use client";
+import chatStyles from "./firstLesson/LessonChat.module.css";
+import { ChatSituation } from "./firstLesson/ChatSituation";
+import { curriculumProgress } from "@/lib/onboarding/personalized/firstLesson/lessonProgress";
+import { VocabularyLesson } from "./firstLesson/VocabularyLesson";
+import { vocabularyEvidence } from "@/lib/onboarding/personalized/firstLesson/templates";
+import { grammarSteps, grammarStepIndex } from "@/lib/onboarding/personalized/firstLesson/grammarSequence";
+import { GrammarPractice } from "./firstLesson/GrammarPractice";
+import { CorrectCelebration } from "./firstLesson/CorrectCelebration";
+import { prepareCelebrationSound } from "@/lib/pronunciation/celebration";
+import { CoursePlacementGate } from "./firstLesson/CoursePlacementGate";
+import { updatedLessonLevel, updatedFirstLesson } from "@/lib/onboarding/personalized/firstLesson/curriculum";
 import { PronunciationResults } from "./firstLesson/PronunciationResults";
 import { parsePronunciationPieces } from "@/lib/onboarding/personalized/firstLesson/pronunciationResults";
 import { lessonInput } from "@/lib/onboarding/personalized/firstLesson/personalization";
 import { compileTemplate, fallbackTemplatePlan, templateKey, templatePrerequisites, validTemplatePlan } from "@/lib/onboarding/personalized/firstLesson/templates";
 import { PrepareMessage } from "./firstLesson/PrepareMessage";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronLeft, Mic, Send, Square, Volume2 } from "lucide-react";
+import { Check, ChevronLeft, Mic, Square, Volume2 } from "lucide-react";
 import { abortPcmRecording, startPcmRecording, stopPcmRecording, type PcmRecorderHandle } from "@/lib/audio/recordPcm";
 import { ONBOARDING_EVENTS } from "@/lib/onboarding/personalized/analytics";
 import { awardLessonXp, lessonXpTotal } from "@/lib/onboarding/personalized/flow";
@@ -16,7 +27,7 @@ import type { StepProps } from "./stepTypes";
 import { CARD_BORDER, GREEN, MUTED, NAVY, PrimaryButton, SecondaryButton, SKY_PALE, StepFrame, TextButton } from "./ui";
 import { AudioButton, BuildSentence, Feedback, SentenceBreakdown, hasWordBreakdown, MatchWords, MeaningQuiz, RouteIcon, WordCard, say } from "./firstLesson/LessonActivities";
 
-const PHASES: LessonPhase[] = ["intro", "teach_first", "beginner_match", "beginner_recall", "recognize", "teach_second", "meaning", "listen", "frame", "supported", "build", "transfer", "baseline", "prepare", "chat", "complete"];
+const PHASES: LessonPhase[] = ["intro", "vocabulary", "teach_first", "beginner_match", "beginner_recall", "recognize", "teach_second", "meaning", "listen", "frame", "supported", "build", "transfer", "baseline", "prepare", "chat", "discussion", "note", "complete"];
 const HEADINGS: Partial<Record<LessonPhase, [string, string]>> = {
   intro: ["Your first conversation starts here.", "A little practice. Then a real task with Huahua."],
   teach_first: ["Start with one useful word.", "Read the meaning and play the audio when you can."],
@@ -47,10 +58,14 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
   const answers = state.answers;
   const lesson = useMemo(() => lessonOverride ?? getLessonById(answers.firstLesson.lessonId ?? "") ?? selectFirstLesson({ goal: answers.goal.primary, interestKeys: answers.interests.keys, selfReport: answers.level.selfReport, basic: answers.vocabBasic, advanced: answers.vocabAdvanced }), [lessonOverride, answers.firstLesson.lessonId, answers.goal.primary, answers.interests.keys, answers.level.selfReport, answers.vocabBasic, answers.vocabAdvanced]);
   const [progress, setProgress] = useState<FirstLessonProgress>(() => {
-    const saved = answers.firstLesson.version === 2 && ((lessonOverride && answers.firstLesson.lessonId === lesson.id) || getLessonById(answers.firstLesson.lessonId ?? "")) ? answers.firstLesson : {...EMPTY_FIRST_LESSON,lessonId:lesson.id};
-    return {...saved,phase:saved.phase === "coach" ? "baseline" : saved.phase,selectedDrinkId:lesson.chat.choices.some(p=>p.id===saved.selectedDrinkId)?saved.selectedDrinkId:null};
+    const saved = answers.firstLesson.version === 2 && (lessonOverride ? answers.firstLesson.lessonId === lesson.id : getLessonById(answers.firstLesson.lessonId ?? "")) ? answers.firstLesson : {...EMPTY_FIRST_LESSON,lessonId:lesson.id};
+    return {...saved,phase:saved.phase === "discussion" && !lesson.curriculum?.discussion ? "prepare" : saved.phase === "baseline" && lesson.curriculum?.pronunciation === false ? "prepare" : lesson.curriculum && ["teach_first","meaning"].includes(saved.phase) ? "vocabulary" : saved.phase === "coach" ? "baseline" : saved.phase,discussionReplyId:lesson.curriculum?.discussion?.choices.some(p=>p.id===saved.discussionReplyId)?saved.discussionReplyId:null,selectedDrinkId:lesson.chat.choices.some(p=>p.id===saved.selectedDrinkId)?saved.selectedDrinkId:null};
   });
   const progressRef = useRef(progress);
+  const phase = progress.phase;
+  const chatting = phase === "chat" || phase === "discussion";
+  const activeChat = phase === "discussion" ? lesson.curriculum?.discussion ?? lesson.chat : lesson.chat;
+  const sentReplyId = phase === "discussion" ? progress.discussionReplyId : progress.selectedDrinkId;
   const [status, setStatus] = useState("");
   const [audioUnavailable, setAudioUnavailable] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -61,6 +76,7 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
   const [chatError, setChatError] = useState(false);
   const [typing, setTyping] = useState(false);
   const [xpBurst, setXpBurst] = useState(0);
+  const [celebration,setCelebration] = useState(0);
   const recorder = useRef<PcmRecorderHandle | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -77,9 +93,11 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
   const teaching = lesson.template?.teaching ?? [];
   const teachingIndex = Math.min(progress.teachingIndex ?? 0, Math.max(0,teaching.length-1));
   const quizPairs = lesson.template?.quizPairs ?? lesson.match;
-  const beginnerRounds = lesson.template?.tier === 1 && teaching.length >= 2;
+  const beginnerRounds = !lesson.curriculum && lesson.template?.tier === 1 && teaching.length >= 2;
   const roundPairs = lesson.match.filter(p => teaching.slice(Math.max(0, teachingIndex - 2), teachingIndex + 1).some(w => w.id === p.id));
   const phases = PHASES.filter(p => {
+    if (lesson.curriculum) return ["intro", "vocabulary", "frame", ...(lesson.curriculum.pronunciation === false ? [] : ["baseline"]), "prepare", "chat", ...(lesson.curriculum.discussion ? ["discussion"] : []), "note", "complete"].includes(p);
+    if (p === "discussion" || p === "note" || p === "vocabulary") return false;
     if (["beginner_match", "beginner_recall"].includes(p)) return beginnerRounds;
     if (beginnerRounds && ["recognize", "meaning", "listen"].includes(p)) return false;
     return !lesson.template || (p !== "teach_second" && !(teaching.length === 0 && ["teach_first", "recognize"].includes(p)) && !(teaching.length <= 1 && ["meaning", "listen"].includes(p)));
@@ -103,7 +121,7 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
       const index = PHASES.indexOf(phase); phase = phases.find(p => PHASES.indexOf(p)>index) ?? "complete";
     }
     if (lesson.template && phase === "frame" && teaching.length<=1) xpKey = "meaning";
-    setStatus(""); setSilent(false); save({ ...patch, phase }, xpKey);
+    setStatus(""); setSilent(false); setChoice(null); setChatError(false); save({ ...patch, phase }, xpKey);
     track(ONBOARDING_EVENTS.firstLessonPhase, { lesson_id: lesson.id, phase });
   };
   const mistake = (id: string) => save({ mistakes: Array.from(new Set([...(progressRef.current.mistakes ?? []), id])) });
@@ -123,14 +141,17 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
     };
   }, []);
   const finish = () => {
+    if (lesson.curriculum?.discussion && !progressRef.current.discussionReplyId) { go("discussion"); return; }
+    if (lesson.curriculum && progressRef.current.phase !== "note") { go("note"); return; }
+    setCelebration(n=>n+1);
     const completed = save({ phase: "complete", completedAt: new Date().toISOString() }, "exchange");
     track(ONBOARDING_EVENTS.firstLessonCompleted, { lesson_id: lesson.id, xp_total: lessonXpTotal(completed), speaking_path: completed.speakingPath, used_alternative: completed.usedAlternative });
     setStatus("Mission complete. You used your Mandarin in context.");
   };
   const deliver = () => {
-    if (!choice || choice !== lesson.chat.expectedChoiceId) return;
-    save({ selectedDrinkId: choice }); setTyping(true);
-    typingTimer.current = setTimeout(() => { if (alive.current) { setTyping(false); const reply = lesson.chat.responses[choice]; if (reply) say(reply.hanzi, failAudio); } }, 850);
+    if (!choice || choice !== activeChat.expectedChoiceId) return;
+    save(phase === "discussion" ? { discussionReplyId: choice } : { selectedDrinkId: choice }); setTyping(true);
+    typingTimer.current = setTimeout(() => { if (alive.current) { setTyping(false); const reply = activeChat.responses[choice]; if (reply) say(reply.hanzi, failAudio); } }, 850);
   };
   const evaluate = async (blob: Blob, attemptKind: "baseline" | "coach" | "chat") => {
     if (!alive.current) return;
@@ -143,7 +164,7 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
       const authenticated = await Promise.race([ensureSession(), new Promise<boolean>(resolve => setTimeout(() => resolve(false), 6000))]);
       if (!authenticated || !alive.current) throw new Error("Assessment session unavailable");
       const body = new FormData();
-      const text = attemptKind === "chat" ? lesson.chat.choices.find(p => p.id === choice)?.hanzi ?? target.hanzi : target.hanzi;
+      const text = attemptKind === "chat" ? activeChat.choices.find(p => p.id === choice)?.hanzi ?? target.hanzi : target.hanzi;
       if (progressRef.current.generated?.token) body.append("lessonToken", progressRef.current.generated.token);
       body.append("targetText", text.replace(/[，。！？、\s]/g, "")); body.append("audio", blob, "phrase.wav");
       const response = await fetch("/api/onboarding/pronunciation", { method: "POST", body, signal: controller.signal });
@@ -153,6 +174,7 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
     finally { clearTimeout(timeout); scoreAbort.current = null; }
     if (!alive.current) return;
     setBusy(false);
+    if (typeof attempt.overall === "number" && attempt.overall >= 90) setCelebration(n=>n+1);
     if (attemptKind === "chat") { setStatus("Your reply is ready."); deliver(); return; }
     const first = progressRef.current.baseline;
     save({ baseline: first ?? attempt, latest: attempt, coachRetries: first ? progressRef.current.coachRetries + 1 : 0, speakingPath: "spoken" }, "speaking");
@@ -187,23 +209,30 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
     finally { if (request === captureRequest.current) starting.current = false; }
   };
   const validateChoice = () => {
-    if (choice === lesson.chat.expectedChoiceId) { setChatError(false); return true; }
+    if (choice === activeChat.expectedChoiceId) { setChatError(false); return true; }
     setChatError(true); mistake(lesson.template ? "mission" : lesson.match[1].id); return false;
   };
-  const phase = progress.phase;
+  const conceptSteps = lesson.curriculum ? grammarSteps(lesson.curriculum) : [];
+  const conceptIndex = grammarStepIndex(conceptSteps, progress.grammarStepId);
+  const conceptStep = conceptSteps[conceptIndex];
   const phaseIndex = phase === "revisit" ? phases.length-2 : phases.indexOf(phase);
   const roundPhase = ["teach_first", "beginner_match", "beginner_recall"].includes(phase);
   const roundFraction = (Math.floor(teachingIndex / 2) + (phase === "teach_first" ? 0 : phase === "beginner_match" ? 0.55 : 0.8)) / Math.ceil(teaching.length / 2);
   const progressIndex = beginnerRounds && roundPhase ? 1 + roundFraction * (phases.indexOf("frame") - 1) : Math.max(0, phaseIndex);
-  const percentage = phase === "complete" ? 100 : Math.round(progressIndex / (phases.length - 1) * 100);
+  const percentage = lesson.curriculum ? curriculumProgress(lesson, progress) : phase === "complete" ? 100 : Math.round((progressIndex + (phase === "frame" && conceptSteps.length ? conceptIndex / conceptSteps.length : 0)) / (phases.length - 1) * 100);
   const xp = lessonXpTotal(progress);
   const simplePhrase = !hasWordBreakdown(lesson.sentenceWords, lesson.transferBuild.result);
-  let title = phase === "teach_first" && lesson.template ? (teaching.length===1 && teaching[0].hanzi===lesson.build.result.hanzi ? "A useful way to say it." : "Learn the pieces you’ll use.") : phase === "chat" && lesson.template ? lesson.outcome : phase === "frame" && simplePhrase ? "Use it in a conversation." : phase === "intro" ? lesson.outcome : phase === "chat" ? `Your mission: ${lesson.mission.toLowerCase()}.` : phase === "complete" ? lesson.completionLine : phase === "prepare" && lesson.template ? (lesson.chat.huahua.hanzi.includes("？") ? "Understand Huahua’s question." : "Understand Huahua’s message.") : HEADINGS[phase]?.[0] ?? "Practice with Huahua";
-  let subtitle = phase === "prepare" && lesson.template ? "A short explanation, then your conversation." : phase === "frame" && simplePhrase ? "A short phrase can do a lot." : phase === "intro" ? lesson.situation : HEADINGS[phase]?.[1];
+  let title = phase === "vocabulary" ? (progress.vocabularyChecked ? "A few words, then a little practice." : "Let’s build on what you know.") : phase === "teach_first" && lesson.template ? (teaching.length===1 && teaching[0].hanzi===lesson.build.result.hanzi ? "A useful way to say it." : "Learn the pieces you’ll use.") : phase === "chat" && lesson.template ? lesson.outcome : phase === "frame" && simplePhrase ? "Use it in a conversation." : phase === "note" ? lesson.curriculum?.note.title ?? "Remember this" : phase === "frame" && lesson.curriculum ? "Discover the pattern. Then use it." : phase === "intro" ? lesson.outcome : phase === "chat" ? `Your mission: ${lesson.mission.toLowerCase()}.` : phase === "complete" ? lesson.completionLine : phase === "prepare" && lesson.template ? (lesson.chat.huahua.hanzi.includes("？") ? "Understand Huahua’s question." : "Understand Huahua’s message.") : HEADINGS[phase]?.[0] ?? "Practice with Huahua";
+  let subtitle = phase === "vocabulary" ? "Learn only the words you need, up to three at a time." : phase === "prepare" && lesson.template ? "A short explanation, then your conversation." : phase === "frame" && simplePhrase ? "A short phrase can do a lot." : phase === "intro" ? lesson.situation : HEADINGS[phase]?.[1];
+  if (phase === "frame" && conceptStep) {
+    title = conceptStep.kind === "teach" ? conceptStep.card.title : conceptStep.kind === "check" ? "Your turn." : "Put it into practice.";
+    subtitle = conceptStep.kind === "teach" ? conceptStep.card.explanation : conceptStep.kind === "check" ? "Use the idea you just learned." : "Use what you’ve learned in a situation that matters to you.";
+  }
   if (beginnerRounds && phase === "teach_first") {
     title = "Learn one word at a time.";
     subtitle = "Read the meaning and play the audio. You’ll practise after every two new words.";
   }
+  if (phase === "discussion") { title = "Consider another perspective."; subtitle = "Huahua raises a concern. Acknowledge it and explain a balanced response."; }
   const meaningPractice = (phase === "baseline" && silent) || (phase === "coach" && (progress.speakingPath !== "spoken" || silent));
   const sentenceRevisit = phase === "revisit" && lesson.template && !lesson.match.some(p => progress.mistakes?.includes(p.id));
   if (meaningPractice || (phase === "listen" && audioUnavailable) || (phase === "revisit" && !sentenceRevisit)) {
@@ -224,36 +253,39 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
   const coached = baselineDone && progress.coachRetries > 0;
   const improved = coached && typeof progress.latest?.overall === "number" && typeof progress.baseline?.overall === "number" && progress.latest.overall > progress.baseline.overall;
   const playback = (attempt: SpeakingAttempt | null, label: string, compact = false) => { const Button = compact ? TextButton : SecondaryButton; return attempt?.playbackUrl ? <Button className={compact ? "!w-auto !px-2" : ""} onClick={() => { const audio = new Audio(attempt.playbackUrl!); void audio.play().catch(() => setStatus("Playback unavailable. Try the model audio instead.")); }}><Volume2 size={16} aria-hidden />{label}</Button> : null; };
-  const speaker = (attemptKind: "baseline" | "coach" | "chat", label: string, secondary = false) => { const Button = secondary ? SecondaryButton : PrimaryButton; return recording ? <PrimaryButton data-testid="lesson-stop" onClick={() => void stop(attemptKind)}><Square size={16} aria-hidden />Stop recording</PrimaryButton> : <Button className={secondary ? "!px-3 whitespace-nowrap" : ""} disabled={busy} data-testid={`lesson-${attemptKind}-record`} onClick={() => void record(attemptKind)}><Mic size={18} aria-hidden />{busy ? "Please wait…" : label}</Button>; };
+  const speaker = (attemptKind: "baseline" | "coach" | "chat", label: string, secondary = false, disabled = false) => { const Button = secondary ? SecondaryButton : PrimaryButton; return recording ? <PrimaryButton data-testid="lesson-stop" onClick={() => void stop(attemptKind)}><Square size={16} aria-hidden />Stop recording</PrimaryButton> : <Button className={secondary ? "!px-3 whitespace-nowrap" : ""} disabled={busy || disabled} data-testid={`lesson-${attemptKind}-record`} onClick={() => {prepareCelebrationSound(); void record(attemptKind);}}><Mic size={18} aria-hidden />{busy ? "Please wait…" : label}</Button>; };
   const bands = ["beginner", "elementary", "intermediate", "advanced"];
   const alternative = LESSON_BANK.find(p => p.route === lesson.route && p.band === bands[bands.indexOf(lesson.band) + 1]);
   const switchLesson = () => {
+    if (lesson.curriculum) { go("frame",{},"meaning"); return; }
     if (onAlternative && !progress.usedAlternative) { onAlternative(); return; }
     if (!alternative || progress.usedAlternative) { go(lesson.template ? "frame" : "teach_first"); return; }
     const initial = { ...EMPTY_FIRST_LESSON, lessonId: alternative.id, usedAlternative: true };
     progressRef.current = initial; setProgress(initial); update({ firstLesson: initial }); setChoice(null); setStatus("");
     track(ONBOARDING_EVENTS.firstLessonAlreadyKnew, { lesson_id: lesson.id });
   };
-  return <div className="onboarding-mini-lesson" data-testid="first-lesson" data-lesson-id={lesson.id} data-lesson-phase={phase} data-teaching-index={teachingIndex}>
+  return <div onClickCapture={prepareCelebrationSound} onPointerDownCapture={prepareCelebrationSound} className="onboarding-mini-lesson" data-testid="first-lesson" data-lesson-id={lesson.id} data-lesson-phase={phase} data-teaching-index={teachingIndex}>
+    {celebration > 0 && <CorrectCelebration key={celebration}/>}
     <style jsx global>{`
       @keyframes lesson-arrive { from { transform: translateY(6px) scale(.97); } to { transform: translateY(0) scale(1); } }
       @media (prefers-reduced-motion: no-preference) {
         .onboarding-mini-lesson .lesson-message, .onboarding-mini-lesson .lesson-correct { animation: lesson-arrive .22s ease-out both; }
       }
     `}</style>
-    <StepFrame key={phase} title={title} subtitle={subtitle} onBack={null} header={<div ref={heading} tabIndex={-1} className="outline-none">
-        <div className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold" style={{ color: MUTED }}><button type="button" disabled={recording || busy} onClick={() => { if (phase === "intro") back?.(); else { const index = phases.indexOf(phase); go(phases[Math.max(0, index - 1)]); } }} aria-label={phase === "intro" ? "Back to your plan" : "Previous lesson step"} className="flex min-h-11 items-center gap-1"><ChevronLeft size={16} aria-hidden />Back</button><span>{phase === "complete" ? "Complete" : phase === "chat" ? "Chat with Huahua" : "Your first lesson"}</span><span data-testid="lesson-xp">{xp} / {LESSON_XP_TOTAL} XP</span></div>
-        <div role="progressbar" aria-label="Lesson progress" aria-valuenow={percentage} aria-valuemin={0} aria-valuemax={100} className="mb-5 h-2 overflow-hidden rounded-full" style={{ background: "#E7F0F6" }}><div className="h-full origin-left rounded-full motion-safe:transition-transform motion-safe:duration-500" style={{ background: GREEN, transform: `scaleX(${percentage / 100})` }} /></div>
+    <StepFrame hideTitle={chatting} compact={chatting || (phase === "frame" && Boolean(lesson.curriculum))} key={phase === "frame" && conceptStep ? `${phase}:${conceptStep.id}` : phase} title={title} subtitle={chatting ? undefined : subtitle} onBack={null} header={<div ref={heading} tabIndex={-1} className="outline-none">
+        <div className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold" style={{ color: MUTED }}><button type="button" disabled={recording || busy} onClick={() => { if (phase === "intro") back?.(); else if (phase === "frame" && conceptIndex > 0) save({grammarIndex:conceptIndex-1,grammarStepId:conceptSteps[conceptIndex-1].id}); else { const index = phases.indexOf(phase); go(phases[Math.max(0, index - 1)]); } }} aria-label={phase === "intro" ? "Back to your plan" : "Previous lesson step"} className="flex min-h-11 items-center gap-1"><ChevronLeft size={16} aria-hidden />Back</button><span>{phase === "complete" ? "Complete" : (phase === "chat" || phase === "discussion") ? "Chat with Huahua" : "Your first lesson"}</span><span data-testid="lesson-xp">{xp} / {LESSON_XP_TOTAL} XP</span></div>
+        <div role="progressbar" aria-label="Lesson progress" aria-valuenow={percentage} aria-valuemin={0} aria-valuemax={100} className={`${chatting ? "mb-4" : "mb-5"} h-2 overflow-hidden rounded-full`} style={{ background: "#E7F0F6" }}><div className="h-full origin-left rounded-full motion-safe:transition-transform motion-safe:duration-500" style={{ background: GREEN, transform: `scaleX(${percentage / 100})` }} /></div>
       </div>}>
       {xpBurst > 0 && <p role="status" className="mb-3 text-center text-sm font-bold motion-safe:animate-bounce" style={{ color: GREEN }}>+{xpBurst} XP</p>}
       {audioUnavailable && <p role="status" className="mb-4 rounded-xl border px-3 py-2 text-sm" style={{ borderColor: CARD_BORDER, color: MUTED }}>Audio is unavailable here. Text and meaning hints will help you keep practicing.</p>}
       <div key={`${lesson.id}-${phase}`} data-testid={phase === "intro" ? "lesson-intro" : undefined}>
       {phase === "intro" && <>
+        {progress.coursePlacement?.notice && <p role="status" className="mb-4 rounded-2xl p-3 text-sm" style={{background:SKY_PALE,color:GREEN}}>{progress.coursePlacement.notice}</p>}
         <div className="flex justify-center rounded-2xl py-6" style={{ background: SKY_PALE, color: GREEN }}><RouteIcon route={lesson.route} /></div>
         <ul className="my-5 space-y-3 text-sm" style={{ color: NAVY }}>{[lesson.template?.tier && lesson.template.tier >= 4 ? "Learn a useful way to express yourself" : lesson.route === "work" ? "Expand your work vocabulary" : lesson.route === "travel" ? "Build vocabulary for your next trip" : "Find words to connect with others", "Turn new words into a sentence you can use", "Put it into practice with Huahua, your personalized Mandarin companion"].map(text => <li key={text} className="flex items-center gap-2"><Check size={17} style={{ color: GREEN }} aria-hidden />{text}</li>)}</ul>
-        <p className="text-center text-xs" style={{ color: MUTED }}>About 3–4 minutes · Extra practice is optional</p>
-        <PrimaryButton className="mt-6" data-testid="lesson-start" onClick={() => go("teach_first")}>Let’s learn</PrimaryButton>
-        <TextButton className="mt-2" data-testid="lesson-already-know" onClick={switchLesson}>{progress.usedAlternative || (!alternative && !onAlternative) ? "Practice this in context" : "I already know this"}</TextButton>
+        <p data-testid="lesson-learning-budget" className="text-center text-xs" style={{ color: MUTED }}>{progress.coursePlacement ? (lesson.match.some(w=>!progress.vocabularyKnownIds?.includes(w.id)) ? `${lesson.match.filter(w=>!progress.vocabularyKnownIds?.includes(w.id)).length} new words and expressions · One useful grammar family` : "Familiar words · One useful pattern to practise") : "About 5–8 minutes · Extra practice is optional"}</p>
+        <PrimaryButton className="mt-6" data-testid="lesson-start" onClick={() => go(lesson.curriculum ? "vocabulary" : "teach_first")}>Let’s learn</PrimaryButton>
+        {!lesson.curriculum && <TextButton className="mt-2" data-testid="lesson-already-know" onClick={switchLesson}>{progress.usedAlternative || (!alternative && !onAlternative) ? "Practice this in context" : "I already know this"}</TextButton>}
       </>}
       {(phase === "teach_first" || phase === "teach_second") && <>
         {lesson.template && <p className="mb-3 text-center text-xs" style={{color:MUTED}}>New piece {teachingIndex+1} of {teaching.length}</p>}
@@ -261,7 +293,7 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
         <PrimaryButton className="mt-6" data-testid="lesson-teach-continue" onClick={()=>{
           if (beginnerRounds && ((teachingIndex + 1) % 2 === 0 || teachingIndex === teaching.length - 1)) go("beginner_match");
           else if(lesson.template && teachingIndex<teaching.length-1) save({teachingIndex:teachingIndex+1});
-          else go(phase==="teach_first"?"recognize":"meaning");
+          else go(lesson.curriculum ? "meaning" : phase==="teach_first"?"recognize":"meaning");
         }}>Continue</PrimaryButton><p className="mt-3 text-center text-xs" style={{color:MUTED}}>Replay as often as you like.</p>
       </>}
       {phase === "beginner_match" && <MatchWords key={`round-match-${teachingIndex}`} pairs={roundPairs} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("beginner_recall")} />}
@@ -270,12 +302,13 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
         else go("frame", {}, "meaning");
       }} />}
       {phase === "recognize" && <MeaningQuiz pairs={quizPairs} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("teach_second")} />}
-      {phase === "meaning" && <MatchWords pairs={lesson.match} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("listen", {}, "meaning")} />}
+      {phase === "vocabulary" && lesson.curriculum && <VocabularyLesson groups={lesson.curriculum.vocabularyGroups} words={lesson.match} progress={progress} previouslyKnown={vocabularyEvidence(answers).known} onSave={save} onComplete={()=>go("frame",{},"meaning")} onMistake={mistake} onUnavailable={failAudio}/>}
+      {phase === "meaning" && <MatchWords pairs={lesson.match} onMistake={mistake} onUnavailable={failAudio} onComplete={()=>go("listen",{},"meaning")}/>}
       {phase === "listen" && <MeaningQuiz pairs={quizPairs} targetIndex={Math.min(1,lesson.match.length-1)} listening={!audioUnavailable} silent={audioUnavailable} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("frame")} />}
-      {phase === "frame" && <>
+      {phase === "frame" && (lesson.curriculum ? <GrammarPractice initialStepId={progress.grammarStepId} onProgress={(grammarIndex,grammarStepId)=>save({grammarIndex,grammarStepId})} curriculum={lesson.curriculum} responses={progress.writingResponses} onResponse={(id,text)=>save({writingResponses:{...progressRef.current.writingResponses,[id]:text}})} onMistake={mistake} onUnavailable={failAudio} onComplete={()=>{ if(lesson.curriculum?.pronunciation===false){save({},"build");go("prepare",{speakingPath:"skipped"},"speaking");}else go("baseline",{},"build");}}/> : <>
         <p className="mb-4 rounded-2xl p-4 text-sm leading-relaxed" style={{background:SKY_PALE,color:NAVY}}>{lesson.skill}</p><SentenceBreakdown words={lesson.sentenceWords} sentence={lesson.transferBuild.result} onUnavailable={failAudio} />
         <PrimaryButton className="mt-6" onClick={() => go("supported")}>{simplePhrase ? "Practice using it" : "Try building it"}</PrimaryButton>
-      </>}
+      </>)}
       {phase === "supported" && <BuildSentence prompt={lesson.build} supported options={lesson.match} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("build")} />}
       {phase === "baseline" && (silent ? <MeaningQuiz key="silent-pronunciation" pairs={quizPairs} targetIndex={0} listening={!audioUnavailable} silent={audioUnavailable} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("prepare", {speakingPath:"listening"}, "speaking")} /> : <>
         {!pronunciationAttempt && <WordCard phrase={target} onUnavailable={failAudio}/>}
@@ -295,22 +328,43 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
       {phase === "build" && <BuildSentence prompt={lesson.build} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("transfer")} />}
       {phase === "transfer" && <BuildSentence prompt={lesson.transferBuild} supported options={lesson.match} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("baseline", {}, "build")} />}
       {phase === "prepare" && <PrepareMessage lesson={lesson} onMistake={mistake} onUnavailable={failAudio} onContinue={()=>{setChoice(null);go("chat");say(lesson.chat.huahua.hanzi,failAudio);}}/>}
-      {phase === "chat" && <div data-testid="lesson-chat">
-        {lesson.template && <div className="mb-5 rounded-2xl border p-4" style={{borderColor:CARD_BORDER,background:SKY_PALE}} data-testid="lesson-chat-situation"><p className="text-xs font-bold uppercase tracking-wider" style={{color:GREEN}}>Your situation</p><p className="mt-2 text-base font-semibold leading-relaxed">{lesson.template.scene}</p></div>}
-        <div className="rounded-3xl border p-4" style={{ background: "#F8FAFB", borderColor: CARD_BORDER }}>
-          <div className="mb-4 flex items-center gap-3 border-b pb-3" style={{ borderColor: CARD_BORDER }}><span className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold" style={{ background: "#E9DFD1", color: NAVY }} aria-hidden>H</span><div><p className="text-sm font-bold">Huahua</p><p className="text-xs" style={{ color: MUTED }}>Your practice partner</p></div></div>
-          <Bubble phrase={lesson.chat.huahua} />
-          <AudioButton text={lesson.chat.huahua.hanzi} label="Replay question" onUnavailable={failAudio} />
-          {progress.selectedDrinkId ? <><Bubble mine phrase={lesson.chat.choices.find(p => p.id === progress.selectedDrinkId)!} /><p className="text-right text-xs" style={{ color: MUTED }}>Delivered</p>{typing ? <p role="status" className="mt-4 text-sm" style={{ color: MUTED }}>Huahua is typing…</p> : <Bubble phrase={lesson.chat.responses[progress.selectedDrinkId]} />}</> : <>
-            <p className="mb-2 mt-4 text-xs font-semibold" style={{ color: MUTED }}>Choose your reply</p>
-            <div className="flex flex-col gap-2">{lesson.chat.choices.map(p => <button key={p.id} type="button" disabled={busy || recording} aria-pressed={choice === p.id} data-testid={`lesson-choice-${p.id}`} onClick={() => { setChoice(p.id); setChatError(false); }} className="rounded-2xl border-2 px-4 py-3 text-left" style={{ borderColor: choice === p.id ? GREEN : CARD_BORDER, background: choice === p.id ? "#EFF7F2" : "white" }}><span className="block text-lg font-bold" lang="zh-CN">{p.hanzi}</span><span className="mt-1 block text-xs" style={{ color: MUTED }}>{p.pinyin}</span></button>)}</div>
-            {choice && <div className="mt-4 flex items-center justify-between gap-2 rounded-full border bg-white px-4 py-2" style={{ borderColor: CARD_BORDER }}><span lang="zh-CN">{lesson.chat.choices.find(p => p.id === choice)?.hanzi}</span><button type="button" disabled={busy || recording} aria-label="Send selected reply without speaking" onClick={() => { if (validateChoice()) deliver(); }} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white" style={{ background: GREEN }}><Send size={16} aria-hidden /></button></div>}
-          </>}
+      {chatting && <div data-testid="lesson-chat" className={chatStyles.chat}>
+        {lesson.template && <ChatSituation mission={activeChat.mission} fallback={phase === "discussion" ? "Acknowledge Huahua’s concern and explain a balanced response." : lesson.template.scene}/>}
+        {phase === "discussion" && <div className="mb-3 rounded-xl px-3 py-2" style={{background:SKY_PALE}}><p className="text-xs font-bold" style={{color:MUTED}}>Your first point</p><p className="mt-1 text-sm" lang="zh-CN">{(lesson.chat.choices.find(p=>p.id===progress.selectedDrinkId) ?? lesson.chat.choices[1]).hanzi}</p></div>}
+        <div className="mb-2 flex items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{background:"#E9DFD1",color:NAVY}} aria-hidden>H</span>
+          <p className="text-sm font-bold">Huahua</p>
         </div>
-        {chatError && <Feedback>That is a valid Mandarin reply meaning “{lesson.chat.choices.find(p => p.id === choice)?.meaning}”{lesson.template ? `. For this situation: ${lesson.template.scene}` : `. Your task is to ${lesson.mission.toLowerCase()}.`} Choose the reply that expresses that intention.</Feedback>}
-        {progress.selectedDrinkId ? <PrimaryButton className="mt-5" disabled={typing} data-testid="lesson-chat-finish" onClick={() => (progress.mistakes?.length ? go("revisit") : finish())}>Finish my lesson</PrimaryButton> : <div className="mt-5">{choice && speaker("chat", "Say and send")}<SecondaryButton className="mt-3" data-testid="lesson-chat-skip-speak" disabled={!choice || busy || recording} onClick={() => { if (validateChoice()) deliver(); }}>Send without speaking</SecondaryButton></div>}
+        <div className={chatStyles.question} data-testid="chat-question">
+          <div className="min-w-0">
+            <p className="text-xl font-bold leading-snug sm:text-2xl" lang="zh-CN">{activeChat.huahua.hanzi}</p>
+            <p className="mt-1 text-sm leading-relaxed" style={{color:MUTED}}>{activeChat.huahua.pinyin}</p>
+            <p className="mt-1 text-sm leading-relaxed">{activeChat.huahua.meaning}</p>
+          </div>
+          <button type="button" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{color:GREEN,outlineColor:GREEN}} aria-label={`Replay question: ${activeChat.huahua.hanzi}`} onClick={()=>say(activeChat.huahua.hanzi,failAudio)}><Volume2 size={23} aria-hidden/></button>
+        </div>
+        {sentReplyId ? <div className="mt-3">
+          <Bubble mine phrase={activeChat.choices.find(p=>p.id===sentReplyId)!}/>
+          <p className="text-right text-xs" style={{color:MUTED}}>Delivered</p>
+          {typing ? <p role="status" className="mt-3 text-sm" style={{color:MUTED}}>Huahua is typing…</p> : <Bubble phrase={activeChat.responses[sentReplyId]}/>}
+        </div> : <>
+          <p className="sr-only" id="chat-replies-label">Choose your reply</p>
+          <div role="group" aria-labelledby="chat-replies-label" data-testid="chat-replies" className={`${chatStyles.choices} ${activeChat.choices.every(p=>p.hanzi.length<=12) ? chatStyles.shortChoices : ""}`}>
+            {activeChat.choices.map(p=><button key={p.id} type="button" disabled={busy||recording} aria-pressed={choice===p.id} data-testid={`lesson-choice-${p.id}`} onClick={()=>{setChoice(p.id);setChatError(false);}} className={chatStyles.choice} style={{borderColor:choice===p.id?GREEN:CARD_BORDER,background:choice===p.id?"#EFF7F2":"white",color:NAVY,outlineColor:GREEN}}>
+              <span className="block text-lg font-bold leading-snug sm:text-xl" lang="zh-CN">{p.hanzi}</span>
+              <span className="mt-1 block text-xs leading-relaxed sm:text-sm" style={{color:MUTED}}>{p.pinyin}</span>
+              {choice===p.id && <span className={chatStyles.selected} style={{background:GREEN}}><Check size={13} aria-hidden/></span>}
+            </button>)}
+          </div>
+        </>}
+        {chatError && <Feedback>That is a valid Mandarin reply meaning “{activeChat.choices.find(p=>p.id===choice)?.meaning}”. {activeChat.mission?.task ?? lesson.mission} Choose the reply that expresses that intention.</Feedback>}
+        {sentReplyId ? <PrimaryButton className="mt-4" disabled={typing} data-testid="lesson-chat-finish" onClick={()=>(phase==="chat" && progress.mistakes?.length ? go("revisit") : finish())}>{phase==="chat" && lesson.curriculum?.discussion ? "Hear another perspective" : "Finish my lesson"}</PrimaryButton> : <div className="mt-4">
+          {speaker("chat","Say & send",false,!choice)}
+          <TextButton className="mt-1 w-full" data-testid="lesson-chat-skip-speak" disabled={!choice||busy||recording} onClick={()=>{if(validateChoice())deliver();}}>Send without speaking</TextButton>
+        </div>}
       </div>}
       {phase === "revisit" && (lesson.template && !lesson.match.some(p=>progress.mistakes?.includes(p.id)) ? <BuildSentence prompt={lesson.transferBuild} supported onMistake={mistake} onUnavailable={failAudio} onComplete={finish}/> : <MeaningQuiz pairs={quizPairs} targetIndex={Math.max(0,lesson.match.findIndex(p=>progress.mistakes?.includes(p.id)))} silent onMistake={mistake} onUnavailable={failAudio} onComplete={finish}/>)}
+      {phase === "note" && lesson.curriculum && <div data-testid="lesson-note"><p className="rounded-2xl p-5 text-base leading-relaxed" style={{background:SKY_PALE}}>{lesson.curriculum.note.text}</p><PrimaryButton className="mt-6" data-testid="lesson-note-continue" onClick={finish}>Complete my lesson</PrimaryButton></div>}
       {phase === "complete" && <div data-testid="lesson-complete">
         <div className="flex justify-center rounded-2xl py-5" style={{ background: "#EFF7F2", color: GREEN }}><Check size={34} aria-hidden /></div>
         <p className="my-4 text-center text-lg font-bold" style={{ color: GREEN }}>Mission complete · {xp} XP</p>
@@ -318,7 +372,7 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
         <p className="mt-4 text-center text-sm" style={{ color: MUTED }}>{progress.speakingPath === "spoken" ? "You practiced speaking and used a sentence in context." : "You practiced meanings and built a reply in context."}</p>
         {baselineDone && coached && <div className="mt-4 rounded-2xl p-4 text-center" style={{ background: SKY_PALE }}><p className="mb-3 text-sm font-bold">Hear your progress</p><div className="grid gap-2 sm:grid-cols-2">{playback(progress.baseline, "First try")}{playback(progress.latest, "Latest try")}</div>{improved && <p className="mt-3 text-sm" style={{ color: GREEN }}>Your latest pronunciation score is higher.</p>}</div>}
         <PrimaryButton className="mt-6" data-testid="lesson-to-commitment" onClick={() => next({ firstLesson: progressRef.current })}>Continue my journey</PrimaryButton>
-        <TextButton className="mt-2" onClick={() => go("transfer")}>Practice a little more</TextButton>
+        <TextButton className="mt-2" onClick={() => go(lesson.curriculum ? "frame" : "transfer",{grammarIndex:0,grammarStepId:undefined})}>Practice a little more</TextButton>
       </div>}
       </div>
       {status && <p className="mt-4 text-sm leading-relaxed" role="status" style={{ color: MUTED }}>{status}</p>}
@@ -326,7 +380,7 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
   </div>;
 }
 
-export function FirstLessonStep(props: StepProps & { ensureSession: () => Promise<boolean> }) {
+function TemplateFirstLessonStep(props: StepProps & { ensureSession: () => Promise<boolean> }) {
   const {state,update}=props, answers=state.answers, key=templateKey(answers);
   const stored=validTemplatePlan(answers.firstLesson.templatePlan,answers);
   const beginner=answers.level.selfReport==="new";
@@ -366,4 +420,13 @@ export function FirstLessonStep(props: StepProps & { ensureSession: () => Promis
   </StepFrame>;
   const lesson=compileTemplate(stored);
   return <LessonPlayer key={`${lesson.id}:${stored.familiarWords.join("|")}:${stored.patternFamiliar}:${Boolean(answers.firstLesson.usedAlternative)}`} {...props} lessonOverride={lesson} onAlternative={()=>void load([stored.templateId])}/>;
+}
+
+/** Placement confirms prerequisites before a bounded, authored course begins. */
+export function FirstLessonStep(props: StepProps & { ensureSession: () => Promise<boolean> }) {
+ const tier=updatedLessonLevel(props.state.answers);
+ if(!tier)return <TemplateFirstLessonStep {...props}/>;
+ return <CoursePlacementGate key={`${tier}:${props.state.answers.goal.primary}`} answers={props.state.answers} tier={tier} onBack={props.back} onSave={firstLesson=>props.update({firstLesson})}>
+  {lesson=><LessonPlayer key={lesson.id} {...props} lessonOverride={lesson}/>}
+ </CoursePlacementGate>;
 }

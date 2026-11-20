@@ -1,0 +1,69 @@
+.lesson {
+  display: block;
+  position: relative;
+  padding-top: 16px;
+  color: #5f3119;
+}
+.mascot { position: absolute; top: -36px; right: 8px; width: 56px; min-width: 0; }
+.character { display: block; width: 100%; height: auto; }
+.examples { display: grid; min-width: 0; gap: 12px; }
+.bubble {
+  position: relative;
+  min-width: 0;
+  padding: 10px 12px 14px;
+  border: 1.5px solid #c2dcf0;
+  border-radius: 21px;
+  background: linear-gradient(135deg, #fff 0%, #f0f8ff 100%);
+}
+.bubble::before {
+  content: "";
+  position: absolute;
+  top: 45%; left: -7px;
+  width: 12px; height: 12px;
+  border-left: 1.5px solid #c2dcf0;
+  border-bottom: 1.5px solid #c2dcf0;
+  background: #f8fcff;
+  transform: rotate(45deg);
+}
+.mintBubble { border-color: #b8d8bb; background: linear-gradient(135deg, #fff 0%, #f1f9ed 100%); }
+.mintBubble::before { border-color: #b8d8bb; background: #f8fcf6; }
+.reply { width: 90%; margin-left: auto; }
+.reply::before { left: auto; right: -7px; transform: rotate(225deg); }
+.exampleHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 4px; margin-bottom: 2px; }
+.exampleHeader button { padding: 0 4px; font-size: 11px; gap: 4px; }
+.exampleHeader button svg { width: 14px; height: 14px; }
+.label { border-radius: 20px; padding: 4px 8px; background: #deeffc; color: #355c76; font-size: 11px; line-height: 1.3; font-weight: 700; }
+.mintBubble .label { background: #e0f0d9; color: #20674f; }
+.hanzi { font-size: 23px; line-height: 1.5; font-weight: 700; overflow-wrap: anywhere; }
+.pinyin { margin-top: 2px; color: #4f6e83; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.meaning { margin-top: 5px; font-size: 14px; line-height: 1.4; }
+.highlight { border-radius: 5px; padding: 0 2px; color: #20674f; background: #dff0d7; }
+.soundHighlight { color: #20674f; background: none; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.context { margin: 0 0 6px; color: #5f3119; font-size: 12px; line-height: 1.5; }
+.parts { display: grid; align-items: start; gap: 6px; }
+.part { min-width: 0; text-align: center; }
+.partHanzi { padding: 5px 2px; border-radius: 10px; background: #e6f2de; font-size: 20px; white-space: nowrap; line-height: 1.4; font-weight: 700; overflow-wrap: anywhere; }
+.variablePart { background: #deedff; }
+.partPinyin { margin-top: 4px; color: #4f6e83; font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.partMeaning { margin-top: 3px; font-size: 11px; line-height: 1.4; }
+.patternMeaning { margin-top: 12px; padding: 5px 8px; border-radius: 10px; background: #e8f2df; color: #20674f; font-size: 14px; line-height: 1.4; font-weight: 700; text-align: center; }
+.connector { display: flex; justify-content: center; align-items: center; gap: 5px; margin: -6px 0 8px; color: #20674f; font-size: 12px; font-weight: 700; }
+.connector span { border-radius: 20px; padding: 3px 12px; background: #e5f2de; }
+.takeaway { margin-top: 14px; padding: 10px 12px; border: 1px solid #d5e9cb; border-radius: 16px; background: #edf6e7; color: #20674f; font-size: 14px; line-height: 1.5; font-weight: 700; text-align: center; }
+.detail { margin-top: 4px; color: #5f3119; font-size: 12px; font-weight: 400; }
+@media (min-width: 640px) {
+  .lesson { display: grid; grid-template-columns: 144px minmax(0, 1fr); align-items: center; gap: 12px; padding-top: 0; }
+  .mascot { position: static; width: auto; }
+  .bubble { padding: 10px 18px 15px; border-radius: 24px; }
+  .exampleHeader button { font-size: 12px; }
+  .label { font-size: 12px; padding: 4px 10px; }
+  .hanzi { font-size: 28px; }
+  .pinyin { font-size: 14px; }
+  .meaning { font-size: 16px; }
+  .context { font-size: 13px; }
+  .partHanzi { font-size: 25px; }
+  .partPinyin, .partMeaning { font-size: 12px; }
+  .patternMeaning { font-size: 16px; }
+  .takeaway { font-size: 16px; padding: 11px 16px; }
+  .detail { font-size: 14px; }
+}

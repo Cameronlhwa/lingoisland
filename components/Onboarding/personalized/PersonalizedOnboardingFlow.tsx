@@ -424,7 +424,7 @@ function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMo
     jumpTo,
   };
 
-  const wide = step === "reflect" ? "xl" : step === "commitment" || step === "reviews";
+  const wide = step === "reflect" ? "xl" : step === "commitment" || step === "reviews" || (step === "first_lesson" && ["frame","chat","discussion"].includes(state.answers.firstLesson.phase));
 
   return (
     <Shell wide={wide}>
