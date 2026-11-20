@@ -37,7 +37,7 @@ test("preview reaches the real lesson and paywall presentation without real chec
  a.goal.primary="travel";a.interests.keys=["restaurants"];a.level.selfReport="new";a.vocabBasic={shownIds:["wo"],selectedIds:[],noneKnown:true};a.vocabAdvanced={shownIds:[],selectedIds:[],noneKnown:false,skipped:true};a.usingPain={keys:["want_to_improve"],timing:"ongoing",upcomingText:null};a.learningPain={keys:[],hesitations:["dont_know_where_start"]};a.availability={minutes:"10",days:"5",session:null};
  for(const step of ["goal","interests","level","vocab_basic","vocab_advanced","using_pain","learning_pain","reviews","building","reflect"] as const)state.events[step]={completed_at:state.updatedAt};
  await page.addInitScript(({key,state})=>localStorage.setItem(key,JSON.stringify(state)),{key:PREVIEW_STORAGE_KEY,state});
- await page.goto("/admin/testing");await page.getByRole("button",{name:"Open onboarding flow"}).click();await expect(page.getByTestId("first-lesson")).toBeVisible();await finishFirstLesson(page);
+ await page.goto("/admin/testing");await page.getByRole("button",{name:"Open onboarding flow"}).click();await expect(page.getByTestId("course-placement")).toBeVisible();await finishFirstLesson(page);
  await page.getByLabel("Your first name").fill("Tester");await page.getByTestId("commitment-cta").click();await expect(page.getByTestId("conversation-paywall")).toBeVisible();
  await page.getByRole("button",{name:/^(Start learning Mandarin|Start my plan|Activate my plan|Start my Mandarin plan)/}).click();await expect(page.getByText(/No checkout or charge was created/)).toBeVisible();expect(writes).toBe(0);expect(checkouts).toBe(0);
  await page.getByRole("button",{name:"Reset test run"}).click();await expect(page.getByTestId("onboarding-step")).toHaveAttribute("data-step","goal");
@@ -45,4 +45,33 @@ test("preview reaches the real lesson and paywall presentation without real chec
 test("testing login rejects cross-origin submissions and bad passwords",async({request})=>{
  const cross=await request.post("/api/admin/testing-session",{headers:{Origin:"https://example.com"},data:{email:"ourlingoisland@gmail.com",password:"incorrect"}});expect(cross.status()).toBe(403);
  const wrong=await request.post("/api/admin/testing-session",{headers:{Origin:"http://localhost:3002"},data:{email:"ourlingoisland@gmail.com",password:"incorrect"}});expect(wrong.status()).toBe(401);expect(wrong.headers()["set-cookie"]).toBeUndefined();
+});
+
+for(const [index,level,goal] of [[1,"new","heritage"],[2,"few_words","work"],[3,"simple_sentences","travel"],[4,"basic_conversations","school"],[5,"familiar_topics","everyday"],[6,"complex_topics","other"]] as const)test(`mini-course picker opens course ${index} directly with the selected goal`,async({page})=>{
+ await authorised(page);let productionWrites=0;
+ await page.route("**/api/onboarding/progress**",r=>{productionWrites++;return r.fulfill({status:500,json:{error:"Preview must stay isolated"}});});
+ await page.addInitScript(key=>localStorage.setItem(key,JSON.stringify({sentinel:"normal progress"})),LOCAL_STORAGE_KEY);
+ await page.goto("/admin/testing");await page.getByTestId("mini-course-goal").selectOption(goal);
+ await page.getByTestId(`preview-course-${level}`).click();
+ await expect(page.getByTestId("course-placement")).toHaveAttribute("data-course-tier",String(index));
+ await expect(page.getByTestId("course-placement")).toBeVisible();expect(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).answers.firstLesson.xpAwarded,PREVIEW_STORAGE_KEY)).toEqual([]);
+ await expect(page.getByTestId("onboarding-step")).toHaveAttribute("data-step","first_lesson");
+ await page.getByTestId("vocabulary-know-all").click();
+ await page.reload();await expect(page.getByTestId("mini-course-picker")).toBeVisible();await page.getByRole("button",{name:"Open onboarding flow",exact:true}).click();
+ await expect(page.getByTestId("course-placement")).toHaveAttribute("data-course-tier",String(index));await expect(page.getByTestId("course-placement")).toBeVisible();
+ await page.getByRole("button",{name:"Testing",exact:true}).click();await page.getByTestId("preview-course-new").click();
+ await expect(page.getByTestId("course-placement")).toHaveAttribute("data-course-tier","1");
+ expect(await page.evaluate(key=>localStorage.getItem(key),LOCAL_STORAGE_KEY)).toBe(JSON.stringify({sentinel:"normal progress"}));expect(productionWrites).toBe(0);
+});
+
+test("mini-course picker fits phones and keeps its controls accessible",async({page})=>{
+ await authorised(page);await page.goto("/admin/testing");
+ const {default:AxeBuilder}=await import("@axe-core/playwright");
+ await page.addStyleTag({content:"*,*::before,*::after{transition:none!important;animation:none!important;}"});
+ await expect(page.getByTestId("mini-course-picker").getByRole("button")).toHaveCount(6);
+ for(const width of [1280,390,320]){
+  await page.setViewportSize({width,height:900});expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  const results=await new AxeBuilder({page}).include("main").withTags(["wcag2a","wcag2aa"]).analyze();expect(results.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.failureSummary)}))).toEqual([]);
+  if(width!==320)await page.screenshot({path:`/tmp/lingo-mini-course-picker-${width}.png`,fullPage:true});
+ }
 });

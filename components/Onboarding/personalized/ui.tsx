@@ -110,6 +110,8 @@ export function StepFrame({
   eyebrow,
   titleId,
   header,
+  compact = false,
+  hideTitle = false,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
@@ -120,6 +122,9 @@ export function StepFrame({
   titleId?: string;
   /** Optional shared-frame header for embedded activities. */
   header?: ReactNode;
+  compact?: boolean;
+  /** Keep an accessible heading when an activity already has a visible header. */
+  hideTitle?: boolean;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -155,7 +160,7 @@ export function StepFrame({
         id={titleId ?? "onboarding-step-title"}
         ref={headingRef}
         tabIndex={-1}
-        className={`${eyebrow ? "mt-1.5" : "mt-5"} text-[22px] font-bold leading-tight outline-none sm:text-[26px]`}
+        className={hideTitle ? "sr-only outline-none" : `${eyebrow ? "mt-1.5" : compact ? "mt-3" : "mt-5"} text-[22px] font-bold leading-tight outline-none sm:text-[26px]`}
         style={{ fontFamily: FONT_DISPLAY, color: NAVY }}
       >
         {title}
@@ -165,7 +170,7 @@ export function StepFrame({
           {subtitle}
         </p>
       ) : null}
-      <div className="mt-6">{children}</div>
+      <div className={hideTitle ? "mt-0" : compact ? "mt-4" : "mt-6"}>{children}</div>
     </section>
   );
 }

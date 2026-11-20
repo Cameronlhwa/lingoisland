@@ -1,4 +1,8 @@
 "use client";
+import { say } from "./lessonSpeech";
+export { say } from "./lessonSpeech";
+import { ConversationPrompt } from "./ConversationPrompt";
+import { CorrectCelebration } from "./CorrectCelebration";
 import { useState, type DragEvent } from "react";
 import { Check, Coffee, BriefcaseBusiness, Music2, Volume2, Undo2 } from "lucide-react";
 import type { AuthoredLesson, BuildPrompt, LessonPhrase, MatchPair } from "@/lib/onboarding/personalized/firstLesson/types";
@@ -45,15 +49,6 @@ function startWordDrag(event: DragEvent<HTMLButtonElement>, id: string) {
   setTimeout(() => canvas.remove(), 0);
 }
 
-export function say(text: string, onUnavailable?: () => void) {
-  if (!("speechSynthesis" in window)) { onUnavailable?.(); return; }
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "zh-CN";
-  utterance.rate = 0.8;
-  utterance.onerror = (event) => { if (event.error !== "interrupted" && event.error !== "canceled") onUnavailable?.(); };
-  window.speechSynthesis.speak(utterance);
-}
 export function AudioButton({ text, label = "Hear it", onUnavailable }: { text: string; label?: string; onUnavailable?: () => void }) {
   return <button type="button" onClick={() => say(text, onUnavailable)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2" style={{ color: GREEN }} aria-label={`${label}: ${text}`}><Volume2 size={18} aria-hidden />{label}</button>;
 }
@@ -71,7 +66,7 @@ export function WordCard({ phrase, route, onUnavailable }: { phrase: LessonPhras
   </div>;
 }
 export function Feedback({ children, correct = false }: { children: React.ReactNode; correct?: boolean }) {
-  return <div role="status" className={`mt-4 rounded-2xl border px-4 py-3 text-sm leading-relaxed ${correct ? "lesson-correct" : ""}`} style={{ borderColor: correct ? GREEN : CARD_BORDER, background: correct ? "#EFF7F2" : SKY_PALE, color: NAVY }}>{correct && <Check className="mr-2 inline" size={17} aria-hidden />}{children}</div>;
+  return <div role="status" className={`mt-4 rounded-2xl border px-4 py-3 text-sm leading-relaxed ${correct ? "lesson-correct" : ""}`} style={{ borderColor: correct ? GREEN : CARD_BORDER, background: correct ? "#EFF7F2" : SKY_PALE, color: NAVY }}>{correct && <CorrectCelebration/>}{correct && <Check className="mr-2 inline" size={17} aria-hidden />}{children}</div>;
 }
 function Choice({ selected, children, onClick, testId, audioText, onUnavailable }: { selected: boolean; children: React.ReactNode; onClick: () => void; testId?: string; audioText?: string; onUnavailable?: () => void }) {
   return <div className="relative min-w-0 flex-1">
@@ -114,7 +109,7 @@ export function MatchWords({ pairs, onComplete, onMistake, onUnavailable }: { pa
   return <div data-testid="lesson-match"><p className="text-sm leading-relaxed" style={{ color: MUTED }}>Drag words to their meanings, or tap a word and then its meaning.</p>
     <div className="mt-4 grid grid-cols-2 gap-4"><div className="flex flex-col gap-3">{pairs.map(p => <button key={p.id} type="button" draggable={!matched.includes(p.id)} disabled={matched.includes(p.id)} data-testid={`match-tile-${p.id}`} aria-pressed={selected === p.id} onDragStart={e => startWordDrag(e, p.id)} onClick={() => { setSelected(p.id); say(p.hanzi, onUnavailable); }} className="min-h-24 rounded-2xl border-2 px-2 py-3" style={{ borderColor: selected === p.id ? GREEN : CARD_BORDER, background: matched.includes(p.id) ? "#EFF7F2" : "white", color: NAVY }}><span className="block text-xl font-bold" lang="zh-CN">{p.hanzi}</span><span className="text-sm" style={{ color: MUTED }}>{p.pinyin}</span>{matched.includes(p.id) && <Check className="mx-auto mt-1" size={17} aria-label="Matched" />}</button>)}</div>
     <div className="flex flex-col gap-3">{[...pairs].reverse().map(p => <button key={p.id} type="button" data-testid={`match-slot-${p.id}`} disabled={matched.includes(p.id)} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); place(p.id, e.dataTransfer.getData("text/plain")); }} onClick={() => selected && place(p.id, selected)} className="min-h-24 rounded-2xl border border-dashed px-2 text-sm font-semibold" style={{ borderColor: matched.includes(p.id) ? GREEN : CARD_BORDER, background: SKY_PALE, color: NAVY }}>{p.label}{matched.includes(p.id) && <Check className="mx-auto mt-2" size={17} aria-hidden />}</button>)}</div></div>
-    {message && <Feedback correct={done}>{message}</Feedback>}
+    {message && <Feedback key={matched.length} correct={matched.length > 0 && message.startsWith("Matched:")}>{message}</Feedback>}
     <PrimaryButton className="mt-6" disabled={!done} data-testid="lesson-match-continue" onClick={onComplete}>Continue</PrimaryButton>
   </div>;
 }
@@ -128,11 +123,8 @@ export function BuildSentence({ prompt, options, supported = false, onComplete, 
   const add = (id: string) => { if (result === "correct") return; setResult(null); if (supported) setSelected(id); else setOrder(prev => prev.includes(id) ? prev : [...prev, id]); };
   const correct = supported ? selected === variable.id : order.length === prompt.order.length && order.every((id, i) => id === prompt.order[i]);
   return <div data-testid="lesson-build" data-correct-order={prompt.order.join(",")}>
-    <div className="mb-5 rounded-2xl border px-5 py-4" style={{ background: "#EFF7F2", borderColor: "#C8DED4" }}>
-      <p className="text-xs font-bold uppercase tracking-widest" style={{ color: GREEN }}>Say this in Mandarin</p>
-      <p className="mt-2 text-2xl font-bold leading-snug sm:text-3xl" style={{ color: NAVY }}>{prompt.result.meaning}</p>
-      <p className="mt-2 text-sm" style={{ color: MUTED }}>{supported ? "Choose the missing word or phrase to complete the sentence below." : "Tap the words or phrases below in order to build this sentence."}</p>
-    </div>
+    <ConversationPrompt prompt={`Say this in Mandarin: ${prompt.result.meaning}`} onUnavailable={onUnavailable}/>
+    <p className="mb-4 text-sm" style={{ color: MUTED }}>{supported ? "Choose the missing word or phrase to complete the sentence below." : "Tap the words or phrases below in order to build this sentence."}</p>
     <div className="mt-4 flex min-h-24 flex-wrap items-center justify-center gap-2 rounded-2xl border border-dashed p-4" style={{ background: SKY_PALE, borderColor: CARD_BORDER }} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); add(e.dataTransfer.getData("text/plain")); }} aria-label="Sentence area" data-testid="lesson-build-tray">
       {supported ? prompt.chunks.map(chunk => {
         const missing = chunk.id === variable.id;

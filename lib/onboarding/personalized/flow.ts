@@ -1,3 +1,4 @@
+import { parseCoursePlacement } from "./firstLesson/coursePlacement";
 import { onboardingVariant, type OnboardingVariant } from "./experiment";
 import { parsePronunciationPieces } from "./firstLesson/pronunciationResults";
 import { parseTemplatePlan } from "./firstLesson/templates";
@@ -515,7 +516,7 @@ function parseResponses(value: unknown, items: AssessmentItem[]): AssessmentAnsw
 const PRONUNCIATION_STATUSES: PronunciationStatus[] = ["not_started", "skipped", "denied", "failed", "completed"];
 const MESSAGING_STATUSES: MessagingStatus[] = ["not_started", "skipped", "unavailable", "verified", "simulated"];
 const PREVIEW_STATUSES: PreviewStatus[] = ["not_started", "skipped", "sent", "completed", "declined", "simulated", "unavailable"];
-const LESSON_PHASES: LessonPhase[] = ["beginner_match", "beginner_recall", "teach_first", "recognize", "teach_second", "listen", "frame", "supported", "transfer", "prepare", "revisit", "intro", "baseline", "meaning", "build", "coach", "chat", "complete"];
+const LESSON_PHASES: LessonPhase[] = ["discussion","vocabulary", "note", "beginner_match", "beginner_recall", "teach_first", "recognize", "teach_second", "listen", "frame", "supported", "transfer", "prepare", "revisit", "intro", "baseline", "meaning", "build", "coach", "chat", "complete"];
 const LESSON_XP_KEYS: LessonXpKey[] = ["meaning", "build", "speaking", "exchange"];
 
 function parseSpeakingAttempt(raw: unknown): SpeakingAttempt | null {
@@ -549,7 +550,17 @@ export function parseFirstLesson(raw: unknown): FirstLessonProgress {
     : [];
   const uniqueXp = LESSON_XP_KEYS.filter((key) => xpAwarded.includes(key));
   return {
+    coursePlacement: parseCoursePlacement(value.coursePlacement),
     templatePlan: parseTemplatePlan(value.templatePlan),
+    writingResponses: Object.fromEntries(Object.entries(obj(value.writingResponses)).filter(([k,v])=>/^[a-z0-9:-]{1,100}$/.test(k)&&typeof v==="string").slice(0,40).map(([k,v])=>[k,(v as string).slice(0,600)])),
+    discussionReplyId: typeof value.discussionReplyId === "string" ? value.discussionReplyId.slice(0,200) : null,
+    vocabularyKnownIds: Array.isArray(value.vocabularyKnownIds) ? Array.from(new Set(value.vocabularyKnownIds.filter((id): id is string => typeof id === "string" && id.length <= 80))).slice(0,30) : undefined,
+    vocabularyChecked: value.vocabularyChecked === true,
+    vocabularyTesting: value.vocabularyTesting === true,
+    vocabularyIndex: typeof value.vocabularyIndex === "number" && Number.isFinite(value.vocabularyIndex) ? Math.max(0,Math.min(30,Math.trunc(value.vocabularyIndex))) : 0,
+    grammarStepId: typeof value.grammarStepId === "string" && /^[a-z0-9:-]{1,100}$/.test(value.grammarStepId) ? value.grammarStepId : undefined,
+    grammarIndex: Math.max(0, Math.min(30, Math.trunc(Number(value.grammarIndex) || 0))),
+    matchRound: Math.max(0, Math.min(10, Math.trunc(Number(value.matchRound) || 0))),
     teachingIndex: Math.max(0, Math.min(20, Math.trunc(Number(value.teachingIndex) || 0))),
     selectionKey: typeof value.selectionKey === "string" ? value.selectionKey.slice(0, 80) : undefined,
     generated: parsePersonalizedLesson(value.generated),

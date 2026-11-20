@@ -45,7 +45,7 @@ describe("daily story island selection", () => {
 
     assert.ok(
       seen.size >= 3,
-      `expected rotation across 3+ islands, got ${[...seen].join(",")}`,
+      `expected rotation across 3+ islands, got ${Array.from(seen).join(",")}`,
     );
   });
 

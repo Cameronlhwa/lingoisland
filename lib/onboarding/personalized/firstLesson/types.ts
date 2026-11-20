@@ -34,6 +34,7 @@ export type BuildPrompt = {
 };
 
 export type ChatTurn = {
+  mission?: { context: string; task: string };
   huahua: LessonPhrase;
   choices: LessonPhrase[];
   /** If set, only this choice id is correct; otherwise any choice is valid. */
@@ -66,6 +67,7 @@ export type AuthoredLesson = {
   speakTargetId: string;
   chat: ChatTurn;
   completionLine: string;
+  curriculum?: import("./curriculum").Curriculum;
   template?: { id: string; tier: number; scene: string; teaching: LessonPhrase[]; incomingTeaching: LessonPhrase[]; construction: string; shortRoute: boolean; quizPairs: MatchPair[] };
 };
 
@@ -82,6 +84,7 @@ export const LESSON_XP_TOTAL = 50;
 
 export type LessonPhase =
   | "intro"
+  | "vocabulary"
   | "beginner_match" | "beginner_recall"
   | "teach_first" | "recognize" | "teach_second" | "listen" | "frame" | "supported" | "transfer" | "prepare" | "revisit"
   | "baseline"
@@ -89,6 +92,8 @@ export type LessonPhase =
   | "build"
   | "coach"
   | "chat"
+  | "discussion"
+  | "note"
   | "complete";
 
 export type SpeakingAttempt = {
@@ -103,8 +108,18 @@ export type SpeakingAttempt = {
 };
 
 export type FirstLessonProgress = {
+  coursePlacement?: import("./coursePlacement").CoursePlacement;
   templatePlan?: TemplatePlan | null;
   teachingIndex?: number;
+  vocabularyKnownIds?: string[];
+  vocabularyChecked?: boolean;
+  vocabularyIndex?: number;
+  vocabularyTesting?: boolean;
+  grammarIndex?: number;
+  grammarStepId?: string;
+  writingResponses?: Record<string, string>;
+  discussionReplyId?: string | null;
+  matchRound?: number;
   selectionKey?: string;
   generated?: PersonalizedLesson | null;
   version?: number;
