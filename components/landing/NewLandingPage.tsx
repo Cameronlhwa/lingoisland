@@ -24,6 +24,7 @@ import {
 import TopicConversation, { type ConversationTopic } from "./TopicConversation";
 import PronunciationPreview from "./PronunciationPreview";
 import HomeWordmark from "./HomeWordmark";
+import LearnerTestimonials from "./LearnerTestimonials";
 import LandingWaveTransition from "./LandingWaveTransition";
 import styles from "./NewLandingPage.module.css";
 
@@ -933,6 +934,14 @@ export default function NewLandingPage() {
         */}
         <Huahua />
         <Pronunciation />
+        <LearnerTestimonials
+          reveal={false}
+          className={styles.reviews}
+          eyebrow=""
+          title="Learner Reviews"
+          ratings={[5, 4.5, 5, 4.5]}
+          overallRating={4.7}
+        />
         <section className={styles.closing} aria-labelledby="closing-title">
           <div className={`${styles.container} ${styles.closingInner}`}>
             <Image

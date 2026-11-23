@@ -31,3 +31,9 @@
   .pinyin { font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) { .track span { transition: none; } }
+
+.completion { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px; border-radius: 20px; background: #f8f4eb; color: #5f3119; font-size: clamp(21px, 2.2vw, 28px); font-weight: 700; }
+.completionInput { flex: 1 1 180px; min-width: 0; width: 100%; min-height: 54px; padding: 10px 12px; border: 2px solid #6b8542; border-radius: 13px; background: white; color: #21664f; font: inherit; font-size: 21px; }
+.completionInput::placeholder { color: #7e8074; font-size: 17px; font-weight: 400; }
+.completionInput:focus-visible { outline: 3px solid #dce8c1; outline-offset: 2px; }
+@media(max-width: 420px) { .completion { gap: 8px; padding: 12px; } .completionInput { flex-basis: 130px; } }

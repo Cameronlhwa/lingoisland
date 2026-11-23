@@ -1,7 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const HEADING = "Mandarin built around real life";
-const EYEBROW = "Learner reviews";
+const HEADING = "Learner Reviews";
 const SUPPORTING = "Real feedback from LingoIsland learners";
 const QUOTES = [
   "I spoke some Mandarin at home growing up, but I still struggled with clients from China. LingoIsland helped me focus on the business vocabulary I actually needed, and I now feel much more confident building connections.",
@@ -71,7 +70,7 @@ for (const vp of VIEWPORTS) {
       const section = page.locator("section", { has: carousel });
 
       await expect(page.getByRole("heading", { level: 2, name: HEADING })).toBeVisible();
-      await expect(section.getByText(EYEBROW, { exact: true })).toBeVisible();
+      await expect(section.locator(".learner-tst-eyebrow")).toHaveCount(0);
       await expect(section.getByText(SUPPORTING, { exact: true })).toBeVisible();
       await expect(page.getByRole("region", { name: "Learner testimonials" })).toBeVisible();
 
@@ -83,10 +82,13 @@ for (const vp of VIEWPORTS) {
 
       await expect(page.getByText(/125K\+ subscribers/i)).toHaveCount(0);
       await expect(page.getByText(/reached conversational fluency/i)).toHaveCount(0);
-      await expect(page.getByLabel(/out of 5 stars/i)).toHaveCount(0);
+      await expect(cards.locator(".learner-tst-stars")).toHaveCount(QUOTES.length);
+      await expect(cards.getByRole("img", { name: "4.5 out of 5 stars", exact: true, includeHidden: true })).toHaveCount(2);
+      await expect(section.getByText("4.7 out of 5", { exact: true })).toBeVisible();
       await expect(page.locator('img[src*="cameron-lim-profile"]')).toHaveCount(0);
       await expect(section).not.toContainText(/Cameron|founder/i);
-      await expect(section.locator("img, svg[aria-label*='star' i]")).toHaveCount(0);
+      await expect(cards.locator("img")).toHaveCount(QUOTES.length);
+      await expect(cards.locator(".learner-tst-stars svg")).toHaveCount(QUOTES.length * 10);
 
       expect(await hasHorizontalOverflow(page)).toBe(false);
     });

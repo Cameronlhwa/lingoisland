@@ -7,9 +7,10 @@ import type { LessonPhrase } from "@/lib/onboarding/personalized/firstLesson/typ
 import { say } from "./lessonSpeech";
 import styles from "./ConversationPrompt.module.css";
 
-export function ConversationPrompt({ prompt, selected, onUnavailable, writing = false }: {
+export function ConversationPrompt({ prompt, selected, onUnavailable, writing = false, label }: {
   prompt: string;
   writing?: boolean;
+  label?: string;
   selected?: LessonPhrase;
   onUnavailable: () => void;
 }) {
@@ -28,7 +29,7 @@ export function ConversationPrompt({ prompt, selected, onUnavailable, writing = 
     {instruction.trim() && <p className={styles.instruction}>{instruction.trim()}</p>}
     <section className={styles.panel} aria-label="Conversation practice">
       <div className={styles.toolbar}>
-        <span className={styles.label}>{hasChinese ? "Say to Huahua" : "Your task"}</span>
+        <span className={styles.label}>{label ?? (hasChinese ? "Say to Huahua" : "Your task")}</span>
         {hasChinese && <div className={styles.controls}>
           {!(writing && hasBlank) && <button type="button" className={styles.listen} disabled={!canListen}
             aria-label={canListen ? "Listen to your sentence" : listenHint}

@@ -354,7 +354,6 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
             {activeChat.choices.map(p=><button key={p.id} type="button" disabled={busy||recording} aria-pressed={choice===p.id} data-testid={`lesson-choice-${p.id}`} onClick={()=>{setChoice(p.id);setChatError(false);}} className={chatStyles.choice} style={{borderColor:choice===p.id?GREEN:CARD_BORDER,background:choice===p.id?"#EFF7F2":"white",color:NAVY,outlineColor:GREEN}}>
               <span className="block text-lg font-bold leading-snug sm:text-xl" lang="zh-CN">{p.hanzi}</span>
               <span className="mt-1 block text-xs leading-relaxed sm:text-sm" style={{color:MUTED}}>{p.pinyin}</span>
-              {choice===p.id && <span className={chatStyles.selected} style={{background:GREEN}}><Check size={13} aria-hidden/></span>}
             </button>)}
           </div>
         </>}
