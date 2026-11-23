@@ -1,3 +1,4 @@
+import MarketingShell from "@/components/landing/MarketingShell";
 import type { Metadata } from "next";
 import { getCanonicalUrl } from "@/lib/utils/site-url";
 
@@ -29,5 +30,5 @@ export const metadata: Metadata = {
 };
 
 export default function TermsLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return <MarketingShell>{children}</MarketingShell>;
 }

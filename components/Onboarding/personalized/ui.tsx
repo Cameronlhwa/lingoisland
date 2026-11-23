@@ -31,12 +31,12 @@ export function Shell({ children, wide = false }: { children: ReactNode; wide?: 
   return (
     <div
       className="relative flex min-h-[100dvh] flex-col items-center overflow-x-hidden px-3 py-6 sm:px-4 sm:py-10"
-      style={{ fontFamily: FONT_BODY, background: "#EAF6FB" }}
+      style={{ fontFamily: FONT_BODY, background: "#fffaf3" }}
     >
       <div
         aria-hidden
         className="hsk-onboarding-bg pointer-events-none fixed inset-0"
-        style={{ backgroundImage: "url(/onboarding/journey-bg.png)", backgroundSize: "cover", backgroundRepeat: "no-repeat" }}
+        style={{ backgroundImage: "url(/onboarding/journey-island-v2.webp)", backgroundSize: "cover", backgroundPosition: "center bottom", backgroundRepeat: "no-repeat" }}
       />
       <div
         aria-hidden

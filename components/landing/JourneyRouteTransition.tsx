@@ -84,7 +84,7 @@ export default function JourneyRouteTransition() {
     if (pathname !== "/") return;
     router.prefetch("/onboarding/journey");
     const img = new Image();
-    img.src = "/onboarding/journey-bg.png";
+    img.src = "/onboarding/journey-island-v2.webp";
   }, [pathname, router]);
 
   useEffect(() => {

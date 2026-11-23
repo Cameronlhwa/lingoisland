@@ -1,0 +1,1626 @@
+.page {
+  --ink: #60371f;
+  --muted: #766554;
+  --paper: #fffaf3;
+  --orange: #c65300;
+  --green: #6b8542;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-home-display), "Nunito", system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  overflow: clip;
+}
+.page h1,
+.page h2,
+.page h3,
+.page p {
+  margin: 0;
+}
+.page h1,
+.page h2,
+.page h3 {
+  color: var(--ink);
+  font-family: var(--font-home-display), "Nunito", system-ui, sans-serif;
+  letter-spacing: -0.035em;
+}
+.page h1 {
+  font-size: clamp(36px, 4.2vw, 56px);
+  font-weight: 900;
+  line-height: 1.08;
+}
+.page h2 {
+  font-size: clamp(27px, 2.65vw, 36px);
+  font-weight: 900;
+  line-height: 1.17;
+}
+.page h3 {
+  font-size: 22px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+.page p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+.page a {
+  text-decoration: none;
+  color: inherit;
+}
+.page button,
+.page a {
+  -webkit-tap-highlight-color: transparent;
+}
+.page button {
+  font: inherit;
+}
+.page :is(a, button, input):focus-visible {
+  outline: 3px solid #b25b15;
+  outline-offset: 5px;
+}
+.container {
+  width: min(1160px, calc(100% - 96px));
+  margin-inline: auto;
+}
+.header {
+  position: relative;
+  z-index: 30;
+  background: var(--paper);
+}
+.nav {
+  min-height: 98px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+.nav > a {
+  flex-shrink: 0;
+}
+.desktopLinks {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  font-size: 14px;
+  font-weight: 750;
+}
+.desktopLinks > a:not(.login):hover {
+  color: #d66a0d;
+}
+.login {
+  border: 1px solid #b99a81;
+  border-radius: 30px;
+  padding: 7px 25px;
+  transition: background 0.2s;
+}
+.login:hover {
+  background: #f6ebdc;
+}
+.menuButton {
+  display: none;
+  border: 0;
+  background: transparent;
+  padding: 10px;
+  color: var(--ink);
+}
+.mobileMenu {
+  display: none;
+}
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 53px;
+  padding: 13px 27px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--orange);
+  color: #fff !important;
+  font-size: 16px;
+  font-weight: 850;
+  box-shadow: 0 5px 14px #e87b1212;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+  cursor: pointer;
+}
+.primary:hover {
+  background: #b84b00;
+  transform: translateY(-2px);
+}
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid #91a56a;
+  border-radius: 99px;
+  padding: 9px 23px;
+  color: #5b742f !important;
+  font-size: 16px;
+  font-weight: 750;
+  transition: background 0.2s;
+}
+.secondary:hover {
+  background: #f0f4e6;
+}
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1.12fr;
+  gap: 16px;
+  align-items: center;
+  padding-top: 64px;
+  padding-bottom: 72px;
+  min-height: 600px;
+}
+.heroCopy {
+  position: relative;
+  z-index: 2;
+  padding-bottom: 20px;
+}
+.eyebrow {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink) !important;
+  line-height: 1.45 !important;
+  margin-bottom: 20px !important;
+}
+.heroLead {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink) !important;
+  margin-top: 23px !important;
+}
+.heroDescription {
+  font-size: 16px;
+  max-width: 470px;
+  margin-top: 18px !important;
+  margin-bottom: 29px !important;
+  line-height: 1.6 !important;
+}
+.heroArt {
+  position: relative;
+  aspect-ratio: 1448/1086;
+  width: 112%;
+  margin-left: -3%;
+  isolation: isolate;
+}
+.heroLayer {
+  position: absolute;
+  inset: 0;
+}
+.heroLayer img {
+  object-fit: fill;
+}
+/* Keep the wave canvases aligned with overscan for tiny scroll-driven drift. */
+.waveTransition {
+  position: relative;
+  width: 100%;
+  height: max(180px, 25vw);
+  overflow: hidden;
+  isolation: isolate;
+  contain: paint;
+  pointer-events: none;
+  user-select: none;
+}
+.waveCanvas {
+  --wave-offset-scale: 1;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(150%, 900px);
+  aspect-ratio: 2172 / 724;
+  transform: translate(-50%, -50%);
+}
+@media (min-width: 900px) {
+  .waveTransition {
+    height: clamp(130px, 12vw, 240px);
+  }
+  .waveCanvas {
+    --wave-offset-scale: 0.3;
+    width: 180%;
+  }
+}
+.waveBand {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+.waveBand img {
+  object-fit: contain;
+}
+.wave {
+  display: block;
+  width: 100%;
+  height: 33px;
+  margin-inline: auto;
+  opacity: 0.72;
+}
+.smallWave {
+  width: 260px;
+  margin-left: 0;
+  height: 28px;
+}
+.topics {
+  padding-top: 112px;
+  padding-bottom: 100px;
+}
+.sectionIntro {
+  text-align: center;
+  max-width: 810px;
+  margin-inline: auto;
+}
+.sectionIntro p {
+  max-width: 700px;
+  margin: 18px auto 0;
+  font-size: 18px;
+}
+.topicGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 48px;
+}
+.topicCard {
+  display: grid;
+  grid-template-columns: 112px 1fr 30px;
+  gap: 19px;
+  align-items: center;
+  min-height: 150px;
+  padding: 16px 23px 16px 15px;
+  border: 1px solid #eadfce88;
+  border-radius: 23px;
+  box-shadow: 0 5px 12px #744d2810;
+  background: #fffaf5;
+  transition:
+    transform 0.25s,
+    box-shadow 0.25s,
+    border-color 0.25s;
+}
+.topicCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px #744d2815;
+  border-color: #d7bd9c;
+}
+.topicCard h3 {
+  font-size: 21px;
+}
+.topicCard p {
+  font-size: 16px;
+  line-height: 1.4;
+  margin-top: 8px;
+  max-width: 240px;
+}
+.topicArt {
+  height: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.topicArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.topicArrow {
+  width: 29px;
+  height: 29px;
+  border: 1px solid #d5b598;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #b77c46;
+  align-self: end;
+  margin-bottom: 12px;
+}
+.center {
+  text-align: center;
+  margin-top: 42px;
+}
+.learning {
+  display: grid;
+  grid-template-columns: 0.85fr 1.25fr;
+  gap: 55px;
+  align-items: center;
+  padding-top: 60px;
+  padding-bottom: 60px;
+  min-height: 560px;
+}
+.learningCopy h2 {
+  max-width: 410px;
+}
+.learningCopy p {
+  margin-top: 23px;
+  max-width: 410px;
+  font-size: 17px;
+}
+.lessonCards {
+  position: relative;
+  height: 400px;
+  isolation: isolate;
+}
+.lessonCard {
+  position: absolute;
+  width: 36%;
+  aspect-ratio: 5/7;
+  top: 35px;
+  filter: drop-shadow(0 10px 12px #77502a11);
+  will-change: transform, opacity;
+}
+.card0 {
+  left: 0;
+  z-index: 3;
+}
+.card1 {
+  left: 34%;
+  z-index: 2;
+  top: 13px;
+}
+.card2 {
+  left: 68%;
+  z-index: 1;
+}
+.cardImage {
+  position: absolute;
+  object-fit: fill;
+}
+.videoSection {
+  padding-top: 50px;
+  padding-bottom: 0;
+  scroll-margin-top: 30px;
+}
+.videoPoster {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16/8.6;
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid #e3cfaa;
+  background: #eddbc4;
+  box-shadow: 0 7px 18px #6e4a2912;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+.videoPoster > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 46%;
+  transition: transform 0.7s;
+}
+.videoPoster:hover > img {
+  transform: scale(1.025);
+}
+.videoPoster:after {
+  content: "";
+  position: absolute;
+  inset: 60% 0 0;
+  background: linear-gradient(transparent, #24140f77);
+}
+.posterBadge {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+  border-radius: 30px;
+  background: #fff9ebee;
+  color: #6a3c23;
+  padding: 5px 13px;
+  font-size: 13px;
+  font-weight: 850;
+}
+.play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #fff9eef5;
+  color: #9c6a27;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 24px #51371825;
+  z-index: 2;
+  transition: scale 0.2s;
+}
+.play svg {
+  width: 31px;
+  height: 31px;
+  margin-left: 4px;
+}
+.videoPoster:hover .play {
+  scale: 1.06;
+}
+.phraseBubble {
+  position: absolute;
+  top: 16%;
+  right: 12%;
+  background: #fffaf1f5;
+  padding: 19px 26px;
+  border-radius: 22px;
+  box-shadow: 0 4px 20px #39241718;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.phraseBubble > span {
+  font-size: 30px;
+  font-weight: 850;
+}
+.phraseBubble small {
+  display: block;
+  font-size: 18px;
+  margin-top: 6px;
+}
+.posterCaption {
+  position: absolute;
+  bottom: 27px;
+  left: 30px;
+  right: 25px;
+  color: #fff;
+  font-size: 18px;
+  z-index: 1;
+}
+.conceptNote {
+  font-size: 12px;
+  text-align: right;
+  margin-top: 9px !important;
+  color: #756656 !important;
+}
+.videoCopy {
+  text-align: center;
+  margin: 40px auto 0;
+  max-width: 800px;
+}
+.videoCopy h2 {
+  font-size: clamp(31px, 3.25vw, 43px);
+}
+.videoCopy p {
+  margin-top: 15px;
+  font-size: 18px;
+}
+.huahuaSection {
+  padding-top: 60px;
+  padding-bottom: 0;
+}
+.huahuaBand {
+  background: linear-gradient(105deg, #fff1db, #fff0d8);
+  border: 1px solid #f6e5c9;
+  border-radius: 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 32px;
+  padding: 34px 47px 30px 25px;
+  min-height: 310px;
+  overflow: hidden;
+}
+.chatScene {
+  position: relative;
+  min-height: 240px;
+}
+.chatCard {
+  position: relative;
+  z-index: 2;
+  width: 64%;
+  min-width: 250px;
+  background: #fffaf3;
+  border: 6px solid #f2e9dd;
+  border-radius: 24px;
+  padding: 17px 14px;
+  box-shadow: 0 5px 16px #71512913;
+}
+.chatHeader {
+  font-size: 14px;
+  font-weight: 850;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.chatHeader > span {
+  width: 9px;
+  height: 9px;
+  background: #91a054;
+  border-radius: 50%;
+}
+.chatLine {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 15px;
+  font-size: 13px;
+  white-space: nowrap;
+  color: #664d35;
+}
+.chatLine img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.chatLine > span {
+  padding: 8px 10px;
+  background: #fff6e6;
+  border-radius: 14px;
+  border: 1px solid #eee4d3;
+}
+.userChat {
+  justify-content: flex-end;
+}
+.userChat > span {
+  background: #e8efcf;
+  border-color: #e1eac7;
+}
+.huahuaMascot {
+  position: absolute;
+  width: 45%;
+  height: auto;
+  right: -6%;
+  bottom: -31px;
+  z-index: 1;
+}
+.huahuaCopy {
+  position: relative;
+  z-index: 3;
+}
+.huahuaCopy h2 {
+  font-size: 30px;
+  max-width: 410px;
+}
+.huahuaCopy p {
+  margin-top: 18px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 850;
+  color: #82501f !important;
+  margin-top: 20px;
+}
+.textLink:hover {
+  text-decoration: underline !important;
+  text-underline-offset: 4px;
+}
+.pronunciation {
+  padding-top: 160px;
+  padding-bottom: 140px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 110px;
+}
+.speaking {
+  padding-top: 3px;
+}
+.speaking p {
+  margin-top: 20px;
+  max-width: 430px;
+}
+.microphonePanel {
+  margin-top: 42px;
+  min-height: 136px;
+  position: relative;
+  display: flex;
+  gap: 19px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 23px;
+  background: #fff1d8;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.microphonePanel:hover {
+  background: #ffebc4;
+  transform: translateY(-3px);
+}
+.micCircle {
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  background: #fb890b;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: white;
+  box-shadow: 0 2px 0 #e87109;
+}
+.waveform {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  color: #f19a25;
+}
+.waveform i {
+  display: block;
+  width: 3px;
+  background: currentColor;
+  border-radius: 3px;
+}
+.micCaption {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #fffaf0;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 12px;
+}
+.academy {
+  border-left: 1px solid #e5dacb;
+  padding-left: 49px;
+  margin-left: -50px;
+}
+.academy h2 {
+  font-size: 29px;
+}
+.levelTag {
+  display: inline-flex;
+  background: #c65300;
+  color: white;
+  padding: 3px 11px;
+  line-height: 1.4;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 850;
+  margin-top: 12px;
+}
+.academy > h3 {
+  font-size: 17px;
+  margin-top: 23px;
+  letter-spacing: -0.01em;
+}
+.academy > p {
+  font-size: 16px;
+  margin-top: 11px;
+  line-height: 1.55;
+}
+.tonesCard {
+  background: #fff7eb;
+  border: 1px solid #ecdfce;
+  box-shadow: 0 4px 10px #76562d09;
+  border-radius: 18px;
+  padding: 16px 20px 10px;
+  margin-top: 25px;
+}
+.tonesCard > h3 {
+  text-align: center;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+.tones {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-top: 9px;
+}
+.tones button {
+  border: 0;
+  background: transparent;
+  color: #705135;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 0 4px;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+.tones button:hover {
+  background: #f0e6d6;
+}
+.tones svg {
+  width: 53px;
+  height: 40px;
+}
+.tones span {
+  font-size: 16px;
+  font-weight: 800;
+}
+.tones small {
+  font-size: 12px;
+  color: #9b8470;
+}
+.academyLink {
+  border: 1px solid #be9d7e;
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 750;
+  padding: 8px 19px;
+  margin-top: 20px;
+  transition: background 0.2s;
+}
+.academyLink:hover {
+  background: #f8ebdb;
+}
+.closing {
+  position: relative;
+  min-height: 460px;
+  padding-top: 40px;
+  isolation: isolate;
+}
+.closingInner {
+  position: relative;
+  min-height: 400px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 45px;
+  align-items: center;
+  z-index: 2;
+  padding-bottom: 90px;
+}
+.closingMascot {
+  width: 113%;
+  height: auto;
+  align-self: end;
+  margin-left: -6%;
+  margin-bottom: -10px;
+}
+.closingCopy {
+  padding-bottom: 25px;
+}
+.closingCopy h2 {
+  font-size: 33px;
+  line-height: 1.2;
+}
+.closingCopy p {
+  font-size: 17px;
+  margin-top: 19px;
+  margin-bottom: 25px;
+  max-width: 470px;
+}
+.shoreline {
+  position: absolute;
+  width: 100%;
+  height: auto;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.footer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  padding-top: 30px;
+  padding-bottom: 38px;
+  min-height: 115px;
+}
+.footer nav {
+  display: flex;
+  gap: 29px;
+  font-size: 14px;
+  font-weight: 650;
+  flex-wrap: wrap;
+}
+.footer nav a:hover {
+  color: #d86a0b;
+}
+.dialog {
+  width: min(640px, calc(100% - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  border: 1px solid #e9d8be;
+  border-radius: 28px;
+  background: #fffaf3;
+  color: var(--ink);
+  padding: 0;
+  box-shadow: 0 25px 100px #36231633;
+}
+.dialog::backdrop {
+  background: #35271988;
+  backdrop-filter: blur(6px);
+}
+.dialogContent {
+  position: relative;
+  padding: 40px;
+}
+.dialog h2 {
+  font-size: 30px;
+  max-width: 450px;
+}
+.closeDialog {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  border: 0;
+  background: #efe5d7;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.closeDialog svg {
+  width: 18px;
+}
+.stepTabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 27px;
+}
+.stepTabs button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 20px;
+  background: #efe8df;
+  padding: 7px 12px;
+  color: #72604c;
+  font-size: 13px;
+  cursor: pointer;
+}
+.stepTabs button[aria-current] {
+  background: #e4edce;
+  color: #47622d;
+}
+.lessonPanel {
+  background: #fff7e8;
+  border: 1px solid #efdfc9;
+  border-radius: 18px;
+  margin-top: 18px;
+  padding: 28px;
+  text-align: center;
+  min-height: 256px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 11px;
+}
+.lessonPanel strong {
+  font-size: 33px;
+  line-height: 1.4;
+}
+.lessonPanel > p {
+  font-size: 15px;
+}
+.lessonPanel > b {
+  font-weight: 700;
+}
+.lessonPanel > span {
+  font-size: 17px;
+  color: #8f7355;
+}
+.vocab {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 13px;
+  color: #7a674d;
+  margin-top: 9px;
+}
+.vocab > span {
+  background: #f3e9d5;
+  padding: 4px 10px;
+  border-radius: 9px;
+}
+.listenButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid #c9d4b5;
+  background: #f0f5e6;
+  color: #47622d;
+  padding: 9px 18px;
+  border-radius: 30px;
+  font-size: 15px;
+  font-weight: 750;
+  cursor: pointer;
+  margin: 18px auto 0;
+}
+.dialogActions {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+.audioMessage {
+  font-size: 13px;
+  text-align: center;
+  min-height: 19px;
+  margin-top: 8px !important;
+}
+.answerOptions {
+  display: grid;
+  gap: 12px;
+  margin-block: 15px;
+}
+.answerOptions button {
+  background: #fffaf3;
+  border: 1px solid #decdb2;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 22px;
+}
+.answerOptions .selectedAnswer {
+  border-color: #6a8948;
+  background: #edf3df;
+}
+.answerFeedback {
+  min-height: 48px;
+}
+.skipLink {
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  z-index: 100;
+  background: #fff;
+  padding: 12px;
+  border-radius: 12px;
+  transform: translateY(-160%);
+}
+.skipLink:focus {
+  transform: none;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (min-width: 1500px) {
+  .hero {
+    min-height: 650px;
+  }
+  .topics {
+    padding-top: 140px;
+  }
+  .learning {
+    padding-top: 75px;
+    padding-bottom: 72px;
+  }
+  .huahuaSection {
+    padding-top: 72px;
+  }
+  .pronunciation {
+    padding-top: 180px;
+    padding-bottom: 165px;
+  }
+}
+@media (max-width: 1050px) {
+  .container {
+    width: calc(100% - 64px);
+  }
+  .desktopLinks {
+    gap: 22px;
+    font-size: 13px;
+  }
+  .hero {
+    grid-template-columns: 1fr 1fr;
+    min-height: 545px;
+    padding-top: 45px;
+  }
+  .hero h1 {
+    font-size: 43px;
+  }
+  .heroDescription {
+    font-size: 15px;
+  }
+  .heroArt {
+    width: 116%;
+    margin-left: -4%;
+  }
+  .heroLead {
+    font-size: 17px;
+  }
+  .topicCard {
+    grid-template-columns: 90px 1fr 25px;
+    gap: 13px;
+    padding: 16px 17px 16px 10px;
+  }
+  .topicArt {
+    height: 90px;
+  }
+  .topicCard h3 {
+    font-size: 19px;
+  }
+  .topicCard p {
+    font-size: 15px;
+  }
+  .learning {
+    gap: 35px;
+    grid-template-columns: 0.9fr 1.15fr;
+  }
+  .lessonCards {
+    height: 345px;
+  }
+  .lessonCard {
+    top: 36px;
+  }
+  .card1 {
+    top: 15px;
+  }
+  .huahuaBand {
+    padding-right: 27px;
+    gap: 20px;
+  }
+  .chatCard {
+    min-width: 220px;
+    padding-inline: 9px;
+  }
+  .chatLine {
+    font-size: 12px;
+    gap: 4px;
+  }
+  .chatLine > span {
+    padding: 7px;
+  }
+  .huahuaCopy h2 {
+    font-size: 26px;
+  }
+  .huahuaCopy p {
+    font-size: 16px;
+  }
+  .pronunciation {
+    gap: 65px;
+  }
+  .academy {
+    padding-left: 32px;
+    margin-left: -33px;
+  }
+  .waveform {
+    gap: 2px;
+  }
+  .closingCopy h2 {
+    font-size: 30px;
+  }
+}
+@media (max-width: 760px) {
+  .container {
+    width: calc(100% - 40px);
+  }
+  .nav {
+    min-height: 82px;
+  }
+  .nav img {
+    height: 43px !important;
+  }
+  .desktopLinks {
+    display: none;
+  }
+  .menuButton {
+    display: grid;
+    place-items: center;
+  }
+  .mobileMenu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: #fff8ed;
+    border: 1px solid #ecdecb;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px #4f321d12;
+    margin: 0 20px;
+    padding: 18px;
+    position: absolute;
+    top: 75px;
+    left: 0;
+    right: 0;
+  }
+  .mobileMenu > a:not(.primary) {
+    padding: 10px 8px;
+    font-weight: 750;
+    font-size: 16px;
+  }
+  .mobileMenu .primary {
+    margin-top: 8px;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+    padding-top: 40px;
+    padding-bottom: 30px;
+    gap: 23px;
+    min-height: 0;
+  }
+  .heroCopy {
+    padding-bottom: 0;
+  }
+  .hero h1 {
+    font-size: clamp(37px, 7.8vw, 52px);
+    max-width: 560px;
+  }
+  .eyebrow {
+    font-size: 13px;
+    margin-bottom: 16px !important;
+    max-width: 320px;
+  }
+  .heroLead {
+    font-size: 17px;
+    margin-top: 21px !important;
+    max-width: 420px;
+  }
+  .heroDescription {
+    font-size: 16px;
+    max-width: 520px;
+    margin-top: 14px !important;
+    margin-bottom: 24px !important;
+  }
+  .heroArt {
+    width: min(100%, 560px);
+    margin: 0 auto;
+    aspect-ratio: 1448/1086;
+  }
+  .wave {
+    height: 23px;
+  }
+  .topics {
+    padding-top: 75px;
+    padding-bottom: 75px;
+  }
+  .sectionIntro h2 {
+    max-width: 400px;
+    margin-inline: auto;
+  }
+  .sectionIntro p {
+    font-size: 16px;
+    margin-top: 15px;
+    max-width: 470px;
+  }
+  .topicGrid {
+    gap: 16px;
+    margin-top: 32px;
+  }
+  .topicCard {
+    grid-template-columns: 75px 1fr;
+    position: relative;
+    min-height: 140px;
+    padding: 15px 14px 17px 7px;
+    gap: 9px;
+  }
+  .topicArt {
+    height: 80px;
+  }
+  .topicCard h3 {
+    font-size: 18px;
+  }
+  .topicCard p {
+    font-size: 14px;
+    line-height: 1.45;
+    padding-right: 5px;
+  }
+  .topicArrow {
+    display: none;
+  }
+  .center {
+    margin-top: 28px;
+  }
+  .smallWave {
+    width: 180px;
+    height: 20px;
+  }
+  .learning {
+    grid-template-columns: 1fr;
+    padding-top: 36px;
+    padding-bottom: 40px;
+    gap: 34px;
+    min-height: 0;
+  }
+  .learningCopy h2 {
+    max-width: 460px;
+  }
+  .learningCopy p {
+    font-size: 16px;
+    max-width: 530px;
+    margin-top: 19px;
+  }
+  .lessonCards {
+    height: auto;
+    aspect-ratio: 1.35;
+    max-width: 570px;
+    width: 100%;
+    margin: auto;
+  }
+  .lessonCard {
+    width: 32%;
+    top: 30px;
+  }
+  .card1 {
+    top: 10px;
+  }
+  .videoSection {
+    padding-top: 30px;
+  }
+  .videoPoster {
+    border-radius: 18px;
+    aspect-ratio: 16/10.5;
+  }
+  .play {
+    width: 60px;
+    height: 60px;
+  }
+  .play svg {
+    width: 25px;
+  }
+  .posterBadge {
+    font-size: 11px;
+    top: 12px;
+    left: 13px;
+    padding: 4px 10px;
+  }
+  .phraseBubble {
+    right: 6%;
+    top: 17%;
+    padding: 12px 16px;
+    border-radius: 15px;
+  }
+  .phraseBubble > span {
+    font-size: 23px;
+  }
+  .phraseBubble small {
+    font-size: 14px;
+    margin-top: 3px;
+  }
+  .posterCaption {
+    font-size: 14px;
+    bottom: 18px;
+    left: 18px;
+    right: 15px;
+    line-height: 1.4;
+  }
+  .conceptNote {
+    font-size: 11px;
+    margin-top: 7px !important;
+  }
+  .videoCopy {
+    margin-top: 26px;
+  }
+  .videoCopy h2 {
+    font-size: 31px;
+  }
+  .videoCopy p {
+    font-size: 16px;
+    max-width: 450px;
+    margin: 13px auto 0;
+  }
+  .huahuaSection {
+    padding-top: 32px;
+  }
+  .huahuaBand {
+    grid-template-columns: 1fr;
+    padding: 28px 24px 32px;
+    gap: 32px;
+  }
+  .chatScene {
+    min-height: 230px;
+    max-width: 430px;
+    width: 100%;
+    margin-inline: auto;
+  }
+  .chatCard {
+    width: 65%;
+    min-width: 225px;
+    padding: 15px 12px;
+  }
+  .chatLine {
+    font-size: 13px;
+    gap: 5px;
+  }
+  .chatLine > span {
+    padding: 8px;
+  }
+  .huahuaMascot {
+    width: 45%;
+    right: -5%;
+    bottom: -23px;
+  }
+  .huahuaCopy h2 {
+    font-size: 28px;
+    max-width: 380px;
+  }
+  .huahuaCopy p {
+    max-width: 440px;
+    font-size: 16px;
+    margin-top: 16px;
+  }
+  .pronunciation {
+    padding-top: 100px;
+    padding-bottom: 70px;
+    grid-template-columns: 1fr;
+    gap: 75px;
+  }
+  .speaking > p {
+    font-size: 16px;
+    max-width: 500px;
+    margin-top: 18px;
+  }
+  .desktopBreak {
+    display: none;
+  }
+  .microphonePanel {
+    max-width: 480px;
+    margin-top: 30px;
+  }
+  .waveform {
+    gap: 3px;
+  }
+  .academy {
+    border-left: 0;
+    padding-left: 0;
+    margin-left: 0;
+    border-top: 1px solid #e7ddcd;
+    padding-top: 45px;
+  }
+  .academy h2 {
+    font-size: 29px;
+  }
+  .academy > p {
+    font-size: 16px;
+    max-width: 500px;
+  }
+  .tonesCard {
+    max-width: 460px;
+    margin-top: 25px;
+    padding-bottom: 12px;
+  }
+  .tones svg {
+    width: 61px;
+    height: 48px;
+  }
+  .levelTag {
+    font-size: 12px;
+  }
+  .closing {
+    padding-top: 50px;
+    min-height: 0;
+  }
+  .closingInner {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding-bottom: clamp(44px, 14vw, 106px);
+    min-height: 0;
+  }
+  .closingCopy {
+    order: -1;
+    text-align: center;
+    padding: 0 8px;
+  }
+  .closingCopy h2 {
+    font-size: 30px;
+  }
+  .closingCopy p {
+    margin-inline: auto;
+    max-width: 460px;
+    font-size: 16px;
+  }
+  .closingMascot {
+    width: min(76%, 360px);
+    margin: 12px auto calc(-1 * clamp(28px, 6vw, 46px) - 14px);
+    justify-self: center;
+  }
+  .shoreline {
+    width: 150%;
+    max-width: none;
+    left: -25%;
+    bottom: 0;
+  }
+  .footer {
+    flex-direction: column;
+    gap: 20px;
+    padding-top: 30px;
+    padding-bottom: 32px;
+  }
+  .footer nav {
+    justify-content: center;
+    gap: 23px;
+    font-size: 14px;
+  }
+  .footer img {
+    height: 42px !important;
+  }
+  .dialogContent {
+    padding: 35px 22px 25px;
+  }
+  .dialog h2 {
+    font-size: 27px;
+  }
+  .stepTabs {
+    gap: 5px;
+  }
+  .stepTabs button {
+    flex: 1;
+    justify-content: center;
+    padding: 8px;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .stepTabs button span {
+    max-width: 70px;
+  }
+  .lessonPanel {
+    padding: 22px 15px;
+  }
+  .lessonPanel strong {
+    font-size: 28px;
+  }
+}
+@media (max-width: 480px) {
+  .topicGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .topicCard {
+    grid-template-columns: 95px 1fr 25px;
+    gap: 14px;
+    min-height: 132px;
+    padding: 13px 17px 13px 8px;
+  }
+  .topicArt {
+    height: 100px;
+  }
+  .topicCard h3 {
+    font-size: 20px;
+  }
+  .topicCard p {
+    font-size: 15px;
+    max-width: 220px;
+  }
+  .topicArrow {
+    display: grid;
+    align-self: center;
+    margin-bottom: 0;
+    width: 25px;
+    height: 25px;
+  }
+  .sectionIntro h2 {
+    font-size: 28px;
+  }
+  .heroArt {
+    margin-top: 7px;
+  }
+  .learning {
+    gap: 25px;
+  }
+  .lessonCards {
+    aspect-ratio: 1.25;
+  }
+  .lessonCard {
+    top: 25px;
+  }
+  .card1 {
+    top: 5px;
+  }
+  .huahuaBand {
+    padding-inline: 17px;
+  }
+  .huahuaMascot {
+    right: -7%;
+  }
+  .chatCard {
+    min-width: 210px;
+  }
+  .chatLine {
+    font-size: 12px;
+  }
+  .chatLine img {
+    width: 25px;
+    height: 25px;
+  }
+  .chatLine > span {
+    padding: 8px 7px;
+  }
+  .chatScene {
+    min-height: 220px;
+  }
+  .huahuaCopy {
+    padding-inline: 6px;
+  }
+  .huahuaCopy h2 {
+    font-size: 27px;
+  }
+  .phraseBubble {
+    right: 5%;
+    top: 15%;
+    padding: 10px 13px;
+  }
+  .phraseBubble > span {
+    font-size: 20px;
+  }
+  .phraseBubble small {
+    font-size: 13px;
+  }
+  .play {
+    width: 54px;
+    height: 54px;
+  }
+  .posterCaption {
+    font-size: 13px;
+  }
+  .videoCopy h2 {
+    font-size: 29px;
+  }
+  .waveform {
+    gap: 2px;
+  }
+  .waveform i {
+    width: 2px;
+  }
+  .microphonePanel {
+    gap: 17px;
+  }
+  .closingCopy h2 {
+    font-size: 28px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lessonCard {
+    opacity: 1 !important;
+    will-change: auto;
+    transform: none !important;
+  }
+  .card0 {
+    transform: rotate(-8deg) !important;
+  }
+  .card2 {
+    transform: rotate(8deg) !important;
+  }
+  .waveBand {
+    transform: none !important;
+    will-change: auto;
+  }
+  .page * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+  .primary:hover,
+  .topicCard:hover,
+  .microphonePanel:hover {
+    transform: none;
+  }
+  .videoPoster:hover > img {
+    transform: none;
+  }
+}
+
+
+/* Each demo bubble types before appearing; empty rows reserve the chat height. */
+.chatLine > .huahuaTyping {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 62px;
+  min-height: 40px;
+  border-radius: 17px 17px 17px 5px;
+}
+.userChat > .huahuaTyping { border-radius: 17px 17px 5px 17px; }
+.huahuaTyping i {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #a69d91;
+  animation: huahuaTypingDot 1s ease-in-out infinite;
+}
+.huahuaTyping i:nth-child(2) { animation-delay: .15s; }
+.huahuaTyping i:nth-child(3) { animation-delay: .3s; }
+@keyframes huahuaTypingDot {
+  0%, 65%, 100% { transform: translateY(0); opacity: .5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .huahuaTyping i { animation: none; } }

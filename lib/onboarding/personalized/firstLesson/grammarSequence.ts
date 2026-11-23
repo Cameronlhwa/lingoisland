@@ -8,7 +8,7 @@ export function grammarSteps(curriculum: Curriculum): GrammarStep[] {
   return [
     ...curriculum.cards.flatMap(card => [
       { id: `${card.id}:teach`, kind: "teach" as const, card },
-      { id: `${card.id}:check`, kind: "check" as const, card, practice: card.check },
+      ...(curriculum.checksAfterTeaching === false ? [] : [{ id: `${card.id}:check`, kind: "check" as const, card, practice: card.check }]),
     ]),
     ...curriculum.practices.map((practice, index) => ({ id: `practice:${index}`, kind: "practice" as const, practice })),
   ];

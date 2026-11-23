@@ -614,7 +614,7 @@ export function parseAnswers(input: unknown, timezone = "UTC"): OnboardingAnswer
   const keys = Array.isArray(interests.keys) ? interests.keys.filter(isInterestKey) : [];
   base.interests = {
     keys: keys.filter((key, index) => keys.indexOf(key) === index).slice(0, 12),
-    custom: normalizeCustomText(interests.custom, CUSTOM_TEXT_MAX),
+    custom: normalizeCustomText(interests.custom, 160),
   };
 
   const level = obj(raw.level);

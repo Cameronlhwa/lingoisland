@@ -1,7 +1,4 @@
 import Link from "next/link";
-import Nav from "@/components/landing/Nav";
-import Footer from "@/components/landing/Footer";
-import { OceanBackground } from "@/components/OceanBackground";
 
 const LAST_UPDATED = "May 11, 2026";
 const email = "cameron@lingoisland.com";
@@ -10,7 +7,7 @@ const site = "https://lingoisland.com";
 function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="mt-10 space-y-3">
-      <h2 className="text-lg font-bold uppercase tracking-wide text-gray-900">{title}</h2>
+      <h2 className="text-lg font-bold uppercase tracking-wide text-[#60371f]">{title}</h2>
       {children}
     </section>
   );
@@ -19,14 +16,12 @@ function Section({ id, title, children }: { id?: string; title: string; children
 export default function TermsOfServicePage() {
   return (
     <main className="relative min-h-screen">
-      <OceanBackground />
       <div className="relative z-10">
-        <Nav />
 
-        <article className="mx-auto max-w-3xl px-6 py-12 md:px-12 md:py-16">
+        <article className="marketing-legal mx-auto px-5 py-10 md:px-8 md:py-14">
           <Link
             href="/"
-            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 rounded"
+            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[#766554] transition-colors hover:text-[#60371f] focus:outline-none focus:ring-2 focus:ring-[#617b3c] focus:ring-offset-2 rounded"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -34,17 +29,17 @@ export default function TermsOfServicePage() {
             Back to home
           </Link>
 
-          <div className="rounded-2xl bg-white/90 px-6 py-8 shadow-md backdrop-blur-sm md:bg-white/85 md:px-10 md:py-10">
-            <h1 className="text-3xl font-semibold tracking-tight text-gray-900 md:text-4xl">Terms of Service</h1>
-            <p className="mt-2 text-sm text-gray-500">Last Updated: {LAST_UPDATED}</p>
+          <div className="marketing-paper px-6 py-8 md:px-10 md:py-10">
+            <h1 className="text-3xl font-semibold tracking-tight text-[#60371f] md:text-4xl">Terms of Service</h1>
+            <p className="mt-2 text-sm text-[#82725f]">Last Updated: {LAST_UPDATED}</p>
 
-            <div className="mt-6 space-y-3 text-[15px] leading-relaxed text-gray-700">
+            <div className="mt-6 space-y-3 text-base leading-relaxed text-[#766554]">
               <p>
                 We are LingoIsland (&ldquo;we,&rdquo; &ldquo;us,&rdquo; &ldquo;our&rdquo;).
               </p>
               <p>
                 We operate the website{" "}
-                <a href={site} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{site}</a>{" "}
+                <a href={site} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{site}</a>{" "}
                 (the &ldquo;Site&rdquo;), as well as any other related products and services that refer or link to these
                 legal terms (collectively, the &ldquo;Services&rdquo;).
               </p>
@@ -54,7 +49,7 @@ export default function TermsOfServicePage() {
               </p>
               <p>
                 You can contact us by email at{" "}
-                <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{email}</a>.
+                <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{email}</a>.
               </p>
               <p>
                 These Legal Terms constitute a legally binding agreement made between you, whether personally or on
@@ -81,7 +76,7 @@ export default function TermsOfServicePage() {
               </p>
             </div>
 
-            <div className="mt-8 space-y-1 text-[15px] leading-relaxed text-gray-700">
+            <div className="mt-8 space-y-1 text-base leading-relaxed text-[#766554]">
 
               <Section id="services" title="1. Our Services">
                 <p>
@@ -197,7 +192,7 @@ export default function TermsOfServicePage() {
                 </p>
                 <p>
                   If you are unsatisfied with our Services, please email us at{" "}
-                  <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{email}</a>.
+                  <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{email}</a>.
                 </p>
               </Section>
 
@@ -289,7 +284,7 @@ export default function TermsOfServicePage() {
               <Section id="privacy-policy" title="12. Privacy Policy">
                 <p>
                   We care about data privacy and security. Please review our{" "}
-                  <Link href="/privacy" className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">
+                  <Link href="/privacy" className="font-medium text-[#617b3c] underline-offset-2 hover:underline">
                     Privacy Policy
                   </Link>
                   . By using the Services, you agree to be bound by our Privacy Policy, which is incorporated into
@@ -302,7 +297,7 @@ export default function TermsOfServicePage() {
                   We respect the intellectual property rights of others. If you believe that any material available on
                   or through the Services infringes upon any copyright you own or control, please notify us immediately
                   at{" "}
-                  <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{email}</a>.
+                  <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{email}</a>.
                 </p>
               </Section>
 
@@ -418,7 +413,7 @@ export default function TermsOfServicePage() {
                   Refunds will be provided when required by applicable law. Due to the costly nature of AI services, we
                   are generally unable to issue refunds for purchases made on the Services. If you believe you are
                   entitled to a refund under applicable law or have a special circumstance, please contact us at{" "}
-                  <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{email}</a>.
+                  <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{email}</a>.
                 </p>
               </Section>
 
@@ -442,14 +437,14 @@ export default function TermsOfServicePage() {
                   <strong>LingoIsland</strong>
                   <br />
                   Email:{" "}
-                  <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{email}</a>
+                  <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{email}</a>
                   <br />
                   Website:{" "}
-                  <a href={site} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{site}</a>
+                  <a href={site} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{site}</a>
                 </p>
                 <p className="mt-2">
                   Or visit our{" "}
-                  <Link href="/contact" className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">
+                  <Link href="/contact" className="font-medium text-[#617b3c] underline-offset-2 hover:underline">
                     Contact page
                   </Link>
                   .
@@ -460,7 +455,6 @@ export default function TermsOfServicePage() {
           </div>
         </article>
 
-        <Footer />
       </div>
     </main>
   );

@@ -5,7 +5,7 @@ import { grammarStepIndex, grammarSteps } from "@/lib/onboarding/personalized/fi
 import { PrimaryButton, CARD_BORDER, GREEN, MUTED, SKY_PALE } from "../ui";
 import { BuildSentence, Feedback } from "./LessonActivities";
 import { ReadingPassage } from "./ReadingPassage";
-import { WritingExercise } from "./WritingExercise";
+import { WritingExercise, type WritingContext } from "./WritingExercise";
 import { TeachingSlide } from "./TeachingSlide";
 import { ConversationPrompt } from "./ConversationPrompt";
 
@@ -37,8 +37,9 @@ function Question({ practice, onComplete, onMistake, onUnavailable }: {
   </div>;
 }
 
-export function GrammarPractice({ curriculum, onComplete, onMistake, onUnavailable, initialStepId, onProgress, responses = {}, onResponse }: {
+export function GrammarPractice({ curriculum, writingContext, onComplete, onMistake, onUnavailable, initialStepId, onProgress, responses = {}, onResponse }: {
   curriculum: Curriculum;
+  writingContext:WritingContext;
   responses?: Record<string, string>;
   onResponse: (id: string, text: string) => void;
   initialStepId?: string;
@@ -60,7 +61,7 @@ export function GrammarPractice({ curriculum, onComplete, onMistake, onUnavailab
       <TeachingSlide card={step.card} onUnavailable={onUnavailable}/>
       <PrimaryButton className="mt-5" data-testid="grammar-continue" onClick={advance}>Continue</PrimaryButton>
     </> : step.practice.kind === "reading" ? <PrimaryButton data-testid="reading-continue" onClick={advance}>Continue to the questions</PrimaryButton>
-      : step.practice.kind === "writing" ? <WritingExercise key={step.id} practice={step.practice} value={responses[step.id] ?? ""} onChange={text => onResponse(step.id,text)} onComplete={advance} onMistake={onMistake} onUnavailable={onUnavailable}/>
+      : step.practice.kind === "writing" ? <WritingExercise key={step.id} practice={step.practice} context={writingContext} stepId={step.id} value={responses[step.id] ?? ""} onChange={text => onResponse(step.id,text)} onComplete={advance} onMistake={onMistake} onUnavailable={onUnavailable}/>
       : step.practice.kind === "build" ? <BuildSentence key={step.id} prompt={step.practice.build} onComplete={advance} onMistake={onMistake} onUnavailable={onUnavailable}/>
       : <Question key={step.id} practice={step.practice} onComplete={advance} onMistake={onMistake} onUnavailable={onUnavailable}/>}
   </div>;

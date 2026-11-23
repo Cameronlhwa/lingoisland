@@ -689,7 +689,7 @@ export default function JourneyOnboardingFlow({
         aria-hidden
         className="hsk-onboarding-bg absolute inset-0"
         style={{
-          backgroundImage: "url(/onboarding/journey-bg.png)",
+          backgroundImage: "url(/onboarding/journey-island-v2.webp)",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
         }}

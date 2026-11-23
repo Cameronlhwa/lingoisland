@@ -53,13 +53,13 @@ export default function ConversationPaywall({
 
   return (
     <div
-      className={`${fullPage ? "relative min-h-[100dvh]" : "fixed inset-0 z-50 overflow-y-auto"} flex items-center justify-center bg-[#EAF6FB] p-3 sm:p-6`}
+      className={`${fullPage ? "relative min-h-[100dvh]" : "fixed inset-0 z-50 overflow-y-auto"} flex items-center justify-center bg-[#fffaf3] p-3 sm:p-6`}
       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
     >
       <div
         aria-hidden
         className="hsk-onboarding-bg pointer-events-none fixed inset-0 bg-cover bg-no-repeat"
-        style={{ backgroundImage: "url(/onboarding/journey-bg.png)" }}
+        style={{ backgroundImage: "url(/onboarding/journey-island-v2.webp)" }}
       />
       <div className="relative my-auto flex w-full max-w-[480px] flex-col items-center">
         <section

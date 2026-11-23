@@ -2,12 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import Nav from "@/components/landing/Nav";
-import Footer from "@/components/landing/Footer";
 import FadeSectionObserver from "@/components/landing/FadeSectionObserver";
 import SectionHeader from "@/components/landing/SectionHeader";
-import PrimaryButton from "@/components/landing/PrimaryButton";
-import HSKNightCTA from "@/components/hskprep/HSKNightCTA";
 import { FOUNDER_PAGE } from "@/lib/landing-content";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -20,19 +16,18 @@ export default function TeamPage() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <main style={{ background: "#fff" }}>
+    <main>
       <FadeSectionObserver />
-      <Nav />
 
       {/* Hero: same cove artwork as the landing page */}
-      <section className="hero-scene" style={{ position: "relative", overflow: "hidden" }}>
+      <section className="marketing-team-hero" style={{ position: "relative", overflow: "hidden" }}>
         <div
           aria-hidden
           className="hero-scene-bg"
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: "url(/home/hero-cove.png)",
+            backgroundImage: "url(/onboarding/journey-island-v2.webp)",
             backgroundSize: "cover",
             backgroundPosition: "center bottom",
             backgroundRepeat: "no-repeat",
@@ -46,7 +41,7 @@ export default function TeamPage() {
             padding: "48px 24px 24px",
             position: "relative",
             zIndex: 3,
-            minHeight: "clamp(520px, 72vh, 720px)",
+            minHeight: "clamp(420px, 55vh, 580px)",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
@@ -59,7 +54,7 @@ export default function TeamPage() {
               inset: "-20px -4% 0",
               zIndex: -1,
               background:
-                "radial-gradient(ellipse at center, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.22) 45%, transparent 75%)",
+                "radial-gradient(ellipse 70% 58% at 35% 45%, rgba(255,250,243,0.98) 0%, rgba(255,250,243,0.92) 45%, transparent 85%)",
               pointerEvents: "none",
             }}
           />
@@ -107,12 +102,12 @@ export default function TeamPage() {
                 Two Mandarin learners. One shared goal: make the language you need easier to learn, remember, and use. Cameron builds LingoIsland; Sherly shapes how it teaches.
               </p>
               <div className="flex flex-wrap gap-3">
-                <PrimaryButton href={FOUNDER_PAGE.hero.ctaPrimary.href}>
+                <Link className="marketing-cta-link" href={FOUNDER_PAGE.hero.ctaPrimary.href}>
                   {FOUNDER_PAGE.hero.ctaPrimary.label}
                   <span className="inline-block transition-transform duration-200 group-hover:translate-x-[3px]">
                     →
                   </span>
-                </PrimaryButton>
+                </Link>
                 <Link href="#team-members" className="inline-flex items-center gap-2 rounded-full border px-6 py-3 text-sm font-bold no-underline" style={{color:"var(--lingo-navy)",borderColor:"var(--lingo-border)",background:"var(--lingo-page-bg)"}}>
                   Meet Cameron &amp; Sherly <span aria-hidden>↓</span>
                 </Link>
@@ -121,8 +116,8 @@ export default function TeamPage() {
 
             <div className="grid w-full max-w-sm gap-3 lg:w-80" aria-label="Meet the team">
               <Link href="#cameron" className="flex items-center gap-4 rounded-2xl border p-4 no-underline transition-transform hover:-translate-y-0.5" style={{background:"var(--lingo-page-bg)",borderColor:"var(--lingo-border)"}}>
-                <Image src={FOUNDER_IMAGE} alt="Cameron Lim" width={64} height={64} className="h-16 w-16 rounded-2xl object-cover" />
-                <div><p className="lingo-display text-xl font-bold" style={{color:"var(--lingo-navy)"}}>Cameron Lim</p><p className="mt-1 text-sm" style={{color:"var(--lingo-text-muted)"}}>Founder, Product &amp; Engineering</p></div>
+                <Image src={FOUNDER_IMAGE} alt="Cameron" width={64} height={64} className="h-16 w-16 rounded-2xl object-cover" />
+                <div><p className="lingo-display text-xl font-bold" style={{color:"var(--lingo-navy)"}}>Cameron</p><p className="mt-1 text-sm" style={{color:"var(--lingo-text-muted)"}}>Founder, Product &amp; Engineering</p></div>
               </Link>
               <Link href="#sherly" className="flex items-center gap-4 rounded-2xl border p-4 no-underline transition-transform hover:-translate-y-0.5" style={{background:"var(--lingo-page-bg)",borderColor:"var(--lingo-border)"}}>
                 <span className="relative block h-16 w-16 shrink-0 overflow-hidden rounded-2xl"><Image src="/founder/sherly-profile.jpg" alt="Sherly" fill sizes="128px" quality={90} className="object-cover" style={{transform:"scale(2)",transformOrigin:"0% 24%"}} /></span>
@@ -140,7 +135,7 @@ export default function TeamPage() {
             height: 120,
             marginTop: -60,
             background:
-              "linear-gradient(to bottom, rgba(239,249,252,0) 0%, rgba(248,252,253,0.86) 60%, #ffffff 100%)",
+              "linear-gradient(to bottom, rgba(255,250,243,0) 0%, rgba(255,250,243,0.86) 60%, #fffaf3 100%)",
           }}
         />
       </section>
@@ -148,7 +143,7 @@ export default function TeamPage() {
       <div id="team-members" className="scroll-mt-24">
         <section id="cameron" className="fade-section scroll-mt-24 px-6 py-20 md:py-24" style={{background: SECTION_BG}}>
           <div className="mx-auto max-w-[960px]">
-            <SectionHeader eyebrow="Founder, Product & Engineering" title="Cameron Lim" subtitle="The Mandarin learner building LingoIsland from idea to product." align="left" />
+            <SectionHeader eyebrow="Founder, Product & Engineering" title="Cameron" subtitle="The Mandarin learner building LingoIsland from idea to product." align="left" />
             <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr]">
               <div className="space-y-5 text-base leading-relaxed" style={{color:"var(--lingo-text-muted)",fontFamily:"'DM Sans', system-ui, sans-serif"}}>
                 <p>Cameron studies Computer Engineering at the University of Waterloo, one of the world’s leading universities for engineering and computer science. He brings that technical foundation to LingoIsland, leading the engineering, design, and development of the product as a whole.</p>
@@ -244,15 +239,12 @@ export default function TeamPage() {
         </div>
       </section>
 
-      <HSKNightCTA
-        appearance="warm"
-        title="Learn Mandarin you can actually use"
-        subtitle="Build a personalized learning plan around your work, studies, and real life. See your plan before choosing a membership."
-        primary={{ href: "/onboarding/journey", label: "Build my learning plan" }}
-        secondary={{ href: "/topics", label: "Explore Topics" }}
-      />
+      <section className="marketing-team-cta">
+        <h2>Learn Mandarin you can actually use</h2>
+        <p>Build a personalized learning plan around your work, studies, and real life. See your plan before choosing a membership.</p>
+        <Link className="marketing-cta-link" href="/onboarding/journey">Build my learning plan</Link>
+      </section>
 
-      <Footer />
     </main>
   );
 }

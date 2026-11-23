@@ -924,11 +924,11 @@
   }
 }
 
-/* Wide screens: fit by height so corner mascots stay in frame. */
+/* Wide screens still fill the viewport without exposing side gutters. */
 @media (min-width: 1600px) {
   .hsk-onboarding-bg {
-    background-size: auto 100%;
-    background-position: center 32%;
+    background-size: cover;
+    background-position: center bottom;
   }
 }
 

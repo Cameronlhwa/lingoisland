@@ -1,3 +1,4 @@
+import { PREVIEW_SENTENCE } from "@/lib/pronunciation/preview";
 import { validLessonTarget } from "@/lib/onboarding/personalized/firstLesson/token";
 import { isLessonPronunciationTarget } from "@/lib/onboarding/personalized/firstLesson/bank";
 import { NextResponse } from "next/server";
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const targetText = form.get("targetText");
     const audio = form.get("audio");
-    if ((!isPronunciationWord(targetText) && !isLessonPronunciationTarget(targetText) && !validLessonTarget(form.get("lessonToken"), targetText, process.env.DEEPSEEK_API_KEY?.trim())) || !(audio instanceof File) || audio.size === 0) {
+    if ((targetText !== PREVIEW_SENTENCE && !isPronunciationWord(targetText) && !isLessonPronunciationTarget(targetText) && !validLessonTarget(form.get("lessonToken"), targetText, process.env.DEEPSEEK_API_KEY?.trim())) || !(audio instanceof File) || audio.size === 0) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
     if (audio.size > MAX_AUDIO_BYTES) return NextResponse.json({ error: "Recording is too long" }, { status: 413 });

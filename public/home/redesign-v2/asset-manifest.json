@@ -1,0 +1,128 @@
+[
+  {
+    "source": "landing-assets-v1/01_hero_reading_capy.png",
+    "output": "public/home/redesign-v2/01_hero_reading_capy.webp",
+    "bytes": 437324
+  },
+  {
+    "source": "landing-assets-v1/02_topic_family_heritage.png",
+    "output": "public/home/redesign-v2/02_topic_family_heritage.webp",
+    "bytes": 248392
+  },
+  {
+    "source": "landing-assets-v1/03_topic_travel_adventure.png",
+    "output": "public/home/redesign-v2/03_topic_travel_adventure.webp",
+    "bytes": 152260
+  },
+  {
+    "source": "landing-assets-v1/04_topic_work_career.png",
+    "output": "public/home/redesign-v2/04_topic_work_career.webp",
+    "bytes": 222530
+  },
+  {
+    "source": "landing-assets-v1/05_topic_food_lifestyle.png",
+    "output": "public/home/redesign-v2/05_topic_food_lifestyle.webp",
+    "bytes": 268344
+  },
+  {
+    "source": "landing-assets-v1/06_lesson_travel_friends.png",
+    "output": "public/home/redesign-v2/06_lesson_travel_friends.webp",
+    "bytes": 543042
+  },
+  {
+    "source": "landing-assets-v1/07_lesson_pagoda_landscape.png",
+    "output": "public/home/redesign-v2/07_lesson_pagoda_landscape.webp",
+    "bytes": 414180
+  },
+  {
+    "source": "landing-assets-v1/08_huahua_buddy.png",
+    "output": "public/home/redesign-v2/08_huahua_buddy.webp",
+    "bytes": 233984
+  },
+  {
+    "source": "landing-assets-v1/09_closing_capy_palm_foreground.png",
+    "output": "public/home/redesign-v2/09_closing_capy_palm_foreground.webp",
+    "bytes": 290180
+  },
+  {
+    "source": "landing-assets-v1/10_closing_shoreline_background.png",
+    "output": "public/home/redesign-v2/10_closing_shoreline_background.webp",
+    "bytes": 152076
+  },
+  {
+    "source": "landing-assets-v1/11_video_poster_concept.png",
+    "output": "public/home/redesign-v2/11_video_poster_concept.webp",
+    "bytes": 224206
+  },
+  {
+    "source": "landing-cards-v1/01_grammar_context_card.png",
+    "output": "public/home/redesign-v2/cards/01_grammar_context_card.webp",
+    "bytes": 1242508,
+    "revision": "pinyin-corrected-20261121"
+  },
+  {
+    "source": "landing-cards-v1/02_practice_card.png",
+    "output": "public/home/redesign-v2/cards/02_practice_card.webp",
+    "bytes": 86090
+  },
+  {
+    "source": "landing-cards-v1/03_story_card.png",
+    "output": "public/home/redesign-v2/cards/03_story_card.webp",
+    "bytes": 176196
+  },
+  {
+    "source": "hero-reading-parallax-v1/01_sand.png",
+    "output": "public/home/redesign-v2/hero/01_sand.webp",
+    "bytes": 107676
+  },
+  {
+    "source": "hero-reading-parallax-v1/02_palm_plants.png",
+    "output": "public/home/redesign-v2/hero/02_palm_plants.webp",
+    "bytes": 106836
+  },
+  {
+    "source": "hero-reading-parallax-v1/03_capy_book.png",
+    "output": "public/home/redesign-v2/hero/03_capy_book.webp",
+    "bytes": 150266
+  },
+  {
+    "source": "hero-reading-parallax-v1/04_foreground_oranges.png",
+    "output": "public/home/redesign-v2/hero/04_foreground_oranges.webp",
+    "bytes": 34644
+  },
+  {
+    "source": "hero-reading-parallax-v1/05_shells_starfish.png",
+    "output": "public/home/redesign-v2/hero/05_shells_starfish.webp",
+    "bytes": 27414
+  },
+  {
+    "source": "wave-transition-v1/01_rear_seafoam.png",
+    "output": "public/home/redesign-v2/waves/01_rear_seafoam.png",
+    "bytes": 523203
+  },
+  {
+    "source": "wave-transition-v1/02_middle_aqua.png",
+    "output": "public/home/redesign-v2/waves/02_middle_aqua.png",
+    "bytes": 639026
+  },
+  {
+    "source": "wave-transition-v1/03_front_turquoise_foam.png",
+    "output": "public/home/redesign-v2/waves/03_front_turquoise_foam.png",
+    "bytes": 610174
+  },
+  {
+    "source": "wave-transition-desktop-v2/01_rear_seafoam.png",
+    "output": "public/home/redesign-v2/waves/desktop-v2/01_rear_seafoam.png",
+    "bytes": 322557
+  },
+  {
+    "source": "wave-transition-desktop-v2/02_middle_aqua.png",
+    "output": "public/home/redesign-v2/waves/desktop-v2/02_middle_aqua.png",
+    "bytes": 305824
+  },
+  {
+    "source": "wave-transition-desktop-v2/03_front_turquoise_foam.png",
+    "output": "public/home/redesign-v2/waves/desktop-v2/03_front_turquoise_foam.png",
+    "bytes": 294119
+  }
+]

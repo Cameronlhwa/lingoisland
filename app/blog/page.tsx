@@ -31,12 +31,12 @@ export const metadata: Metadata = {
 
 export default function BlogIndexPage() {
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-6 pb-16 pt-10 md:px-10 md:pt-14">
+    <main className="mx-auto w-full max-w-[1100px] px-6 pb-16 pt-10 md:px-10 md:pt-14">
       <header className="max-w-[820px]">
         <p
-          className="text-xs font-semibold uppercase tracking-wide"
+          className="text-sm font-semibold uppercase tracking-wide"
           style={{
-            color: "#20674F",
+            color: "#617b3c",
             fontFamily: "'DM Sans', system-ui, sans-serif",
           }}
         >
@@ -44,19 +44,19 @@ export default function BlogIndexPage() {
         </p>
         <h1
           className="mt-3 text-3xl font-semibold leading-tight md:text-[2.35rem]"
-          style={{ color: "#5F3119", fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
+          style={{ color: "#60371f", fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
         >
           The LingoIsland Blog
         </h1>
         <p
           className="mt-4 text-lg leading-relaxed md:text-[1.125rem]"
           style={{
-            color: "#5F3119",
+            color: "#60371f",
             fontFamily: "'DM Sans', system-ui, sans-serif",
             opacity: 0.92,
           }}
         >
-          The LingoIsland Blog — Mandarin tips, vocab deep-dives, and honest
+          Mandarin tips, vocabulary deep dives, and honest
           takes on learning.
         </p>
       </header>
@@ -66,14 +66,14 @@ export default function BlogIndexPage() {
           <Link
             key={post.slug}
             href={`/blog/${post.slug}`}
-            className="group flex h-full flex-col rounded-2xl border border-[#20674F]/12 bg-white/85 p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[#20674F]/25 hover:shadow-md"
-            style={{ textDecoration: "none", color: "#5F3119" }}
+            className="marketing-card group flex h-full flex-col rounded-2xl border border-[#eadfce] bg-[#fffdf9] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[#617b3c]/25 hover:shadow-md"
+            style={{ textDecoration: "none", color: "#60371f" }}
           >
             <span
-              className="mb-3 inline-flex w-fit rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide"
+              className="mb-3 inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide"
               style={{
-                background: "#EAF5FB",
-                color: "#20674F",
+                background: "#f1efdf",
+                color: "#617b3c",
                 fontFamily: "'DM Sans', system-ui, sans-serif",
               }}
             >
@@ -97,7 +97,7 @@ export default function BlogIndexPage() {
             <div
               className="mt-auto flex items-center justify-between pt-5 text-xs font-semibold"
               style={{
-                color: "#20674F",
+                color: "#617b3c",
                 fontFamily: "'DM Sans', system-ui, sans-serif",
               }}
             >
@@ -109,6 +109,6 @@ export default function BlogIndexPage() {
           </Link>
         ))}
       </div>
-    </div>
+    </main>
   );
 }

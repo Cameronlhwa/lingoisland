@@ -37,8 +37,8 @@
 .hanzi { font-size: 23px; line-height: 1.5; font-weight: 700; overflow-wrap: anywhere; }
 .pinyin { margin-top: 2px; color: #4f6e83; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 .meaning { margin-top: 5px; font-size: 14px; line-height: 1.4; }
-.highlight { border-radius: 5px; padding: 0 2px; color: #20674f; background: #dff0d7; }
-.soundHighlight { color: #20674f; background: none; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.highlight { color: #20674f; background: none; }
+.soundHighlight { color: #20674f; background: none; font-weight: 700; }
 .context { margin: 0 0 6px; color: #5f3119; font-size: 12px; line-height: 1.5; }
 .parts { display: grid; align-items: start; gap: 6px; }
 .part { min-width: 0; text-align: center; }
@@ -67,3 +67,9 @@
   .takeaway { font-size: 16px; padding: 11px 16px; }
   .detail { font-size: 14px; }
 }
+
+/* Match the grammar focus across characters and pinyin. */
+.keyWord { color: #20674f; font-weight: 700; }
+
+.partHanzi, .fixedReading { color: #20674f; }
+.variablePart, .variableReading { color: #355c76; }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { GOALS, normalizeCustomText } from "@/lib/onboarding/personalized/goals";
 import { useAnalytics } from "@/lib/posthog/client";
 import { createClient } from "@/lib/supabase/browser";
 import { ONBOARDING_EVENTS, trackOnboarding, type OnboardingEventName } from "@/lib/onboarding/personalized/analytics";
@@ -208,7 +209,21 @@ function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMo
         return;
       }
       const existing = mergeStates(local, remote?.state ?? null) ?? initialState(new Date(), variant);
-      const merged = {...existing,answers:{...existing.answers,onboardingVariant:variant}};
+      let merged = {...existing,answers:{...existing.answers,onboardingVariant:variant}};
+      // An explicit homepage chat handoff seeds the same interests used by the
+      // assessment and plan, while preserving progress and the learner’s level.
+      if (!preview && !restarting && searchParams.get("source") === "topic-chat") {
+        const topic = normalizeCustomText(searchParams.get("topic") ?? "", 160);
+        const goal = GOALS.find((option) => option.key === searchParams.get("goal"));
+        if (topic) {
+          merged = updateAnswers(merged, {
+            interests: { keys: merged.answers.interests.keys.filter((key) => key !== "let_us_decide"), custom: topic },
+            ...(goal && !merged.answers.goal.primary ? { goal: { ...merged.answers.goal, primary: goal.key } } : {}),
+          }, new Date());
+        }
+        // The draft is persisted below; remove free text from the address bar.
+        router.replace("/onboarding/journey");
+      }
       const requested = preview ? null : searchParams.get("resume");
       const resume = isStepId(requested) && canVisit(requested, merged) ? requested : resumeStep(merged);
       const fresh = Object.keys(merged.events).length === 0;

@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { pinyin } from "pinyin-pro";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import type { GrammarCard, TeachingExample } from "@/lib/onboarding/personalized/firstLesson/curriculum";
 import { AudioButton } from "./LessonActivities";
@@ -11,10 +12,24 @@ const ASSETS = {
   contrast: "03-compare-meanings.png",
   exchange: "04-follow-the-exchange.png",
 };
-function Highlight({ text, value, hanzi = false }: { text: string; value?: string; hanzi?: boolean }) {
-  const index = value ? text.indexOf(value) : -1;
-  if (index < 0 || !value) return <>{text}</>;
-  return <>{text.slice(0, index)}<mark className={hanzi ? styles.highlight : styles.soundHighlight}>{value}</mark>{text.slice(index + value.length)}</>;
+function KeyWords({text,words,reading=false}:{text:string;words:readonly string[];reading?:boolean}) {
+  const targets=Array.from(new Set(words)).filter(Boolean).sort((a,b)=>b.length-a.length);
+  const pieces=[];
+  let start=0,index=0;
+  while(index<text.length){
+    const target=targets.map(word => {
+      if (!reading) return text.startsWith(word,index) ? word : undefined;
+      // Preserve authored spacing, including pinyin with joined syllables.
+      const pattern=word.replace(/\s/g, "").split("").map(char=>char.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("\\s*");
+      return text.slice(index).match(new RegExp(`^${pattern}`, "iu"))?.[0];
+    }).find(Boolean);
+    if(!target){index++;continue;}
+    if(start<index)pieces.push(text.slice(start,index));
+    pieces.push(<span key={index} className={styles.keyWord}>{target}</span>);
+    index+=target.length;start=index;
+  }
+  if(start<text.length)pieces.push(text.slice(start));
+  return <>{pieces}</>;
 }
 function Example({ example, index, format, onUnavailable }: { example: TeachingExample; index: number; format: GrammarCard["format"]; onUnavailable: () => void }) {
   return <div className={`${styles.bubble} ${index > 0 ? styles.mintBubble : ""} ${format === "exchange" && index > 0 ? styles.reply : ""}`} data-testid={`teaching-example-${index}`}>
@@ -27,14 +42,14 @@ function Example({ example, index, format, onUnavailable }: { example: TeachingE
       <div className={styles.parts} aria-label={example.hanzi} style={{gridTemplateColumns:example.parts.map(piece=>`${Math.max(1,piece.hanzi.length)}fr`).join(" ")}}>
         {example.parts.map((piece, i) => <div key={`${piece.hanzi}-${i}`} className={styles.part}>
           <p className={`${styles.partHanzi} ${piece.variable ? styles.variablePart : ""}`} lang="zh-CN">{piece.hanzi}</p>
-          <p className={styles.partPinyin}>{piece.pinyin}</p>
+          <p className={`${styles.partPinyin} ${piece.variable ? styles.variableReading : styles.fixedReading}`}>{piece.pinyin}</p>
           <p className={styles.partMeaning}>{piece.meaning}</p>
         </div>)}
       </div>
       <p className={styles.patternMeaning}>{example.meaning}</p>
     </> : <>
-      <p className={styles.hanzi} lang="zh-CN"><Highlight text={example.hanzi} value={example.highlight?.hanzi} hanzi/></p>
-      <p className={styles.pinyin}><Highlight text={example.pinyin} value={example.highlight?.pinyin}/></p>
+      <p className={styles.hanzi} lang="zh-CN">{example.keyWords ? <KeyWords text={example.hanzi} words={example.keyWords}/> : <KeyWords text={example.hanzi} words={example.highlight ? [example.highlight.hanzi] : []}/>}</p>
+      <p className={styles.pinyin}>{example.keyWords ? <KeyWords reading text={example.pinyin} words={example.keyWords.map(word => pinyin(word, { toneType: "symbol" }))}/> : <KeyWords reading text={example.pinyin} words={example.highlight ? [example.highlight.pinyin] : []}/>}</p>
       <p className={styles.meaning}>{example.meaning}</p>
     </>}
   </div>;

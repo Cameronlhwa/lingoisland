@@ -69,13 +69,13 @@ export default function BlogArticlePage({ params }: Props) {
       <article className="mx-auto w-full max-w-[720px] px-6 pb-20 pt-8 md:px-8 md:pt-10">
         <nav
           className="text-sm"
-          style={{ color: "#5F3119", fontFamily: "'DM Sans', system-ui, sans-serif" }}
+          style={{ color: "#60371f", fontFamily: "'DM Sans', system-ui, sans-serif" }}
         >
-          <Link href="/" className="font-medium hover:underline" style={{ color: "#20674F" }}>
+          <Link href="/" className="font-medium hover:underline" style={{ color: "#617b3c" }}>
             Home
           </Link>
           <span className="mx-2 opacity-40">/</span>
-          <Link href="/blog" className="font-medium hover:underline" style={{ color: "#20674F" }}>
+          <Link href="/blog" className="font-medium hover:underline" style={{ color: "#617b3c" }}>
             Blog
           </Link>
           <span className="mx-2 opacity-40">/</span>
@@ -84,19 +84,19 @@ export default function BlogArticlePage({ params }: Props) {
 
         <p
           className="mt-6 text-xs font-semibold uppercase tracking-wide"
-          style={{ color: "#20674F", fontFamily: "'DM Sans', system-ui, sans-serif" }}
+          style={{ color: "#617b3c", fontFamily: "'DM Sans', system-ui, sans-serif" }}
         >
           {post.category}
         </p>
         <h1
           className="mt-2 text-3xl font-semibold leading-tight md:text-[2.15rem]"
-          style={{ color: "#5F3119", fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
+          style={{ color: "#60371f", fontFamily: 'var(--font-home-display), Nunito, system-ui, sans-serif' }}
         >
           {post.title}
         </h1>
         <p
           className="mt-3 text-sm font-medium opacity-70"
-          style={{ fontFamily: "'DM Sans', system-ui, sans-serif", color: "#5F3119" }}
+          style={{ fontFamily: "'DM Sans', system-ui, sans-serif", color: "#60371f" }}
         >
           {post.readTimeMinutes} min read
         </p>
