@@ -1,14 +1,11 @@
 import Link from "next/link";
-import Nav from "@/components/landing/Nav";
-import Footer from "@/components/landing/Footer";
-import { OceanBackground } from "@/components/OceanBackground";
 
 const LAST_UPDATED = "May 11, 2026";
 
 function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="mt-10 space-y-3">
-      <h2 className="text-lg font-bold uppercase tracking-wide text-gray-900">{title}</h2>
+      <h2 className="text-lg font-bold uppercase tracking-wide text-[#60371f]">{title}</h2>
       {children}
     </section>
   );
@@ -17,7 +14,7 @@ function Section({ id, title, children }: { id?: string; title: string; children
 function Sub({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mt-5 space-y-2">
-      <h3 className="font-semibold text-gray-900">{title}</h3>
+      <h3 className="font-semibold text-[#60371f]">{title}</h3>
       {children}
     </div>
   );
@@ -29,14 +26,12 @@ const site = "https://lingoisland.com";
 export default function PrivacyPolicyPage() {
   return (
     <main className="relative min-h-screen">
-      <OceanBackground />
       <div className="relative z-10">
-        <Nav />
 
-        <article className="mx-auto max-w-3xl px-6 py-12 md:px-12 md:py-16">
+        <article className="marketing-legal mx-auto px-5 py-10 md:px-8 md:py-14">
           <Link
             href="/"
-            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0B1B3A] focus:ring-offset-2 rounded"
+            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[#766554] transition-colors hover:text-[#60371f] focus:outline-none focus:ring-2 focus:ring-[#617b3c] focus:ring-offset-2 rounded"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -44,11 +39,11 @@ export default function PrivacyPolicyPage() {
             Back to home
           </Link>
 
-          <div className="rounded-2xl bg-white/90 px-6 py-8 shadow-md backdrop-blur-sm md:bg-white/85 md:px-10 md:py-10">
-            <h1 className="text-3xl font-semibold tracking-tight text-gray-900 md:text-4xl">Privacy Policy</h1>
-            <p className="mt-2 text-sm text-gray-500">Last Updated: {LAST_UPDATED}</p>
+          <div className="marketing-paper px-6 py-8 md:px-10 md:py-10">
+            <h1 className="text-3xl font-semibold tracking-tight text-[#60371f] md:text-4xl">Privacy Policy</h1>
+            <p className="mt-2 text-sm text-[#82725f]">Last Updated: {LAST_UPDATED}</p>
 
-            <div className="mt-6 space-y-3 text-[15px] leading-relaxed text-gray-700">
+            <div className="mt-6 space-y-3 text-base leading-relaxed text-[#766554]">
               <p>
                 This privacy notice for LingoIsland (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) describes
                 how and why we might collect, store, use, and/or share (&ldquo;process&rdquo;) your information when you
@@ -57,7 +52,7 @@ export default function PrivacyPolicyPage() {
               <ul className="list-disc space-y-1 pl-5">
                 <li>
                   Visit our website at{" "}
-                  <a href={site} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">
+                  <a href={site} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">
                     {site}
                   </a>
                   , or any website of ours that links to this privacy notice
@@ -70,7 +65,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Questions or concerns?</strong> Reading this privacy notice will help you understand your privacy
                 rights and choices. If you do not agree with our policies and practices, please do not use our Services.
                 If you still have any questions or concerns, please contact us at{" "}
-                <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">
+                <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">
                   {email}
                 </a>
                 .
@@ -78,9 +73,9 @@ export default function PrivacyPolicyPage() {
             </div>
 
             {/* Table of Contents */}
-            <nav className="mt-8 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm">
-              <p className="font-semibold text-gray-900 mb-2">Table of Contents</p>
-              <ol className="list-decimal pl-5 space-y-1 text-[#0B1B3A]">
+            <nav className="mt-8 rounded-xl border border-[#eadfce] bg-[#f5f0e6] px-5 py-4 text-sm">
+              <p className="font-semibold text-[#60371f] mb-2">Table of Contents</p>
+              <ol className="list-decimal pl-5 space-y-1 text-[#617b3c]">
                 {[
                   ["#collect", "What Information Do We Collect?"],
                   ["#process", "How Do We Process Your Information?"],
@@ -107,11 +102,11 @@ export default function PrivacyPolicyPage() {
               </ol>
             </nav>
 
-            <div className="mt-8 space-y-1 text-[15px] leading-relaxed text-gray-700">
+            <div className="mt-8 space-y-1 text-base leading-relaxed text-[#766554]">
 
               <Section id="collect" title="1. What Information Do We Collect?">
                 <Sub title="Personal information you disclose to us">
-                  <p className="text-sm italic text-gray-500">In Short: We collect personal information that you provide to us.</p>
+                  <p className="text-sm italic text-[#82725f]">In Short: We collect personal information that you provide to us.</p>
                   <p>
                     We collect personal information that you voluntarily provide to us when you register on the Services,
                     express an interest in obtaining information about us or our products and Services, when you
@@ -132,7 +127,7 @@ export default function PrivacyPolicyPage() {
                     <strong>Payment Data.</strong> We may collect data necessary to process your payment if you make
                     purchases, such as your payment instrument number and the security code associated with your payment
                     instrument. All payment data is stored by{" "}
-                    <a href="https://stripe.com/privacy" className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">
+                    <a href="https://stripe.com/privacy" className="font-medium text-[#617b3c] underline-offset-2 hover:underline">
                       Stripe, Inc.
                     </a>
                   </p>
@@ -143,7 +138,7 @@ export default function PrivacyPolicyPage() {
                 </Sub>
 
                 <Sub title="Information automatically collected">
-                  <p className="text-sm italic text-gray-500">
+                  <p className="text-sm italic text-[#82725f]">
                     In Short: Some information — such as your Internet Protocol (IP) address and/or browser and device
                     characteristics — is collected automatically when you visit our Services.
                   </p>
@@ -173,7 +168,7 @@ export default function PrivacyPolicyPage() {
               </Section>
 
               <Section id="process" title="2. How Do We Process Your Information?">
-                <p className="text-sm italic text-gray-500">
+                <p className="text-sm italic text-[#82725f]">
                   In Short: We process your information to provide, improve, and administer our Services, communicate
                   with you, for security and fraud prevention, and to comply with law.
                 </p>
@@ -192,7 +187,7 @@ export default function PrivacyPolicyPage() {
               </Section>
 
               <Section id="legal" title="3. What Legal Bases Do We Rely On to Process Your Information?">
-                <p className="text-sm italic text-gray-500">
+                <p className="text-sm italic text-[#82725f]">
                   In Short: We only process your personal information when we believe it is necessary and we have a valid
                   legal reason to do so under applicable law.
                 </p>
@@ -207,7 +202,7 @@ export default function PrivacyPolicyPage() {
               </Section>
 
               <Section id="share" title="4. When and With Whom Do We Share Your Personal Information?">
-                <p className="text-sm italic text-gray-500">
+                <p className="text-sm italic text-[#82725f]">
                   In Short: We may share information in specific situations described in this section.
                 </p>
                 <p>We do not sell your personal information. We share information with service providers that help us run the Service, including:</p>
@@ -226,7 +221,7 @@ export default function PrivacyPolicyPage() {
               </Section>
 
               <Section id="cookies" title="5. Do We Use Cookies and Other Tracking Technologies?">
-                <p className="text-sm italic text-gray-500">
+                <p className="text-sm italic text-[#82725f]">
                   In Short: We may use cookies and other tracking technologies to collect and store your information.
                 </p>
                 <p>
@@ -237,7 +232,7 @@ export default function PrivacyPolicyPage() {
               </Section>
 
               <Section id="international" title="6. Is Your Information Transferred Internationally?">
-                <p className="text-sm italic text-gray-500">
+                <p className="text-sm italic text-[#82725f]">
                   In Short: We may transfer, store, and process your information in countries other than your own.
                 </p>
                 <p>
@@ -249,7 +244,7 @@ export default function PrivacyPolicyPage() {
               </Section>
 
               <Section id="retention" title="7. How Long Do We Keep Your Information?">
-                <p className="text-sm italic text-gray-500">
+                <p className="text-sm italic text-[#82725f]">
                   In Short: We keep your information for as long as necessary to fulfill the purposes outlined in this
                   privacy notice unless otherwise required by law.
                 </p>
@@ -275,7 +270,7 @@ export default function PrivacyPolicyPage() {
                     <li><strong>Right to opt-out:</strong> We do not sell your personal information. However, certain sharing with analytics providers may qualify as &ldquo;sharing&rdquo; under applicable US privacy laws.</li>
                     <li><strong>Right to non-discrimination:</strong> We will not discriminate against you for exercising any of your privacy rights.</li>
                     <li><strong>Appeal:</strong> If you wish to appeal any of our decisions regarding a rights request, you may do so by contacting us at{" "}
-                      <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{email}</a>.
+                      <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{email}</a>.
                     </li>
                   </ul>
                   <p>
@@ -287,7 +282,7 @@ export default function PrivacyPolicyPage() {
                 <Sub title="EEA and UK">
                   <p>
                     You may exercise your rights by contacting us at{" "}
-                    <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{email}</a>.
+                    <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{email}</a>.
                     If you are a resident of the EEA and believe our processing of your information contradicts the GDPR,
                     you may direct your questions or complaints to the Irish Data Protection Commission. If you are a
                     resident of the UK, direct your questions or concerns to the UK Information Commissioner&apos;s Office.
@@ -300,7 +295,7 @@ export default function PrivacyPolicyPage() {
                     data centers in the United States. You have the right to request access or rectification of the
                     personal data LingoIsland holds related to you, or to withdraw any consent given to the processing of
                     such personal data. You may exercise those rights by contacting us at{" "}
-                    <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{email}</a>.
+                    <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{email}</a>.
                   </p>
                 </Sub>
 
@@ -315,7 +310,7 @@ export default function PrivacyPolicyPage() {
               </Section>
 
               <Section id="safe" title="9. How Do We Keep Your Information Safe?">
-                <p className="text-sm italic text-gray-500">
+                <p className="text-sm italic text-[#82725f]">
                   In Short: We aim to protect your personal information through a system of organizational and technical
                   security measures.
                 </p>
@@ -327,7 +322,7 @@ export default function PrivacyPolicyPage() {
               </Section>
 
               <Section id="rights" title="10. What Are Your Privacy Rights?">
-                <p className="text-sm italic text-gray-500">
+                <p className="text-sm italic text-[#82725f]">
                   In Short: In some regions, such as the EEA, UK, and Canada, you have rights that allow you greater
                   access to and control over your personal information.
                 </p>
@@ -341,7 +336,7 @@ export default function PrivacyPolicyPage() {
                 <p>
                   <strong>Withdrawing your consent:</strong> If we are relying on your consent to process your personal
                   information, you have the right to withdraw that consent at any time by contacting us at{" "}
-                  <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">{email}</a>.
+                  <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">{email}</a>.
                 </p>
                 <p>
                   <strong>Account Information:</strong> You may at any time review or change the information in your
@@ -362,7 +357,7 @@ export default function PrivacyPolicyPage() {
               </Section>
 
               <Section id="california" title="12. Do California Residents Have Specific Privacy Rights?">
-                <p className="text-sm italic text-gray-500">
+                <p className="text-sm italic text-[#82725f]">
                   In Short: Yes, if you are a resident of California, you are granted specific rights regarding access to
                   your personal information.
                 </p>
@@ -377,7 +372,7 @@ export default function PrivacyPolicyPage() {
               </Section>
 
               <Section id="updates" title="13. Do We Make Updates to This Notice?">
-                <p className="text-sm italic text-gray-500">
+                <p className="text-sm italic text-[#82725f]">
                   In Short: Yes, we will update this notice as necessary to stay compliant with relevant laws.
                 </p>
                 <p>
@@ -391,11 +386,11 @@ export default function PrivacyPolicyPage() {
               <Section id="contact" title="14. How Can You Contact Us About This Notice?">
                 <p>
                   If you have questions or comments about this notice, you may email us at{" "}
-                  <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">
+                  <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">
                     {email}
                   </a>{" "}
                   or visit our{" "}
-                  <Link href="/contact" className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">
+                  <Link href="/contact" className="font-medium text-[#617b3c] underline-offset-2 hover:underline">
                     Contact page
                   </Link>
                   .
@@ -407,7 +402,7 @@ export default function PrivacyPolicyPage() {
                   Based on the applicable laws of your country, you may have the right to request access to the personal
                   information we collect from you, change that information, or delete it. To request to review, update,
                   or delete your personal information, please email{" "}
-                  <a href={`mailto:${email}`} className="font-medium text-[#0B1B3A] underline-offset-2 hover:underline">
+                  <a href={`mailto:${email}`} className="font-medium text-[#617b3c] underline-offset-2 hover:underline">
                     {email}
                   </a>{" "}
                   with your request. We will respond to your request within 30 days.
@@ -418,7 +413,6 @@ export default function PrivacyPolicyPage() {
           </div>
         </article>
 
-        <Footer />
       </div>
     </main>
   );

@@ -1,4 +1,5 @@
 "use client";
+import {LessonIntroImage} from "./firstLesson/LessonIntroImage";
 import chatStyles from "./firstLesson/LessonChat.module.css";
 import { ChatSituation } from "./firstLesson/ChatSituation";
 import { curriculumProgress } from "@/lib/onboarding/personalized/firstLesson/lessonProgress";
@@ -281,7 +282,7 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
       <div key={`${lesson.id}-${phase}`} data-testid={phase === "intro" ? "lesson-intro" : undefined}>
       {phase === "intro" && <>
         {progress.coursePlacement?.notice && <p role="status" className="mb-4 rounded-2xl p-3 text-sm" style={{background:SKY_PALE,color:GREEN}}>{progress.coursePlacement.notice}</p>}
-        <div className="flex justify-center rounded-2xl py-6" style={{ background: SKY_PALE, color: GREEN }}><RouteIcon route={lesson.route} /></div>
+        <LessonIntroImage goal={answers.goal.primary}/>
         <ul className="my-5 space-y-3 text-sm" style={{ color: NAVY }}>{[lesson.template?.tier && lesson.template.tier >= 4 ? "Learn a useful way to express yourself" : lesson.route === "work" ? "Expand your work vocabulary" : lesson.route === "travel" ? "Build vocabulary for your next trip" : "Find words to connect with others", "Turn new words into a sentence you can use", "Put it into practice with Huahua, your personalized Mandarin companion"].map(text => <li key={text} className="flex items-center gap-2"><Check size={17} style={{ color: GREEN }} aria-hidden />{text}</li>)}</ul>
         <p data-testid="lesson-learning-budget" className="text-center text-xs" style={{ color: MUTED }}>{progress.coursePlacement ? (lesson.match.some(w=>!progress.vocabularyKnownIds?.includes(w.id)) ? `${lesson.match.filter(w=>!progress.vocabularyKnownIds?.includes(w.id)).length} new words and expressions · One useful grammar family` : "Familiar words · One useful pattern to practise") : "About 5–8 minutes · Extra practice is optional"}</p>
         <PrimaryButton className="mt-6" data-testid="lesson-start" onClick={() => go(lesson.curriculum ? "vocabulary" : "teach_first")}>Let’s learn</PrimaryButton>
@@ -302,10 +303,10 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
         else go("frame", {}, "meaning");
       }} />}
       {phase === "recognize" && <MeaningQuiz pairs={quizPairs} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("teach_second")} />}
-      {phase === "vocabulary" && lesson.curriculum && <VocabularyLesson groups={lesson.curriculum.vocabularyGroups} words={lesson.match} progress={progress} previouslyKnown={vocabularyEvidence(answers).known} onSave={save} onComplete={()=>go("frame",{},"meaning")} onMistake={mistake} onUnavailable={failAudio}/>}
+      {phase === "vocabulary" && lesson.curriculum && <VocabularyLesson matching={lesson.curriculum.vocabularyMatching!==false} groups={lesson.curriculum.vocabularyGroups} words={lesson.match} progress={progress} previouslyKnown={vocabularyEvidence(answers).known} onSave={save} onComplete={()=>go("frame",{},"meaning")} onMistake={mistake} onUnavailable={failAudio}/>}
       {phase === "meaning" && <MatchWords pairs={lesson.match} onMistake={mistake} onUnavailable={failAudio} onComplete={()=>go("listen",{},"meaning")}/>}
       {phase === "listen" && <MeaningQuiz pairs={quizPairs} targetIndex={Math.min(1,lesson.match.length-1)} listening={!audioUnavailable} silent={audioUnavailable} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("frame")} />}
-      {phase === "frame" && (lesson.curriculum ? <GrammarPractice initialStepId={progress.grammarStepId} onProgress={(grammarIndex,grammarStepId)=>save({grammarIndex,grammarStepId})} curriculum={lesson.curriculum} responses={progress.writingResponses} onResponse={(id,text)=>save({writingResponses:{...progressRef.current.writingResponses,[id]:text}})} onMistake={mistake} onUnavailable={failAudio} onComplete={()=>{ if(lesson.curriculum?.pronunciation===false){save({},"build");go("prepare",{speakingPath:"skipped"},"speaking");}else go("baseline",{},"build");}}/> : <>
+      {phase === "frame" && (lesson.curriculum ? <GrammarPractice writingContext={{tier:lesson.template?.tier??4,goal:answers.goal.primary??"other",variant:progress.coursePlacement?.variant??0,interestKeys:answers.interests.keys,lessonId:lesson.id}} initialStepId={progress.grammarStepId} onProgress={(grammarIndex,grammarStepId)=>save({grammarIndex,grammarStepId})} curriculum={lesson.curriculum} responses={progress.writingResponses} onResponse={(id,text)=>save({writingResponses:{...progressRef.current.writingResponses,[id]:text}})} onMistake={mistake} onUnavailable={failAudio} onComplete={()=>{ if(lesson.curriculum?.pronunciation===false){save({},"build");go("prepare",{speakingPath:"skipped"},"speaking");}else go("baseline",{},"build");}}/> : <>
         <p className="mb-4 rounded-2xl p-4 text-sm leading-relaxed" style={{background:SKY_PALE,color:NAVY}}>{lesson.skill}</p><SentenceBreakdown words={lesson.sentenceWords} sentence={lesson.transferBuild.result} onUnavailable={failAudio} />
         <PrimaryButton className="mt-6" onClick={() => go("supported")}>{simplePhrase ? "Practice using it" : "Try building it"}</PrimaryButton>
       </>)}

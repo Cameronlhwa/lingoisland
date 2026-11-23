@@ -1,3 +1,4 @@
+import MarketingShell from "@/components/landing/MarketingShell";
 import type { Metadata } from "next";
 import { getCanonicalUrl } from "@/lib/utils/site-url";
 
@@ -33,5 +34,5 @@ export default function PrivacyLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <MarketingShell>{children}</MarketingShell>;
 }

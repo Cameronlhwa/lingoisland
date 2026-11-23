@@ -1,3 +1,5 @@
+import { advancedFirstLesson } from "./advancedCurriculum";
+import type { OnboardingAnswers } from "../flow";
 import type { AuthoredLesson, BuildPrompt, LessonPhrase, MatchPair } from "./types";
 import type { CurriculumPractice, GrammarCard } from "./curriculum";
 import type { GoalKey } from "../goals";
@@ -67,16 +69,39 @@ const ASPECTS: Record<GoalKey, readonly {pair:Pair; context:string}[]> = {
 };
 export type BudgetCourse = AuthoredLesson & { budget: {
  revision: typeof COURSE_REVISION; tier: CourseTier; variant: number; goal: GoalKey;
- grammarIds: string[]; topicIds: string[]; prerequisiteIds: string[];
+ grammarIds: string[]; topicIds: string[]; prerequisiteIds: string[]; foundationIds?: string[];
  // Explicit vocabulary for all learner-facing Chinese, including distractors and Huahua's replies.
  words: LessonPhrase[]; probes: Extract<CurriculumPractice,{kind:"choice"}>[];
 }};
-export function makeBudgetCourse(tier: CourseTier, goal: GoalKey, variant = 0): BudgetCourse {
+function withFoundations(course:BudgetCourse):BudgetCourse {
+ if(course.budget.tier<=3)return {...course,budget:{...course.budget,foundationIds:course.budget.prerequisiteIds}};
+ const targets=new Set([...course.budget.grammarIds,...course.budget.topicIds]);
+ const corpus=JSON.stringify({cards:course.curriculum!.cards,practices:course.curriculum!.practices,chat:course.chat,discussion:course.curriculum!.discussion});
+ const candidates=course.budget.tier===4?course.budget.prerequisiteIds:["我","我们","也","因为","什么","可以","应该","自己","需要","重要","不同","想","时间","觉得","会","能","你"];
+ const meanings:Record<string,string>={"我":"I / me","我们":"we / us","也":"also","因为":"because","什么":"what","可以":"can / may","应该":"should","自己":"oneself","需要":"need","重要":"important","不同":"different","想":"want to","时间":"time","觉得":"think / feel","会":"know how to","能":"be able to","你":"you"};
+ const foundationIds=candidates.filter(id=>!targets.has(id)&&corpus.includes(id)).slice(0,6);
+ const extras=foundationIds.filter(id=>!course.match.some(w=>w.id===id)).map(id=>courseWord(id,meanings[id]));
+ return {...course,match:[...course.match,...extras.map(w=>({...w,label:w.meaning,visual:"word"}))],sentenceWords:[...course.sentenceWords,...extras],curriculum:{...course.curriculum!,vocabularyGroups:course.curriculum!.vocabularyGroups.map(g=>g.id==="core"?{...g,wordIds:[...g.wordIds,...extras.map(w=>w.id)]}:g)},budget:{...course.budget,foundationIds,prerequisiteIds:[...course.budget.prerequisiteIds,...extras.map(w=>w.id)],words:[...course.budget.words,...extras]}};
+}
+export function makeBudgetCourse(tier: CourseTier, goal: GoalKey, variant = 0, profile?: OnboardingAnswers): BudgetCourse {
  variant = variant === 1 ? 1 : 0;
+ if(tier>=4){
+  const lesson=advancedFirstLesson(profile??{goal:{primary:goal},interests:{keys:[]}} as unknown as OnboardingAnswers,tier as 4|5|6,variant);
+  const words=lesson.match.map(({label,...word})=>({...word,meaning:label}));
+  const groups=lesson.curriculum!.vocabularyGroups;
+  const coreIds=groups.find(group=>group.id==="core")!.wordIds;
+  const grammarCount=tier===6?5:3;
+  const probes:Extract<CurriculumPractice,{kind:"choice"}>[]=tier===5?[
+   {kind:"choice",prompt:"Add another idea. 除了…以外，我 ___ …。",choices:[W.also,W.outside],correct:W.also.id,explanation:"还 adds the second idea."},
+   {kind:"choice",prompt:"Start the addition pattern. ___ …以外，我还…。",choices:[W.except,W.outside],correct:W.except.id,explanation:"除了 introduces the first idea."},
+  ]:lesson.curriculum!.cards.slice(0,2).map(card=>card.check).filter((check):check is Extract<CurriculumPractice,{kind:"choice"}>=>check.kind==="choice");
+  return withFoundations({...lesson,budget:{revision:COURSE_REVISION,tier,variant,goal,grammarIds:coreIds.slice(0,grammarCount),topicIds:groups.find(group=>group.id==="personalized")!.wordIds,prerequisiteIds:coreIds.slice(grammarCount),words,probes}});
+ }
+
  let grammar: LessonPhrase[], prerequisites: LessonPhrase[], topic: LessonPhrase[], title: string, context: string;
  const pair = (p:Pair) => [word(p[0],p[1]),word(p[2],p[3])];
  if(tier===1){grammar=[W.ni,W.hao,W.everyone];prerequisites=[];topic=pair(PEOPLE[goal][variant]);title="Greet someone. Greet everyone.";context="You’re greeting someone in a situation that matters to you.";}
- else if(tier===2){grammar=[W.hui,W.bu,W.ma];prerequisites=[W.wo,W.ni];topic=pair(ACTIONS[goal][variant]);title="Say what you know how to do.";context="Talk about two skills connected to your interests.";}
+ else if(tier===2){grammar=[W.hui,W.bu,W.ma];prerequisites=[W.wo,W.ni,W.hao];topic=pair(ACTIONS[goal][variant]);title="Say what you know how to do.";context="Talk about two skills connected to your interests.";}
  else if(tier===3){grammar=[W.neng];prerequisites=[W.wo,W.ni,W.bu,W.ma];topic=pair(PLANS[goal][variant]);title="Say what’s possible.";context="Your schedule allows one plan, but prevents the other.";}
  else if(tier===4){const option=OPTIONS[goal][variant];grammar=[W.haishi,W.huozhe];prerequisites=[W.wo,W.ni,W.want,option.verb];topic=pair(option.pair);title="Ask for a choice. Give alternatives.";context=option.context;}
  else if(tier===5){grammar=[W.except,W.outside,W.also];prerequisites=[W.wo,W.like];topic=pair(INTERESTS[goal][variant]);title="Keep one idea. Add another.";context="Tell Huahua about two things you like in your chosen topic.";}
@@ -92,15 +117,15 @@ export function makeBudgetCourse(tier: CourseTier, goal: GoalKey, variant = 0): 
  if(tier===1){
   first=build([A,W.hao],`Hello, ${A.meaning}!`);second=build([B,W.hao],`Hello, ${B.meaning}!`);
   question=phrase([W.ni,W.hao],"Hello!","！");right=second.result;wrong=first.result;
-  explanation="Put the person or group first, then 好. Change who you greet; keep the same pattern.";takeaway="Person or group + 好.";
+  explanation="Put the person you’re greeting first, then 好. Change who you greet; keep the same pattern.";takeaway="Person + 好.";
   checks=[choice("You’re greeting a group. Choose the greeting.",phrase([W.everyone,W.hao],"Hello, everyone!"),phrase([W.ni,W.hao],"Hello!"),"大家 means everyone."),choice(`Greet ${B.meaning}.`,second.result,first.result,"Choose the person named in the situation.")];mission=`Greet ${B.meaning}.`;
  } else if(tier===2 || tier===3){
   const modal=tier===2?W.hui:W.neng;
   first=build([W.wo,modal,A],tier===2?`I know how to ${A.meaning}.`:`I can ${A.meaning}; the circumstances allow it.`);
   second=build([W.wo,W.bu,modal,B],tier===2?`I don’t know how to ${B.meaning}.`:`I can’t ${B.meaning}; the circumstances prevent it.`);
   question=phrase([W.ni,modal,B,W.ma],`Can you ${B.meaning}?`,"？");right=second.result;wrong=phrase([W.wo,modal,B],`I can ${B.meaning}.`);
-  explanation=tier===2?"会 goes before a learned skill. Put 不 before 会 to say you don’t know how. Add 吗 at the end to ask a yes/no question.":"能 goes before an action when the circumstances allow it. 不 before 能 means they prevent it. Reuse the familiar 吗 question ending.";
-  takeaway=tier===2?"会 / 不会 / 会…吗？ describe learned ability.":"能 / 不能 describe what the circumstances allow.";
+  explanation=tier===2?"会 goes before a learned skill. Put 不 before 会 to say you don’t know how.":"能 goes before an action when the circumstances allow it. Put 不 before 能 to say the circumstances prevent it.";
+  takeaway=tier===2?"会 / 不会 describe learned ability.":"能 / 不能 describe what the circumstances allow.";
   checks=[choice(tier===2?`You learned to ${A.meaning}. 我 ___ ${A.hanzi}。`:`Your schedule allows you to ${A.meaning}. 我 ___ ${A.hanzi}。`,modal,phrase([W.bu,modal],"cannot"),"Choose the positive form for this situation."),choice(tier===2?`You haven’t learned to ${B.meaning}.`:`A scheduling conflict prevents you from being able to ${B.meaning}.`,second.result,wrong,"Use the negative form for this situation.")];mission=tier===2?`For this practice, you haven’t learned to ${B.meaning}. Tell Huahua.`:`For this practice, a scheduling conflict prevents you from being able to ${B.meaning}. Tell Huahua.`;
  } else if(tier===4){
   const verb=OPTIONS[goal][variant].verb;
@@ -122,14 +147,20 @@ export function makeBudgetCourse(tier: CourseTier, goal: GoalKey, variant = 0): 
   explanation="一方面 introduces one aspect. 另一方面 introduces another. The two aspects can contrast or simply be different.";takeaway="一方面…，另一方面… organizes two aspects.";
   checks=[choice(`Introduce the second aspect. 一方面很${A.hanzi}， ___ 很${B.hanzi}。`,W.other,W.one,"另一方面 introduces the second aspect."),choice(`Introduce the first aspect. ___ 很${A.hanzi}，另一方面很${B.hanzi}。`,W.one,W.other,"一方面 introduces the first aspect.")];mission=`Use both expressions. Start with “${B.meaning}”, then add “${A.meaning}”.`;
  }
- const examples=[first.result,second.result].map((p,i)=>({...p,hanzi:p.hanzi.replace("以外我","以外，我").replace("另一方面","，另一方面")+(tier===1?"！":tier===4&&i===1?"？":"。"),label:i===0?"First example":"Same family, another example"}));
+ // Mark only the grammar taught by this card, including every part of paired patterns.
+ const keyWords=(i:number):string[]=>tier===1?["好"]:tier===2?[i===0?"会":"不会"]:tier===3?[i===0?"能":"不能"]:tier===4?[i===0?"或者":"还是"]:tier===5?["除了","以外","还"]:["一方面","另一方面"];
+ const examples=[first.result,second.result].map((p,i)=>({...p,keyWords:keyWords(i),hanzi:p.hanzi.replace("以外我","以外，我").replace("另一方面","，另一方面")+(tier===1?"！":tier===4&&i===1?"？":"。"),label:i===0?"First example":"Same family, another example"}));
  // At most two teaching cards; related forms are taught together, with two checks total.
  const cards:GrammarCard[]=[{id:`family-${tier}`,format:tier===4?"contrast":"pattern",title,explanation,examples,takeaway,check:checks[0]}];
- if(tier===2){cards.push({id:"ability-question",format:"exchange",title:"Ask about the same skill.",explanation:"Add 吗 to ask. A question about 你 gets an answer about 我.",examples:[{...question,label:"Huahua asks"},{...right,label:"You answer"}],takeaway:"The same ability pattern works as a statement, negative, or question.",check:checks[1]});}
+ if(tier===2){
+  const statement=phrase([W.ni,W.hui,B],`You know how to ${B.meaning}.`,"。");
+  const questionCheck=choice(`Turn this into a yes/no question: 你会${B.hanzi} ___？`,W.ma,W.bu,"Add 吗 at the end. Keep the rest of the sentence the same.");
+  cards.push({id:"ability-question",format:"change",title:"Turn a statement into a question.",explanation:"Add 吗 (ma) at the end to ask a yes/no question. Keep the rest of the sentence the same.",examples:[{...statement,label:"A statement"},{...question,label:"A yes/no question",highlight:{hanzi:"吗",pinyin:"ma"}}],connector:"+ 吗 (ma)",takeaway:"Same sentence + 吗 = a yes/no question.",check:questionCheck});
+ }
  const practices:CurriculumPractice[]=[...(tier===2?[]:[checks[1]]),{kind:"build",build:first},{kind:"build",build:second}];
  const match:MatchPair[]=all.map(w=>({...w,label:w.meaning,visual:"word"}));
- // Echo a familiar item rather than introducing a new acknowledgement phrase after the learner replies.
- const response=tier===1?phrase([W.hao],"Good!","！"):tier===2||tier===3?phrase([W.wo,grammar[0],A],first.result.meaning,"。"):tier===4?phrase([A],A.meaning,"！"):tier===5?first.result:second.result;
+ // Level two acknowledges the reply with 好, included in its supporting vocabulary checks.
+ const response=tier===1?phrase([W.hao],"Good!","！"):tier===2?word("好","Okay."):tier===3?phrase([W.wo,grammar[0],A],first.result.meaning,"。"):tier===4?phrase([A],A.meaning,"！"):tier===5?first.result:second.result;
  const id=`${COURSE_REVISION}-${tier}-${goal}-${variant}`;
- return {id,route:goal==="travel"?"travel":goal==="work"||goal==="school"?"work":"social",band:tier===1?"beginner":tier<4?"elementary":tier===4?"intermediate":"advanced",outcome:title,situation:context,skill:explanation,huahuaPose:"coaching",targets:[first.result,second.result],match,build:first,transferBuild:second,sentenceWords:all,questionWords:all,starter:tier===1?W.ni:tier===6?W.one:W.wo,mission:mission,speakTargetId:first.result.id,completionLine:"You used your new language in a conversation.",chat:{mission:{context,task:mission},huahua:question,choices:[wrong,right].sort((a,b)=>a.id.localeCompare(b.id,"zh")),expectedChoiceId:right.id,responses:{[right.id]:response},outcomeVisual:{[right.id]:"check"}},curriculum:{cards,practices,pronunciation:tier<=4,note:{title:"One useful pattern to keep",text:takeaway},vocabularyGroups:[{id:"core",title:"Grammar and supporting words",wordIds:[...grammar,...prerequisites].map(w=>w.id)},{id:"personalized",title:"Words for your goal",wordIds:topic.map(w=>w.id)}]},template:{id:`budget-${tier}`,tier,scene:context,teaching:all,incomingTeaching:[],construction:explanation,shortRoute:true,quizPairs:match},budget:{revision:COURSE_REVISION,tier,variant,goal,grammarIds:grammar.map(w=>w.id),topicIds:topic.map(w=>w.id),prerequisiteIds:prerequisites.map(w=>w.id),words:all,probes:checks}};
+ return withFoundations({id,route:goal==="travel"?"travel":goal==="work"||goal==="school"?"work":"social",band:tier===1?"beginner":tier<4?"elementary":tier===4?"intermediate":"advanced",outcome:title,situation:context,skill:explanation,huahuaPose:"coaching",targets:[first.result,second.result],match,build:first,transferBuild:second,sentenceWords:all,questionWords:all,starter:tier===1?W.ni:tier===6?W.one:W.wo,mission:mission,speakTargetId:first.result.id,completionLine:"You used your new language in a conversation.",chat:{mission:{context,task:mission},huahua:question,choices:[wrong,right].sort((a,b)=>a.id.localeCompare(b.id,"zh")),expectedChoiceId:right.id,responses:{[right.id]:response},outcomeVisual:{[right.id]:"check"}},curriculum:{cards,practices,pronunciation:tier<=4,note:{title:"One useful pattern to keep",text:takeaway},vocabularyGroups:[{id:"core",title:"Grammar and supporting words",wordIds:[...grammar,...prerequisites].map(w=>w.id)},{id:"personalized",title:"Words for your goal",wordIds:topic.map(w=>w.id)}]},template:{id:`budget-${tier}`,tier,scene:context,teaching:all,incomingTeaching:[],construction:explanation,shortRoute:true,quizPairs:match},budget:{revision:COURSE_REVISION,tier,variant,goal,grammarIds:grammar.map(w=>w.id),topicIds:topic.map(w=>w.id),prerequisiteIds:prerequisites.map(w=>w.id),words:all,probes:tier===1?[checks[0],choice("Choose the greeting with the person first.",phrase([W.ni,W.hao],"Hello!"),phrase([W.hao,W.ni],"The greeting is reversed."),"Put 你 before 好.")]:checks}});
 }

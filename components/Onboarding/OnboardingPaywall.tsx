@@ -305,7 +305,7 @@ export default function OnboardingPaywall({
             : "fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto p-4 sm:p-6 md:flex"
         }
         style={{
-          background: "#EAF6FB",
+          background: "#fffaf3",
           fontFamily: "'DM Sans', system-ui, sans-serif",
         }}
       >
@@ -313,7 +313,7 @@ export default function OnboardingPaywall({
           aria-hidden
           className="hsk-onboarding-bg pointer-events-none fixed inset-0"
           style={{
-            backgroundImage: "url(/onboarding/journey-bg.png)",
+            backgroundImage: "url(/onboarding/journey-island-v2.webp)",
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
           }}

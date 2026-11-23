@@ -9,9 +9,8 @@ export function curriculumProgress(lesson: AuthoredLesson, progress: FirstLesson
  if (!curriculum || progress.phase === "intro") return 0;
  if (progress.phase === "complete") return 100;
  const known = new Set(progress.vocabularyKnownIds ?? []);
- const groups = curriculum.vocabularyGroups.map(group => lesson.match.filter(word => group.wordIds.includes(word.id) && !known.has(word.id)));
- const wordCount = groups.reduce((count, words) => count + words.length, 0);
- const matchCount = groups.reduce((count, words) => count + Math.ceil(words.length / VOCABULARY_BATCH_SIZE), 0);
+ const wordCount = lesson.match.filter(word=>!known.has(word.id)).length;
+ const matchCount = curriculum.vocabularyMatching===false?0:Math.ceil(wordCount / VOCABULARY_BATCH_SIZE);
  const steps = grammarSteps(curriculum);
  const phases = [
   { id: "intro", weight: 1 },
@@ -29,13 +28,11 @@ export function curriculumProgress(lesson: AuthoredLesson, progress: FirstLesson
  let within = 0;
  if (phase === "vocabulary" && progress.vocabularyChecked) {
   const taught = Math.min(progress.vocabularyIndex ?? 0, Math.max(0, wordCount - 1));
-  let offset = 0, completedMatches = 0;
-  for (const words of groups) {
-   const covered = Math.min(Math.max(0, taught - offset), words.length);
-   completedMatches += covered === words.length ? Math.ceil(words.length / VOCABULARY_BATCH_SIZE) : Math.floor(covered / VOCABULARY_BATCH_SIZE);
-   offset += words.length;
-  }
-  within = (1 + taught + completedMatches + (progress.vocabularyTesting ? 1 : 0)) / phases[index].weight;
+  const batchIndex = Math.floor(taught / VOCABULARY_BATCH_SIZE);
+  const completedMatches = curriculum.vocabularyMatching===false?0:batchIndex;
+  const batchEnd = Math.min((batchIndex+1)*VOCABULARY_BATCH_SIZE,wordCount)-1;
+  const testing = curriculum.vocabularyMatching!==false && progress.vocabularyTesting && taught===batchEnd;
+  within = (1 + taught + completedMatches + (testing ? 1 : 0)) / phases[index].weight;
  }
  if (phase === "frame") within = grammarStepIndex(steps, progress.grammarStepId) / Math.max(1, steps.length);
  if (phase === "baseline" && progress.baseline) within = 0.8;

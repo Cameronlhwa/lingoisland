@@ -11,7 +11,7 @@ test("every mini-course shortcut survives storage parsing and resumes directly a
   const state=parseState(JSON.parse(JSON.stringify(original)))!;
   assert.ok(state);assert.equal(state.answers.onboardingVariant,"test");
   assert.equal(resumeStep(state),"first_lesson");assert.ok(canVisit("first_lesson",state));
-  const lesson=updatedFirstLesson(state.answers)!;assert.equal(lesson.template!.tier,index+1);assert.equal(lesson.id,`budget-v1-${index+1}-${goal.key}-0`);
+  const lesson=updatedFirstLesson(state.answers)!;assert.equal(lesson.template!.tier,index+1);assert.equal(lesson.id,`${index<3?"budget-v1":"methods-v1"}-${index+1}-${goal.key}-0`);
   assert.equal(state.answers.firstLesson.phase,"intro");assert.deepEqual(state.answers.firstLesson.xpAwarded,[]);
   assert.equal(state.answers.firstLesson.completedAt,null);assert.equal(state.answers.firstLesson.vocabularyChecked,false);
   assert.equal(state.answers.commitment.committedAt,null);assert.equal(state.revision,null);

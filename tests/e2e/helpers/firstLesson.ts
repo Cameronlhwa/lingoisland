@@ -1,3 +1,4 @@
+import {placementFoundationIds} from "../../../lib/onboarding/personalized/firstLesson/coursePlacement";
 import {makeBudgetCourse,type CourseTier} from "../../../lib/onboarding/personalized/firstLesson/budgetCourseContent";
 import {grammarSteps} from "../../../lib/onboarding/personalized/firstLesson/grammarSequence";
 import {updatedFirstLesson} from "../../../lib/onboarding/personalized/firstLesson/curriculum";
@@ -17,7 +18,7 @@ export async function advanceLesson(page: Page, until = "complete", press: (loca
     const answers=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).answers,storageKey);
     const course=makeBudgetCourse(tier,answers.goal.primary??"other",Number(await placement.getAttribute("data-course-variant")));
     await page.getByTestId("vocabulary-know-none").click();
-    for(const id of course.budget.prerequisiteIds)await page.getByTestId(`known-word-${id}`).click();
+    for(const id of placementFoundationIds(course)){const card=page.getByTestId(`known-word-${id}`);if(await card.isVisible())await card.click();}
     await page.getByTestId("course-placement-continue").click();
   }
   if(await familiarity.isVisible()) {await page.getByRole("button",{name:"I know all of these"}).click();await page.getByRole("button",{name:"Continue",exact:true}).click();}

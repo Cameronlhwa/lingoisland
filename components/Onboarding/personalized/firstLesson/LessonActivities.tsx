@@ -1,4 +1,5 @@
 "use client";
+import {meaningQuizChoices} from "@/lib/onboarding/personalized/firstLesson/quizChoices";
 import { say } from "./lessonSpeech";
 export { say } from "./lessonSpeech";
 import { ConversationPrompt } from "./ConversationPrompt";
@@ -78,6 +79,7 @@ export function MeaningQuiz({ pairs, targetIndex = 0, listening = false, silent 
   pairs: MatchPair[]; targetIndex?: number; listening?: boolean; silent?: boolean; onMistake: (id: string) => void; onComplete: () => void; onUnavailable: () => void;
 }) {
   const target = pairs[targetIndex] ?? pairs[0];
+  const choices = meaningQuizChoices(pairs,target);
   const [selected, setSelected] = useState<string | null>(null);
   const [result, setResult] = useState<"correct" | "retry" | null>(null);
   const [showText, setShowText] = useState(!listening);
@@ -85,7 +87,7 @@ export function MeaningQuiz({ pairs, targetIndex = 0, listening = false, silent 
   return <div data-testid="lesson-quiz" data-target-id={target.id}>
     {listening && showText && <p className="mb-3 text-sm" style={{ color: MUTED }}>Read the expression below, then choose its English meaning.</p>}
     {listening ? <div className="rounded-2xl p-5 text-center" style={{ background: SKY_PALE }}><button type="button" onClick={() => { setHeard(true); say(target.hanzi, () => { setShowText(true); onUnavailable(); }); }} className="inline-flex min-h-12 items-center gap-2 rounded-xl px-3 font-semibold" style={{ color: GREEN }}><Volume2 size={22} aria-hidden />Play word</button>{showText && <p className="mt-3 text-2xl font-bold" lang="zh-CN">{target.hanzi} <span className="text-sm font-normal">{target.pinyin}</span></p>}</div> : <p className="py-5 text-center text-2xl font-bold" style={{ color: NAVY }}>{silent ? target.hanzi : target.label}</p>}
-    <div className={pairs.length > 2 ? "mt-5 grid grid-cols-2 gap-3" : "mt-5 flex gap-3"}>{[...pairs].reverse().map((p) => <Choice key={p.id} selected={selected === p.id} testId={`quiz-choice-${p.id}`} audioText={!listening && !silent ? p.hanzi : undefined} onUnavailable={onUnavailable} onClick={() => { if (result === "correct") return; setSelected(p.id); setResult(null); }}>
+    <div className={choices.length > 2 ? "mt-5 grid grid-cols-2 gap-3" : "mt-5 flex gap-3"}>{[...choices].reverse().map((p) => <Choice key={p.id} selected={selected === p.id} testId={`quiz-choice-${p.id}`} audioText={!listening && !silent ? p.hanzi : undefined} onUnavailable={onUnavailable} onClick={() => { if (result === "correct") return; setSelected(p.id); setResult(null); }}>
       <span className="block text-lg font-bold" lang={listening || silent ? "en" : "zh-CN"}>{listening || silent ? p.label : p.hanzi}</span>
       {!listening && !silent && <span className="mt-1 block text-sm" style={{ color: MUTED }}>{p.pinyin}</span>}
     </Choice>)}</div>

@@ -6,9 +6,9 @@ export const MINI_COURSE_PREVIEWS: readonly { level: SelfReportKey; title: strin
  { level: "new", title: "Greet people", concepts: "你好 · 大家好 · personalized greetings" },
  { level: "few_words", title: "Say what you can do", concepts: "会 · 不会 · 吗" },
  { level: "simple_sentences", title: "Say what’s possible", concepts: "能 · 不能 · familiar 吗 questions" },
- { level: "basic_conversations", title: "Make choices", concepts: "还是 · 或者" },
+ { level: "basic_conversations", title: "Make choices", concepts: "还是 · 或者 · 更 · writing and reading" },
  { level: "familiar_topics", title: "Connect your ideas", concepts: "除了…以外，还…" },
- { level: "complex_topics", title: "Discuss different views", concepts: "一方面…另一方面…" },
+ { level: "complex_topics", title: "Discuss different views", concepts: "观点 · 角度 · two-sided discussion" },
 ];
 
 /** A fresh, local-only test profile. Normal onboarding never calls this shortcut. */

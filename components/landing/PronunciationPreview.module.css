@@ -1,0 +1,26 @@
+.dialog{position:fixed;inset:0;width:min(620px,calc(100% - 28px));max-height:calc(100dvh - 32px);margin:auto;padding:0;border:1px solid #eadfce;border-radius:28px;background:#fffaf3;color:#60371f;box-shadow:0 24px 100px #35231440;overflow:auto;overscroll-behavior:contain}
+.dialog::backdrop{background:#352b2459;backdrop-filter:blur(7px)}
+.dialog .panel{position:relative;padding:36px;animation:academyEnter .25s ease-out}
+.dialog .close{position:absolute;top:12px;right:12px;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:50%;color:#60371f;background:#f1e8dd;cursor:pointer}
+.dialog .eyebrow{margin:0 40px 12px 0;color:#6b8542;font-size:12px;font-weight:850;letter-spacing:.12em}
+.dialog h2{margin:0;font-size:32px;line-height:1.15;letter-spacing:-.03em}
+.dialog .description{margin:16px 0 24px;color:#766554;font-size:16px;line-height:1.6}
+.dialog .lessons{display:grid;gap:18px;margin-bottom:26px}
+.dialog .lessons>div{display:flex;gap:14px;align-items:flex-start;font-size:15px;line-height:1.5;color:#766554}
+.dialog .lessons svg{flex-shrink:0;width:42px;height:42px;padding:10px;color:#617d3a;border-radius:13px;background:#edf0df}
+.dialog .lessons strong{display:block;margin-bottom:3px;color:#60371f;font-size:17px}
+.dialog .invitation{margin:24px 0 14px;font-weight:750;font-size:18px}
+.dialog .primary,.dialog .secondary{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:50px;padding:14px 18px;border-radius:999px;font:inherit;font-size:16px;text-align:center;text-decoration:none;cursor:pointer}
+.dialog .primary{margin-top:20px;color:#fff;background:#647f3d;border:1px solid #647f3d;font-weight:800;box-shadow:0 5px 14px #647f3d20}
+.dialog .primary:hover{background:#526b30}.dialog .primary:disabled{opacity:.6;cursor:default}
+.dialog .secondary{margin-top:8px;color:#766554;background:transparent;border:0;font-size:14px;text-decoration:underline;text-underline-offset:4px}
+.dialog .sentence{padding:24px 18px;border:1px solid #eadfce;border-radius:20px;text-align:center;background:#fff6e6}
+.dialog .sentence p{margin:5px 0;color:#766554;font-size:15px}.dialog .sentence p:first-child{color:#60371f;font-size:38px;line-height:1.5}.dialog .sentence p:nth-child(2){font-size:20px;color:#607b3a}
+.dialog .listen{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin-top:14px;padding:10px 14px;color:#60371f;border:1px solid #decbb4;border-radius:999px;background:#fffbf6;font:inherit;font-size:14px;cursor:pointer}.dialog .listen:disabled{opacity:.5;cursor:default}
+.dialog .note{margin:18px 0 0;font-size:13px;color:#766554;line-height:1.6}.dialog .status{margin-top:18px;font-size:15px;line-height:1.5;color:#607b3a;min-height:24px}.dialog .error{margin:12px 0;color:#a33e25;font-size:14px;line-height:1.5}
+.dialog .score{margin:24px 0 20px;padding:20px;background:#edf0df;border:1px solid #dae2c4;border-radius:22px;text-align:center}.dialog .score strong{font-size:70px;line-height:1.1;color:#607b3a;font-weight:850;letter-spacing:-.05em}.dialog .score strong span{font-size:24px;letter-spacing:0}.dialog .score p{margin:6px 0 0;color:#607043;font-size:14px}
+.dialog .quote{margin:16px 0;font-size:20px;color:#60371f;font-weight:750;line-height:1.5}.dialog .help,.dialog .focus{margin:18px 0;padding:18px;border:1px solid #eadfce;border-radius:18px;background:#fff7e9}.dialog .help h3,.dialog .focus strong{margin:0 0 8px;font-size:17px;color:#60371f}.dialog .help p,.dialog .focus p{margin:6px 0 0;color:#766554;font-size:15px;line-height:1.6}
+.dialog :is(button,a):focus-visible{outline:3px solid #6b8542;outline-offset:3px}.dialog h2:focus{outline:none}
+@keyframes academyEnter{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media(max-width:600px){.dialog .panel{padding:30px 20px 20px}.dialog h2{font-size:28px}.dialog .sentence p:first-child{font-size:32px}}
+@media(prefers-reduced-motion:reduce){.dialog .panel{animation:none}}

@@ -30,7 +30,7 @@ export function BlogReadingProgress() {
       <div
         className="h-full origin-left transition-[transform] duration-150 ease-out"
         style={{
-          background: "#20674F",
+          background: "#617b3c",
           transform: `scaleX(${p})`,
         }}
       />

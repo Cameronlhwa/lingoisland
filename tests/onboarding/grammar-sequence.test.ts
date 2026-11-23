@@ -14,17 +14,16 @@ test("every concept is taught before its own objective assessment for every goal
     const curriculum = updatedFirstLesson(a)!.curriculum!;
     const steps = grammarSteps(curriculum);
     assert.equal(new Set(steps.map(s => s.id)).size, steps.length);
-    for (let i = 0; i < curriculum.cards.length * 2; i += 2) {
-      const teach = steps[i], check = steps[i + 1];
-      assert.equal(teach.kind, "teach"); assert.equal(check.kind, "check");
-      if (teach.kind !== "teach" || check.kind !== "check") throw new Error("Missing teaching/check pair");
-      assert.equal(teach.card.id, check.card.id);
+    for (const card of curriculum.cards) {
+      const i=steps.findIndex(step=>step.kind==="teach"&&step.card.id===card.id);
+      const teach=steps[i];
+      assert.equal(teach.kind,"teach");if(teach.kind!=="teach")throw new Error("Missing teaching");
       formats.add(teach.card.format);
-      assert.equal(check.practice.kind, "choice");
-      if (check.practice.kind === "choice") {
-        assert.ok(check.practice.correct);
-        const correct=check.practice.correct;
-        assert.equal(check.practice.choices.filter(p => p.id === correct).length, 1);
+      if(curriculum.checksAfterTeaching!==false){
+        const check=steps[i+1];assert.equal(check.kind,"check");
+        if(check.kind!=="check")throw new Error("Missing check");
+        assert.equal(check.card.id,card.id);
+        if(check.practice.kind==="choice"){const practice=check.practice;assert.equal(practice.choices.filter(p=>p.id===practice.correct).length,1);}
       }
       for (const e of teach.card.examples) {
         assert.ok(e.meaning && e.pinyin && e.label);
@@ -33,7 +32,7 @@ test("every concept is taught before its own objective assessment for every goal
       }
     }
   }
-  assert.deepEqual(Array.from(formats).sort(), ["contrast", "exchange", "pattern"]);
+  assert.deepEqual(Array.from(formats).sort(), ["change", "contrast", "pattern"]);
 });
 test("stable checkpoints survive parsing and old or removed checkpoints restart teaching", () => {
   const a = initialState(new Date(), "test").answers; a.level.selfReport = "few_words"; a.goal.primary = "work";

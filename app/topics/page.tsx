@@ -80,6 +80,7 @@ export default function TopicsHubPage() {
           {TOPICS_BY_CATEGORY.map(({ category, topics }) => (
             <section
               key={category}
+              id={topicToSlug(category).replace(/-+/g, "-")}
               className="mb-10"
               data-topic-category={category}
             >
