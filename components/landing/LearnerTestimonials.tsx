@@ -8,7 +8,8 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import Image from "next/image";
 import { LEARNER_TESTIMONIALS, type LearnerTestimonial } from "@/lib/landing-content";
 
 const AUTOPLAY_MS = 7000;
@@ -46,12 +47,20 @@ export default function LearnerTestimonials({
   title = "Mandarin built around real life",
   subtitle = "Real feedback from LingoIsland learners",
   testimonials = LEARNER_TESTIMONIALS,
+  className = "",
+  reveal = true,
+  ratings,
+  overallRating,
 }: {
   id?: string;
   eyebrow?: string;
   title?: string;
   subtitle?: string;
   testimonials?: LearnerTestimonial[];
+  className?: string;
+  reveal?: boolean;
+  ratings?: readonly number[];
+  overallRating?: number;
 }) {
   const count = testimonials.length;
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -185,7 +194,7 @@ export default function LearnerTestimonials({
   } as CSSProperties;
 
   return (
-    <section id={id} className="fade-section learner-tst-section" aria-labelledby={`${id}-title`}>
+    <section id={id} className={`${reveal ? "fade-section " : ""}learner-tst-section ${className}`} aria-labelledby={`${id}-title`}>
       <div className="learner-tst-inner">
         <div className="learner-tst-header">
           {eyebrow ? <span className="learner-tst-eyebrow">{eyebrow}</span> : null}
@@ -193,6 +202,7 @@ export default function LearnerTestimonials({
             {title}
           </h2>
           {subtitle ? <p className="learner-tst-sub">{subtitle}</p> : null}
+          {overallRating !== undefined && <p className="learner-tst-overall"><Star size={18} fill="currentColor" aria-hidden="true" /><strong>{overallRating.toFixed(1)} out of 5</strong><span>Overall learner rating</span></p>}
         </div>
 
         <div
@@ -239,13 +249,22 @@ export default function LearnerTestimonials({
                     aria-label={clone ? undefined : `${real + 1} of ${count}`}
                     aria-hidden={clone || !inView ? true : undefined}
                   >
+                    <div className="learner-tst-stars" role="img" aria-label={`${ratings?.[real] ?? 5} out of 5 stars`}>
+                      {Array.from({ length: 5 }, (_, star) => {
+                        const fill = Math.max(0, Math.min(1, (ratings?.[real] ?? 5) - star));
+                        return <span className="learner-tst-star" key={star} aria-hidden="true"><Star size={16} strokeWidth={1.5}/><span style={{width:`${fill * 100}%`}}><Star size={16} fill="currentColor" strokeWidth={1.5}/></span></span>;
+                      })}
+                    </div>
                     <span className="learner-tst-mark" aria-hidden>
                       &ldquo;
                     </span>
                     <blockquote className="learner-tst-quote">
                       <p>{t.quote}</p>
                     </blockquote>
-                    <figcaption className="learner-tst-role">{t.role}</figcaption>
+                    <figcaption className="learner-tst-role">
+                      <Image src={t.image} alt="" width={44} height={44} className="learner-tst-avatar" />
+                      <span>{t.role}</span>
+                    </figcaption>
                   </figure>
                 );
               })}

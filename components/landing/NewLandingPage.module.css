@@ -1624,3 +1624,58 @@
   30% { transform: translateY(-4px); opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) { .huahuaTyping i { animation: none; } }
+
+/* The original learner stories, in the landing page's warm palette. */
+.reviews.reviews {
+  --lingo-navy: var(--ink);
+  --lingo-teal: var(--green);
+  --lingo-text-muted: var(--muted);
+  --lingo-border: #eadfce;
+  --lingo-accent: var(--orange);
+  --lingo-card-bg: #fffdf9;
+  --lingo-sky-pale: #eef1df;
+  background: var(--paper);
+  padding: 12px 0 96px;
+  width: min(1160px, calc(100% - 96px));
+  margin-inline: auto;
+}
+.reviews :global(.learner-tst-inner) { max-width: none; }
+.reviews :global(.learner-tst-eyebrow) {
+  background: #edf0df;
+  border: 1px solid #dce3c6;
+  color: #617b3c;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.reviews :global(.learner-tst-sub) { margin: 16px auto 0; font-family: inherit; }
+.reviews :global(.learner-tst-card) {
+  background: #fffdf9;
+  border: 1px solid #eadfce;
+  border-radius: 26px;
+  box-shadow: 0 8px 24px #744d2808;
+  padding: 28px 32px;
+}
+.reviews :global(.learner-tst-mark) { color: #b87c43; opacity: .65; }
+.reviews :global(.learner-tst-quote) p { color: var(--ink); font-family: inherit; font-size: 17px; line-height: 1.75; }
+.reviews :global(.learner-tst-role) { color: #617b3c; font-family: inherit; font-weight: 800; }
+.reviews :global(.learner-tst-arrow):hover { border-color: #a7b981; background: #edf0df; }
+@media(max-width: 1050px) { .reviews.reviews { width: calc(100% - 64px); } }
+@media(max-width: 760px) {
+  .reviews.reviews { width: calc(100% - 40px); padding: 8px 0 60px; }
+  .reviews :global(.learner-tst-card) { padding: 24px; border-radius: 23px; }
+  .reviews :global(.learner-tst-quote) p { font-size: 16px; }
+}
+
+.reviews :global(.learner-tst-stars) { display: flex; gap: 4px; margin-bottom: 18px; color: #c18a28; }
+.reviews :global(.learner-tst-mark) { display: none; }
+.reviews :global(.learner-tst-role) { display: flex; align-items: center; gap: 12px; }
+.reviews :global(.learner-tst-avatar) { width: 44px; height: 44px; flex-shrink: 0; object-fit: contain; border-radius: 50%; background: #f6efdf; border: 1px solid #eadfce; padding: 3px; }
+
+.reviews :global(.learner-tst-star) { position: relative; display: block; width: 16px; height: 16px; }
+.reviews :global(.learner-tst-star)>span { position: absolute; top: 0; left: 0; height: 16px; overflow: hidden; }
+.reviews :global(.learner-tst-star) svg { display: block; min-width: 16px; }
+.reviews :global(.learner-tst-overall) { margin: 18px auto 0; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; font-size: 14px; }
+.reviews :global(.learner-tst-overall)>svg { color: #c18a28; }
+.reviews :global(.learner-tst-overall)>strong { color: var(--ink); }
