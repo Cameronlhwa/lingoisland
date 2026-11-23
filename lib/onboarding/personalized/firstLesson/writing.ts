@@ -15,3 +15,9 @@ export function reviewWriting(practice: WritingPractice, text: string): WritingF
  if (normalizeWriting(text) === normalizeWriting(practice.sample.hanzi)) return { status: "correct", feedback: "That matches the model’s meaning and pattern. Well done!" };
  return { status: "review", feedback: "The required pieces are present. Now compare the meaning and word order with the model. Different wording and opinions can be valid." };
 }
+
+/** Only authored single-blank question tasks use the inline answer format. */
+export function writingCompletion(prompt: string): { prefix: string; suffix: string; reply: string } | null {
+ const match = /^Complete the question:\s*([^_]+?)\s*_{2,}([^_]*?)\s+The reply is:\s*(.+)$/.exec(prompt);
+ return match ? { prefix: match[1].trim(), suffix: match[2].trim(), reply: match[3].trim() } : null;
+}
