@@ -1,5 +1,6 @@
 "use client";
 
+import HuahuaAvatar from "@/components/app/HuahuaAvatar";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type ChatRole = "user" | "assistant";
@@ -203,11 +204,7 @@ export default function StorySideChat({
   const Header = (
     <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
       <div className="flex items-center gap-2">
-        <img 
-          src="/characters/capybara-face.png"
-          alt="Huáhuá" 
-          className="h-5 w-5 rounded-full"
-        />
+        <HuahuaAvatar className="h-5 w-5 rounded-full" />
         <div className="text-sm font-semibold text-gray-900">Ask for help</div>
         <select
           value={modelMode}
@@ -357,11 +354,7 @@ export default function StorySideChat({
         aria-label="Ask for help"
         title="Ask Huáhuá for help with this story"
       >
-        <img 
-          src="/characters/capybara-face.png"
-          alt="Huáhuá" 
-          className="h-8 w-8 rounded-full"
-        />
+        <HuahuaAvatar className="h-8 w-8 rounded-full" />
         <span className="truncate text-sm font-semibold max-md:max-w-[11rem]">
           Have any questions?
         </span>

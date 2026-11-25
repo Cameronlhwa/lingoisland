@@ -1,3 +1,5 @@
+import { ensureLesson } from "@/lib/journey/teaching/store"
+import { loadJourneyVocabulary } from "@/lib/journey/teaching/vocabularyHistory"
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateWordSentences } from '@/lib/deepseek/generate-word-sentences'
@@ -86,7 +88,10 @@ export async function POST(
     )
 
     // Get base level from island
-    const baseLevel = (island.level as 'A1' | 'A2' | 'B1' | 'B2' | 'C1') || 'B1'
+    const band = String(island.level || 'B1').match(/^(A0|A1|A2|B1|B2|C1)/)?.[1] || 'B1'
+    const baseLevel = (band === 'A0' ? 'A1' : band) as 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
+    const teaching = await ensureLesson(supabase, islandId, user.id)
+    const vocabularyPolicy = teaching ? await loadJourneyVocabulary(supabase, user.id, islandId, island.level, allWords.map(word => word.hanzi), teaching.objective.pattern) : undefined
     const grammarTarget = island.grammar_target || 0
     const sentenceStyle = normalizeSentenceStyle(island.sentence_style)
 
@@ -98,14 +103,12 @@ export async function POST(
       try {
         console.log(`Regenerating sentences for word: ${word.hanzi}`)
 
-        // First, delete any existing sentences for this word (may be incomplete)
-        await supabase
-          .from('island_sentences')
-          .delete()
-          .eq('word_id', word.id)
-
         // Generate new sentences
-        const sentences = await generateWordSentences({
+        let sentences: Awaited<ReturnType<typeof generateWordSentences>> | undefined
+        let feedback = ""
+        for (let attempt = 0; attempt < (vocabularyPolicy ? 3 : 1); attempt++) {
+          try {
+            sentences = await generateWordSentences({
           word: {
             hanzi: word.hanzi,
             pinyin: word.pinyin,
@@ -113,17 +116,32 @@ export async function POST(
           },
           topic: island.topic,
           level: baseLevel,
+          detailedLevel: island.level,
+          vocabularyPolicy,
+          retryHint: feedback,
+          grammarTags: teaching ? [teaching.objective.pattern] : undefined,
           grammarTarget,
           sentenceStyle,
           wordIndex: 0, // Not used for retry
           totalWords: 1,
         })
 
+          break
+          } catch (error) { feedback = (error as Error).message; if (!vocabularyPolicy) throw error }
+        }
+        if (!sentences) throw new Error("Could not prepare sentences at the selected vocabulary level")
+
         if (sentences.length !== 3) {
           throw new Error(
             `Expected 3 sentences, got ${sentences.length} for word ${word.hanzi}`
           )
         }
+
+        // Replace incomplete rows only after new sentences pass validation
+        await supabase
+          .from('island_sentences')
+          .delete()
+          .eq('word_id', word.id)
 
         // Insert new sentences
         const sentencesToInsert = sentences.map((sentence) => ({

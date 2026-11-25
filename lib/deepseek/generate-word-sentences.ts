@@ -1,3 +1,4 @@
+import { assertVocabulary, vocabularyInstructions, type VocabularyPolicy } from "@/lib/journey/teaching/vocabularyPolicy";
 /**
  * Generate sentences for a single word
  * Used in parallel generation flow
@@ -49,6 +50,7 @@ export async function generateWordSentences({
   sentenceTierMode = 'full',
   sentenceStyle = 'casual',
   generationConfig,
+  vocabularyPolicy,
 }: {
   word: Word
   topic: string
@@ -67,6 +69,7 @@ export async function generateWordSentences({
   /** Default: all three (easy / same / hard). easy_same: onboarding free island — approachable. */
   sentenceTierMode?: 'full' | 'easy_same'
   sentenceStyle?: SentenceStyle
+  vocabularyPolicy?: VocabularyPolicy
   generationConfig?: {
     temperature?: number
     topP?: number
@@ -192,7 +195,7 @@ export async function generateWordSentences({
   const toneBlock = getSentenceStyleToneBlock(style, sentenceTierMode)
   const styleRequirements = getSentenceStyleRequirements(style)
 
-  const prompt = sentenceTierMode === 'easy_same'
+  let prompt = sentenceTierMode === 'easy_same'
     ? `You are a Mandarin Chinese learning assistant. Generate example sentences for a single vocabulary word.
 
 Word to demonstrate: ${word.hanzi} (${word.pinyin}) - ${word.english}
@@ -264,8 +267,18 @@ Output ONLY valid JSON (no markdown, no code blocks, no explanation). Format:
   ]
 }`
 
+  if (vocabularyPolicy) {
+    prompt = `Write ${sentenceTierMode === 'easy_same' ? 'two' : 'three'} short Mandarin example sentences teaching the exact word ${JSON.stringify(word.hanzi)} (${word.english}) about ${JSON.stringify(topic)}.
+${vocabularyInstructions(vocabularyPolicy)}
+Each sentence must contain the exact target word. Use one natural sentence, not A/B dialogue. Do not force slang, idioms, filler or business jargon. Keep sentences short, even at higher levels. The easy sentence is simplest; same and hard may combine familiar words, never add unapproved vocabulary.
+${grammarSection}
+${retryHint ? `REWRITE REQUEST: ${retryHint}` : ''}
+Return JSON only, with sentences containing ${sentenceTierMode === 'easy_same' ? 'easy and same' : 'easy, same and hard'} tiers. Each object needs tier, hanzi, pinyin with tone marks, and english. Format: {"sentences":[{"tier":"easy","hanzi":"...","pinyin":"...","english":"..."}, ...]}.`;
+  }
+
   const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
+    ...(vocabularyPolicy ? { signal: AbortSignal.timeout(20000) } : {}),
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
@@ -276,7 +289,7 @@ Output ONLY valid JSON (no markdown, no code blocks, no explanation). Format:
         {
           role: 'system',
           content:
-            'You are a helpful assistant that generates structured JSON data for Chinese language learning. Always respond with valid JSON only, no markdown formatting.',
+            'You are a helpful assistant that generates structured JSON data for Chinese language learning. Always respond with valid JSON only, no markdown formatting.' + (vocabularyPolicy ? '\n' + vocabularyInstructions(vocabularyPolicy) + '\nFor every tier, output one short sentence, not a mini-exchange or A/B role labels. Prefer literal, simple language; no slang. The hard tier may combine familiar words but must not introduce additional vocabulary.' : ''),
         },
         {
           role: 'user',
@@ -288,10 +301,10 @@ Output ONLY valid JSON (no markdown, no code blocks, no explanation). Format:
       // before it emits JSON, producing empty or truncated responses.
       thinking: { type: 'disabled' },
       response_format: { type: 'json_object' },
-      temperature: generationConfig?.temperature ?? 0.9,
+      temperature: vocabularyPolicy ? 0.3 : generationConfig?.temperature ?? 0.9,
       top_p: generationConfig?.topP ?? 0.93,
-      frequency_penalty: generationConfig?.frequencyPenalty ?? 0.5,
-      presence_penalty: generationConfig?.presencePenalty ?? 0.35,
+      frequency_penalty: vocabularyPolicy ? 0 : generationConfig?.frequencyPenalty ?? 0.5,
+      presence_penalty: vocabularyPolicy ? 0 : generationConfig?.presencePenalty ?? 0.35,
       max_tokens:
         generationConfig?.maxTokens ??
         (sentenceTierMode === 'easy_same' ? 1800 : 3000),
@@ -361,6 +374,6 @@ Output ONLY valid JSON (no markdown, no code blocks, no explanation). Format:
     }
   }
 
+  if (vocabularyPolicy) assertVocabulary(parsed.sentences.map(sentence => sentence.hanzi), vocabularyPolicy)
   return parsed.sentences
 }
-

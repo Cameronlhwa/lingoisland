@@ -112,6 +112,8 @@ export async function generateGrammarFocus({
   recentPatterns = [],
   requiredPattern,
   supportingWords,
+  vocabularyInstruction,
+  requestTimeoutMs = 25000,
 }: {
   topic: string
   level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
@@ -119,6 +121,8 @@ export async function generateGrammarFocus({
   grammarCount: number
   varietyHint?: string | number
   recentPatterns?: string[]
+  requestTimeoutMs?: number
+  vocabularyInstruction?: string
   supportingWords?: string[]
   requiredPattern?: string
 }): Promise<GrammarFocusResult> {
@@ -219,12 +223,13 @@ CRITICAL REQUIREMENTS:
 5. All examples must be about or related to "${topic}".
 6. Warmup examples are short and simple.
 7. Target examples are natural, conversational, and level-appropriate.
-8. Output ONLY valid JSON, no markdown code blocks.`
+8. Output ONLY valid JSON, no markdown code blocks.
+${vocabularyInstruction || ""}`
 
   try {
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(requestTimeoutMs),
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
@@ -242,7 +247,7 @@ CRITICAL REQUIREMENTS:
             content: prompt,
           },
         ],
-        temperature: 1.0, // Balanced randomness
+        temperature: vocabularyInstruction ? 0.4 : 1.0,
         max_tokens: 2500,
         // Same V4 Flash issue as word-list generation: thinking shares the
         // token budget and can truncate the JSON before grammar is saved.

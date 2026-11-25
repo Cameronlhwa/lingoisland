@@ -87,3 +87,27 @@ have per-process request limits. RLS also isolates lesson rows by owner and jour
 Browser checks mock generation/chat/scoring responses and persistence. Live
 provider credentials, production database migration and a signed-in staging smoke
 test remain deployment checks. No production learner data is changed by these tests.
+
+## Surrounding vocabulary policy
+
+New journey grammar examples, all word-sentence tiers, pronunciation sentences
+(derived from the grammar examples), and Huahua replies/suggested replies use
+HSK 2.0 vocabulary cumulatively up to the selected level (A0–C1 → HSK 1–6).
+The exact lesson target words and assigned grammar expressions may be harder.
+Earlier completed lessons in this journey and completed owned journeys provide
+additional learned-word exceptions, including their completed mini-course words.
+Future lessons and other unfinished journeys never contribute exceptions.
+
+Generation receives the actual approved vocabulary and a small sample of learned
+words for occasional review. Server validation checks lexical compounds before
+productive combinations; imported bracket/paired-pattern entries and ordinary
+forms such as 杯/杯子 are normalized. Unlisted or unapproved supporting words
+trigger bounded rewriting rather than silently raising the level. Cached grammar
+examples are checked before compiling a new lesson. Sentence repair uses the same
+policy and keeps existing rows until replacements have passed validation.
+
+This is a practical vocabulary ceiling based on the bundled syllabus, not a
+claim that automated tokenization can certify every word sense or grammar level.
+Existing immutable lesson snapshots and completed progress are not rewritten.
+The current chat policy applies when generating new turns in saved lessons too.
+No database migration is required for this policy.

@@ -1,5 +1,6 @@
 "use client";
 
+import { isCorrectBuildAnswer } from "@/lib/lessons/buildAnswer";
 import { useState } from "react";
 import type { BuildPrompt } from "@/lib/onboarding/personalized/firstLesson/types";
 import { CARD_BORDER, GREEN, MUTED, NAVY, PrimaryButton, SKY_PALE, TextButton } from "../ui";
@@ -40,7 +41,7 @@ export function BuildActivity({
   };
 
   const check = () => {
-    const ok = order.length === prompt.order.length && order.every((id, index) => id === prompt.order[index]);
+    const ok = isCorrectBuildAnswer(prompt, order);
     if (!ok) {
       setStatus("retry");
       setOrder([]);

@@ -1,4 +1,5 @@
 "use client";
+import { isCorrectBuildAnswer } from "@/lib/lessons/buildAnswer";
 import {meaningQuizChoices} from "@/lib/onboarding/personalized/firstLesson/quizChoices";
 import { say } from "./lessonSpeech";
 export { say } from "./lessonSpeech";
@@ -123,7 +124,7 @@ export function BuildSentence({ prompt, options, supported = false, onComplete, 
   const variable = prompt.chunks.find(c => c.id === prompt.slotId) ?? prompt.chunks[1] ?? prompt.chunks[0];
   const choices = supported && (prompt.options ?? options) ? [...(prompt.options ?? options)!].reverse().map(p => ({ id: p.id, label: p.hanzi, pinyin: p.pinyin, meaning: p.label })) : [...prompt.chunks.slice(1), prompt.chunks[0]];
   const add = (id: string) => { if (result === "correct") return; setResult(null); if (supported) setSelected(id); else setOrder(prev => prev.includes(id) ? prev : [...prev, id]); };
-  const correct = supported ? selected === variable.id : order.length === prompt.order.length && order.every((id, i) => id === prompt.order[i]);
+  const correct = supported ? selected === variable.id : isCorrectBuildAnswer(prompt, order);
   return <div data-testid="lesson-build" data-correct-order={prompt.order.join(",")}>
     <ConversationPrompt prompt={`Say this in Mandarin: ${prompt.result.meaning}`} onUnavailable={onUnavailable}/>
     <p className="mb-4 text-sm" style={{ color: MUTED }}>{supported ? "Choose the missing word or phrase to complete the sentence below." : "Tap the words or phrases below in order to build this sentence."}</p>

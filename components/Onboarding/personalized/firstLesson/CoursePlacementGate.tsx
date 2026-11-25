@@ -26,11 +26,15 @@ export function CoursePlacementGate({answers,tier,onSave,onBack,children}:{answe
   } else onSave({...answers.firstLesson,coursePlacement:next});
  };
  const visible=placementWordsToShow(placement);
+ const needsLessonReset=placement.status==="ready"&&(answers.firstLesson.lessonId!==course.id||answers.firstLesson.version!==2);
  useEffect(()=>{
   // If a replacement course has no unseen vocabulary, use the saved answers directly.
   if(placement.status==="checking"&&!visible.length)persist(placeCourse(placement));
-  if(placement.status==="ready"&&answers.firstLesson.lessonId!==course.id)persist(placement);
- },[placement]);
+  if(needsLessonReset)persist(placement);
+ },[placement,needsLessonReset]);
+ // Mount the player only after its selected course and known words are saved together.
+ // Otherwise its one-time state initializer can capture the previous lesson's progress.
+ if(needsLessonReset)return <StepFrame title="Your lesson is almost ready." onBack={onBack}><p role="status" className="py-6 text-sm" style={{color:MUTED}}>Getting your lesson ready…</p></StepFrame>;
  if(placement.status==="ready")return children(course);
  if(placement.status==="probe")return <GrammarProbe key={`${course.id}-probe`} course={course} onBack={onBack} onFinish={passed=>persist(finishGrammarProbe(placement,passed))}/>;
  const selected=course.match.filter(w=>placement.evidence[w.id]===true).map(w=>w.id);

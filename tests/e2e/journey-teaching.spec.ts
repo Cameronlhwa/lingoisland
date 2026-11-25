@@ -24,6 +24,19 @@ test.use({ launchOptions: { args: ["--use-fake-device-for-media-stream", "--use-
 test.beforeAll(() => {
   mkdirSync(fixturePath, { recursive: true });
   mkdirSync(`${fixturePath}/[id]`, { recursive: true });
+  mkdirSync(`${fixturePath}/build`, { recursive: true });
+  writeFileSync(`${fixturePath}/build/page.tsx`, `"use client";
+import { useState } from "react";
+import { BuildActivity } from "@/components/Onboarding/personalized/firstLesson/BuildActivity";
+import { BuildSentence } from "@/components/Onboarding/personalized/firstLesson/LessonActivities";
+const prompt = { prompt: "Build the sentence", chunks: [{ id: "hua1", label: "华" }, { id: "hua2", label: "华" }, { id: "can", label: "能看" }, { id: "market", label: "股市" }], order: ["hua1", "hua2", "can", "market"], result: { id: "result", hanzi: "华华能看股市。", pinyin: "", meaning: "Huahua can watch the market." } };
+export default function BuildHarness() {
+ const [done, setDone] = useState(false);
+ const legacy = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("legacy");
+ if(done) return <p>Build complete</p>;
+ return legacy ? <BuildActivity prompt={prompt} onComplete={() => setDone(true)} /> : <BuildSentence prompt={prompt} onComplete={() => setDone(true)} onMistake={() => {}} onUnavailable={() => {}} />;
+}`);
+
   writeFileSync(`${fixturePath}/[id]/page.tsx`, 'export { default } from "@/app/app/topic-islands/[id]/learn/page";\n');
   writeFileSync(`${fixturePath}/page.tsx`, 'export { default } from "@/tests/e2e/helpers/JourneyTeachingHarness";\n');
 });
@@ -442,4 +455,31 @@ test("a saved fake-success reply can be recovered without duplicating the learne
   await expect(page.getByLabel("Your reply in Mandarin")).toHaveValue("我想补充一点。");
   expect(progress().chatMessages?.filter(message => message.role === "user")).toHaveLength(1);
   expect(progress().chatMessages?.some(message => message.content === fallback)).toBe(false);
+});
+
+test("journey accepts swapped identical character tiles and saves advancement", async ({ page }) => {
+  const content = structuredClone(lesson);
+  const step = grammarSteps(content.curriculum)[1];
+  if (step.kind !== "check" || step.practice.kind !== "build") throw Error();
+  step.practice.build.chunks = [{ id: "hua1", label: "华" }, { id: "hua2", label: "华" }, { id: "can", label: "能看" }, { id: "market", label: "股市" }];
+  step.practice.build.order = ["hua1", "hua2", "can", "market"];
+  step.practice.build.result.hanzi = "华华能看股市。";
+  const progress = await setup(page, { stepId: step.id }, false, 0, content);
+  for (const id of ["hua2", "hua1", "can", "market"]) await page.getByTestId(`build-chunk-${id}`).click();
+  await page.getByTestId("lesson-build-check").click();
+  await page.getByTestId("lesson-build-continue").click();
+  await expect.poll(() => progress().stepId).toBe("practice:0");
+  await page.reload();
+  await expect(page.getByTestId("grammar-practice")).toHaveAttribute("data-grammar-step", "practice:0");
+});
+
+for (const legacy of [false, true]) test(`onboarding ${legacy ? "legacy" : "shared"} builder accepts interchangeable character tiles`, async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { cancel() {}, speak() {} } });
+  });
+  await page.goto(`/journey-teaching-browser-test/build${legacy ? "?legacy=1" : ""}`);
+  for (const id of ["hua2", "hua1", "can", "market"]) await page.getByTestId(`build-chunk-${id}`).click();
+  await page.getByTestId("lesson-build-check").click();
+  await page.getByTestId("lesson-build-continue").click();
+  await expect(page.getByText("Build complete", { exact: true })).toBeVisible();
 });

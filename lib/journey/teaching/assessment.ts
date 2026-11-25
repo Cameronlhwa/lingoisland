@@ -1,3 +1,4 @@
+import { isCorrectBuildAnswer } from "@/lib/lessons/buildAnswer";
 import { createHash } from "node:crypto";
 import { grammarSteps } from "@/lib/lessons/grammarSequence";
 import type { JourneyLesson, LessonProgress } from "./curriculum";
@@ -10,7 +11,7 @@ export function verifyLessonAdvance(lesson: JourneyLesson, before: LessonProgres
   if (!step || step.kind === "teach" || step.practice.kind === "reading") return;
   const task = step.practice;
   if (task.kind === "build") {
-    if (!Array.isArray(evidence) || evidence.length !== task.build.order.length || evidence.some((id, index) => id !== task.build.order[index])) throw new LessonError("Check your sentence before continuing", 400);
+    if (!isCorrectBuildAnswer(task.build, evidence)) throw new LessonError("Check your sentence before continuing", 400);
   } else if (task.kind === "choice") {
     if (typeof evidence !== "string" || !task.choices.some(choice => choice.id === evidence) || task.correct && evidence !== task.correct) throw new LessonError("Check your answer before continuing", 400);
   } else {

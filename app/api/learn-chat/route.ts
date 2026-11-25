@@ -1,3 +1,5 @@
+import { loadJourneyVocabulary } from "@/lib/journey/teaching/vocabularyHistory";
+import { vocabularyInstructions, type VocabularyPolicy } from "@/lib/journey/teaching/vocabularyPolicy";
 import { buildJourneyChatPrompt } from "@/lib/journey/teaching/chatPrompt";
 import { generateLearnChat, ChatProviderError } from "@/lib/deepseek/learnChat";
 import { lessonAccess, LessonError } from "@/lib/journey/teaching/store";
@@ -360,10 +362,11 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Body;
     let { messages, islandLevel, islandTopic, words, mode } = body;
     let lessonMission = "";
+    let vocabularyPolicy: VocabularyPolicy | undefined;
     if (body.lessonIslandId !== undefined) {
       if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       if (typeof body.lessonIslandId !== "string") return NextResponse.json({ error: "Invalid lesson" }, { status: 400 });
-      const { row, island } = await lessonAccess(body.lessonIslandId);
+      const { db, row, island } = await lessonAccess(body.lessonIslandId);
       if (!row.content || row.progress.stepId !== "chat") return NextResponse.json({ error: "Finish the teaching activities first" }, { status: 409 });
       limitLessonRequests(user.id, "chat");
       if (!Array.isArray(messages) || messages.length > 60 || messages.some(message => !message || !["user", "assistant"].includes(message.role) || typeof message.content !== "string" || message.content.length > MAX_CONTENT_LENGTH)) return NextResponse.json({ error: "Invalid conversation" }, { status: 400 });
@@ -371,7 +374,8 @@ export async function POST(request: Request) {
       islandTopic = island.topic;
       words = row.content.words.map(word => ({ hanzi: word.hanzi, pinyin: word.pinyin, english: word.label }));
       mode = "chat";
-      lessonMission = buildJourneyChatPrompt({ level: island.level, topic: island.topic, mission: row.content.mission, pattern: row.objective.pattern, words }, body.replySuggestions === true);
+      vocabularyPolicy = await loadJourneyVocabulary(db, user.id, island.id, row.objective.level, row.content.words.filter(word => word.id !== "grammar-core").map(word => word.hanzi), row.objective.pattern);
+      lessonMission = buildJourneyChatPrompt({ level: island.level, topic: island.topic, mission: row.content.mission, pattern: row.objective.pattern, words }, body.replySuggestions === true) + "\n" + vocabularyInstructions(vocabularyPolicy);
     }
 
     if (!islandLevel || !Array.isArray(words) || words.length === 0) {
@@ -411,7 +415,7 @@ export async function POST(request: Request) {
           ]
         : safeMessages;
 
-    const reply = await generateLearnChat({ systemPrompt: resolvedSystemPrompt, messages: chatMessages, exerciseMode, guidedReply });
+    const reply = await generateLearnChat({ systemPrompt: resolvedSystemPrompt, messages: chatMessages, exerciseMode, guidedReply, vocabularyPolicy });
     return NextResponse.json(lessonMission && !guidedReply ? { message: reply.message.slice(0, MAX_CONTENT_LENGTH) } : reply);
   } catch (error) {
     if (error instanceof ChatProviderError) return NextResponse.json({ error: error.message }, { status: error.status });

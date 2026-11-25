@@ -56,3 +56,15 @@ test("server checks the actual sentence and written approval before advancing", 
   verifyLessonAdvance(advanced, { stepId: writing.id }, { stepId: "speaking", writingResponses: { [writing.id]: answer } }, null, approval);
   assert.throws(() => verifyLessonAdvance(advanced, { stepId: writing.id }, { stepId: "speaking", writingResponses: { [writing.id]: "changed" } }, null, approval));
 });
+
+test("server accepts swapped identical tiles but rejects tile reuse", () => {
+  const content = structuredClone(lesson);
+  const step = grammarSteps(content.curriculum)[1];
+  if (step.kind !== "check" || step.practice.kind !== "build") throw Error();
+  step.practice.build.chunks = [{ id: "hua1", label: "华" }, { id: "hua2", label: "华" }, { id: "can", label: "能看" }, { id: "market", label: "股市" }];
+  step.practice.build.order = ["hua1", "hua2", "can", "market"];
+  const before = { stepId: step.id }, after = { stepId: "practice:0" };
+  verifyLessonAdvance(content, before, after, ["hua2", "hua1", "can", "market"], null);
+  assert.throws(() => verifyLessonAdvance(content, before, after, ["hua1", "hua1", "can", "market"], null));
+  assert.throws(() => verifyLessonAdvance(content, before, after, ["hua1", "can", "hua2", "market"], null));
+});
