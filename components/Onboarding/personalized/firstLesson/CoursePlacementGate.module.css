@@ -1,0 +1,24 @@
+.probe { color: #71452e; }
+.progress { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #687c71; font-size: 13px; margin-bottom: 22px; }
+.steps { display: flex; gap: 4px; }
+.steps > span { width: 24px; height: 5px; border-radius: 8px; background: #e9ede5; }
+.steps > .current { background: #236e58; }
+.task { font-size: 16px; font-weight: 800; line-height: 1.5; margin: 0 0 16px; }
+.meaning { background: #f6f7f1; border-radius: 15px; padding: 20px; font-size: 21px; line-height: 1.5; font-weight: 750; text-align: center; margin: 0 0 20px; overflow-wrap: anywhere; }
+.choices { display: grid; gap: 11px; }
+.choice { display: flex; align-items: center; gap: 14px; padding: 16px; min-height: 84px; width: 100%; border: 2px solid #dce3d6; border-radius: 15px; text-align: left; background: white; color: #71452e; }
+.choice[aria-pressed="true"] { border-color: #236e58; background: #eef5ec; }
+.choice:focus-visible { outline: 2px solid #236e58; outline-offset: 3px; }
+.radio { flex: 0 0 20px; height: 20px; border: 1.5px solid #b7c6b4; border-radius: 50%; }
+.choice[aria-pressed="true"] .radio { border: 6px solid #236e58; }
+.word { min-width: 0; }
+.hanzi { display: block; font-size: 24px; line-height: 1.6; font-weight: 650; overflow-wrap: anywhere; }
+.pinyin { display: block; color: #687c71; font-size: 14px; line-height: 1.5; margin-top: 3px; overflow-wrap: anywhere; }
+@media (max-width: 639px) {
+ .progress { margin-bottom: 14px; }
+ .task { font-size: 15px; margin-bottom: 12px; }
+ .meaning { font-size: 18px; padding: 14px; margin-bottom: 14px; }
+ .choice { padding: 12px; gap: 11px; min-height: 76px; }
+ .hanzi { font-size: 21px; line-height: 1.5; }
+ .pinyin { font-size: 12px; }
+}

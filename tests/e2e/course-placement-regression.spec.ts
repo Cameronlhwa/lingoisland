@@ -15,6 +15,10 @@ async function setup(page:Page,tier:number){
 }
 async function probe(page:Page,tier:CourseTier,pass=true){
  for(const q of makeBudgetCourse(tier,"heritage").budget.probes){
+  await expect(page.getByRole("heading",{name:"Which sentence means this?"})).toBeVisible();
+  await expect(page.getByTestId("course-probe-meaning")).toHaveText(`“${q.prompt}”`);
+  await expect(page.getByTestId("course-probe-continue")).toBeDisabled();
+  for(const choice of q.choices)await expect(page.getByTestId(`probe-option-${choice.id}`)).toContainText(choice.hanzi);
   const id=pass?q.correct:q.choices.find(c=>c.id!==q.correct)!.id;
   await page.getByTestId(`probe-option-${id}`).click();await page.getByTestId("course-probe-continue").click();
  }
@@ -62,4 +66,28 @@ test("a failed higher vocabulary check does not return a learner to a mastered c
  await expect(page.getByTestId("lesson-intro")).toBeVisible();
  const progress=await page.evaluate(()=>JSON.parse(localStorage.getItem("placement-fixture")!).answers.firstLesson);
  expect(progress.coursePlacement.tier).toBe(5);
+});
+
+for(const tier of [1,2,3,4,5,6] as CourseTier[])test(`level ${tier}: unsure answers retain the current lesson and known words`,async({page})=>{
+ await setup(page,tier);await page.getByTestId("vocabulary-know-all").click();await page.getByTestId("course-placement-continue").click();
+ await expect(page.getByTestId("course-probe-continue")).toBeDisabled();
+ await page.getByTestId("course-probe-unsure").click();
+ await expect(page.getByText("Question 2 of 2",{exact:true})).toBeVisible();
+ await page.getByTestId("course-probe-unsure").click();
+ await expect(page.getByTestId("lesson-intro")).toBeVisible();
+ const progress=await page.evaluate(()=>JSON.parse(localStorage.getItem("placement-fixture")!).answers.firstLesson);
+ expect(progress.coursePlacement.tier).toBe(tier);
+ expect(progress.vocabularyKnownIds.length).toBeGreaterThan(0);
+});
+test("sentence checks keep Continue within reach on short mobile screens at every level",async({page})=>{
+ for(const tier of [1,2,3,4,5,6] as CourseTier[]){
+  if(tier>1)await page.evaluate(()=>localStorage.removeItem("placement-fixture"));
+  await setup(page,tier);await page.getByTestId("vocabulary-know-all").click();await page.getByTestId("course-placement-continue").click();
+  await page.setViewportSize({width:375,height:667});
+  const button=page.getByTestId("course-probe-continue");
+  await expect(button).toBeInViewport();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  if(tier===2||tier===6)await page.screenshot({path:`/tmp/placement-sentence-level-${tier}-mobile.png`,fullPage:true});
+  if(tier===2){await page.setViewportSize({width:1440,height:900});await page.screenshot({path:"/tmp/placement-sentence-level-2-desktop.png",fullPage:true});}
+ }
 });
