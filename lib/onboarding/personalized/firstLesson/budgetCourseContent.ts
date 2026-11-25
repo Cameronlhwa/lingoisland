@@ -1,3 +1,4 @@
+import { placementSentenceProbes } from "./placementSentenceProbes";
 import { advancedFirstLesson } from "./advancedCurriculum";
 import type { OnboardingAnswers } from "../flow";
 import type { AuthoredLesson, BuildPrompt, LessonPhrase, MatchPair } from "./types";
@@ -73,7 +74,8 @@ export type BudgetCourse = AuthoredLesson & { budget: {
  // Explicit vocabulary for all learner-facing Chinese, including distractors and Huahua's replies.
  words: LessonPhrase[]; probes: Extract<CurriculumPractice,{kind:"choice"}>[];
 }};
-function withFoundations(course:BudgetCourse):BudgetCourse {
+function withFoundations(input:AuthoredLesson & {budget:Omit<BudgetCourse["budget"],"probes">}):BudgetCourse {
+ const course:BudgetCourse={...input,budget:{...input.budget,probes:placementSentenceProbes(input,input.budget.tier)}};
  if(course.budget.tier<=3)return {...course,budget:{...course.budget,foundationIds:course.budget.prerequisiteIds}};
  const targets=new Set([...course.budget.grammarIds,...course.budget.topicIds]);
  const corpus=JSON.stringify({cards:course.curriculum!.cards,practices:course.curriculum!.practices,chat:course.chat,discussion:course.curriculum!.discussion});
@@ -91,11 +93,7 @@ export function makeBudgetCourse(tier: CourseTier, goal: GoalKey, variant = 0, p
   const groups=lesson.curriculum!.vocabularyGroups;
   const coreIds=groups.find(group=>group.id==="core")!.wordIds;
   const grammarCount=tier===6?5:3;
-  const probes:Extract<CurriculumPractice,{kind:"choice"}>[]=tier===5?[
-   {kind:"choice",prompt:"Add another idea. 除了…以外，我 ___ …。",choices:[W.also,W.outside],correct:W.also.id,explanation:"还 adds the second idea."},
-   {kind:"choice",prompt:"Start the addition pattern. ___ …以外，我还…。",choices:[W.except,W.outside],correct:W.except.id,explanation:"除了 introduces the first idea."},
-  ]:lesson.curriculum!.cards.slice(0,2).map(card=>card.check).filter((check):check is Extract<CurriculumPractice,{kind:"choice"}>=>check.kind==="choice");
-  return withFoundations({...lesson,budget:{revision:COURSE_REVISION,tier,variant,goal,grammarIds:coreIds.slice(0,grammarCount),topicIds:groups.find(group=>group.id==="personalized")!.wordIds,prerequisiteIds:coreIds.slice(grammarCount),words,probes}});
+  return withFoundations({...lesson,budget:{revision:COURSE_REVISION,tier,variant,goal,grammarIds:coreIds.slice(0,grammarCount),topicIds:groups.find(group=>group.id==="personalized")!.wordIds,prerequisiteIds:coreIds.slice(grammarCount),words}});
  }
 
  let grammar: LessonPhrase[], prerequisites: LessonPhrase[], topic: LessonPhrase[], title: string, context: string;
@@ -162,5 +160,5 @@ export function makeBudgetCourse(tier: CourseTier, goal: GoalKey, variant = 0, p
  // Level two acknowledges the reply with 好, included in its supporting vocabulary checks.
  const response=tier===1?phrase([W.hao],"Good!","！"):tier===2?word("好","Okay."):tier===3?phrase([W.wo,grammar[0],A],first.result.meaning,"。"):tier===4?phrase([A],A.meaning,"！"):tier===5?first.result:second.result;
  const id=`${COURSE_REVISION}-${tier}-${goal}-${variant}`;
- return withFoundations({id,route:goal==="travel"?"travel":goal==="work"||goal==="school"?"work":"social",band:tier===1?"beginner":tier<4?"elementary":tier===4?"intermediate":"advanced",outcome:title,situation:context,skill:explanation,huahuaPose:"coaching",targets:[first.result,second.result],match,build:first,transferBuild:second,sentenceWords:all,questionWords:all,starter:tier===1?W.ni:tier===6?W.one:W.wo,mission:mission,speakTargetId:first.result.id,completionLine:"You used your new language in a conversation.",chat:{mission:{context,task:mission},huahua:question,choices:[wrong,right].sort((a,b)=>a.id.localeCompare(b.id,"zh")),expectedChoiceId:right.id,responses:{[right.id]:response},outcomeVisual:{[right.id]:"check"}},curriculum:{cards,practices,pronunciation:tier<=4,note:{title:"One useful pattern to keep",text:takeaway},vocabularyGroups:[{id:"core",title:"Grammar and supporting words",wordIds:[...grammar,...prerequisites].map(w=>w.id)},{id:"personalized",title:"Words for your goal",wordIds:topic.map(w=>w.id)}]},template:{id:`budget-${tier}`,tier,scene:context,teaching:all,incomingTeaching:[],construction:explanation,shortRoute:true,quizPairs:match},budget:{revision:COURSE_REVISION,tier,variant,goal,grammarIds:grammar.map(w=>w.id),topicIds:topic.map(w=>w.id),prerequisiteIds:prerequisites.map(w=>w.id),words:all,probes:tier===1?[checks[0],choice("Choose the greeting with the person first.",phrase([W.ni,W.hao],"Hello!"),phrase([W.hao,W.ni],"The greeting is reversed."),"Put 你 before 好.")]:checks}});
+ return withFoundations({id,route:goal==="travel"?"travel":goal==="work"||goal==="school"?"work":"social",band:tier===1?"beginner":tier<4?"elementary":tier===4?"intermediate":"advanced",outcome:title,situation:context,skill:explanation,huahuaPose:"coaching",targets:[first.result,second.result],match,build:first,transferBuild:second,sentenceWords:all,questionWords:all,starter:tier===1?W.ni:tier===6?W.one:W.wo,mission:mission,speakTargetId:first.result.id,completionLine:"You used your new language in a conversation.",chat:{mission:{context,task:mission},huahua:question,choices:[wrong,right].sort((a,b)=>a.id.localeCompare(b.id,"zh")),expectedChoiceId:right.id,responses:{[right.id]:response},outcomeVisual:{[right.id]:"check"}},curriculum:{cards,practices,pronunciation:tier<=4,note:{title:"One useful pattern to keep",text:takeaway},vocabularyGroups:[{id:"core",title:"Grammar and supporting words",wordIds:[...grammar,...prerequisites].map(w=>w.id)},{id:"personalized",title:"Words for your goal",wordIds:topic.map(w=>w.id)}]},template:{id:`budget-${tier}`,tier,scene:context,teaching:all,incomingTeaching:[],construction:explanation,shortRoute:true,quizPairs:match},budget:{revision:COURSE_REVISION,tier,variant,goal,grammarIds:grammar.map(w=>w.id),topicIds:topic.map(w=>w.id),prerequisiteIds:prerequisites.map(w=>w.id),words:all}});
 }

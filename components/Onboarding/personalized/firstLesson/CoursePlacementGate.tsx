@@ -1,4 +1,5 @@
 "use client";
+import styles from "./CoursePlacementGate.module.css";
 import { useState, useEffect, type ReactNode } from "react";
 import type { OnboardingAnswers } from "@/lib/onboarding/personalized/flow";
 import type { FirstLessonProgress } from "@/lib/onboarding/personalized/firstLesson/types";
@@ -62,12 +63,27 @@ export function CoursePlacementGate({answers,tier,onSave,onBack,children}:{answe
 function GrammarProbe({course,onBack,onFinish}:{course:BudgetCourse;onBack:(()=>void)|null;onFinish:(passed:boolean)=>void}){
  const [index,setIndex]=useState(0),[selected,setSelected]=useState<string|null>(null),[correct,setCorrect]=useState(0);
  const question=course.budget.probes[index];
- return <StepFrame title="These lesson words look familiar." subtitle="Two quick checks will help us choose the right pattern to practise." onBack={onBack}>
-  <div data-testid="course-grammar-probe">
-   <p className="mb-3 text-sm" style={{color:MUTED}}>Check {index+1} of {course.budget.probes.length}</p>
-   <p className="mb-4 text-lg font-bold">{question.prompt}</p>
-   <div className="grid gap-3 sm:grid-cols-2">{question.choices.map(w=><button key={w.id} type="button" aria-pressed={selected===w.id} data-testid={`probe-option-${w.id}`} onClick={()=>setSelected(w.id)} className="min-h-24 rounded-2xl border-2 p-4 focus-visible:outline focus-visible:outline-2" style={{borderColor:selected===w.id?GREEN:CARD_BORDER,outlineColor:GREEN}}><span lang="zh-CN" className="block text-xl font-bold">{w.hanzi}</span><span className="mt-2 block text-sm" style={{color:MUTED}}>{w.pinyin}</span></button>)}</div>
-   <PrimaryButton mobileSticky data-testid="course-probe-continue" disabled={!selected} className="mt-5" onClick={()=>{const score=correct+Number(selected===question.correct);if(index+1===course.budget.probes.length)onFinish(score===course.budget.probes.length);else{setCorrect(score);setIndex(i=>i+1);setSelected(null);}}}>Continue</PrimaryButton>
+ const advance=(answer:string|null)=>{
+  const score=correct+Number(answer===question.correct);
+  if(index+1===course.budget.probes.length)onFinish(score===course.budget.probes.length);
+  else{setCorrect(score);setIndex(i=>i+1);setSelected(null);}
+ };
+ return <StepFrame title="Let’s find the right lesson." subtitle="Two quick questions to find your next step." onBack={onBack}>
+  <div className={styles.probe} data-testid="course-grammar-probe" data-course-tier={course.budget.tier}>
+   <div className={styles.progress} aria-live="polite">
+    <span>Question {index+1} of {course.budget.probes.length}</span>
+    <span className={styles.steps} aria-hidden>{course.budget.probes.map((_,i)=><span key={i} className={i<=index?styles.current:undefined}/>)}</span>
+   </div>
+   <h2 className={styles.task}>Which sentence means this?</h2>
+   <p className={styles.meaning} data-testid="course-probe-meaning">“{question.prompt}”</p>
+   <div className={styles.choices} role="group" aria-label="Choose the Mandarin sentence">
+    {question.choices.map(w=><button key={w.id} type="button" aria-pressed={selected===w.id} data-testid={`probe-option-${w.id}`} onClick={()=>setSelected(w.id)} className={styles.choice}>
+     <span className={styles.radio} aria-hidden/>
+     <span className={styles.word}><span lang="zh-CN" className={styles.hanzi}>{w.hanzi}</span><span className={styles.pinyin}>{w.pinyin}</span></span>
+    </button>)}
+   </div>
+   <PrimaryButton mobileSticky data-testid="course-probe-continue" disabled={!selected} className="mt-5" onClick={()=>advance(selected)}>Continue <span aria-hidden>→</span></PrimaryButton>
+   <TextButton data-testid="course-probe-unsure" className="mt-1" onClick={()=>advance(null)}>I’m not sure</TextButton>
   </div>
  </StepFrame>;
 }
