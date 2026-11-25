@@ -1,3 +1,4 @@
+import { ensureLesson } from "@/lib/journey/teaching/store"
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { isA0Level, seedA0IslandFromCourse } from '@/lib/a0Course'
@@ -69,6 +70,7 @@ export async function POST(
     }
 
     if (ji.island_id) {
+      await ensureLesson(supabase, ji.island_id, user.id)
       return NextResponse.json({ islandId: ji.island_id, alreadyStarted: true })
     }
 
@@ -225,6 +227,7 @@ export async function POST(
         )
       }
 
+      await ensureLesson(supabase, island.id, user.id)
       return NextResponse.json({ islandId: island.id })
     }
 
@@ -244,9 +247,11 @@ export async function POST(
           { status: 500 },
         )
       }
+      await ensureLesson(supabase, island.id, user.id)
       return NextResponse.json({ islandId: island.id })
     }
 
+    await ensureLesson(supabase, island.id, user.id)
     return NextResponse.json({ islandId: island.id })
   } catch (e) {
     console.error('[journey/start-island]', e)

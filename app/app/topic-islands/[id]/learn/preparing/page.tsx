@@ -113,24 +113,6 @@ export default function PrepareIslandLessonPage() {
     );
   }, [basePath, data?.learn_ready, islandId, router, searchParams]);
 
-  const island = data?.island;
-  const requiredSentences = data?.required_sentence_count ?? (island?.word_target ?? 1) * 3;
-  const savedSentences = island?.sentences_generated ?? 0;
-  const progress = island
-    ? Math.min(
-        100,
-        Math.round(
-          ((Math.min(island.words_selected ?? 0, island.word_target) +
-            Math.min(savedSentences, requiredSentences)) /
-            Math.max(1, island.word_target + requiredSentences)) *
-            100,
-        ),
-      )
-    : 0;
-  const progressLabel = island
-    ? `${Math.min(savedSentences, requiredSentences)} ${t("of")} ${requiredSentences} ${t("example sentences")}`
-    : t("Loading your island…");
-
   if (error) {
     return (
       <main className="hsk-app-theme lingo-body flex min-h-screen items-center justify-center bg-white px-4">
@@ -152,11 +134,5 @@ export default function PrepareIslandLessonPage() {
     );
   }
 
-  return (
-    <PreCourseLoading
-      topic={island?.topic ?? t("Your island")}
-      progressLabel={progressLabel}
-      progressPercentage={progress}
-    />
-  );
+  return <PreCourseLoading />;
 }

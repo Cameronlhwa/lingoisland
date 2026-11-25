@@ -112,7 +112,7 @@ export function BuildActivity({
       <div className="mt-6 flex flex-col gap-2">
         {status !== "correct" ? (
           <>
-            <PrimaryButton data-testid="lesson-build-check" disabled={order.length === 0} onClick={check}>
+            <PrimaryButton mobileSticky data-testid="lesson-build-check" disabled={order.length === 0} onClick={check}>
               Check
             </PrimaryButton>
             <TextButton onClick={undo} disabled={order.length === 0}>
@@ -120,7 +120,7 @@ export function BuildActivity({
             </TextButton>
           </>
         ) : (
-          <PrimaryButton data-testid="lesson-build-continue" onClick={onComplete} style={{ background: GREEN }}>
+          <PrimaryButton mobileSticky data-testid="lesson-build-continue" onClick={onComplete} style={{ background: GREEN }}>
             Continue
           </PrimaryButton>
         )}

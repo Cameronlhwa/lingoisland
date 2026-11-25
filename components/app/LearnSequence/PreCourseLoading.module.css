@@ -1,0 +1,61 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100svh;
+  background: #fdfcf9;
+  color: #513727;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: calc(100% - 64px);
+  max-width: 1264px;
+  min-height: 104px;
+  margin: 0 auto;
+  border-bottom: 1px solid #e8e8df;
+}
+.journey { color: #69776a; font-size: 14px; letter-spacing: .02em; }
+.center { display: flex; flex: 1; align-items: center; justify-content: center; padding: 64px 24px 128px; }
+.content { width: 100%; max-width: 900px; text-align: center; }
+.ring {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 34px;
+  border: 3px solid #e5ece1;
+  border-top-color: #2b7058;
+  border-right-color: #2b7058;
+  border-radius: 50%;
+  animation: turn 1.2s linear infinite;
+}
+.title {
+  margin: 0;
+  font-family: var(--font-home-display), Nunito, system-ui, sans-serif;
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 750;
+  line-height: 1.23;
+  letter-spacing: -.03em;
+  text-wrap: balance;
+}
+.subtitle { margin: 16px 0 0; color: #6e796f; font-size: 17px; line-height: 1.7; }
+.status { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 33px 0 0; color: #536d5c; font-size: 13px; line-height: 1.5; }
+.dots { display: inline-flex; align-items: center; gap: 5px; }
+.dots i { width: 5px; height: 5px; border-radius: 50%; background: #286b53; }
+.dots i:nth-child(2) { background: #7b9c88; }
+.dots i:nth-child(3) { background: #bbccba; }
+.footer { padding: 24px 24px 44px; text-align: center; color: #697565; font-size: 12px; line-height: 1.5; letter-spacing: .015em; }
+.recovery { max-width: 440px; margin: 28px auto 0; font-size: 14px; line-height: 1.6; }
+@keyframes turn { to { transform: rotate(360deg); } }
+@media (max-width: 600px) {
+  .header { width: calc(100% - 40px); min-height: 88px; gap: 16px; }
+  .header img { height: 44px !important; }
+  .journey { font-size: 12px; }
+  .center { padding: 56px 24px 88px; }
+  .title { max-width: 380px; margin: 0 auto; }
+  .subtitle { font-size: 15px; }
+  .footer { padding-bottom: max(28px, env(safe-area-inset-bottom)); font-size: 11px; }
+}
+@media (max-height: 560px) { .center { padding-top: 32px; padding-bottom: 32px; } }
+@media (prefers-reduced-motion: reduce) { .ring { animation: none; transform: rotate(-28deg); } }

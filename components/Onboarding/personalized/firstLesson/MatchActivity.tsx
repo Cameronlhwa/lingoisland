@@ -120,7 +120,7 @@ export function MatchActivity({
           ))}
       </div>
 
-      <PrimaryButton className="mt-6" disabled={!done} data-testid="lesson-match-continue" onClick={onComplete}>
+      <PrimaryButton mobileSticky className="mt-6" disabled={!done} data-testid="lesson-match-continue" onClick={onComplete}>
         Continue
       </PrimaryButton>
     </div>

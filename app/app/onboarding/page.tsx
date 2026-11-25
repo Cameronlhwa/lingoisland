@@ -15,5 +15,5 @@ export default function AppOnboardingPage({ searchParams = {} }: { searchParams?
     ) : (
       <PersonalizedOnboardingFlow mode="app" />
     );
-  return <Suspense fallback={<AppPageLoading className="bg-[#EAF6FB]" />}>{content}</Suspense>;
+  return <Suspense fallback={<AppPageLoading label="Getting ready…" className="lingo-body bg-[#fffaf3]" />}>{content}</Suspense>;
 }

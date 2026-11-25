@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { Check, ChevronLeft } from "lucide-react";
 import AppLogo from "@/components/app/AppLogo";
+import styles from "./ui.module.css";
 import { HSK_BTN_GRADIENT, HSK_BTN_SHADOW, HSK_CARD_SHADOW } from "@/lib/glossy-theme";
 
 export const NAVY = "#5F3119";
@@ -30,7 +31,7 @@ export function usePrefersReducedMotion() {
 export function Shell({ children, wide = false }: { children: ReactNode; wide?: boolean | "xl" }) {
   return (
     <div
-      className="relative flex min-h-[100dvh] flex-col items-center overflow-x-hidden px-3 py-6 sm:px-4 sm:py-10"
+      className={`${styles.shell} relative flex min-h-[100dvh] flex-col items-center overflow-x-hidden px-3 py-3 sm:px-4 sm:py-10`}
       style={{ fontFamily: FONT_BODY, background: "#fffaf3" }}
     >
       <div
@@ -47,12 +48,12 @@ export function Shell({ children, wide = false }: { children: ReactNode; wide?: 
         }}
       />
       <div className="relative z-10 flex w-full flex-col items-center">
-        <div className="mb-4 sm:mb-6">
+        <div className={`${styles.logo} mb-2 sm:mb-6`}>
           <AppLogo />
         </div>
         <main
           id="onboarding-main"
-          className={`w-full rounded-3xl bg-white p-5 sm:p-8 ${wide === "xl" ? "max-w-xl md:max-w-4xl" : wide ? "max-w-2xl" : "max-w-xl"}`}
+          className={`w-full rounded-3xl bg-white p-4 sm:p-8 ${wide === "xl" ? "max-w-xl md:max-w-4xl" : wide ? "max-w-2xl" : "max-w-xl"}`}
           style={{ boxShadow: HSK_CARD_SHADOW }}
         >
           {children}
@@ -103,6 +104,7 @@ export function ProgressBar({ index, total }: { index: number; total: number }) 
  */
 export function StepFrame({
   title,
+  mobileTitle,
   subtitle,
   progress,
   onBack,
@@ -114,6 +116,7 @@ export function StepFrame({
   hideTitle = false,
 }: {
   title: ReactNode;
+  mobileTitle?: ReactNode;
   subtitle?: ReactNode;
   progress?: { index: number; total: number };
   onBack?: (() => void) | null;
@@ -131,7 +134,7 @@ export function StepFrame({
     headingRef.current?.focus({ preventScroll: false });
   }, []);
   return (
-    <section aria-labelledby={titleId ?? "onboarding-step-title"}>
+    <section className={styles.frame} aria-labelledby={titleId ?? "onboarding-step-title"}>
       {header}
       <div className="flex items-center gap-2">
         {onBack ? (
@@ -163,7 +166,7 @@ export function StepFrame({
         className={hideTitle ? "sr-only outline-none" : `${eyebrow ? "mt-1.5" : compact ? "mt-3" : "mt-5"} text-[22px] font-bold leading-tight outline-none sm:text-[26px]`}
         style={{ fontFamily: FONT_DISPLAY, color: NAVY }}
       >
-        {title}
+        {mobileTitle ? <><span className="sm:hidden">{mobileTitle}</span><span className="hidden sm:inline">{title}</span></> : title}
       </h1>
       {subtitle ? (
         <p className="mt-2 text-[15px] leading-relaxed" style={{ color: MUTED }}>
@@ -175,17 +178,21 @@ export function StepFrame({
   );
 }
 
-export function PrimaryButton({ children, className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      type="button"
-      {...props}
-      className={`flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-[15px] font-semibold text-white transition-all motion-safe:hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 motion-safe:disabled:hover:translate-y-0 ${className}`}
-      style={{ background: HSK_BTN_GRADIENT, boxShadow: HSK_BTN_SHADOW, outlineColor: GREEN, ...props.style }}
-    >
-      {children}
-    </button>
-  );
+/** A single primary action stays within thumb reach on small onboarding screens. */
+export function PrimaryButton({ children, className = "", mobileSticky = false, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { mobileSticky?: boolean }) {
+  const actionRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!mobileSticky || !window.visualViewport) return;
+    const viewport = window.visualViewport;
+    const sync = () => actionRef.current?.style.setProperty("--keyboard-offset", `${Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)}px`);
+    sync();
+    viewport.addEventListener("resize", sync); viewport.addEventListener("scroll", sync);
+    return () => { viewport.removeEventListener("resize", sync); viewport.removeEventListener("scroll", sync); };
+  }, [mobileSticky]);
+  const button = <button type="button" {...props}
+    className={`flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-[15px] font-semibold text-white transition-all motion-safe:hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 motion-safe:disabled:hover:translate-y-0 ${mobileSticky ? "" : className}`}
+    style={{ background: HSK_BTN_GRADIENT, boxShadow: HSK_BTN_SHADOW, outlineColor: GREEN, ...props.style }}>{children}</button>;
+  return mobileSticky ? <div ref={actionRef} className={`${styles.mobileAction} ${className}`}>{button}</div> : button;
 }
 
 export function SecondaryButton({ children, className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
@@ -225,6 +232,8 @@ export function OptionCard({
   lang,
   testId,
   compact = false,
+  mobileDetailOnSelect = false,
+  mobileTile = false,
 }: {
   selected: boolean;
   onSelect: () => void;
@@ -235,6 +244,8 @@ export function OptionCard({
   lang?: string;
   testId?: string;
   compact?: boolean;
+  mobileDetailOnSelect?: boolean;
+  mobileTile?: boolean;
 }) {
   return (
     <button
@@ -244,7 +255,7 @@ export function OptionCard({
       onClick={onSelect}
       data-testid={testId}
       lang={lang}
-      className={`flex w-full min-h-[48px] items-center gap-3 rounded-2xl bg-white text-left transition-colors hover:bg-[#F4FAFD] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${compact ? "px-3.5 py-2.5" : "p-4"}`}
+      className={`${mobileTile ? styles.tile : ""} flex w-full min-h-[48px] items-center gap-3 rounded-2xl bg-white text-left transition-colors hover:bg-[#F4FAFD] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${compact ? "px-3.5 py-2.5" : "p-4"}`}
       style={{
         border: `1px solid ${selected ? GREEN : CARD_BORDER}`,
         boxShadow: selected ? `inset 0 0 0 1px ${GREEN}` : undefined,
@@ -271,7 +282,7 @@ export function OptionCard({
           ) : null}
         </span>
         {description ? (
-          <span className="mt-0.5 block text-[13px] leading-snug" style={{ color: MUTED }}>
+          <span className={`${mobileDetailOnSelect && !selected ? "hidden sm:block" : "block"} mt-0.5 text-[13px] leading-snug`} style={{ color: MUTED }}>
             {description}
           </span>
         ) : null}

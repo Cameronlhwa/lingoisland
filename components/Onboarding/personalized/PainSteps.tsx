@@ -45,7 +45,7 @@ export function ExperienceStep({ state, update, next, back, progress, track }: S
           />
         ))}
       </div>
-      <PrimaryButton
+      <PrimaryButton mobileSticky
         className="mt-8"
         disabled={!selected}
         data-testid="continue"
@@ -131,17 +131,22 @@ export function UsingPainStep({ state, update, next, back, progress, track }: St
       ) : null}
       <FieldError message={error} />
 
-      <div className="mt-7">
+      <div className="mt-5 sm:mt-7">
         <SectionLabel id="timing-label">When&rsquo;s the next time you&rsquo;ll need it?</SectionLabel>
-        <div role="group" aria-labelledby="timing-label" className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+        <select aria-labelledby="timing-label" data-testid="timing-select" value={timing ?? ""} onChange={event => chooseTiming(event.target.value as TimingKey)} className="mt-2.5 min-h-[48px] w-full rounded-xl border bg-white px-3 text-base sm:hidden" style={{borderColor:CARD_BORDER,color:NAVY}}>
+          <option value="" disabled>Choose a time</option>
+          {TIMING_OPTIONS.map(option=><option key={option.key} value={option.key}>{option.label}</option>)}
+        </select>
+        <div role="group" aria-labelledby="timing-label" className="mt-2.5 hidden grid-cols-3 gap-2.5 sm:grid">
           {TIMING_OPTIONS.map((option) => (
             <OptionCard
               key={option.key}
               compact
+              mobileTile
               testId={`timing-${option.key}`}
               selected={timing === option.key}
               onSelect={() => chooseTiming(option.key)}
-              title={option.label}
+              title={<><span className="sm:hidden">{option.key === "upcoming_event" ? "A trip or event" : option.key === "ongoing" ? "Every week" : option.key === "no_date" ? "No date yet" : option.label}</span><span className="hidden sm:inline">{option.label}</span></>}
             />
           ))}
         </div>
@@ -164,7 +169,7 @@ export function UsingPainStep({ state, update, next, back, progress, track }: St
         </div>
       ) : null}
 
-      <PrimaryButton className="mt-8" disabled={!ready} onClick={submit} data-testid="continue">
+      <PrimaryButton mobileSticky className="mt-8" disabled={!ready} onClick={submit} data-testid="continue">
         Continue
       </PrimaryButton>
     </StepFrame>
@@ -230,7 +235,7 @@ export function LearningPainStep({ state, update, next, back, progress, track }:
             ))}
       </div>
       <FieldError message={error} />
-      <PrimaryButton className="mt-8" disabled={!ready} onClick={submit} data-testid="continue">
+      <PrimaryButton mobileSticky className="mt-8" disabled={!ready} onClick={submit} data-testid="continue">
         Continue
       </PrimaryButton>
     </StepFrame>

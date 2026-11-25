@@ -8,7 +8,7 @@ import {CARD_BORDER,GREEN,MUTED,PrimaryButton,SKY_PALE} from "../ui";
 import {writingCompletion} from "@/lib/onboarding/personalized/firstLesson/writing";
 import styles from "./ConversationPrompt.module.css";
 import {Feedback} from "./LessonActivities";
-export type WritingContext={tier:number;goal:string;variant:number;interestKeys:string[];lessonId:string};
+export type WritingContext={tier:number;goal:string;variant:number;interestKeys:string[];lessonId:string} | {islandId:string};
 export function WritingExercise({practice,value,context,stepId,onChange,onComplete,onMistake,onUnavailable}:{practice:WritingPractice;value:string;context:WritingContext;stepId:string;onChange:(text:string)=>void;onComplete:()=>void;onMistake:(id:string)=>void;onUnavailable:()=>void}){
  const [result,setResult]=useState<WritingGrade|null>(null),[busy,setBusy]=useState(false),[showHint,setShowHint]=useState(false);
  const completion=writingCompletion(practice.prompt);
@@ -22,7 +22,7 @@ export function WritingExercise({practice,value,context,stepId,onChange,onComple
   const controller=new AbortController();requestRef.current=controller;setBusy(true);setResult(null);
   const timer=setTimeout(()=>controller.abort(),20000);
   try{
-   const response=await fetch("/api/onboarding/writing",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...context,stepId,answer:value}),signal:controller.signal});
+   const response=await fetch("islandId" in context ? `/api/topic-islands/${encodeURIComponent(context.islandId)}/lesson-writing` : "/api/onboarding/writing",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...context,stepId,answer:value}),signal:controller.signal});
    const grade=await response.json();
    if(requestRef.current!==controller)return;
    if(!response.ok||!["correct","retry"].includes(grade.status)||typeof grade.feedback!=="string")throw Error("Unavailable");
@@ -50,6 +50,6 @@ export function WritingExercise({practice,value,context,stepId,onChange,onComple
   <p className="mt-1 text-right text-xs" style={{color:MUTED}}>{completion ? fragment.length : value.length} / {completion ? 600-completion.prefix.length-completion.suffix.length : 600}</p>
   {result&&<Feedback correct={result.status==="correct"}>{result.feedback}</Feedback>}
   {showHint&&<p id="writing-hint" data-testid="writing-hint" className="mt-3 rounded-xl p-3 text-sm leading-relaxed" style={{background:SKY_PALE,color:MUTED}}>Hint: {practice.hint}</p>}
-  <PrimaryButton className="mt-5" data-testid="writing-check" disabled={busy||!(completion?fragment:value).trim()} onClick={()=>void check()}>{busy?"Checking your answer…":result?.status==="correct"?"Continue":result?.status==="unavailable"?"Try again":"Check my answer"}</PrimaryButton>
+  <PrimaryButton mobileSticky className="mt-5" data-testid="writing-check" disabled={busy||!(completion?fragment:value).trim()} onClick={()=>void check()}>{busy?"Checking your answer…":result?.status==="correct"?"Continue":result?.status==="unavailable"?"Try again":"Check my answer"}</PrimaryButton>
  </div>;
 }

@@ -1,3 +1,4 @@
+import { ensureLesson } from "@/lib/journey/teaching/store"
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { generateWordList } from '@/lib/deepseek/generate-word-list'
@@ -155,7 +156,8 @@ export async function POST(
 
     const baseLevel = mapToBaseLevel(island.level as string)
     const detailedLevel = island.level as string
-    const grammarTarget = island.grammar_target || 0
+    const teaching = await ensureLesson(supabase, islandId, user.id)
+    const grammarTarget = teaching ? 1 : island.grammar_target || 0
     const sentenceStyle = normalizeSentenceStyle(
       body.sentenceStyle ?? island.sentence_style,
     )
@@ -324,6 +326,7 @@ export async function POST(
               grammarCount: grammarTarget,
               varietyHint,
               recentPatterns,
+              requiredPattern: teaching?.objective.pattern,
             })
             for (let i = 0; i < grammarFocusResult.points.length; i++) {
               const point = grammarFocusResult.points[i]
@@ -647,6 +650,8 @@ export async function POST(
             sentences = await generateWordSentences({
             word,
             topic: island.topic,
+            grammarTags: teaching ? [teaching.objective.pattern] : undefined,
+            grammarTarget: teaching ? 1 : undefined,
             level: baseLevel,
             detailedLevel,
             knownWords: knownWords.length > 0 ? knownWords : undefined,

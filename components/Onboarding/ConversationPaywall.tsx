@@ -65,7 +65,7 @@ export default function ConversationPaywall({
         <section
           aria-labelledby="conversation-offer-title"
           data-testid="conversation-paywall"
-          className="relative w-full rounded-[28px] bg-white px-6 pb-5 pt-8 text-center shadow-[0_20px_60px_-20px_rgba(7,30,46,0.3)] sm:px-9 sm:pb-6 sm:pt-9"
+          className="relative w-full rounded-[28px] bg-white px-5 pb-5 pt-8 text-center shadow-[0_20px_60px_-20px_rgba(7,30,46,0.3)] sm:px-9 sm:pb-6 sm:pt-9"
         >
           {activation.onClose || activation.onNotNow ? (
             <button
@@ -81,7 +81,7 @@ export default function ConversationPaywall({
 
           <h1
             id="conversation-offer-title"
-            className="lingo-display mx-auto max-w-[22ch] text-[28px] leading-[1.15] text-[var(--lingo-navy)] sm:text-[32px]"
+            className="lingo-display mx-auto max-w-[22ch] text-[25px] leading-[1.15] text-[var(--lingo-navy)] sm:text-[32px]"
           >
             {activation.headline}
           </h1>
@@ -89,14 +89,13 @@ export default function ConversationPaywall({
             {activation.subline}
           </p>
 
-          {comparison ? (
-            <ProgressComparisonChart
-              title={comparison.title}
-              weeks={comparison.weeks}
-              lingoLabel={comparison.lingoLabel}
-              otherLabel={comparison.otherLabel}
-            />
-          ) : null}
+          {comparison ? <>
+            <details className="mt-4 rounded-xl border border-[#E4E7DF] px-3 py-2 text-left sm:hidden">
+              <summary className="min-h-8 cursor-pointer text-sm font-semibold leading-8 text-[#526B59]">See your learning outlook</summary>
+              <ProgressComparisonChart title={comparison.title} weeks={comparison.weeks} lingoLabel={comparison.lingoLabel} otherLabel={comparison.otherLabel} />
+            </details>
+            <div className="hidden sm:block"><ProgressComparisonChart title={comparison.title} weeks={comparison.weeks} lingoLabel={comparison.lingoLabel} otherLabel={comparison.otherLabel} /></div>
+          </> : null}
 
           <ul aria-label="Membership benefits" className="mx-auto mt-4 max-w-[400px] space-y-2.5 text-left">
             {activation.benefits.slice(0, 2).map((benefit) => (
@@ -151,6 +150,7 @@ export default function ConversationPaywall({
             type="button"
             disabled={checkoutLoading}
             onClick={onProceedCheckout}
+            data-testid="conversation-continue"
             className="mt-5 min-h-[54px] w-full rounded-2xl bg-[#20674F] px-4 py-3 text-[17px] font-bold text-white transition-colors hover:bg-[#19533F] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#20674F] disabled:cursor-wait disabled:opacity-60"
           >
             {checkoutLoading ? "Starting checkout…" : activation.cta}

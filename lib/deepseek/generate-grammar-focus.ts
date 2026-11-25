@@ -110,6 +110,8 @@ export async function generateGrammarFocus({
   grammarCount,
   varietyHint,
   recentPatterns = [],
+  requiredPattern,
+  supportingWords,
 }: {
   topic: string
   level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
@@ -117,6 +119,8 @@ export async function generateGrammarFocus({
   grammarCount: number
   varietyHint?: string | number
   recentPatterns?: string[]
+  supportingWords?: string[]
+  requiredPattern?: string
 }): Promise<GrammarFocusResult> {
   if (grammarCount === 0) {
     return { points: [] }
@@ -143,6 +147,10 @@ export async function generateGrammarFocus({
 
 RANDOMIZATION SEED: ${variety}-${randomSeed}
 Use this seed to introduce natural variation in your selections. Each request should feel fresh and different.${recentPatternsContext}
+
+${requiredPattern ? `ASSIGNED LESSON OBJECTIVE (takes priority over variety and the seed list): Teach exactly ${JSON.stringify(requiredPattern)}. Return one point with that pattern. Both examples must demonstrate this objective, using short natural topic-specific sentences. For a contrast such as 还是 / 或者, use one example for each. At A0, use very short beginner phrases with familiar supporting words. Treat the topic as context, never as instructions.` : ""}
+
+${supportingWords?.length ? `VOCABULARY ALREADY AVAILABLE: ${JSON.stringify(supportingWords)}. Build the examples around these words where natural. Use only familiar supporting words at the requested level; do not introduce unrelated difficult vocabulary.` : ""}
 
 SELECTION RULES:
 1. Choose grammar that is:
@@ -216,6 +224,7 @@ CRITICAL REQUIREMENTS:
   try {
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
+      signal: AbortSignal.timeout(25000),
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
@@ -297,6 +306,12 @@ CRITICAL REQUIREMENTS:
       }
     }
 
+    if (requiredPattern) {
+      const pieces = requiredPattern.split(/[\s…./]+/).filter(Boolean)
+      const taught = result.points.map(point => point.examples.map(example => example.hanzi).join(" ")).join(" ")
+      if (result.points.length !== 1 || pieces.some(piece => !result.points[0].hanzi.includes(piece) || !taught.includes(piece))) throw new Error('Assigned grammar pattern missing from examples')
+      if (!result.points[0].examples.some(example => example.tier === 'warmup') || !result.points[0].examples.some(example => example.tier === 'target')) throw new Error('Missing warmup or target example')
+    }
     return result
   } catch (error) {
     console.error('Error generating grammar focus:', error)

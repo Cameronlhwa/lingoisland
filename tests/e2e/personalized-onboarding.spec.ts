@@ -138,7 +138,8 @@ async function pains(page: Page, level: string) {
   }
   await heading(page, /what usually happens/);
   await page.locator("[data-testid^=pain-]").first().click();
-  await page.getByTestId("timing-ongoing").click();
+  if (await page.getByTestId("timing-select").isVisible()) await page.getByTestId("timing-select").selectOption("ongoing");
+  else await page.getByTestId("timing-ongoing").click();
   await next(page);
   await heading(page, /hardest about learning so far|held you back from starting/);
   await page.locator("[data-testid^=learning-pain-], [data-testid^=hesitation-]").first().click();
@@ -159,7 +160,7 @@ async function reviews(page: Page) {
 /** Completes the embedded mini lesson without requiring a microphone. */
 
 async function availability(page: Page, minutes = "10", days = "5") {
-  await heading(page, "How much time can you usually spend learning Mandarin?");
+  await heading(page, /How much time can you/);
   await page.getByTestId(`minutes-${minutes}`).click();
   await page.getByTestId(`days-${days}`).click();
   if (Number(minutes) >= 30 || minutes.startsWith("60")) await page.getByTestId("session-auto").click();
@@ -174,7 +175,7 @@ async function toPlan(page: Page, input: ProfileInput) {
   await availability(page, input.minutes, input.days);
   await confirmReflection(page);
   await finishFirstLesson(page);
-  await heading(page, "Ready to continue your Mandarin journey?");
+  await heading(page, /Ready to (?:continue|begin) your Mandarin journey\?/);
 }
 
 async function toCommitment(page: Page, input: ProfileInput) {
@@ -203,8 +204,15 @@ for (const viewport of VIEWPORTS) {
       await expect(page.getByTestId("calibration-start")).toHaveCount(0);
       await availability(page, "5", "3");
       await confirmReflection(page);
-      await finishFirstLesson(page);
-      await heading(page, "Ready to continue your Mandarin journey?");
+      await finishFirstLesson(page, async button => {
+        if (isMobile(page) && await button.evaluate(element => element.classList.contains("text-white"))) {
+          const box = await button.boundingBox();
+          expect(box!.y).toBeGreaterThanOrEqual(0);
+          expect(box!.y + box!.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+        }
+        await button.click();
+      });
+      await heading(page, /Ready to (?:continue|begin) your Mandarin journey\?/);
       await page.getByTestId("commitment-cta").click();
       await expect(page.getByTestId("conversation-paywall")).toBeVisible({ timeout: 15_000 });
     });
@@ -227,7 +235,7 @@ for (const viewport of VIEWPORTS) {
       await toCommitment(page, { goal: "travel", interests: ["restaurants"], level: "few_words" });
       for (const step of ["huahua", "messaging", "huahua_prefs", "preview"]) {
         await page.goto(`/onboarding/journey?resume=${step}`);
-        await heading(page, "Ready to continue your Mandarin journey?");
+        await heading(page, /Ready to (?:continue|begin) your Mandarin journey\?/);
       }
     });
 
@@ -259,7 +267,7 @@ for (const viewport of VIEWPORTS) {
       expect(axe.violations.map((violation) => violation.id)).toEqual([]);
 
       await page.getByTestId("social-proof-continue").click();
-      await heading(page, "How much time can you usually spend learning Mandarin?");
+      await heading(page, /How much time can you/);
       await page.getByRole("button", { name: "Back" }).click();
       await heading(page, "Professionals like you learn with LingoIsland");
       await page.getByRole("button", { name: "Back" }).click();
@@ -292,13 +300,13 @@ for (const viewport of VIEWPORTS) {
       await page.goto("/onboarding/journey?resume=reflect");
       await heading(page, /^From .+ in \d+ weeks$/);
       await page.getByRole("button", { name: "Back" }).click();
-      await heading(page, "How much time can you usually spend learning Mandarin?");
+      await heading(page, /How much time can you/);
       await page.getByTestId("minutes-30").click();
       await page.getByTestId("session-short_sessions").click();
       await next(page);
       await confirmReflection(page);
       await finishFirstLesson(page);
-      await heading(page, "Ready to continue your Mandarin journey?");
+      await heading(page, /Ready to (?:continue|begin) your Mandarin journey\?/);
       await expect(page.getByText(/30 minutes, 3 days a week/)).toBeVisible();
     });
 
@@ -437,7 +445,7 @@ for (const viewport of VIEWPORTS) {
         }, { timeout: 15_000 })
         .toBe(true);
       await page.reload();
-      await heading(page, "How much time can you usually spend learning Mandarin?");
+      await heading(page, /How much time can you/);
     });
 
     test("13. a signed-in learner stays signed in when progress can't be loaded", async ({ page }) => {
@@ -449,7 +457,7 @@ for (const viewport of VIEWPORTS) {
           : route.fallback(),
       );
       await page.reload();
-      await heading(page, "Ready to continue your Mandarin journey?");
+      await heading(page, /Ready to (?:continue|begin) your Mandarin journey\?/);
       await expect(page.getByLabel("Your first name")).toHaveValue("Cameron");
     });
 
@@ -505,7 +513,7 @@ for (const viewport of VIEWPORTS) {
       const lessonAxe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
       expect(lessonAxe.violations.map((violation) => violation.id)).toEqual([]);
       await finishFirstLesson(page);
-      await heading(page, "Ready to continue your Mandarin journey?");
+      await heading(page, /Ready to (?:continue|begin) your Mandarin journey\?/);
       await expect(page.locator("h1")).toBeFocused();
       const commitAxe = await new AxeBuilder({ page }).include("#onboarding-main").withTags(["wcag2a", "wcag2aa"]).analyze();
       expect(commitAxe.violations.map((violation) => violation.id)).toEqual([]);
@@ -528,7 +536,7 @@ for (const viewport of VIEWPORTS) {
       await availability(page, "10", "5");
       await confirmReflection(page);
       await finishFirstLesson(page);
-      await heading(page, "Ready to continue your Mandarin journey?");
+      await heading(page, /Ready to (?:continue|begin) your Mandarin journey\?/);
       await page.screenshot({ path: testInfo.outputPath(`commitment-${viewport.name}.png`), fullPage: true });
     });
   });

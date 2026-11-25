@@ -87,15 +87,16 @@ export function GoalStep({ state, update, next, back, progress, track }: StepPro
       progress={progress}
       onBack={back}
     >
-      <div role="group" aria-labelledby="onboarding-step-title" className="grid gap-2.5 sm:grid-cols-2">
+      <div role="group" aria-labelledby="onboarding-step-title" className="grid grid-cols-2 gap-2.5">
         {GOALS.map((goal) => (
           <OptionCard
+            mobileTile
             key={goal.key}
             testId={`goal-${goal.key}`}
             selected={selected(goal.key)}
             onSelect={() => toggle(goal.key)}
             title={goal.label}
-            description={goal.description}
+            description={<span className="hidden sm:block">{goal.description}</span>}
           />
         ))}
       </div>
@@ -118,7 +119,7 @@ export function GoalStep({ state, update, next, back, progress, track }: StepPro
       ) : null}
 
       <FieldError message={error} />
-      <PrimaryButton className="mt-8" disabled={!primary} onClick={submit} data-testid="continue">
+      <PrimaryButton mobileSticky className="mt-8" disabled={!primary} onClick={submit} data-testid="continue">
         Continue
       </PrimaryButton>
     </StepFrame>
@@ -265,7 +266,7 @@ export function InterestsStep({ state, update, next, back, progress, track }: St
         </form>
       ) : null}
 
-      <PrimaryButton className="mt-8" disabled={!ready} onClick={submit} data-testid="continue">
+      <PrimaryButton mobileSticky className="mt-8" disabled={!ready} onClick={submit} data-testid="continue">
         Continue
       </PrimaryButton>
     </StepFrame>
@@ -277,7 +278,7 @@ export function LevelStep({ state, update, next, back, progress, track }: StepPr
   return (
     <StepFrame
       title="How does your Mandarin feel right now?"
-      subtitle="Choose the description that feels closest. There is no wrong answer."
+      subtitle="Choose the closest fit. There’s no wrong answer."
       progress={progress}
       onBack={back}
     >
@@ -286,6 +287,7 @@ export function LevelStep({ state, update, next, back, progress, track }: StepPr
           <OptionCard
             key={option.key}
             compact
+            mobileDetailOnSelect
             testId={`level-${option.key}`}
             selected={selected === option.key}
             onSelect={() => update({ level: { selfReport: option.key } })}
@@ -305,7 +307,7 @@ export function LevelStep({ state, update, next, back, progress, track }: StepPr
           />
         ))}
       </div>
-      <PrimaryButton
+      <PrimaryButton mobileSticky
         className="mt-8"
         disabled={!selected}
         data-testid="continue"
@@ -330,58 +332,59 @@ export function AvailabilityStep({ state, update, next, back, progress, track }:
   return (
     <StepFrame
       title="How much time can you usually spend learning Mandarin?"
-      subtitle="Be realistic. A plan you can keep beats an ambitious one."
+      mobileTitle="How much time can you make for Mandarin?"
+      subtitle="Choose a pace that fits your day."
       progress={progress}
       onBack={back}
     >
-      <div role="group" aria-labelledby="onboarding-step-title" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+      <div role="group" aria-labelledby="onboarding-step-title" className="grid grid-cols-3 gap-2 sm:gap-2.5">
         {MINUTES_OPTIONS.map((option) => (
-          <OptionCard
+          <OptionCard mobileTile
             key={option.key}
             compact
             testId={`minutes-${option.key}`}
             selected={availability.minutes === option.key}
             onSelect={() => set({ minutes: option.key, session: needsSessionPreference(option.key) ? availability.session : null })}
-            title={option.label}
+            title={<><span className="sm:hidden">{option.key === "60_plus" ? "60+ min" : option.key === "60" ? "1 hour" : option.label.replace("minutes", "min")}</span><span className="hidden sm:inline">{option.label}</span></>}
           />
         ))}
       </div>
 
-      <div className="mt-7">
+      <div className="mt-5 sm:mt-7">
         <SectionLabel id="days-label">How many days each week feels realistic?</SectionLabel>
-        <div role="group" aria-labelledby="days-label" className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+        <div role="group" aria-labelledby="days-label" className="mt-2.5 grid grid-cols-3 gap-2 sm:gap-2.5">
           {DAYS_OPTIONS.map((option) => (
-            <OptionCard
+            <OptionCard mobileTile
               key={option.key}
               compact
               testId={`days-${option.key}`}
               selected={availability.days === option.key}
               onSelect={() => set({ days: option.key })}
-              title={option.label}
+              title={<><span className="sm:hidden">{option.key === "varies" ? "Varies" : option.label}</span><span className="hidden sm:inline">{option.label}</span></>}
             />
           ))}
         </div>
       </div>
 
       {showSession ? (
-        <div className="mt-7">
+        <div className="mt-5 sm:mt-7">
           <SectionLabel id="session-label">How would you prefer to use that time?</SectionLabel>
-          <div role="group" aria-labelledby="session-label" className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
+          <div role="group" aria-labelledby="session-label" className="mt-2.5 grid grid-cols-3 gap-2 sm:gap-2.5">
             {SESSION_OPTIONS.map((option) => (
-              <OptionCard
+              <OptionCard mobileTile
                 key={option.key}
                 compact
                 testId={`session-${option.key}`}
                 selected={availability.session === option.key}
                 onSelect={() => set({ session: option.key })}
-                title={option.label}
+                title={<><span className="sm:hidden">{option.key === "one_session" ? "One session" : option.key === "short_sessions" ? "Short sessions" : "Choose for me"}</span><span className="hidden sm:inline">{option.label}</span></>}
               />
             ))}
           </div>
         </div>
       ) : null}
 
-      <PrimaryButton
+      <PrimaryButton mobileSticky
         className="mt-8"
         disabled={!ready}
         data-testid="continue"

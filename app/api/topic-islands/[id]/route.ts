@@ -1,3 +1,4 @@
+import { ensureLesson } from "@/lib/journey/teaching/store"
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getEntitlements, canCreateTopicIsland } from '@/lib/entitlements'
@@ -181,7 +182,10 @@ export async function GET(
       island.word_target,
     )
 
+    const teaching = journeyContext ? await ensureLesson(supabase, islandId, user.id) : null
+
     return NextResponse.json({
+      teaching: teaching ? { lesson: teaching.content, progress: teaching.progress, revision: teaching.revision } : null,
       island,
       words: wordsWithSentences,
       learn_ready: readiness.learnReady,

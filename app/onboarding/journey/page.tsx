@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import AppPageLoading from "@/components/app/AppPageLoading";
 import type { Metadata } from "next";
 import JourneyOnboardingFlow from "@/components/Onboarding/JourneyOnboardingFlow";
 import PersonalizedOnboardingFlow from "@/components/Onboarding/personalized/PersonalizedOnboardingFlow";
@@ -19,18 +20,7 @@ function usesLegacyFlow(params: SearchParams) {
 export default function OnboardingJourneyPage({ searchParams = {} }: { searchParams?: SearchParams }) {
   return (
     <Suspense
-      fallback={
-        <div
-          className="flex min-h-screen items-center justify-center"
-          style={{
-            fontFamily: "'DM Sans', system-ui, sans-serif",
-            background: "#EAF6FB",
-            color: "#4F6E83",
-          }}
-        >
-          Loading…
-        </div>
-      }
+      fallback={<AppPageLoading label="Getting ready…" className="lingo-body bg-[#fffaf3]" />}
     >
       {usesLegacyFlow(searchParams) ? <JourneyOnboardingFlow publicSurface /> : <PersonalizedOnboardingFlow mode="public" />}
     </Suspense>

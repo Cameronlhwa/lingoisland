@@ -1,3 +1,8 @@
+import { buildJourneyChatPrompt } from "@/lib/journey/teaching/chatPrompt";
+import { generateLearnChat, ChatProviderError } from "@/lib/deepseek/learnChat";
+import { lessonAccess, LessonError } from "@/lib/journey/teaching/store";
+import { limitLessonRequests } from "@/lib/journey/teaching/rateLimit";
+import { isSameOriginMutation } from "@/lib/security/sameOrigin";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -6,6 +11,8 @@ type IncomingMessage = { role: "user" | "assistant"; content: string };
 type LearnWord = { hanzi: string; pinyin: string; english: string };
 
 type Body = {
+  lessonIslandId?: string;
+  replySuggestions?: boolean;
   messages: IncomingMessage[];
   islandLevel: string;
   islandTopic?: string;
@@ -15,12 +22,6 @@ type Body = {
 
 const MAX_MESSAGES = 20;
 const MAX_CONTENT_LENGTH = 2000;
-
-function getDeepSeekUrl() {
-  const base = (process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").trim();
-  const normalized = base.endsWith("/") ? base.slice(0, -1) : base;
-  return `${normalized}/v1/chat/completions`;
-}
 
 function getLevelTier(level: string): "beginner" | "intermediate" | "advanced" {
   const base = level.trim().toUpperCase().slice(0, 2);
@@ -357,7 +358,21 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as Body;
-    const { messages, islandLevel, islandTopic, words, mode } = body;
+    let { messages, islandLevel, islandTopic, words, mode } = body;
+    let lessonMission = "";
+    if (body.lessonIslandId !== undefined) {
+      if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (typeof body.lessonIslandId !== "string") return NextResponse.json({ error: "Invalid lesson" }, { status: 400 });
+      const { row, island } = await lessonAccess(body.lessonIslandId);
+      if (!row.content || row.progress.stepId !== "chat") return NextResponse.json({ error: "Finish the teaching activities first" }, { status: 409 });
+      limitLessonRequests(user.id, "chat");
+      if (!Array.isArray(messages) || messages.length > 60 || messages.some(message => !message || !["user", "assistant"].includes(message.role) || typeof message.content !== "string" || message.content.length > MAX_CONTENT_LENGTH)) return NextResponse.json({ error: "Invalid conversation" }, { status: 400 });
+      islandLevel = island.level;
+      islandTopic = island.topic;
+      words = row.content.words.map(word => ({ hanzi: word.hanzi, pinyin: word.pinyin, english: word.label }));
+      mode = "chat";
+      lessonMission = buildJourneyChatPrompt({ level: island.level, topic: island.topic, mission: row.content.mission, pattern: row.objective.pattern, words }, body.replySuggestions === true);
+    }
 
     if (!islandLevel || !Array.isArray(words) || words.length === 0) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -372,17 +387,10 @@ export async function POST(request: Request) {
     const level = islandLevel.slice(0, 16);
     const exerciseMode = mode === "exercise";
     const tier = getLevelTier(level);
-    const resolvedSystemPrompt = exerciseMode
+    const guidedReply = !!lessonMission && body.replySuggestions === true;
+    const resolvedSystemPrompt = lessonMission || (exerciseMode
       ? buildExerciseSystemPrompt(topic, level, wordList)
-      : buildSystemPrompt(tier, topic, level, wordList);
-
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "DEEPSEEK_API_KEY not configured" },
-        { status: 500 },
-      );
-    }
+      : buildSystemPrompt(tier, topic, level, wordList));
 
     const safeMessages = Array.isArray(messages)
       ? messages.slice(-MAX_MESSAGES).map((m) => ({
@@ -403,40 +411,11 @@ export async function POST(request: Request) {
           ]
         : safeMessages;
 
-    const deepseekRes = await fetch(getDeepSeekUrl(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      signal: AbortSignal.timeout(15_000),
-      body: JSON.stringify({
-        model: "deepseek-v4-flash",
-        messages: [
-          { role: "system", content: resolvedSystemPrompt },
-          ...chatMessages,
-        ],
-        temperature: exerciseMode ? 0.3 : 0.7,
-        max_tokens: exerciseMode ? 2000 : 600,
-      }),
-    });
-
-    if (!deepseekRes.ok) {
-      const t = await deepseekRes.text();
-      console.error("[learn-chat] DeepSeek error", deepseekRes.status, t.slice(0, 500));
-      return NextResponse.json(
-        { error: "Chat provider error" },
-        { status: 502 },
-      );
-    }
-
-    const data = await deepseekRes.json();
-    const assistantMessage =
-      data.choices?.[0]?.message?.content?.trim() ||
-      "Let's practice! Try using one of your new words in a sentence.";
-
-    return NextResponse.json({ message: assistantMessage });
+    const reply = await generateLearnChat({ systemPrompt: resolvedSystemPrompt, messages: chatMessages, exerciseMode, guidedReply });
+    return NextResponse.json(lessonMission && !guidedReply ? { message: reply.message.slice(0, MAX_CONTENT_LENGTH) } : reply);
   } catch (error) {
+    if (error instanceof ChatProviderError) return NextResponse.json({ error: error.message }, { status: error.status });
+    if (error instanceof LessonError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("Error in POST /api/learn-chat:", error);
     return NextResponse.json(
       { error: "Internal server error" },

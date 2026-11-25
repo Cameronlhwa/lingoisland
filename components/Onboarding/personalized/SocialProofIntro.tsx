@@ -79,7 +79,7 @@ export function SocialProofIntro({
           <Laurel flip />
         </div>
         <p className="mt-3 text-sm" style={{ color: MUTED }}>
-          Reviews picked for you, based on what you told us
+          Learners with goals like yours
         </p>
       </div>
 
@@ -141,7 +141,7 @@ export function SocialProofIntro({
       <p className="mt-4 text-center text-xs" style={{ color: MUTED }}>
         {RATING_NOTE}
       </p>
-      <PrimaryButton className="mt-5" onClick={onContinue} data-testid="social-proof-continue">
+      <PrimaryButton mobileSticky className="mt-5" onClick={onContinue} data-testid="social-proof-continue">
         Continue
       </PrimaryButton>
     </StepFrame>
