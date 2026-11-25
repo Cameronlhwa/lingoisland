@@ -169,7 +169,7 @@ export function VocabRecognitionStep({
   return (
     <StepFrame
       title={band === "basic" ? "Which of these words do you recognize?" : "What about these more advanced words?"}
-      subtitle="Select words whose meaning you know, even if you’re not confident saying them. This is only an estimate of word familiarity."
+      subtitle="Tap the words you understand, even if you can’t say them yet."
       progress={progress}
       onBack={back}
     >
@@ -180,28 +180,18 @@ export function VocabRecognitionStep({
         <ChipButton selected={false} onToggle={clearAll} testId="vocab-clear-all">
           Clear all
         </ChipButton>
+        <button type="button" aria-pressed={noneKnown} aria-label="I don’t know any yet" data-testid="vocab-none-known" onClick={markNone}
+          className="inline-flex min-h-[44px] items-center justify-center rounded-full border px-4 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          style={{borderColor:noneKnown?GREEN:CARD_BORDER,background:noneKnown?"rgba(32,103,79,0.08)":SKY_PALE,color:NAVY,outlineColor:GREEN}}>None yet</button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" role="group" aria-label="Vocabulary words" data-testid="vocab-grid" data-count={words.length}>
+      <div className="grid grid-cols-3 gap-2 sm:gap-2.5" role="group" aria-label="Vocabulary words" data-testid="vocab-grid" data-count={words.length}>
         {words.map((word) => (
           <WordChip key={word.id} word={word} selected={!noneKnown && selected.has(word.id)} onToggle={() => toggle(word.id)} />
         ))}
       </div>
 
-      <button
-        type="button"
-        aria-pressed={noneKnown}
-        data-testid="vocab-none-known"
-        onClick={markNone}
-        className="mt-4 flex min-h-[48px] w-full items-center justify-center rounded-2xl px-4 text-[15px] font-semibold"
-        style={{
-          border: `1px solid ${noneKnown ? GREEN : CARD_BORDER}`,
-          background: noneKnown ? "rgba(32,103,79,0.08)" : SKY_PALE,
-          color: NAVY,
-        }}
-      >
-        I don’t know any yet
-      </button>
+
 
       {band === "advanced" && beginner ? (
         <SecondaryButton
@@ -220,7 +210,7 @@ export function VocabRecognitionStep({
         </SecondaryButton>
       ) : null}
 
-      <PrimaryButton
+      <PrimaryButton mobileSticky
         className="mt-6"
         disabled={!continueEnabled}
         data-testid="vocab-continue"

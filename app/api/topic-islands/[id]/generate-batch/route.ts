@@ -1,3 +1,6 @@
+import { loadJourneyVocabulary } from "@/lib/journey/teaching/vocabularyHistory"
+import { VocabularyPolicyError } from "@/lib/journey/teaching/vocabularyPolicy"
+import { ensureLesson } from "@/lib/journey/teaching/store"
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { generateWordList } from '@/lib/deepseek/generate-word-list'
@@ -155,7 +158,8 @@ export async function POST(
 
     const baseLevel = mapToBaseLevel(island.level as string)
     const detailedLevel = island.level as string
-    const grammarTarget = island.grammar_target || 0
+    const teaching = await ensureLesson(supabase, islandId, user.id)
+    const grammarTarget = teaching ? 1 : island.grammar_target || 0
     const sentenceStyle = normalizeSentenceStyle(
       body.sentenceStyle ?? island.sentence_style,
     )
@@ -306,7 +310,7 @@ export async function POST(
     }
 
     // ── Fire grammar focus in the background — don't block word/sentence generation ──
-    const grammarFocusPromise: Promise<void> = grammarTarget > 0 && currentWords === 0
+    const grammarFocusPromise: Promise<void> = grammarTarget > 0 && currentWords === 0 && !teaching
       ? (async () => {
           try {
             const { data: recentGrammar } = await supabase
@@ -444,6 +448,9 @@ export async function POST(
         { status: 500 }
       )
     }
+
+    // Journey grammar is prepared only after these exact target words exist.
+    const vocabularyPolicy = teaching ? await loadJourneyVocabulary(dbClient, user.id, islandId, detailedLevel, wordsForSentences.map(word => word.hanzi), teaching.objective.pattern) : undefined
 
     const { data: savedSentenceRows } = await dbClient
       .from('island_sentences')
@@ -615,6 +622,7 @@ export async function POST(
         // The provider can occasionally return a successful response with no
         // completion under concurrent load. Retry those transient failures
         // before marking the island as repairable.
+        let vocabularyFeedback = ""
         const maxAttempts = 5
         while (attempt < maxAttempts) {
           attempt++
@@ -647,21 +655,25 @@ export async function POST(
             sentences = await generateWordSentences({
             word,
             topic: island.topic,
+            grammarTags: teaching ? [teaching.objective.pattern] : undefined,
+            grammarTarget: teaching ? 1 : undefined,
             level: baseLevel,
             detailedLevel,
-            knownWords: knownWords.length > 0 ? knownWords : undefined,
+            knownWords: vocabularyPolicy ? vocabularyPolicy.learnedWords.slice(0, 8) : knownWords.length > 0 ? knownWords : undefined,
             wordIndex: index,
             totalWords: wordsToGenerate.length,
             styles: chosenStyles,
             contexts: chosenContexts,
             avoidOpeners: avoidOpeners.length > 0 ? avoidOpeners : undefined,
             avoidPatterns: avoidPatterns.length > 0 ? avoidPatterns : undefined,
-              retryHint,
+              retryHint: [retryHint, vocabularyFeedback].filter(Boolean).join("\n"),
+              vocabularyPolicy,
               sentenceTierMode,
               sentenceStyle,
               generationConfig,
           })
           } catch (error) {
+            if (error instanceof VocabularyPolicyError) vocabularyFeedback = error.message
             console.error(`Error generating sentences for word ${word.hanzi}:`, error)
             if (attempt < maxAttempts) {
               await new Promise((resolve) => setTimeout(resolve, attempt * 500))
@@ -922,4 +934,3 @@ export async function POST(
     )
   }
 }
-

@@ -27,6 +27,6 @@ export function OnboardingExperiment({children}:{children:ReactNode}) {
     },2500);
     return () => {clearTimeout(timer);if(typeof unsubscribe === "function")unsubscribe();};
   },[posthog]);
-  if (variant === null) return <div className="flex min-h-screen items-center justify-center" style={{background:"#EAF6FB",color:"#4F6E83"}} role="status">Loading your plan…</div>;
+  if (variant === null) return <div className="flex min-h-screen items-center justify-center" style={{background:"#fffaf3",color:"#4F6E83"}} role="status">Loading your plan…</div>;
   return <Context.Provider value={variant}>{children}</Context.Provider>;
 }

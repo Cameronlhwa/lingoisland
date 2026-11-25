@@ -1,0 +1,32 @@
+@media (max-width: 639px) {
+  .logo img { height: 38px !important; }
+  .frame > h1 { margin-top: 12px; font-size: 21px; line-height: 1.25; }
+  .frame > p { font-size: 14px; line-height: 1.5; }
+  .frame > div:last-child { margin-top: 18px; }
+  .shell:has(.mobileAction) { padding-bottom: 98px; }
+  .shell:has(.mobileAction) :global(#onboarding-main) { padding-bottom: 24px; }
+  .shell .mobileAction {
+    position: fixed;
+    z-index: 40;
+    left: 0;
+    right: 0;
+    bottom: var(--keyboard-offset, 0px);
+    display: flex;
+    justify-content: center;
+    margin: 0 !important;
+    padding: 12px 20px max(12px, env(safe-area-inset-bottom));
+    border-top: 1px solid #e9e5da;
+    background: #fffaf3;
+  }
+  .shell .mobileAction > button { max-width: 560px; box-shadow: 0 3px 10px #20674f18 !important; }
+  .shell input, .shell textarea, .shell select { font-size: 16px; }
+  .tile { position: relative; min-height: 56px; padding: 12px 8px; text-align: center; justify-content: center; }
+  .tile > span:first-child { position: absolute; top: 5px; right: 5px; width: 16px; height: 16px; }
+  .tile[aria-pressed="false"] > span:first-child { visibility: hidden; }
+  .tile > span:first-child svg { width: 11px; height: 11px; }
+  .tile > span:last-child > span:first-child { justify-content: center; }
+  .tile > span:last-child > span:first-child > span { font-size: 14px; line-height: 1.4; }
+  .shell [data-step="level"] button[aria-pressed] { padding-top: 10px; padding-bottom: 10px; }
+  .shell [data-step="level"] button[aria-pressed] > span:last-child > span:first-child > span { font-size: 14px; }
+  .shell [data-testid="lesson-intro-image"] img { max-height: 110px; object-fit: cover; }
+}

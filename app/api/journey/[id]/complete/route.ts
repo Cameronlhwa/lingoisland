@@ -1,3 +1,4 @@
+import { readLesson } from "@/lib/journey/teaching/store"
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { advanceCurriculumAfterUnitComplete } from '@/lib/hsk/curriculum'
@@ -37,7 +38,7 @@ export async function POST(
 
     const { data: ji, error: findErr } = await supabase
       .from('journey_islands')
-      .select('id, journey_id, node_type, seed_words')
+      .select('id, journey_id, node_type, seed_words, island_id')
       .eq('id', journeyIslandId)
       .eq('journey_id', params.id)
       .maybeSingle()
@@ -56,6 +57,12 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    if (ji.island_id) {
+      const lesson = await readLesson(supabase, ji.island_id, user.id)
+      if (lesson && (!lesson.content || lesson.progress.stepId !== "complete")) {
+        return NextResponse.json({ error: 'Finish the lesson activities before completing this island' }, { status: 409 })
+      }
+    }
     const now = new Date().toISOString()
     const { error: upErr } = await supabase
       .from('journey_islands')

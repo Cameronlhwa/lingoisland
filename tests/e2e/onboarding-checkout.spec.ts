@@ -131,13 +131,14 @@ async function toCommitment(page: Page) {
   await page.getByTestId("continue").click();
   await heading(page, "When Mandarin comes up at work, what usually happens?");
   await page.getByTestId("pain-stay_quiet").click();
-  await page.getByTestId("timing-ongoing").click();
+  if (await page.getByTestId("timing-select").isVisible()) await page.getByTestId("timing-select").selectOption("ongoing");
+  else await page.getByTestId("timing-ongoing").click();
   await page.getByTestId("continue").click();
   await heading(page, "What’s been hardest about learning so far?");
   await page.getByTestId("learning-pain-not_relevant").click();
   await page.getByTestId("continue").click();
   await page.getByTestId("social-proof-continue").click();
-  await heading(page, "How much time can you usually spend learning Mandarin?");
+  await heading(page, /How much time can you/);
   await page.getByTestId("minutes-10").click();
   await page.getByTestId("days-5").click();
   await page.getByTestId("continue").click();

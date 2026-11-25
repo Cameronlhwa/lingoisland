@@ -15,6 +15,6 @@ export function PrepareMessage({lesson,onContinue,onUnavailable,onMistake}:{less
     <TextButton className="mt-2" onClick={()=>setExpanded(!expanded)}>{expanded?"Hide word breakdown":"See how the words fit together"}</TextButton>
     {expanded&&<SentenceBreakdown words={lesson.questionWords} sentence={lesson.chat.huahua} onUnavailable={onUnavailable}/>}
     {!checked&&<div className="mt-4"><p className="mb-2 text-sm" style={{color:MUTED}}>Before the chat, choose the English meaning of this Mandarin expression.</p><MeaningQuiz pairs={lesson.template?.quizPairs ?? lesson.match} targetIndex={Math.max(0,target)} silent onMistake={onMistake} onUnavailable={onUnavailable} onComplete={()=>setChecked(true)}/></div>}
-    {checked&&<PrimaryButton className="mt-6" data-testid="lesson-start-chat" onClick={onContinue}>Start the chat</PrimaryButton>}
+    {checked&&<PrimaryButton mobileSticky className="mt-6" data-testid="lesson-start-chat" onClick={onContinue}>Start the chat</PrimaryButton>}
   </div>;
 }

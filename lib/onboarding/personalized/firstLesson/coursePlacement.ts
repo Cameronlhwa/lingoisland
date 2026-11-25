@@ -31,10 +31,14 @@ export function placementWordsToShow(p:CoursePlacement){
 }
 function ready(p:CoursePlacement,notice?:string):CoursePlacement{return {...p,status:"ready",notice};}
 export function placeCourse(p:CoursePlacement):CoursePlacement{
+ // A saved older placement may have fallen back to a pattern already passed.
+ if(p.tier<6&&p.mastered.includes(p.tier))return {...p,tier:(p.tier+1) as CourseTier,variant:0,status:"checking",notice:"You’ve already shown you can use that pattern. Let’s find your next step."};
  const course=makeBudgetCourse(p.tier,p.goal,p.variant);
  if(placementWordsToShow(p).length)return {...p,status:"checking"};
  const next={...p,visited:Array.from(new Set([...p.visited,`${p.tier}:${p.variant}`]))};
  if(!fitsBudget(course,p.evidence)&&p.tier>1){
+  // New supporting words at the next tier do not erase demonstrated grammar mastery.
+  if(p.mastered.some(tier=>tier>=p.tier-1))return ready(next,"You’ve already passed the earlier pattern. We’ll keep the next step and teach the supporting words you need.");
   return {...next,tier:(p.tier-1) as CourseTier,variant:0,status:"checking",notice:"Let’s check a few foundations for an easier starting point. We’ve kept your earlier answers."};
  }
  if(placementTargetIds(course).every(id=>p.evidence[id]===true)&&!p.mastered.includes(p.tier))return {...next,status:"probe"};

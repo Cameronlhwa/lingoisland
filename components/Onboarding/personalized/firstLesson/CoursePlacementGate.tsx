@@ -26,11 +26,15 @@ export function CoursePlacementGate({answers,tier,onSave,onBack,children}:{answe
   } else onSave({...answers.firstLesson,coursePlacement:next});
  };
  const visible=placementWordsToShow(placement);
+ const needsLessonReset=placement.status==="ready"&&(answers.firstLesson.lessonId!==course.id||answers.firstLesson.version!==2);
  useEffect(()=>{
   // If a replacement course has no unseen vocabulary, use the saved answers directly.
   if(placement.status==="checking"&&!visible.length)persist(placeCourse(placement));
-  if(placement.status==="ready"&&answers.firstLesson.lessonId!==course.id)persist(placement);
- },[placement]);
+  if(needsLessonReset)persist(placement);
+ },[placement,needsLessonReset]);
+ // Mount the player only after its selected course and known words are saved together.
+ // Otherwise its one-time state initializer can capture the previous lesson's progress.
+ if(needsLessonReset)return <StepFrame title="Your lesson is almost ready." onBack={onBack}><p role="status" className="py-6 text-sm" style={{color:MUTED}}>Getting your lesson ready…</p></StepFrame>;
  if(placement.status==="ready")return children(course);
  if(placement.status==="probe")return <GrammarProbe key={`${course.id}-probe`} course={course} onBack={onBack} onFinish={passed=>persist(finishGrammarProbe(placement,passed))}/>;
  const selected=course.match.filter(w=>placement.evidence[w.id]===true).map(w=>w.id);
@@ -40,17 +44,17 @@ export function CoursePlacementGate({answers,tier,onSave,onBack,children}:{answe
   persist({...placement,evidence});
  };
  const supporting=new Set(placementFoundationIds(course));
- return <StepFrame title="Let’s find your starting point." subtitle="Select the words you already understand. Leave unfamiliar words unselected." onBack={onBack}>
+ return <StepFrame title="Let’s find your starting point." subtitle="Tap words you understand. Leave the others unselected." onBack={onBack}>
   <div data-testid="course-placement" data-course-tier={placement.tier} data-course-variant={placement.variant}>
    {placement.notice&&<p role="status" className="mb-4 rounded-2xl p-3 text-sm" style={{background:SKY_PALE,color:GREEN}}>{placement.notice}</p>}
    {placement.visited.length>0&&<p className="mb-3 text-sm" style={{color:MUTED}}>Just a few different words to check. We’ve kept your earlier answers.</p>}
    <p className="mb-4 font-semibold" style={{color:NAVY}}>{course.outcome}</p>
    {[{title:"A few words from this lesson",words:visible.filter(w=>!supporting.has(w.id))},{title:"A few words we’ll build on",words:visible.filter(w=>supporting.has(w.id))}].filter(g=>g.words.length).map(group=><div key={group.title} className="mb-4">
     <p className="mb-2 text-sm font-semibold" style={{color:MUTED}}>{group.title}</p>
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{group.words.map(w=><button key={w.id} type="button" aria-pressed={selected.includes(w.id)} data-testid={`known-word-${w.id}`} onClick={()=>changeKnown(selected.includes(w.id)?selected.filter(id=>id!==w.id):[...selected,w.id])} className="min-h-20 rounded-2xl border-2 px-3 py-3 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{borderColor:selected.includes(w.id)?GREEN:CARD_BORDER,background:selected.includes(w.id)?SKY_PALE:"white",outlineColor:GREEN}}><span lang="zh-CN" className="block text-xl font-bold">{w.hanzi}</span><span className="mt-1 block text-sm" style={{color:MUTED}}>{w.pinyin}</span></button>)}</div>
+    <div className="grid grid-cols-3 gap-2">{group.words.map(w=><button key={w.id} type="button" aria-pressed={selected.includes(w.id)} data-testid={`known-word-${w.id}`} onClick={()=>changeKnown(selected.includes(w.id)?selected.filter(id=>id!==w.id):[...selected,w.id])} className="min-h-[64px] rounded-2xl border-2 px-2 py-2 sm:min-h-20 sm:px-3 sm:py-3 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{borderColor:selected.includes(w.id)?GREEN:CARD_BORDER,background:selected.includes(w.id)?SKY_PALE:"white",outlineColor:GREEN}}><span lang="zh-CN" className="block text-xl font-bold">{w.hanzi}</span><span className="mt-1 block text-sm" style={{color:MUTED}}>{w.pinyin}</span></button>)}</div>
    </div>)}
    <div className="flex flex-wrap justify-center gap-3"><TextButton data-testid="vocabulary-know-all" onClick={()=>changeKnown(visible.map(w=>w.id))}>I know all of these</TextButton><TextButton data-testid="vocabulary-know-none" onClick={()=>changeKnown([])}>These are all new</TextButton></div>
-   <PrimaryButton data-testid="course-placement-continue" className="mt-4" onClick={()=>persist(recordWordCheck(placement,selected))}>Find my lesson</PrimaryButton>
+   <PrimaryButton mobileSticky data-testid="course-placement-continue" className="mt-4" onClick={()=>persist(recordWordCheck(placement,selected))}>Find my lesson</PrimaryButton>
    <p className="mt-3 text-center text-xs" style={{color:MUTED}}>New lesson words are expected. We mainly use the foundations to find your starting point.</p>
   </div>
  </StepFrame>;
@@ -63,7 +67,7 @@ function GrammarProbe({course,onBack,onFinish}:{course:BudgetCourse;onBack:(()=>
    <p className="mb-3 text-sm" style={{color:MUTED}}>Check {index+1} of {course.budget.probes.length}</p>
    <p className="mb-4 text-lg font-bold">{question.prompt}</p>
    <div className="grid gap-3 sm:grid-cols-2">{question.choices.map(w=><button key={w.id} type="button" aria-pressed={selected===w.id} data-testid={`probe-option-${w.id}`} onClick={()=>setSelected(w.id)} className="min-h-24 rounded-2xl border-2 p-4 focus-visible:outline focus-visible:outline-2" style={{borderColor:selected===w.id?GREEN:CARD_BORDER,outlineColor:GREEN}}><span lang="zh-CN" className="block text-xl font-bold">{w.hanzi}</span><span className="mt-2 block text-sm" style={{color:MUTED}}>{w.pinyin}</span></button>)}</div>
-   <PrimaryButton data-testid="course-probe-continue" disabled={!selected} className="mt-5" onClick={()=>{const score=correct+Number(selected===question.correct);if(index+1===course.budget.probes.length)onFinish(score===course.budget.probes.length);else{setCorrect(score);setIndex(i=>i+1);setSelected(null);}}}>Continue</PrimaryButton>
+   <PrimaryButton mobileSticky data-testid="course-probe-continue" disabled={!selected} className="mt-5" onClick={()=>{const score=correct+Number(selected===question.correct);if(index+1===course.budget.probes.length)onFinish(score===course.budget.probes.length);else{setCorrect(score);setIndex(i=>i+1);setSelected(null);}}}>Continue</PrimaryButton>
   </div>
  </StepFrame>;
 }

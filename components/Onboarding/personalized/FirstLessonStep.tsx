@@ -283,15 +283,16 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
       {phase === "intro" && <>
         {progress.coursePlacement?.notice && <p role="status" className="mb-4 rounded-2xl p-3 text-sm" style={{background:SKY_PALE,color:GREEN}}>{progress.coursePlacement.notice}</p>}
         <LessonIntroImage goal={answers.goal.primary}/>
-        <ul className="my-5 space-y-3 text-sm" style={{ color: NAVY }}>{[lesson.template?.tier && lesson.template.tier >= 4 ? "Learn a useful way to express yourself" : lesson.route === "work" ? "Expand your work vocabulary" : lesson.route === "travel" ? "Build vocabulary for your next trip" : "Find words to connect with others", "Turn new words into a sentence you can use", "Put it into practice with Huahua, your personalized Mandarin companion"].map(text => <li key={text} className="flex items-center gap-2"><Check size={17} style={{ color: GREEN }} aria-hidden />{text}</li>)}</ul>
+        <p className="my-4 text-sm sm:hidden" style={{color:NAVY}}>Learn useful words, build a sentence, then try it with Huahua.</p>
+        <ul className="my-5 hidden space-y-3 text-sm sm:block" style={{ color: NAVY }}>{[lesson.template?.tier && lesson.template.tier >= 4 ? "Learn a useful way to express yourself" : lesson.route === "work" ? "Expand your work vocabulary" : lesson.route === "travel" ? "Build vocabulary for your next trip" : "Find words to connect with others", "Turn new words into a sentence you can use", "Put it into practice with Huahua, your personalized Mandarin companion"].map(text => <li key={text} className="flex items-center gap-2"><Check size={17} style={{ color: GREEN }} aria-hidden />{text}</li>)}</ul>
         <p data-testid="lesson-learning-budget" className="text-center text-xs" style={{ color: MUTED }}>{progress.coursePlacement ? (lesson.match.some(w=>!progress.vocabularyKnownIds?.includes(w.id)) ? `${lesson.match.filter(w=>!progress.vocabularyKnownIds?.includes(w.id)).length} new words and expressions · One useful grammar family` : "Familiar words · One useful pattern to practise") : "About 5–8 minutes · Extra practice is optional"}</p>
-        <PrimaryButton className="mt-6" data-testid="lesson-start" onClick={() => go(lesson.curriculum ? "vocabulary" : "teach_first")}>Let’s learn</PrimaryButton>
+        <PrimaryButton className="mt-6" mobileSticky data-testid="lesson-start" onClick={() => go(lesson.curriculum ? "vocabulary" : "teach_first")}>Let’s learn</PrimaryButton>
         {!lesson.curriculum && <TextButton className="mt-2" data-testid="lesson-already-know" onClick={switchLesson}>{progress.usedAlternative || (!alternative && !onAlternative) ? "Practice this in context" : "I already know this"}</TextButton>}
       </>}
       {(phase === "teach_first" || phase === "teach_second") && <>
         {lesson.template && <p className="mb-3 text-center text-xs" style={{color:MUTED}}>New piece {teachingIndex+1} of {teaching.length}</p>}
         <WordCard phrase={lesson.template ? teaching[teachingIndex] : word(phase === "teach_first" ? 0 : 1)} route={lesson.route} onUnavailable={failAudio}/>
-        <PrimaryButton className="mt-6" data-testid="lesson-teach-continue" onClick={()=>{
+        <PrimaryButton className="mt-6" mobileSticky data-testid="lesson-teach-continue" onClick={()=>{
           if (beginnerRounds && ((teachingIndex + 1) % 2 === 0 || teachingIndex === teaching.length - 1)) go("beginner_match");
           else if(lesson.template && teachingIndex<teaching.length-1) save({teachingIndex:teachingIndex+1});
           else go(lesson.curriculum ? "meaning" : phase==="teach_first"?"recognize":"meaning");
@@ -308,7 +309,7 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
       {phase === "listen" && <MeaningQuiz pairs={quizPairs} targetIndex={Math.min(1,lesson.match.length-1)} listening={!audioUnavailable} silent={audioUnavailable} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("frame")} />}
       {phase === "frame" && (lesson.curriculum ? <GrammarPractice writingContext={{tier:lesson.template?.tier??4,goal:answers.goal.primary??"other",variant:progress.coursePlacement?.variant??0,interestKeys:answers.interests.keys,lessonId:lesson.id}} initialStepId={progress.grammarStepId} onProgress={(grammarIndex,grammarStepId)=>save({grammarIndex,grammarStepId})} curriculum={lesson.curriculum} responses={progress.writingResponses} onResponse={(id,text)=>save({writingResponses:{...progressRef.current.writingResponses,[id]:text}})} onMistake={mistake} onUnavailable={failAudio} onComplete={()=>{ if(lesson.curriculum?.pronunciation===false){save({},"build");go("prepare",{speakingPath:"skipped"},"speaking");}else go("baseline",{},"build");}}/> : <>
         <p className="mb-4 rounded-2xl p-4 text-sm leading-relaxed" style={{background:SKY_PALE,color:NAVY}}>{lesson.skill}</p><SentenceBreakdown words={lesson.sentenceWords} sentence={lesson.transferBuild.result} onUnavailable={failAudio} />
-        <PrimaryButton className="mt-6" onClick={() => go("supported")}>{simplePhrase ? "Practice using it" : "Try building it"}</PrimaryButton>
+        <PrimaryButton mobileSticky className="mt-6" onClick={() => go("supported")}>{simplePhrase ? "Practice using it" : "Try building it"}</PrimaryButton>
       </>)}
       {phase === "supported" && <BuildSentence prompt={lesson.build} supported options={lesson.match} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("build")} />}
       {phase === "baseline" && (silent ? <MeaningQuiz key="silent-pronunciation" pairs={quizPairs} targetIndex={0} listening={!audioUnavailable} silent={audioUnavailable} onMistake={mistake} onUnavailable={failAudio} onComplete={() => go("prepare", {speakingPath:"listening"}, "speaking")} /> : <>
@@ -322,7 +323,7 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
         {attemptCount>=3 && <Feedback correct>Practice complete. You’ve worked on this sentence. Let’s use it in your chat.</Feedback>}
         <div className={baselineDone && attemptCount<3 && !recording ? "mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] items-start gap-2" : "mt-3"}>
           {attemptCount<3 && speaker(baselineDone ? "coach" : "baseline", baselineDone ? "Try again" : "Record my sentence",baselineDone)}
-          {baselineDone && <PrimaryButton disabled={busy || recording} data-testid="lesson-baseline-continue" onClick={() => go("prepare")}>Continue to chat</PrimaryButton>}
+          {baselineDone && <PrimaryButton disabled={busy || recording} mobileSticky data-testid="lesson-baseline-continue" onClick={() => go("prepare")}>Continue to chat</PrimaryButton>}
         </div>
         <TextButton className="mt-2" disabled={recording || (busy && !starting.current)} data-testid="lesson-cant-speak" onClick={() => {captureRequest.current+=1;starting.current=false;setBusy(false);setSilent(true);setStatus("");}}>Practice without speaking</TextButton>
       </>)}
@@ -358,20 +359,20 @@ function LessonPlayer({ state, update, next, back, track, ensureSession, lessonO
           </div>
         </>}
         {chatError && <Feedback>That is a valid Mandarin reply meaning “{activeChat.choices.find(p=>p.id===choice)?.meaning}”. {activeChat.mission?.task ?? lesson.mission} Choose the reply that expresses that intention.</Feedback>}
-        {sentReplyId ? <PrimaryButton className="mt-4" disabled={typing} data-testid="lesson-chat-finish" onClick={()=>(phase==="chat" && progress.mistakes?.length ? go("revisit") : finish())}>{phase==="chat" && lesson.curriculum?.discussion ? "Hear another perspective" : "Finish my lesson"}</PrimaryButton> : <div className="mt-4">
+        {sentReplyId ? <PrimaryButton className="mt-4" disabled={typing} mobileSticky data-testid="lesson-chat-finish" onClick={()=>(phase==="chat" && progress.mistakes?.length ? go("revisit") : finish())}>{phase==="chat" && lesson.curriculum?.discussion ? "Hear another perspective" : "Finish my lesson"}</PrimaryButton> : <div className="mt-4">
           {speaker("chat","Say & send",false,!choice)}
           <TextButton className="mt-1 w-full" data-testid="lesson-chat-skip-speak" disabled={!choice||busy||recording} onClick={()=>{if(validateChoice())deliver();}}>Send without speaking</TextButton>
         </div>}
       </div>}
       {phase === "revisit" && (lesson.template && !lesson.match.some(p=>progress.mistakes?.includes(p.id)) ? <BuildSentence prompt={lesson.transferBuild} supported onMistake={mistake} onUnavailable={failAudio} onComplete={finish}/> : <MeaningQuiz pairs={quizPairs} targetIndex={Math.max(0,lesson.match.findIndex(p=>progress.mistakes?.includes(p.id)))} silent onMistake={mistake} onUnavailable={failAudio} onComplete={finish}/>)}
-      {phase === "note" && lesson.curriculum && <div data-testid="lesson-note"><p className="rounded-2xl p-5 text-base leading-relaxed" style={{background:SKY_PALE}}>{lesson.curriculum.note.text}</p><PrimaryButton className="mt-6" data-testid="lesson-note-continue" onClick={finish}>Complete my lesson</PrimaryButton></div>}
+      {phase === "note" && lesson.curriculum && <div data-testid="lesson-note"><p className="rounded-2xl p-5 text-base leading-relaxed" style={{background:SKY_PALE}}>{lesson.curriculum.note.text}</p><PrimaryButton className="mt-6" mobileSticky data-testid="lesson-note-continue" onClick={finish}>Complete my lesson</PrimaryButton></div>}
       {phase === "complete" && <div data-testid="lesson-complete">
         <div className="flex justify-center rounded-2xl py-5" style={{ background: "#EFF7F2", color: GREEN }}><Check size={34} aria-hidden /></div>
         <p className="my-4 text-center text-lg font-bold" style={{ color: GREEN }}>Mission complete · {xp} XP</p>
         <div className="rounded-2xl border p-4" style={{ borderColor: CARD_BORDER }}><Bubble phrase={lesson.chat.huahua} /><Bubble mine phrase={lesson.chat.choices.find(p => p.id === progress.selectedDrinkId) ?? lesson.targets[1]} /><Bubble phrase={lesson.chat.responses[lesson.chat.expectedChoiceId!]} /></div>
         <p className="mt-4 text-center text-sm" style={{ color: MUTED }}>{progress.speakingPath === "spoken" ? "You practiced speaking and used a sentence in context." : "You practiced meanings and built a reply in context."}</p>
         {baselineDone && coached && <div className="mt-4 rounded-2xl p-4 text-center" style={{ background: SKY_PALE }}><p className="mb-3 text-sm font-bold">Hear your progress</p><div className="grid gap-2 sm:grid-cols-2">{playback(progress.baseline, "First try")}{playback(progress.latest, "Latest try")}</div>{improved && <p className="mt-3 text-sm" style={{ color: GREEN }}>Your latest pronunciation score is higher.</p>}</div>}
-        <PrimaryButton className="mt-6" data-testid="lesson-to-commitment" onClick={() => next({ firstLesson: progressRef.current })}>Continue my journey</PrimaryButton>
+        <PrimaryButton className="mt-6" mobileSticky data-testid="lesson-to-commitment" onClick={() => next({ firstLesson: progressRef.current })}>Continue my journey</PrimaryButton>
         <TextButton className="mt-2" onClick={() => go(lesson.curriculum ? "frame" : "transfer",{grammarIndex:0,grammarStepId:undefined})}>Practice a little more</TextButton>
       </div>}
       </div>
@@ -411,7 +412,7 @@ function TemplateFirstLessonStep(props: StepProps & { ensureSession: () => Promi
   if(prerequisites.length)return <StepFrame title="A quick familiarity check." subtitle="Select the words you already understand. We’ll explain unfamiliar pieces." onBack={props.back}>
     <div className="grid grid-cols-2 gap-3">{prerequisites.map(w=><button type="button" key={w.hanzi} aria-pressed={confirmed.includes(w.hanzi)} onClick={()=>setConfirmed(prev=>prev.includes(w.hanzi)?prev.filter(v=>v!==w.hanzi):[...prev,w.hanzi])} className="rounded-2xl border-2 p-4" style={{borderColor:confirmed.includes(w.hanzi)?GREEN:CARD_BORDER}}><span className="block text-xl" lang="zh-CN">{w.hanzi}</span><span className="text-sm" style={{color:MUTED}}>{w.pinyin}</span></button>)}</div>
     <TextButton onClick={()=>setConfirmed(prerequisites.map(w=>w.hanzi))}>I know all of these</TextButton>
-    <PrimaryButton className="mt-4" onClick={()=>{
+    <PrimaryButton mobileSticky className="mt-4" onClick={()=>{
       const unknown=prerequisites.filter(w=>!confirmed.includes(w.hanzi)).map(w=>w.hanzi);
       const revised={...stored,familiarWords:stored.familiarWords.filter(w=>!unknown.includes(w)),checked:true};
       const plan=validTemplatePlan(revised,answers)??{...fallbackTemplatePlan(answers,[stored.templateId],unknown),checked:true};

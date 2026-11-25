@@ -293,7 +293,7 @@ export function CommitmentStep({
         style={{ borderColor: CARD_BORDER, color: NAVY }}
       />
       <p
-        className="mt-3 text-[15px] italic"
+        className="mt-3 hidden text-[15px] italic sm:block"
         style={{ color: NAVY }}
         aria-live="polite"
         data-testid="commitment-statement"
@@ -306,6 +306,7 @@ export function CommitmentStep({
         className="mt-6"
         onClick={commit}
         disabled={sealed}
+        mobileSticky
         data-testid="commitment-cta"
       >
         {sealed ? "Opening your plan…" : "I’m ready, start my plan"}
@@ -415,6 +416,7 @@ export function ReflectStep({ state, next, back, progress, track, jumpTo }: Step
   const actions = (
     <>
       <PrimaryButton
+        mobileSticky
         data-testid="reflect-confirm"
         onClick={() => {
           track(ONBOARDING_EVENTS.reflectionConfirmed, { path, insight_source: insight.source, chart_variant: chartVariantLabel });
@@ -441,10 +443,9 @@ export function ReflectStep({ state, next, back, progress, track, jumpTo }: Step
               {path_.event ? <EventNote event={path_.event} /> : null}
             </div>
           </div>
-          <h2 className="mb-2.5 mt-6 text-[15px] font-bold" style={{ color: NAVY }}>
-            Why you’ll get there fast
-          </h2>
-          <ul className="flex flex-col gap-2.5" data-testid="reflect-fixes">
+          <details className="mt-4 rounded-xl border p-3" style={{borderColor:CARD_BORDER}}>
+            <summary className="cursor-pointer text-sm font-semibold" style={{color:NAVY}}>Why this plan fits you</summary>
+          <ul className="mt-3 flex flex-col gap-2.5" data-testid="reflect-fixes">
             {path_.reasons.map((reason) => {
               const Icon = REASON_ICONS[reason.id];
               return (
@@ -459,6 +460,7 @@ export function ReflectStep({ state, next, back, progress, track, jumpTo }: Step
               );
             })}
           </ul>
+          </details>
           <div className="mt-7">{actions}</div>
         </div>
 

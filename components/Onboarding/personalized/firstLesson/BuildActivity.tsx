@@ -1,5 +1,6 @@
 "use client";
 
+import { isCorrectBuildAnswer } from "@/lib/lessons/buildAnswer";
 import { useState } from "react";
 import type { BuildPrompt } from "@/lib/onboarding/personalized/firstLesson/types";
 import { CARD_BORDER, GREEN, MUTED, NAVY, PrimaryButton, SKY_PALE, TextButton } from "../ui";
@@ -40,7 +41,7 @@ export function BuildActivity({
   };
 
   const check = () => {
-    const ok = order.length === prompt.order.length && order.every((id, index) => id === prompt.order[index]);
+    const ok = isCorrectBuildAnswer(prompt, order);
     if (!ok) {
       setStatus("retry");
       setOrder([]);
@@ -112,7 +113,7 @@ export function BuildActivity({
       <div className="mt-6 flex flex-col gap-2">
         {status !== "correct" ? (
           <>
-            <PrimaryButton data-testid="lesson-build-check" disabled={order.length === 0} onClick={check}>
+            <PrimaryButton mobileSticky data-testid="lesson-build-check" disabled={order.length === 0} onClick={check}>
               Check
             </PrimaryButton>
             <TextButton onClick={undo} disabled={order.length === 0}>
@@ -120,7 +121,7 @@ export function BuildActivity({
             </TextButton>
           </>
         ) : (
-          <PrimaryButton data-testid="lesson-build-continue" onClick={onComplete} style={{ background: GREEN }}>
+          <PrimaryButton mobileSticky data-testid="lesson-build-continue" onClick={onComplete} style={{ background: GREEN }}>
             Continue
           </PrimaryButton>
         )}

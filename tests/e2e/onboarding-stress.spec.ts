@@ -213,7 +213,8 @@ const STEPS: Step[] = [
     heading: /what usually happens/,
     act: async (page, press) => {
       await page.getByTestId("pain-stay_quiet").click();
-      await page.getByTestId("timing-ongoing").click();
+      if (await page.getByTestId("timing-select").isVisible()) await page.getByTestId("timing-select").selectOption("ongoing");
+  else await page.getByTestId("timing-ongoing").click();
       await press(page.getByTestId("continue"));
     },
   },
@@ -232,7 +233,7 @@ const STEPS: Step[] = [
   },
   {
     name: "availability",
-    heading: "How much time can you usually spend learning Mandarin?",
+    heading: /How much time can you/,
     act: async (page, press) => {
       await page.getByTestId("minutes-10").click();
       await page.getByTestId("days-5").click();
@@ -642,7 +643,8 @@ test.describe("stress: saved data and network", () => {
     await heading(page, /what usually happens/);
     await page.getByTestId("pain-something_else").click();
     await page.getByTestId("custom-pain-text").fill(payload);
-    await page.getByTestId("timing-ongoing").click();
+    if (await page.getByTestId("timing-select").isVisible()) await page.getByTestId("timing-select").selectOption("ongoing");
+  else await page.getByTestId("timing-ongoing").click();
     await page.getByTestId("continue").click();
     for (const step of STEPS.slice(STEPS.findIndex((candidate) => candidate.name === "learning_pain"))) {
       await heading(page, step.heading, 20_000);

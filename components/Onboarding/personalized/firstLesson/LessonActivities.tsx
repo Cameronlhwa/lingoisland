@@ -1,4 +1,5 @@
 "use client";
+import { isCorrectBuildAnswer } from "@/lib/lessons/buildAnswer";
 import {meaningQuizChoices} from "@/lib/onboarding/personalized/firstLesson/quizChoices";
 import { say } from "./lessonSpeech";
 export { say } from "./lessonSpeech";
@@ -93,7 +94,7 @@ export function MeaningQuiz({ pairs, targetIndex = 0, listening = false, silent 
     </Choice>)}</div>
     {result === "correct" && <Feedback correct>{target.hanzi} means “{target.label}”.</Feedback>}
     {result === "retry" && <Feedback>That means “{pairs.find(p => p.id === selected)?.label}”. {target.hanzi} means “{target.label}”. Choose it and try again.</Feedback>}
-    <PrimaryButton className="mt-6" data-testid="lesson-quiz-check" disabled={!selected || (listening && !heard && !showText)} onClick={() => { if (result === "correct") { onComplete(); return; } if (selected === target.id) { setResult("correct"); say(target.hanzi, onUnavailable); } else { setResult("retry"); onMistake(target.id); } }}>{result === "correct" ? "Continue" : "Check answer"}</PrimaryButton>
+    <PrimaryButton mobileSticky className="mt-6" data-testid="lesson-quiz-check" disabled={!selected || (listening && !heard && !showText)} onClick={() => { if (result === "correct") { onComplete(); return; } if (selected === target.id) { setResult("correct"); say(target.hanzi, onUnavailable); } else { setResult("retry"); onMistake(target.id); } }}>{result === "correct" ? "Continue" : "Check answer"}</PrimaryButton>
     {listening && !showText && <TextButton className="mt-2" onClick={() => setShowText(true)}>Can’t listen? Show the word</TextButton>}
   </div>;
 }
@@ -112,10 +113,10 @@ export function MatchWords({ pairs, onComplete, onMistake, onUnavailable }: { pa
     <div className="mt-4 grid grid-cols-2 gap-4"><div className="flex flex-col gap-3">{pairs.map(p => <button key={p.id} type="button" draggable={!matched.includes(p.id)} disabled={matched.includes(p.id)} data-testid={`match-tile-${p.id}`} aria-pressed={selected === p.id} onDragStart={e => startWordDrag(e, p.id)} onClick={() => { setSelected(p.id); say(p.hanzi, onUnavailable); }} className="min-h-24 rounded-2xl border-2 px-2 py-3" style={{ borderColor: selected === p.id ? GREEN : CARD_BORDER, background: matched.includes(p.id) ? "#EFF7F2" : "white", color: NAVY }}><span className="block text-xl font-bold" lang="zh-CN">{p.hanzi}</span><span className="text-sm" style={{ color: MUTED }}>{p.pinyin}</span>{matched.includes(p.id) && <Check className="mx-auto mt-1" size={17} aria-label="Matched" />}</button>)}</div>
     <div className="flex flex-col gap-3">{[...pairs].reverse().map(p => <button key={p.id} type="button" data-testid={`match-slot-${p.id}`} disabled={matched.includes(p.id)} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); place(p.id, e.dataTransfer.getData("text/plain")); }} onClick={() => selected && place(p.id, selected)} className="min-h-24 rounded-2xl border border-dashed px-2 text-sm font-semibold" style={{ borderColor: matched.includes(p.id) ? GREEN : CARD_BORDER, background: SKY_PALE, color: NAVY }}>{p.label}{matched.includes(p.id) && <Check className="mx-auto mt-2" size={17} aria-hidden />}</button>)}</div></div>
     {message && <Feedback key={matched.length} correct={matched.length > 0 && message.startsWith("Matched:")}>{message}</Feedback>}
-    <PrimaryButton className="mt-6" disabled={!done} data-testid="lesson-match-continue" onClick={onComplete}>Continue</PrimaryButton>
+    <PrimaryButton mobileSticky className="mt-6" disabled={!done} data-testid="lesson-match-continue" onClick={onComplete}>Continue</PrimaryButton>
   </div>;
 }
-export function BuildSentence({ prompt, options, supported = false, onComplete, onMistake, onUnavailable }: { prompt: BuildPrompt; options?: MatchPair[]; supported?: boolean; onComplete: () => void; onMistake: (id: string) => void; onUnavailable: () => void }) {
+export function BuildSentence({ prompt, options, supported = false, onComplete, onMistake, onUnavailable, onAnswer }: { onAnswer?: (order: string[]) => void; prompt: BuildPrompt; options?: MatchPair[]; supported?: boolean; onComplete: () => void; onMistake: (id: string) => void; onUnavailable: () => void }) {
   const [order, setOrder] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [result, setResult] = useState<"correct" | "retry" | null>(null);
@@ -123,7 +124,7 @@ export function BuildSentence({ prompt, options, supported = false, onComplete, 
   const variable = prompt.chunks.find(c => c.id === prompt.slotId) ?? prompt.chunks[1] ?? prompt.chunks[0];
   const choices = supported && (prompt.options ?? options) ? [...(prompt.options ?? options)!].reverse().map(p => ({ id: p.id, label: p.hanzi, pinyin: p.pinyin, meaning: p.label })) : [...prompt.chunks.slice(1), prompt.chunks[0]];
   const add = (id: string) => { if (result === "correct") return; setResult(null); if (supported) setSelected(id); else setOrder(prev => prev.includes(id) ? prev : [...prev, id]); };
-  const correct = supported ? selected === variable.id : order.length === prompt.order.length && order.every((id, i) => id === prompt.order[i]);
+  const correct = supported ? selected === variable.id : isCorrectBuildAnswer(prompt, order);
   return <div data-testid="lesson-build" data-correct-order={prompt.order.join(",")}>
     <ConversationPrompt prompt={`Say this in Mandarin: ${prompt.result.meaning}`} onUnavailable={onUnavailable}/>
     <p className="mb-4 text-sm" style={{ color: MUTED }}>{supported ? "Choose the missing word or phrase to complete the sentence below." : "Tap the words or phrases below in order to build this sentence."}</p>
@@ -144,9 +145,9 @@ export function BuildSentence({ prompt, options, supported = false, onComplete, 
       }) : <span className="text-sm" style={{color:MUTED}}>Tap or drag the words or phrases here</span>}
     </div>
     <div className="mt-4 flex flex-wrap gap-3">{choices.filter(c => supported || !order.includes(c.id)).map(c => <button key={c.id} type="button" draggable={result !== "correct"} data-testid={`build-chunk-${c.id}`} aria-pressed={supported ? selected === c.id : undefined} onDragStart={e => startWordDrag(e, c.id)} onClick={() => add(c.id)} className="min-h-16 flex-1 rounded-2xl border-2 bg-white px-3 py-3" style={{ borderColor: selected === c.id ? GREEN : CARD_BORDER, color: NAVY }}><span className="block text-xl font-bold" lang="zh-CN">{c.label}</span><span className="mt-1 block text-sm" style={{ color: MUTED }}>{c.pinyin}</span>{hint && <span className="mt-1 block text-xs" style={{ color: MUTED }}>{c.meaning}</span>}</button>)}</div>
-    {result === "retry" && <Feedback>Use this order: {prompt.chunks.map(c => c.label).join(" → ")}. Start with {prompt.chunks[0].label} (“{prompt.chunks[0].meaning}”), then add {variable.label} (“{variable.meaning}”){prompt.chunks[2] ? `, then ${prompt.chunks[2].label}` : ""}. Tap a chunk above to change it.</Feedback>}
+    {result === "retry" && <Feedback>Use this order: {prompt.chunks.map(c => c.label).join(" → ")}. Start with {prompt.chunks[0].label}{prompt.chunks[0].meaning ? ` (“${prompt.chunks[0].meaning}”)` : ""}, then add {variable.label}{variable.meaning ? ` (“${variable.meaning}”)` : ""}{prompt.chunks[2] ? `, then ${prompt.chunks[2].label}` : ""}. Tap a chunk above to change it.</Feedback>}
     {result === "correct" && <Feedback correct><span className="block text-xl" lang="zh-CN">{prompt.result.hanzi}</span><span className="block">{prompt.result.pinyin}</span>{prompt.result.meaning}</Feedback>}
-    <PrimaryButton className="mt-6" data-testid={result === "correct" ? "lesson-build-continue" : "lesson-build-check"} disabled={supported ? !selected : order.length === 0} onClick={() => { if (result === "correct") { onComplete(); return; } setResult(correct ? "correct" : "retry"); if (correct) say(prompt.result.hanzi, onUnavailable); else { setHint(true); onMistake(variable.id); } }}>{result === "correct" ? "Continue" : "Check sentence"}</PrimaryButton>
+    <PrimaryButton mobileSticky className="mt-6" data-testid={result === "correct" ? "lesson-build-continue" : "lesson-build-check"} disabled={supported ? !selected : order.length === 0} onClick={() => { if (result === "correct") { onComplete(); return; } setResult(correct ? "correct" : "retry"); if (correct) { onAnswer?.(supported ? prompt.order : order); say(prompt.result.hanzi, onUnavailable); } else { setHint(true); onMistake(variable.id); } }}>{result === "correct" ? "Continue" : "Check sentence"}</PrimaryButton>
     {result !== "correct" && <div className="mt-2 flex justify-center gap-3"><TextButton onClick={() => setHint(!hint)}>{hint ? "Hide hint" : "Show a hint"}</TextButton>{order.length > 0 && <TextButton onClick={() => { setOrder(prev => prev.slice(0, -1)); setResult(null); }}><Undo2 size={15} aria-hidden /> Undo</TextButton>}</div>}
     {hint && result !== "correct" && <p className="mt-3 text-center text-sm" style={{ color: MUTED }} lang="zh-CN">{prompt.chunks.map(c => c.label).join(" + ")}</p>}
   </div>;

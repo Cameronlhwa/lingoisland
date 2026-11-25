@@ -1,5 +1,6 @@
 "use client";
 
+import HuahuaAvatar from "@/components/app/HuahuaAvatar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import AppLogo from "@/components/app/AppLogo";
 import JourneyIslandPaywall from "@/components/app/JourneyIslandPaywall";
@@ -109,6 +110,7 @@ export default function TopicIslandDetailPage() {
 
   const [island, setIsland] = useState<Island | null>(null);
   const [words, setWords] = useState<Word[]>([]);
+  const [hasUnfinishedTeaching, setHasUnfinishedTeaching] = useState(false);
   const [grammarFocus, setGrammarFocus] = useState<GrammarFocus[]>([]);
   const [loading, setLoading] = useState(true);
   const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
@@ -476,6 +478,7 @@ export default function TopicIslandDetailPage() {
       setIsland(data.island);
       setWords(data.words);
       setGrammarFocus(data.grammarFocus || []);
+      setHasUnfinishedTeaching(!!data.teaching && data.teaching.progress?.stepId !== "complete");
       setUserPlan(data.user_plan || "free");
       setIsAnonymous(data.is_anonymous ?? false);
       setUserTopicIslandCount(
@@ -1317,15 +1320,12 @@ export default function TopicIslandDetailPage() {
     wantsLearnSequence &&
     isLearnSequenceReady &&
     !learnSequenceDismissed &&
+    !hasUnfinishedTeaching &&
     !showLearnSummary;
 
   if (showPreCourseLoading) {
     return (
-      <PreCourseLoading
-        topic={island.topic}
-        progressLabel={progressLabel}
-        progressPercentage={progressPercentage}
-      />
+      <PreCourseLoading />
     );
   }
 
@@ -1358,6 +1358,11 @@ export default function TopicIslandDetailPage() {
         <div className="flex w-full px-8 py-8">
           <div className="flex-1 min-w-0">
             <div className="mx-auto max-w-4xl">
+              {hasUnfinishedTeaching && <section className="mb-6 rounded-2xl border border-[var(--lingo-accent-border)] bg-white p-5">
+                <h2 className="text-lg font-bold">Continue your lesson</h2>
+                <p className="mt-2 text-sm">Learn the words, practise a useful grammar pattern and try it with Huahua. Your progress is saved.</p>
+                <Link href={`${appBase}/topic-islands/${islandId}/learn/preparing`} className="mt-4 inline-block rounded-xl bg-[var(--lingo-blue)] px-5 py-3 text-sm font-bold text-white">Continue lesson</Link>
+              </section>}
               {/* Header */}
               <div className="mb-10">
                 <div className="mb-6 flex items-center justify-between">
@@ -1666,11 +1671,7 @@ export default function TopicIslandDetailPage() {
                           className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
                           title="Ask 华华 about this word"
                         >
-                          <img
-                            src="/characters/capybara-face.png"
-                            alt="Huáhuá"
-                            className="h-5 w-5 rounded-full"
-                          />
+                          <HuahuaAvatar className="h-5 w-5 rounded-full" />
                           <span>Ask for help</span>
                         </button>
                         <button
