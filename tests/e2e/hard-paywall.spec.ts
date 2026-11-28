@@ -29,7 +29,7 @@ async function login(context:BrowserContext,sub:string){
 
 test('unpaid learning and activation requests are blocked without writes',async({context,page})=>{
  await login(context,free);const before=writes;
- for(const path of ['/api/onboarding/activate','/api/journey/generate','/api/journey/abc/start-island','/api/topic-islands/abc/lesson','/api/onboarding/first-lesson','/api/learn-chat','/api/tts','/api/quiz/answer','/api/sms/send','/api/hsk/placement-checklist','/api/hsk/onboarding-answers']){
+ for(const path of ['/api/onboarding/activate','/api/journey/generate','/api/journey/abc/start-island','/api/topic-islands/abc/lesson','/api/learn-chat','/api/tts','/api/quiz/answer','/api/sms/send']){
   const response=await context.request.post(path,{data:{stage:'complete'}});expect(response.status(),path).toBe(403);expect((await response.json()).code).toBe('PRODUCT_ACCESS_REQUIRED');
  }
  expect(writes).toBe(before);

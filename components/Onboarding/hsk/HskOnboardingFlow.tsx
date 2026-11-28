@@ -270,7 +270,7 @@ export default function HskOnboardingFlow() {
       const mins = minsMap[timeLabel ?? "15min"] ?? 15;
       const wordsPerWeek = Math.round((mins / 15) * 4 * 10);
 
-      await fetch("/api/hsk/onboarding-answers", {
+      const savedAnswers = await fetch("/api/hsk/onboarding-answers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -284,6 +284,11 @@ export default function HskOnboardingFlow() {
           testDate: examPlanned && testDate ? testDate : null,
         }),
       });
+
+      if (!savedAnswers.ok) {
+        const failure = await savedAnswers.json().catch(() => null);
+        throw new Error(failure?.error || "Could not save your answers. Please try again.");
+      }
 
       const res = await fetch("/api/hsk/curriculum/generate", {
         method: "POST",
