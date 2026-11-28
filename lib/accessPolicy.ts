@@ -1,11 +1,16 @@
-/** Setup, billing, and the authenticated onboarding pronunciation trial stay reachable before purchase. */
+/** Onboarding trials and setup run before purchase; their handlers retain task, session, and usage checks. */
 export type RequiredProduct = "core" | "hsk" | "either";
-const PUBLIC_APIS = new Set([
+// Exact paths only: adding a general onboarding/HSK prefix would expose full lessons.
+export const PRE_PURCHASE_ONBOARDING_APIS = [
+  "/api/onboarding/progress", "/api/onboarding/abandon", "/api/onboarding/save-email", "/api/onboarding/insight",
+  "/api/onboarding/pronunciation", "/api/onboarding/first-lesson", "/api/onboarding/writing",
+  "/api/hsk/placement-checklist", "/api/hsk/onboarding-answers", "/api/hsk/curriculum/generate",
+] as const;
+const PUBLIC_APIS = new Set<string>([
+  ...PRE_PURCHASE_ONBOARDING_APIS,
   "/api/entitlements", "/api/profile", "/api/app-side", "/api/subscription-status",
   "/api/auth/confirm-for-checkout", "/api/billing/cancellation-feedback",
   "/api/stripe/checkout", "/api/stripe/portal", "/api/stripe/reconcile", "/api/stripe/sync", "/api/stripe/webhook",
-  "/api/onboarding/progress", "/api/onboarding/abandon", "/api/onboarding/save-email", "/api/onboarding/insight",
-  "/api/onboarding/pronunciation",
   "/api/hsk/waitlist",
   "/api/sms/webhook",
 ]);
