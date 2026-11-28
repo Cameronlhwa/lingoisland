@@ -505,7 +505,7 @@ describe("flow state and resume", () => {
     assert.equal(resumeStep(partial), "level");
   });
 
-  it("shows the building wait before reflection, then the first lesson", () => {
+  it("shows the building wait before reflection, then the mini course", () => {
     const state = answeredState();
     assert.equal(resumeStep(state), "building");
     assert.equal(resumeStep(markCompleted(state, "building", NOW)), "reflect");
@@ -513,7 +513,7 @@ describe("flow state and resume", () => {
     assert.equal(resumeStep(built), "first_lesson");
   });
 
-  it("hides retired phone and quiz steps, and goes reflect → first lesson → commitment", () => {
+  it("hides retired phone and quiz steps, and keeps the mini course before commitment", () => {
     for (const messaging of [
       { channel: null, status: "not_started" },
       { channel: "sms", status: "verified" },

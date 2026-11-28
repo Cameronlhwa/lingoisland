@@ -1,17 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import styles from "./SocialProofIntro.module.css";
 import { Star } from "lucide-react";
 import type { OnboardingAnswers } from "@/lib/onboarding/personalized/flow";
 import { matchReviews, RATING_NOTE, reviewsTitle, SITE_RATING } from "@/lib/onboarding/personalized/socialProof";
-import { CARD_BORDER, FONT_DISPLAY, GREEN, MUTED, NAVY, PrimaryButton, StepFrame } from "./ui";
+import { CARD_BORDER, FONT_DISPLAY, GREEN, MUTED, NAVY, PrimaryButton, StepFrame, usePrefersReducedMotion } from "./ui";
 
 const STAR_COLOR = "#F5A524";
 const LEAF_COLOR = "#A9BCCB";
-const CARD_SHADOW = "0 10px 28px rgba(7, 30, 46, 0.1)";
 /** Desktop cards step up from left to right. */
-const STAGGER = ["sm:mt-8", "sm:mt-4", "sm:mt-0"];
+const STAGGER = ["md:mt-8", "md:mt-4", "md:mt-0"];
 
 function Stars({ rating, size = 22 }: { rating: number; size?: number }) {
   const row = (filled: boolean) =>
@@ -62,6 +62,26 @@ export function SocialProofIntro({
   onContinue: () => void;
 }) {
   const reviews = useMemo(() => matchReviews(answers), [answers]);
+  const carousel = useRef<HTMLDivElement>(null);
+  const pauseUntil = useRef(0);
+  const reducedMotion = usePrefersReducedMotion();
+  const pause = () => { pauseUntil.current = Date.now() + 10000; };
+  useEffect(() => {
+    if (reducedMotion || reviews.length < 2) return;
+    const timer = window.setInterval(() => {
+      const viewport = carousel.current;
+      if (!viewport || !window.matchMedia("(max-width: 767px)").matches || document.hidden || Date.now() < pauseUntil.current || (viewport.matches(":focus-visible") || viewport.querySelector(":focus-visible"))) return;
+      const cards = Array.from(viewport.querySelectorAll<HTMLElement>("[data-testid='social-proof-review']"));
+      const max = viewport.scrollWidth - viewport.clientWidth;
+      if (max <= 0) return;
+      const origin = viewport.getBoundingClientRect().left + 20;
+      const positions = cards.map(card => Math.min(max, Math.max(0, card.getBoundingClientRect().left - origin + viewport.scrollLeft)));
+      const current = positions.reduce((best, position, index) => Math.abs(position - viewport.scrollLeft) < Math.abs(positions[best] - viewport.scrollLeft) ? index : best, 0);
+      viewport.scrollTo({ left: positions[(current + 1) % positions.length], behavior: "smooth" });
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [reviews, reducedMotion]);
+
 
   return (
     <StepFrame title={reviewsTitle(answers)} progress={progress} onBack={onBack}>
@@ -84,19 +104,24 @@ export function SocialProofIntro({
       </div>
 
       <div
+        ref={carousel}
+        onPointerDown={pause}
+        onWheel={pause}
+        onKeyDown={pause}
         role="region"
+        aria-roledescription="carousel"
         aria-label="Learner reviews"
         tabIndex={0}
-        className="-mx-5 mt-5 overflow-x-auto px-5 pb-3 outline-none [scrollbar-width:none] focus-visible:ring-2 sm:mx-0 sm:overflow-visible sm:px-0"
+        className={`${styles.viewport} -mx-5 mt-5 overflow-x-auto px-5 outline-none [scrollbar-width:none] focus-visible:ring-2 md:mx-0 md:overflow-visible md:px-0`}
         style={{ scrollSnapType: "x mandatory", scrollPaddingInline: 20 }}
       >
-        <ul className="flex gap-3.5 sm:grid sm:grid-cols-3 sm:items-start sm:gap-3">
+        <ul className="flex gap-3.5 md:grid md:grid-cols-3 md:items-start md:gap-3">
           {reviews.map(({ testimonial, reason }, index) => (
             <li
               key={testimonial.role}
               data-testid="social-proof-review"
-              className={`w-[86%] shrink-0 rounded-[20px] bg-white p-4 text-left sm:w-auto sm:p-4 ${STAGGER[index] ?? ""}`}
-              style={{ border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW, scrollSnapAlign: "start" }}
+              className={`${styles.card} w-[86%] shrink-0 rounded-[20px] bg-white p-4 text-left md:w-auto md:p-4 ${STAGGER[index] ?? ""}`}
+              style={{ border: `1px solid ${CARD_BORDER}`, scrollSnapAlign: "start" }}
             >
               <figure className="flex h-full flex-col">
                 <div className="flex items-center gap-1.5">

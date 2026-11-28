@@ -8,6 +8,8 @@ import {
   revokeProduct,
   type BillableProduct,
 } from "@/lib/product-plans";
+import { actionForSubscriptionUpdate } from "@/lib/stripe/subscriptionLifecycle";
+import { verifyStripeWebhookEvent } from "@/lib/stripe/webhookSecurity";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -309,22 +311,23 @@ const resolveUserId = async (
 export async function POST(request: Request) {
   const stripe = getStripe();
   const signature = request.headers.get("stripe-signature");
-  if (!signature || !webhookSecret) {
+  const body = await request.text();
+  const verified = verifyStripeWebhookEvent({
+    stripe,
+    body,
+    signature,
+    secret: webhookSecret,
+  });
+  if (!verified.ok) {
+    if (verified.error === "Invalid signature") {
+      console.error("[STRIPE WEBHOOK] Signature verification failed");
+    }
     return NextResponse.json(
-      { error: "Missing Stripe signature" },
-      { status: 400 }
+      { error: verified.error },
+      { status: verified.status },
     );
   }
-
-  const body = await request.text();
-  let event: Stripe.Event;
-
-  try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-  } catch (error) {
-    console.error("[STRIPE WEBHOOK] Signature verification failed:", error);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-  }
+  const event = verified.event;
 
   try {
     switch (event.type) {
@@ -454,39 +457,23 @@ export async function POST(request: Request) {
         });
 
         const product = resolveBillableProduct(subscription, null);
+        const lifecycle = actionForSubscriptionUpdate(subscription.status);
 
-        if (subscription.status === "active" || subscription.status === "trialing") {
-          console.log("[STRIPE WEBHOOK] Subscription is active/trialing - upgrading plan");
+        if (lifecycle.type === "upsert_active") {
+          console.log(
+            "[STRIPE WEBHOOK] Subscription is active/trialing - upgrading plan",
+          );
           await upsertActiveSubscription(userId, subscription, product);
-        } else if (subscription.status === "canceled") {
-          // Check if subscription has cancel_at set or cancellation_details
-          const rawSub = subscription as any;
-          const cancelAtPeriodEnd = rawSub.cancel_at_period_end ?? false;
-          const cancelAt = rawSub.cancel_at;
-          const isCanceled = cancelAtPeriodEnd || !!cancelAt || rawSub.cancellation_details?.reason === 'cancellation_requested';
-          
-          // If subscription is canceled but user should keep access until period end
-          if (isCanceled) {
-            let periodEnd = rawSub.current_period_end;
-            if (!periodEnd && rawSub.items?.data?.[0]) {
-              periodEnd = rawSub.items.data[0].current_period_end;
-            }
-            if (!periodEnd && cancelAt) {
-              periodEnd = cancelAt;
-            }
-            
-            console.log("[STRIPE WEBHOOK] Subscription canceled at period end - maintaining access until", periodEnd);
-            // Keep them as Pro until the period ends
-            await upsertActiveSubscription(userId, subscription, product);
-          } else {
-            console.log("[STRIPE WEBHOOK] Subscription canceled immediately - revoking product", product);
-            await clearSubscription(userId, product);
-          }
-        } else if (subscription.status === "unpaid") {
-          console.log("[STRIPE WEBHOOK] Subscription is unpaid - revoking product", product);
+        } else if (lifecycle.type === "revoke") {
+          console.log(
+            "[STRIPE WEBHOOK] Subscription ended (",
+            subscription.status,
+            ") - revoking product",
+            product,
+          );
           await clearSubscription(userId, product);
         } else {
-          console.log("[STRIPE WEBHOOK] Subscription status not handled:", subscription.status);
+          console.log("[STRIPE WEBHOOK]", lifecycle.reason);
         }
         break;
       }

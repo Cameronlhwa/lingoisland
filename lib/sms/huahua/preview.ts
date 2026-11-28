@@ -1,4 +1,4 @@
-// Free onboarding preview chat: sending and thread bookkeeping. The pure
+// Subscriber introduction chat: sending and thread bookkeeping. The pure
 // conversation rules live in previewScript.ts so the browser simulation can
 // use them too.
 
@@ -8,7 +8,7 @@ import { defaultSupportStyle } from "../../onboarding/personalized/plan";
 import { logSmsError } from "../log";
 import { sendTrackedSms, type TrackedSendResult } from "../outbound";
 import type { MessageChannel, WhatsAppTemplate } from "../types";
-import { clock, type HuahuaDeps } from "./context";
+import { clock, loadHuahuaContext, type HuahuaDeps } from "./context";
 import { initialPreviewState, interestsPhrase, previewIntro, previewIntroText, type PreviewProfile } from "./previewScript";
 
 export * from "./previewScript";
@@ -57,7 +57,7 @@ export type PreviewStartResult =
   | { status: "failed"; error: string };
 
 /**
- * Sends the first preview message once per contact. Free and unmetered;
+ * Sends the first introduction once per subscribed contact;
  * requires an active, verified, consented contact (enforced by the claim).
  */
 export async function startHuahuaPreview(
@@ -65,6 +65,8 @@ export async function startHuahuaPreview(
   input: { userId: string; contactId: string; channel: MessageChannel },
 ): Promise<PreviewStartResult> {
   const now = clock(deps);
+  const ctx = await loadHuahuaContext(deps, input.userId, now);
+  if (!ctx.subscribed) return { status: "skipped", reason: "subscription_required" };
   const profile = await loadPreviewProfile(deps, input.userId);
   const intro = previewIntro(profile, input.channel);
   const sent: TrackedSendResult = await sendTrackedSms(deps, {

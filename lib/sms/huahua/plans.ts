@@ -22,10 +22,10 @@ export type HuahuaPlan = {
 export const HUAHUA_PLANS: Record<HuahuaPlanKey, HuahuaPlan> = {
   free: {
     key: "free",
-    label: "Free trial",
-    allowanceSegments: 8,
+    label: "Subscription required",
+    allowanceSegments: 0,
     period: "lifetime",
-    personas: ["friendly_friend"],
+    personas: [],
     proactiveOpeners: false,
     usageWarning: false,
     upgradeTo: null,

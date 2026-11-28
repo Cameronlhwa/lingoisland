@@ -30,7 +30,7 @@ const FEATURE_DEFAULTS: Record<Feature, { free: boolean; pro: boolean }> = {
   regenerate_story: { free: false, pro: true },
   export_decks: { free: false, pro: true },
   chat: { free: false, pro: true },
-  mark_known: { free: false, pro: true }, // Free: 1/month, Pro: unlimited
+  mark_known: { free: false, pro: true }, // Subscription required
 };
 
 function isPeriodActive(currentPeriodEnd: string | null | undefined): boolean {
@@ -251,7 +251,7 @@ export async function getOrCreateUsageRow(
 }
 
 /**
- * Check if user can create a topic island (Free: 1 per month, Pro: unlimited)
+ * Check if user can create a topic island (Subscription required)
  */
 export async function canCreateTopicIsland(
   userId: string
@@ -263,22 +263,7 @@ export async function canCreateTopicIsland(
     return { allowed: true };
   }
 
-  // Free users: check monthly limit
-  const monthKey = getMonthKey();
-  const usage = await getOrCreateUsageRow(userId, monthKey);
-
-  if (!usage) {
-    return { allowed: false, reason: "Failed to check usage limits" };
-  }
-
-  if (usage.topic_islands_created >= 1) {
-    return {
-      allowed: false,
-      reason: "Free plan allows 1 topic island per month. Upgrade to Pro for unlimited islands.",
-    };
-  }
-
-  return { allowed: true };
+  return { allowed: false, reason: "A subscription is required to create islands." };
 }
 
 /**
@@ -316,7 +301,7 @@ export function isWordLocked(position: number, isPro: boolean): boolean {
   if (isPro) {
     return false; // Pro users have no locks
   }
-  return position > 10; // Free users: words 11-20 are locked
+  return true; // Every word requires a subscription.
 }
 
 /**
@@ -329,14 +314,11 @@ export function filterUnlockedWords<T extends { position?: number | null }>(
   if (isPro) {
     return words; // Pro users see all words
   }
-  return words.filter((word) => {
-    const pos = word.position ?? 999;
-    return pos <= 10;
-  });
+  return [];
 }
 
 /**
- * Check if user can mark a word as known (Free: 1 per month, Pro: unlimited)
+ * Check if user can mark a word as known (Subscription required)
  */
 export async function canMarkWordKnown(
   userId: string
@@ -348,25 +330,7 @@ export async function canMarkWordKnown(
     return { allowed: true };
   }
 
-  // Free users: check monthly limit (1 per month)
-  const monthKey = getMonthKey();
-  const usage = await getOrCreateUsageRow(userId, monthKey);
-
-  if (!usage) {
-    return { allowed: false, reason: "Failed to check usage limits" };
-  }
-
-  // Handle potential NULL values from existing rows
-  const wordsMarkedKnown = usage.words_marked_known ?? 0;
-
-  if (wordsMarkedKnown >= 1) {
-    return {
-      allowed: false,
-      reason: 'Free plan allows 1 "Already know" per month. Upgrade to Pro for unlimited replacements.',
-    };
-  }
-
-  return { allowed: true };
+  return { allowed: false, reason: "A subscription is required to practise vocabulary." };
 }
 
 /**

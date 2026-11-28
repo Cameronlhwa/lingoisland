@@ -4,3 +4,8 @@ export type OnboardingVariant = "control" | "test";
 export function onboardingVariant(value: unknown): OnboardingVariant {
   return value === "test" ? "test" : "control";
 }
+
+/** Independent experiment for Course 1; missing/unavailable flags keep greetings. */
+export const FIRST_LEVEL_TEST_FLAG = "first-level-test";
+export type FirstLevelVariant = "control" | "test";
+export function firstLevelVariant(value: unknown): FirstLevelVariant { return value === "test" ? "test" : "control"; }

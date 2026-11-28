@@ -19,6 +19,8 @@ export function curriculumProgress(lesson: AuthoredLesson, progress: FirstLesson
   ...(curriculum.pronunciation === false ? [] : [{ id: "baseline", weight: 1 }]),
   { id: "prepare", weight: 1 },
   { id: "chat", weight: 1 },
+  ...(curriculum.followUp ? [{ id: "follow_up", weight: 1 }] : []),
+  ...(curriculum.afterChat ? [{ id: "short_question", weight: grammarSteps({...curriculum,...curriculum.afterChat}).length }] : []),
   ...(curriculum.discussion ? [{ id: "discussion", weight: 1 }] : []),
   { id: "note", weight: 0.25 },
  ];
@@ -38,6 +40,11 @@ export function curriculumProgress(lesson: AuthoredLesson, progress: FirstLesson
  if (phase === "baseline" && progress.baseline) within = 0.8;
  if (phase === "chat" && progress.selectedDrinkId) within = 1;
  if (phase === "discussion" && progress.discussionReplyId) within = 1;
+ if (phase === "follow_up" && progress.followUpReplyId) within = 1;
+ if (phase === "short_question" && curriculum.afterChat) {
+  const afterSteps = grammarSteps({...curriculum,...curriculum.afterChat});
+  within = grammarStepIndex(afterSteps,progress.afterChatStepId)/Math.max(1,afterSteps.length);
+ }
  const completed = phases.slice(0, index).reduce((sum, item) => sum + item.weight, 0) + within * phases[index].weight;
  const total = phases.reduce((sum, item) => sum + item.weight, 0);
  return Math.max(0, Math.min(99, Math.round(completed / total * 100)));

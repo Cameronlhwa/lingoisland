@@ -20,7 +20,7 @@ export type ActivationDeps = {
   sleep: (ms: number) => Promise<void>;
 };
 
-export type ActivationOutcome = "activated" | "already_activated" | "not_committed";
+export type ActivationOutcome = "activated" | "already_activated" | "not_committed" | "payment_required";
 
 /** How long a reload or second tab waits for a generation already under way. */
 export const GENERATION_WAIT_MS = 90_000;
@@ -32,6 +32,7 @@ function generatedJourneyId(response: ActivateResponse) {
 
 export async function runActivation(deps: ActivationDeps): Promise<ActivationOutcome> {
   let start = await deps.start();
+  if (start.status === 403) return "payment_required";
   if (start.data?.status === "already_activated") return "already_activated";
   if (start.status === 409) return "not_committed";
   if (!start.ok) throw new Error("start_failed");
@@ -43,6 +44,7 @@ export async function runActivation(deps: ActivationDeps): Promise<ActivationOut
     while (!generatedJourneyId(start) && waiting()) {
       await deps.sleep(GENERATION_POLL_MS);
       start = await deps.start();
+      if (start.status === 403) return "payment_required";
       if (start.data?.status === "already_activated") return "already_activated";
       if (start.status === 409) return "not_committed";
       if (!start.ok) throw new Error("start_failed");

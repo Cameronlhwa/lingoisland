@@ -478,6 +478,8 @@ export async function respondToInbound(
     controlPending: Boolean(attach.control_sent_at),
   });
 
+  if (!ctx.subscribed && !["pause", "resume", "keep", "less", "support"].includes(parsed?.command.type ?? "")) return "subscription_required";
+
   // Paused after unanswered invitations: any reply other than PAUSE turns practice back on.
   if (input.contact.status === "paused" && input.contact.paused_reason === "no_response" && parsed?.command.type !== "pause") {
     await deps.rpc("sms_set_paused", { p_user_id: ctx.userId, p_paused: false });
@@ -493,6 +495,7 @@ export async function respondToInbound(
   }
 
   const preview = attach.thread.origin === "preview" ? readPreviewState(session.preview) : null;
+  if (!ctx.subscribed) return "subscription_required";
   if (isPreviewOpen(preview)) return handlePreviewTurn(t, preview);
 
   const limit = await consumeSmsRateLimits(deps.rpc, deps.config.secret, [

@@ -46,7 +46,7 @@ export async function lessonAccess(islandId: string) {
   const { data: journey } = await db.from("journeys").select("id,curriculum_unit_id").eq("id", node.journey_id).eq("user_id", user.id).maybeSingle();
   if (!journey) throw new LessonError("Journey not found", 404);
   const access = await getEntitlements(user.id);
-  if (journey.curriculum_unit_id ? !access.isHskPro : node.step_order > 1 && !access.isPro) throw new LessonError("A subscription is required for this lesson", 403);
+  if (journey.curriculum_unit_id ? !access.isHskPro : !access.isPro) throw new LessonError("A subscription is required for this lesson", 403);
   const row = await ensureLesson(db, islandId, user.id);
   if (!row) throw new LessonError("Journey teaching is not available for this island yet", 409);
   return { db, user, island, node, row };

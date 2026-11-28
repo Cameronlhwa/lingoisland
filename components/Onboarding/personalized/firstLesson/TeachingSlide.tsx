@@ -55,8 +55,10 @@ function Example({ example, index, format, onUnavailable }: { example: TeachingE
   </div>;
 }
 /** Four reusable teaching layouts; all language and geometry remain native website elements. */
-export function TeachingSlide({ card, onUnavailable }: { card: GrammarCard; onUnavailable: () => void }) {
-  return <div data-testid="grammar-teaching" data-teaching-format={card.format} data-concept={card.id}>
+export function TeachingSlide({ card, onUnavailable, progressLabel }: { card: GrammarCard; onUnavailable: () => void; progressLabel?: string }) {
+  return <div className={styles.slide} data-testid="grammar-teaching" data-teaching-format={card.format} data-concept={card.id}>
+    {card.showExplanation && <p className="mb-5 text-base leading-relaxed" data-testid="teaching-explanation">{card.explanation}</p>}
+    {progressLabel && <p className={styles.mobileProgress}>{progressLabel}</p>}
     <div className={styles.lesson}>
       <div className={styles.mascot} aria-hidden="true">
         <Image src={`/onboarding/huahua/${ASSETS[card.format]}`} alt="" width={1254} height={1254} sizes="(max-width: 639px) 56px, 144px" className={styles.character}/>

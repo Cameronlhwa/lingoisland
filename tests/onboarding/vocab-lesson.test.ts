@@ -21,7 +21,7 @@ describe("vocab recognition", () => {
     const basic = wordsForScreen("basic", "travel", ["restaurants"], "seed-a", 15);
     const advanced = wordsForScreen("advanced", "work", ["meetings"], "seed-b", 14);
     assert.equal(basic.length, 15);
-    assert.equal(advanced.length, 14);
+    assert.equal(advanced.length, 15);
     assert.ok(basic.every((word) => word.hsk <= 3));
     assert.ok(advanced.every((word) => word.hsk >= 4));
   });

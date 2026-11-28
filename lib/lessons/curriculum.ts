@@ -2,6 +2,7 @@ import type { BuildPrompt, LessonPhrase } from "@/lib/onboarding/personalized/fi
 export type TeachingPart = { hanzi: string; pinyin: string; meaning: string; variable?: boolean };
 export type TeachingExample = LessonPhrase & { label: string; keyWords?: string[]; context?: string; highlight?: {hanzi:string;pinyin:string}; parts?: TeachingPart[] };
 export type GrammarCard = {
+ checkAfterTeaching?: boolean; showExplanation?: boolean;
  id: string; format: "change" | "pattern" | "contrast" | "exchange";
  title: string; explanation: string; examples: TeachingExample[];
  takeaway: string; detail?: string; connector?: string; check: CurriculumPractice;
@@ -17,4 +18,4 @@ export type CurriculumPractice = { kind: "build"; build: BuildPrompt }
  | { kind: "reading"; reading: LessonReading }
  | WritingPractice;
 export type VocabularyGroup = {id:"core"|"personalized";title:string;wordIds:string[]};
-export type Curriculum = { vocabularyGroups:VocabularyGroup[]; cards: GrammarCard[]; practices: CurriculumPractice[]; note: {title: string; text: string}; pronunciation?: boolean; checksAfterTeaching?: boolean; vocabularyMatching?: boolean; discussion?: import("@/lib/onboarding/personalized/firstLesson/types").ChatTurn };
+export type Curriculum = { vocabularyGroups:VocabularyGroup[]; cards: GrammarCard[]; practices: CurriculumPractice[]; note: {title: string; text: string}; pronunciation?: boolean; checksAfterTeaching?: boolean; vocabularyMatching?: boolean; followUp?: import("@/lib/onboarding/personalized/firstLesson/types").ChatTurn; afterChat?: {cards: GrammarCard[]; practices: CurriculumPractice[]}; discussion?: import("@/lib/onboarding/personalized/firstLesson/types").ChatTurn };

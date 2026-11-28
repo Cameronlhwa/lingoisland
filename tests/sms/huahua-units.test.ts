@@ -175,7 +175,8 @@ describe("personas and correction modes", () => {
   });
 
   it("only offers extra personas to subscribers", () => {
-    assert.deepEqual(HUAHUA_PLANS.free.personas, ["friendly_friend"]);
+    assert.deepEqual(HUAHUA_PLANS.free.personas, []);
+    assert.equal(HUAHUA_PLANS.free.allowanceSegments, 0);
     assert.equal(HUAHUA_PLANS.subscriber.personas.length, 4);
     assert.equal(HUAHUA_PLANS.free.proactiveOpeners, false);
   });

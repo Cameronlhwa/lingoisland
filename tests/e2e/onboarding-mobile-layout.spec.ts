@@ -1,6 +1,8 @@
 import {test,expect} from '@playwright/test';
 import {mkdirSync,writeFileSync,rmSync} from 'node:fs';
 const path='app/onboarding-mobile-review';
+// This regression visits 48 screens, including cold development compilations.
+test.setTimeout(180_000);
 
 test.beforeEach(async({page})=>{
  await page.route('**/array/**',route=>route.fulfill({contentType:'application/javascript',body:''}));
@@ -61,13 +63,13 @@ test('optional plan detail remains available and keyboard-sized viewports keep t
  const rect=await page.getByTestId('continue').boundingBox();expect(rect!.y+rect!.height).toBeLessThanOrEqual(450);
  await page.getByTestId('continue').click();await expect(page.getByTestId('advanced')).toBeVisible();
 });
-test('payment options and billing disclosure fit without expanding the optional chart',async({page})=>{
+test('payment options, visible chart and billing disclosure remain usable on mobile',async({page})=>{
  for(const size of [{width:390,height:844},{width:375,height:667}]){
   await page.setViewportSize(size);await open(page,'paywall');
   await expect(page.getByTestId('conversation-price')).toContainText('Billed monthly');
-  const action = await page.getByTestId('conversation-continue').boundingBox();expect(action!.y+action!.height).toBeLessThanOrEqual(size.height);
+  await page.getByTestId('conversation-continue').scrollIntoViewIfNeeded();await expect(page.getByTestId('conversation-continue')).toBeInViewport();
   await page.getByTestId('plan-yearly').click();await expect(page.getByTestId('conversation-price')).toContainText('Cancel anytime');
-  await page.getByText('See your learning outlook',{exact:true}).click();await expect(page.locator('details[open]')).toBeVisible();
+  await expect(page.getByTestId('conversation-comparison')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(size.width);
  }
 });

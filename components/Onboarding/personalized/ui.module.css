@@ -30,3 +30,46 @@
   .shell [data-step="level"] button[aria-pressed] > span:last-child > span:first-child > span { font-size: 14px; }
   .shell [data-testid="lesson-intro-image"] img { max-height: 110px; object-fit: cover; }
 }
+
+/* Mobile onboarding is a full-page flow rather than a floating card. */
+@media (max-width: 767px) {
+  .shell { padding: 0 !important; background: #fff !important; }
+  .backdrop { display: none; }
+  .content { flex: 1; min-height: inherit; background: #fff; }
+  .logo { margin: 0; padding: 16px 20px 8px; }
+  .shell :global(#onboarding-main) { flex: 1; max-width: none; border-radius: 0; padding: 20px; box-shadow: none !important; }
+  .shell:has(.mobileAction) { padding-bottom: 0 !important; }
+  .shell:has(.mobileAction) :global(#onboarding-main) { padding-bottom: 116px; }
+  .shell .mobileAction { background: #fff; }
+}
+
+@media (max-width: 767px) {
+  .shell { --mobile-paper: #fffcf7; background: var(--mobile-paper) !important; }
+  .content, .shell :global(#onboarding-main), .shell .mobileAction { background: var(--mobile-paper); }
+  .logo { width: 100%; padding: 18px 64px 10px; text-align: center; }
+  .logo > div { justify-content: center; }
+  .logo img { height: 38px !important; width: auto; }
+  .shell :global(#onboarding-main) { padding: 12px 20px 28px; }
+  .navigation { margin: 0 0 28px; }
+  .navigation:empty { display: none; }
+  .navigation > button { position: absolute; top: 10px; left: 18px; font-size: 0; padding: 0; margin: 0; }
+  .navigation > button svg { width: 22px; height: 22px; }
+  .navigation :global([role="progressbar"]) { height: 7px; background: #e7e9e6 !important; }
+  .navigation :global([role="progressbar"]) + span { display: none; }
+  .frame > h1:not(:global(.sr-only)) { position: relative; min-height: 58px; display: flex; align-items: center; padding-left: 66px; margin-top: 18px; font-size: 24px; line-height: 1.25; }
+  .frame > h1:not(:global(.sr-only))::before { content: ""; position: absolute; left: 0; top: 0; width: 54px; height: 58px; border-radius: 50%; background: url('/characters/capybara-profile.png') center / cover no-repeat; }
+  .frame > h1:not(:global(.sr-only)) + p { padding-left: 66px; margin-top: 7px; font-size: 15px; line-height: 1.5; }
+  .frame > div:last-child { margin-top: 24px; }
+  .option { border-radius: 12px; min-height: 50px; padding: 12px 14px; }
+  .option[aria-pressed="true"] { background: #e8f6e8 !important; border-color: #28734f !important; box-shadow: none !important; }
+  .shell :global([data-step="goal"] [role="group"]) { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+  .shell :global([data-step="goal"]) .tile { justify-content: flex-start; text-align: left; }
+  .shell :global([data-step="goal"]) .tile > span:first-child { position: static; width: 21px; height: 21px; visibility: visible; border-radius: 6px; }
+  .shell :global([data-step="goal"]) .tile > span:last-child > span:first-child { justify-content: flex-start; }
+  .shell :global([data-step="goal"]) .tile > span:last-child > span:first-child > span { font-size: 15px; }
+  .shell :global([data-testid="vocab-grid"]), .shell :global([data-testid="course-placement"] .grid-cols-3) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shell :global(button[data-testid^="known-word-"]) { min-height: 80px; border-width: 1px; border-radius: 13px; }
+  .shell :global(button[data-testid^="known-word-"][aria-pressed="true"]) { background: #e8f6e8 !important; border-color: #28734f !important; }
+  .shell .mobileAction { position: fixed; z-index: 40; left: 0; right: 0; bottom: var(--keyboard-offset, 0px); display: flex; justify-content: center; margin: 0 !important; border-top: 0; padding: 12px 20px max(16px, env(safe-area-inset-bottom)); }
+  .shell .mobileAction > button { min-height: 52px; border-radius: 12px; font-size: 16px; }
+}

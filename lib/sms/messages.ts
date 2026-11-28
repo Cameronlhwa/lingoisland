@@ -32,7 +32,7 @@ export function usageWarningMessage(resetsAt: string | null, timeZone: string) {
 
 export function usageExhaustedMessage(plan: "free" | "subscriber", resetsAt: string | null, timeZone: string) {
   if (plan === "free") {
-    return "LingoIsland: That's the end of your free practice chat with 华华. Thanks for trying it! Reply HELP for help or STOP to opt out.";
+    return "LingoIsland: A subscription is required for Mandarin practice with 华华. Reply HELP for help or STOP to opt out.";
   }
   const date = shortDate(resetsAt, timeZone);
   return `LingoIsland: You've used this month's texts with 华华, so replies are paused${date ? ` until ${date}` : ""}. Nothing extra is charged. Reply HELP for help or STOP to opt out.`;

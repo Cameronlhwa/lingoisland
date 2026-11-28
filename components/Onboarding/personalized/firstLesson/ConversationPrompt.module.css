@@ -20,6 +20,7 @@
 .pinyin { display: block; max-width: 100%; margin-top: 5px; color: #597386; font-size: 14px; font-weight: 400; line-height: 1.6; }
 .slot { display: inline-flex; align-items: center; justify-content: center; min-width: 76px; min-height: 45px; padding: 0 9px; border: 2px dashed #97b99e; border-radius: 13px; background: #f4f8f0; color: #21664f; }
 .slot[data-filled="true"] { border-style: solid; background: #e6f4ed; }
+.task { font-size: clamp(18px, 1.6vw, 22px); font-weight: inherit; line-height: 1.5; color: #5f3119; }
 .context { margin-top: 12px; font-size: 14px; line-height: 1.6; color: #597386; }
 .listen:focus-visible, .toggle:focus-visible { outline: 2px solid #21664f; outline-offset: 3px; border-radius: 20px; }
 @media (max-width: 639px) {
@@ -37,3 +38,12 @@
 .completionInput::placeholder { color: #7e8074; font-size: 17px; font-weight: 400; }
 .completionInput:focus-visible { outline: 3px solid #dce8c1; outline-offset: 2px; }
 @media(max-width: 420px) { .completion { gap: 8px; padding: 12px; } .completionInput { flex-basis: 130px; } }
+
+@media (max-width: 767px) {
+  .panel[data-english="true"] { padding: 0; background: transparent; }
+  .panel[data-english="true"] .toolbar, .panel[data-english="true"] .avatar { display: none; }
+  .panel[data-english="true"] .dialogue { display: block; }
+  .panel[data-english="true"] .bubble { padding: 16px 18px; background: #e8f6e8; border-radius: 20px; box-shadow: none; }
+  .panel[data-english="true"] .bubble::before { background: #e8f6e8; top: auto; bottom: 12px; left: -5px; }
+  .panel[data-english="true"] .task { color: #244a34; font-size: 17px; font-weight: 500; }
+}

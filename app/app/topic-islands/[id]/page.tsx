@@ -859,8 +859,7 @@ export default function TopicIslandDetailPage() {
     );
   }
 
-  const isFreeAllowedJourneyIsland = journeyContext?.order === 1;
-  const shouldGateIsland = userPlan !== "pro" && !isFreeAllowedJourneyIsland;
+  const shouldGateIsland = userPlan !== "pro";
   if (shouldGateIsland) {
     return (
       <div className="min-h-screen">
@@ -2265,20 +2264,8 @@ export default function TopicIslandDetailPage() {
                               sentence examples of the new words
                             </label>
                             <button
-                              onClick={
-                                userPlan === "free"
-                                  ? () => {
-                                      setUpgradeFeature("Add More Words");
-                                      setShowUpgradeModal(true);
-                                    }
-                                  : handleAddWords
-                              }
-                              disabled={
-                                userPlan === "pro" &&
-                                (addingWords ||
-                                  island.status !== "ready" ||
-                                  addCount < 5)
-                              }
+                              onClick={handleAddWords}
+                              disabled={addingWords || island.status !== "ready" || addCount < 5}
                               className="rounded-full border border-transparent bg-[var(--lingo-btn-bg)] px-5 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {addingWords

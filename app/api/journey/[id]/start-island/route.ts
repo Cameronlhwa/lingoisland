@@ -69,11 +69,6 @@ export async function POST(
       return NextResponse.json({ error: 'Journey island not found' }, { status: 404 })
     }
 
-    if (ji.island_id) {
-      await ensureLesson(supabase, ji.island_id, user.id)
-      return NextResponse.json({ islandId: ji.island_id, alreadyStarted: true })
-    }
-
     const curriculumUnitId = (journey as { curriculum_unit_id?: string | null })
       .curriculum_unit_id
     const seedWords = Array.isArray((ji as { seed_words?: unknown }).seed_words)
@@ -82,18 +77,23 @@ export async function POST(
     const isCurriculumUnit = !!curriculumUnitId && seedWords.length > 0
 
     const entitlements = await getEntitlements(user.id)
-    if (isCurriculumUnit) {
+    if (curriculumUnitId) {
       if (!entitlements.isHskPro) {
         return NextResponse.json(
           { error: 'An HSK Prep subscription is required', code: 'PRODUCT_ACCESS_REQUIRED' },
           { status: 403 }
         )
       }
-    } else if (order > 1 && !entitlements.isPro) {
+    } else if (!entitlements.isPro) {
       return NextResponse.json(
-        { error: 'Subscribe to unlock islands 2–5', code: 'PAYWALL_JOURNEY' },
+        { error: 'Subscribe to unlock your Journey', code: 'PAYWALL_JOURNEY' },
         { status: 403 }
       )
+    }
+
+    if (ji.island_id) {
+      await ensureLesson(supabase, ji.island_id, user.id)
+      return NextResponse.json({ islandId: ji.island_id, alreadyStarted: true })
     }
 
     const { data: up } = await supabase

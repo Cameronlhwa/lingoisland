@@ -27,7 +27,7 @@ export function ConversationPrompt({ prompt, selected, onUnavailable, writing = 
   const listenHint = "Choose an answer to hear the sentence";
   return <div className={styles.wrapper}>
     {instruction.trim() && <p className={styles.instruction}>{instruction.trim()}</p>}
-    <section className={styles.panel} aria-label="Conversation practice">
+    <section className={styles.panel} data-english={!hasChinese} aria-label="Conversation practice">
       <div className={styles.toolbar}>
         <span className={styles.label}>{label ?? (hasChinese ? "Say to Huahua" : "Your task")}</span>
         {hasChinese && <div className={styles.controls}>
@@ -46,7 +46,7 @@ export function ConversationPrompt({ prompt, selected, onUnavailable, writing = 
             {parts.map((part, index) => /_{2,}/.test(part) ? <span key={index} className={styles.word}>
               <span className={styles.slot} data-filled={Boolean(selected)}>{selected?.hanzi ?? <span className="sr-only">Blank</span>}</span>
               {showPinyin && <span className={styles.pinyin}>{selected?.pinyin || '\u00a0'}</span>}
-            </span> : part.trim() && <span key={index} className={/[\u3400-\u9fff]/.test(part) ? styles.word : styles.context}>
+            </span> : part.trim() && <span key={index} className={/[\u3400-\u9fff]/.test(part) ? styles.word : hasChinese ? styles.context : styles.task}>
               <span>{part.trim()}</span>
               {showPinyin && /[\u3400-\u9fff]/.test(part) && <span className={styles.pinyin}>{pinyin(part.trim())}</span>}
             </span>)}

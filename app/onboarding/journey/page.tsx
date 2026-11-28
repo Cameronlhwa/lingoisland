@@ -1,7 +1,7 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import AppPageLoading from "@/components/app/AppPageLoading";
 import type { Metadata } from "next";
-import JourneyOnboardingFlow from "@/components/Onboarding/JourneyOnboardingFlow";
 import PersonalizedOnboardingFlow from "@/components/Onboarding/personalized/PersonalizedOnboardingFlow";
 
 export const metadata: Metadata = {
@@ -18,11 +18,12 @@ function usesLegacyFlow(params: SearchParams) {
 
 /** Public entry: build a personalized plan before showing the paywall. */
 export default function OnboardingJourneyPage({ searchParams = {} }: { searchParams?: SearchParams }) {
+  if (usesLegacyFlow(searchParams)) redirect("/onboarding/journey");
   return (
     <Suspense
       fallback={<AppPageLoading label="Getting ready…" className="lingo-body bg-[#fffaf3]" />}
     >
-      {usesLegacyFlow(searchParams) ? <JourneyOnboardingFlow publicSurface /> : <PersonalizedOnboardingFlow mode="public" />}
+      <PersonalizedOnboardingFlow mode="public" />
     </Suspense>
   );
 }

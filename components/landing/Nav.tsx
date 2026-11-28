@@ -20,7 +20,7 @@ const LINKS = [
 
 export default function Nav({
   tone = "default",
-  ctaLabel = "Try for free",
+  ctaLabel = "Get started",
 }: {
   tone?: "default" | "home";
   ctaLabel?: string;

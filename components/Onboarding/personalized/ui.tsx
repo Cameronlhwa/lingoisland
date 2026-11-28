@@ -41,13 +41,13 @@ export function Shell({ children, wide = false }: { children: ReactNode; wide?: 
       />
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0"
+        className={`${styles.backdrop} pointer-events-none fixed inset-0`}
         style={{
           background:
             "radial-gradient(ellipse 70% 55% at 50% 38%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.22) 45%, transparent 72%)",
         }}
       />
-      <div className="relative z-10 flex w-full flex-col items-center">
+      <div className={`${styles.content} relative z-10 flex w-full flex-col items-center`}>
         <div className={`${styles.logo} mb-2 sm:mb-6`}>
           <AppLogo />
         </div>
@@ -136,7 +136,7 @@ export function StepFrame({
   return (
     <section className={styles.frame} aria-labelledby={titleId ?? "onboarding-step-title"}>
       {header}
-      <div className="flex items-center gap-2">
+      <div className={`${styles.navigation} flex items-center gap-2`}>
         {onBack ? (
           <button
             type="button"
@@ -255,7 +255,7 @@ export function OptionCard({
       onClick={onSelect}
       data-testid={testId}
       lang={lang}
-      className={`${mobileTile ? styles.tile : ""} flex w-full min-h-[48px] items-center gap-3 rounded-2xl bg-white text-left transition-colors hover:bg-[#F4FAFD] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${compact ? "px-3.5 py-2.5" : "p-4"}`}
+      className={`${styles.option} ${mobileTile ? styles.tile : ""} flex w-full min-h-[48px] items-center gap-3 rounded-2xl bg-white text-left transition-colors hover:bg-[#F4FAFD] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${compact ? "px-3.5 py-2.5" : "p-4"}`}
       style={{
         border: `1px solid ${selected ? GREEN : CARD_BORDER}`,
         boxShadow: selected ? `inset 0 0 0 1px ${GREEN}` : undefined,

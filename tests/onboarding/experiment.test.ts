@@ -10,17 +10,18 @@ test("only explicit test selects mini-lesson onboarding",()=>{
 });
 test("flag-off default preserves the production learner sequence",()=>{
  const a=emptyAnswers();a.level.selfReport="few_words";
- assert.deepEqual(stepsFor(a),["goal","interests","level","experience","using_pain","learning_pain","reviews","calibration","pronunciation","availability","building","reflect","commitment","paywall"]);
+ assert.deepEqual(stepsFor(a),["goal","interests","level","experience","using_pain","learning_pain","reviews","availability","building","reflect","commitment","paywall"]);
  assert.equal(nextStep("level",a),"experience");assert.equal(nextStep("reflect",a),"commitment");
 });
-test("control beginners skip experience and calibration but keep production pronunciation",()=>{
+test("control beginners skip experience and unpaid practice",()=>{
  const a=emptyAnswers();a.level.selfReport="new";
- assert.deepEqual(stepsFor(a),["goal","interests","level","using_pain","learning_pain","reviews","pronunciation","availability","building","reflect","commitment","paywall"]);
+ assert.deepEqual(stepsFor(a),["goal","interests","level","using_pain","learning_pain","reviews","availability","building","reflect","commitment","paywall"]);
  assert.equal(canVisit("first_lesson",initialState(new Date())),false);
 });
-test("test includes vocabulary screens and lesson, and excludes legacy checks",()=>{
+test("mini-course test assignment includes vocabulary assessment and the first lesson",()=>{
  const a=emptyAnswers("test");a.level.selfReport="few_words";
  assert.equal(nextStep("level",a),"vocab_basic");assert.equal(nextStep("reflect",a),"first_lesson");
+ assert.ok(stepsFor(a).includes("first_lesson"));
  for(const step of ["calibration","pronunciation"])assert.ok(!stepsFor(a).includes(step as never));
 });
 test("legacy saved progress defaults to control and explicit assignment survives storage",()=>{

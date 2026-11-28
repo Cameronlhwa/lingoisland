@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const BASE_URL = "http://localhost:3002";
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3002";
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -22,6 +22,8 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: BASE_URL,
+    // Prefer an already-running server. Hard-paywall isolation uses
+    // PLAYWRIGHT_BASE_URL against a fixture-backed process started separately.
     reuseExistingServer: true,
     timeout: 180_000,
   },
