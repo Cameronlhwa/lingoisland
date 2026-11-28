@@ -1,5 +1,9 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { useAnalytics } from "@/lib/posthog/client";
+import AppLogo from "@/components/app/AppLogo";
+import styles from "./ConversationPaywall.module.css";
 import { Check, X } from "lucide-react";
 import ProgressComparisonChart from "./ProgressComparisonChart";
 import type { PaywallActivation } from "./OnboardingPaywall";
@@ -25,6 +29,30 @@ export default function ConversationPaywall({
   checkoutError: string | null;
   onProceedCheckout: () => void;
 }) {
+  const { posthog, captureEvent } = useAnalytics();
+  const [mobileTest, setMobileTest] = useState(false);
+  const exposed = useRef(false);
+  useEffect(() => {
+    const mobile = window.matchMedia("(max-width: 767px)");
+    let assigned: "control" | "test" | undefined;
+    const update = () => {
+      if (!mobile.matches) { setMobileTest(false); return; }
+      if (!assigned) {
+        const value = posthog?.getFeatureFlag("checkout-modal", { send_event: false });
+        if (value === "control" || value === "test") assigned = value;
+      }
+      setMobileTest(assigned === "test");
+      if (assigned && !exposed.current) {
+        exposed.current = true;
+        posthog?.getFeatureFlag("checkout-modal");
+        captureEvent("checkout_modal_viewed", { checkout_modal_variant: assigned, "$feature/checkout-modal": assigned });
+      }
+    };
+    const unsubscribe = posthog?.onFeatureFlags(update);
+    mobile.addEventListener("change", update);
+    update();
+    return () => { mobile.removeEventListener("change", update); unsubscribe?.(); };
+  }, [posthog, captureEvent]);
   const yearly = billingInterval === "yearly";
   const selected = pricing[billingInterval];
   const comparison = activation.comparison;
@@ -53,7 +81,7 @@ export default function ConversationPaywall({
 
   return (
     <div
-      className={`${fullPage ? "relative min-h-[100dvh]" : "fixed inset-0 z-50 overflow-y-auto"} flex items-center justify-center bg-[#fffaf3] p-3 sm:p-6`}
+      className={`${mobileTest ? styles.testRoot : ""} ${fullPage ? "relative min-h-[100dvh]" : "fixed inset-0 z-50 overflow-y-auto"} flex items-center justify-center bg-[#fffaf3] p-3 sm:p-6`}
       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
     >
       <div
@@ -61,11 +89,12 @@ export default function ConversationPaywall({
         className="hsk-onboarding-bg pointer-events-none fixed inset-0 bg-cover bg-no-repeat"
         style={{ backgroundImage: "url(/onboarding/journey-island-v2.webp)" }}
       />
-      <div className="relative my-auto flex w-full max-w-[480px] flex-col items-center">
+      <div className={`${mobileTest ? styles.testContainer : ""} relative my-auto flex w-full max-w-[480px] flex-col items-center`}>
         <section
           aria-labelledby="conversation-offer-title"
           data-testid="conversation-paywall"
-          className="relative w-full rounded-[28px] bg-white px-5 pb-5 pt-8 text-center shadow-[0_20px_60px_-20px_rgba(7,30,46,0.3)] sm:px-9 sm:pb-6 sm:pt-9"
+          data-checkout-modal-variant={mobileTest ? "test" : "control"}
+          className={`${mobileTest ? styles.testPanel : ""} relative w-full rounded-[28px] bg-white px-5 pb-5 pt-8 text-center shadow-[0_20px_60px_-20px_rgba(7,30,46,0.3)] sm:px-9 sm:pb-6 sm:pt-9`}
         >
           {activation.onClose || activation.onNotNow ? (
             <button
@@ -79,6 +108,7 @@ export default function ConversationPaywall({
             </button>
           ) : null}
 
+          {mobileTest && <div className={styles.testLogo}><AppLogo size="sm"/></div>}
           <h1
             id="conversation-offer-title"
             className="lingo-display mx-auto max-w-[22ch] text-[25px] leading-[1.15] text-[var(--lingo-navy)] sm:text-[32px]"
@@ -89,13 +119,7 @@ export default function ConversationPaywall({
             {activation.subline}
           </p>
 
-          {comparison ? <>
-            <details className="mt-4 rounded-xl border border-[#E4E7DF] px-3 py-2 text-left sm:hidden">
-              <summary className="min-h-8 cursor-pointer text-sm font-semibold leading-8 text-[#526B59]">See your learning outlook</summary>
-              <ProgressComparisonChart title={comparison.title} weeks={comparison.weeks} lingoLabel={comparison.lingoLabel} otherLabel={comparison.otherLabel} />
-            </details>
-            <div className="hidden sm:block"><ProgressComparisonChart title={comparison.title} weeks={comparison.weeks} lingoLabel={comparison.lingoLabel} otherLabel={comparison.otherLabel} /></div>
-          </> : null}
+          {comparison ? <ProgressComparisonChart title={comparison.title} weeks={comparison.weeks} lingoLabel={comparison.lingoLabel} otherLabel={comparison.otherLabel} /> : null}
 
           <ul aria-label="Membership benefits" className="mx-auto mt-4 max-w-[400px] space-y-2.5 text-left">
             {activation.benefits.slice(0, 2).map((benefit) => (
@@ -109,6 +133,19 @@ export default function ConversationPaywall({
             ))}
           </ul>
 
+          {mobileTest ? <div role="group" aria-label="Billing plan" className={styles.planChoices} data-testid="conversation-plan-choices">
+            {(["monthly", "yearly"] as const).map(interval => {
+              const active = interval === billingInterval;
+              const plan = pricing[interval];
+              return <button key={interval} type="button" aria-pressed={active} disabled={checkoutLoading} onClick={()=>onBillingIntervalChange(interval)} data-testid={`plan-${interval}`} className={styles.planChoice}>
+                <span className={styles.radio} aria-hidden>{active && <span/>}</span>
+                <span className={styles.planCopy}><span className={styles.planTitle}>{interval === "monthly" ? "Monthly" : "Yearly"}{interval === "yearly" && <span className={styles.saving}>Save 33%</span>}</span>
+                  <span className={styles.planNote}>{interval === "monthly" ? "Billed monthly. Cancel anytime." : `${plan.note}. Cancel anytime.`}</span>
+                </span>
+                <span className={styles.planPrice}>{plan.price}<span> / month</span></span>
+              </button>;
+            })}
+          </div> : <>
           <div
             role="group"
             aria-label="Billing plan"
@@ -140,6 +177,8 @@ export default function ConversationPaywall({
             </p>
           </div>
 
+          </>}
+
           {checkoutError ? (
             <p role="alert" className="mt-3 text-sm text-red-700">
               {checkoutError}
@@ -149,7 +188,10 @@ export default function ConversationPaywall({
           <button
             type="button"
             disabled={checkoutLoading}
-            onClick={onProceedCheckout}
+            onClick={() => {
+              if (window.matchMedia("(max-width: 767px)").matches) captureEvent("checkout_modal_cta_clicked", { checkout_modal_variant: mobileTest ? "test" : "control", "$feature/checkout-modal": mobileTest ? "test" : "control", billing_interval: billingInterval });
+              onProceedCheckout();
+            }}
             data-testid="conversation-continue"
             className="mt-5 min-h-[54px] w-full rounded-2xl bg-[#20674F] px-4 py-3 text-[17px] font-bold text-white transition-colors hover:bg-[#19533F] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#20674F] disabled:cursor-wait disabled:opacity-60"
           >

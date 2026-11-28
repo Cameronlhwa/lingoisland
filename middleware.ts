@@ -1,19 +1,6 @@
+import { requiredApiProduct, permitsProduct } from '@/lib/accessPolicy'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-function isProtectedHskApi(pathname: string): boolean {
-  if (pathname.startsWith('/api/hsk/')) {
-    // These endpoints support the pre-checkout onboarding preview / setup. They
-    // cannot unlock app routes or other HSK API endpoints.
-    if (pathname === '/api/hsk/journey/generate') return false
-    if (pathname === '/api/hsk/curriculum/generate') return false
-    if (pathname === '/api/hsk/onboarding-answers') return false
-    if (pathname === '/api/hsk/placement-checklist') return false
-    if (pathname === '/api/hsk/waitlist') return false
-    return true
-  }
-  return false
-}
 
 export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
@@ -33,9 +20,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(newUrl, 301)
   }
 
-  if (isProtectedHskApi(request.nextUrl.pathname)) {
-    // HSK APIs are paid-only. Islands APIs intentionally remain available to
-    // signed-in free users, whose limits are enforced in their route handlers.
+  const requiredProduct = requiredApiProduct(request.nextUrl.pathname)
+  if (requiredProduct) {
+    // This check runs before handlers can read learning data or spend model/audio credits.
     const entitlementsUrl = new URL('/api/entitlements', request.url)
     const entitlementsResponse = await fetch(entitlementsUrl, {
       headers: {
@@ -52,16 +39,16 @@ export async function middleware(request: NextRequest) {
       )
     }
 
-    const entitlements = (await entitlementsResponse.json()) as {
+    const entitlements = await entitlementsResponse.json().catch(() => null) as {
       isIslandsPro?: boolean
       isHskPro?: boolean
-    }
-    if (!entitlements.isHskPro) {
+    } | null
+    if (!entitlements || !permitsProduct(entitlements, requiredProduct)) {
       return NextResponse.json(
         {
-          error: 'An HSK Prep subscription is required',
+          error: 'A subscription is required to access learning features',
           code: 'PRODUCT_ACCESS_REQUIRED',
-          product: 'hsk',
+          product: requiredProduct,
         },
         { status: 403 },
       )

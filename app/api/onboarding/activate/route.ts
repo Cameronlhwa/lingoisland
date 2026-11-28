@@ -1,3 +1,4 @@
+import { getEntitlements } from "@/lib/entitlements";
 import { NextResponse } from "next/server";
 import { planFor, provisionalLevel } from "@/lib/onboarding/personalized/flow";
 import { cefrForLevel, hskForLevel } from "@/lib/onboarding/personalized/levels";
@@ -53,6 +54,8 @@ async function journeyGeneratedSince(supabase: Awaited<ReturnType<typeof createC
 export async function POST(request: Request) {
   const { user, response } = await requireOnboardingUser(request, { mutation: true, allowAnonymous: false });
   if (!user) return response;
+  const access = await getEntitlements(user.id);
+  if (!access.isIslandsPro) return NextResponse.json({ error: "A subscription is required to activate your plan.", code: "PRODUCT_ACCESS_REQUIRED", product: "core" }, { status: 403 });
   const body = await readBody(request);
   const timezone = timezoneFrom(body.timezone);
   const supabase = await createClient();

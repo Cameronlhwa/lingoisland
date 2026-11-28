@@ -56,12 +56,12 @@ export function GrammarPractice({ curriculum, writingContext, onComplete, onMist
   const step = steps[index];
   const advance = () => index + 1 === steps.length ? onComplete() : onProgress(index + 1, steps[index + 1].id);
   return <div data-testid="grammar-practice" data-grammar-index={index} data-grammar-step={step.id} data-grammar-kind={step.kind} key={step.id}>
-    <p className="mb-3 text-center text-xs font-semibold" style={{ color: MUTED }}>
+    <p className={`mb-3 text-center text-xs font-semibold ${step.kind === "teach" ? "hidden md:block" : ""}`} style={{ color: MUTED }}>
       {step.kind === "teach" ? "Learn" : step.kind === "check" ? "Quick check" : "Practice"} · {index + 1} of {steps.length}
     </p>
     {step.kind !== "teach" && "reading" in step.practice && step.practice.reading && <ReadingPassage key={`${step.id}:reading`} reading={step.practice.reading} compact={step.practice.kind !== "reading"} onUnavailable={onUnavailable}/>}
     {step.kind === "teach" ? <>
-      <TeachingSlide card={step.card} onUnavailable={onUnavailable}/>
+      <TeachingSlide card={step.card} onUnavailable={onUnavailable} progressLabel={`Learn · ${index + 1} of ${steps.length}`}/>
       <PrimaryButton mobileSticky className="mt-5" data-testid="grammar-continue" onClick={advance}>Continue</PrimaryButton>
     </> : step.practice.kind === "reading" ? <PrimaryButton mobileSticky data-testid="reading-continue" onClick={advance}>Continue to the questions</PrimaryButton>
       : step.practice.kind === "writing" ? <WritingExercise key={step.id} practice={step.practice} context={writingContext} stepId={step.id} value={responses[step.id] ?? ""} onChange={text => onResponse(step.id,text)} onComplete={advance} onMistake={onMistake} onUnavailable={onUnavailable}/>

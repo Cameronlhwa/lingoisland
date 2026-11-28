@@ -33,8 +33,7 @@ export default async function AppLayout({
     redirect(`/login?next=${encodeURIComponent(intended)}`);
   }
 
-  // Islands retains its existing free experience. Paid access is enforced at
-  // the individual premium actions and APIs, not by blocking the whole app.
+  // Paid access is enforced before any app content can render.
   const entitlements = await getEntitlements(user.id);
   const intended = h.get("x-login-next") ?? "/app";
   // HSK pages originally existed below /app. Keep those bookmarked URLs from
@@ -44,6 +43,11 @@ export default async function AppLayout({
       redirect(`/hsk${intended}`);
     }
     redirect("/pricing?product=hsk");
+  }
+
+  if (!entitlements.isIslandsPro) {
+    if (entitlements.isHskPro && intended.split("?")[0] === "/app") redirect("/hsk/app");
+    redirect("/onboarding/journey?resume=paywall");
   }
 
   return (

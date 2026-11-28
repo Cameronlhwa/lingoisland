@@ -1,0 +1,12 @@
+.intro { margin: 0 0 16px; color: #4f6e83; font-size: 15px; line-height: 1.5; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.chips > span { display: inline-flex; align-items: center; gap: 7px; border-radius: 30px; padding: 8px 12px; background: #edf5ee; color: #355c59; font-size: 13px; font-weight: 600; }
+.path { margin: 0; padding: 12px 14px; list-style: none; border: 1px solid #c2dcf0; border-radius: 20px; }
+.stage { position: relative; display: flex; align-items: flex-start; gap: 14px; padding: 12px 0; }
+.stage:not(:last-child)::after { content: ""; position: absolute; top: 34px; bottom: -16px; left: 11px; width: 2px; background: #d6e4dd; }
+.node { position: relative; z-index: 1; flex-shrink: 0; width: 24px; height: 24px; margin-top: 3px; border: 2px solid #a6b3ad; border-radius: 50%; background: #fffcf7; }
+.stage[data-current="true"] .node { border: 7px solid #20674f; }
+.stageCopy { flex: 1; min-width: 0; }
+.stage[data-current="true"] .stageCopy { margin: -5px 0; padding: 5px 10px; border-radius: 12px; background: #eaf4eb; }
+.when { color: #5f3119; font-size: 15px; font-weight: 700; }
+.title { margin-top: 3px; color: #4f6e83; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }

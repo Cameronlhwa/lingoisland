@@ -1,3 +1,4 @@
+import { likesFirstLesson } from "./likesFirstLesson";
 import { placementSentenceProbes } from "./placementSentenceProbes";
 import { advancedFirstLesson } from "./advancedCurriculum";
 import type { OnboardingAnswers } from "../flow";
@@ -87,6 +88,14 @@ function withFoundations(input:AuthoredLesson & {budget:Omit<BudgetCourse["budge
 }
 export function makeBudgetCourse(tier: CourseTier, goal: GoalKey, variant = 0, profile?: OnboardingAnswers): BudgetCourse {
  variant = variant === 1 ? 1 : 0;
+ if(tier === 1 && profile?.firstLevelVariant === "test") {
+  const lesson = likesFirstLesson(goal, variant);
+  return withFoundations({...lesson, budget: {revision: COURSE_REVISION, tier, variant, goal,
+   grammarIds: ["喜欢", "吗"], topicIds: lesson.curriculum!.vocabularyGroups.find(group => group.id === "personalized")!.wordIds,
+   prerequisiteIds: ["我", "你"], words: lesson.match.map(({label,...word}) => ({...word, meaning:label})),
+  }});
+ }
+
  if(tier>=4){
   const lesson=advancedFirstLesson(profile??{goal:{primary:goal},interests:{keys:[]}} as unknown as OnboardingAnswers,tier as 4|5|6,variant);
   const words=lesson.match.map(({label,...word})=>({...word,meaning:label}));

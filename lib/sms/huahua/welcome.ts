@@ -9,10 +9,10 @@ import { resolveTimeZone, defaultTimeZoneForCountry } from "./schedule";
 
 /**
  * Level-appropriate welcome sent after verification and consent. Subscribers
- * can pick a persona by number; free learners get the default persona and a
- * short practice chat.
+ * can pick a persona by number. Unpaid contacts receive no practice welcome.
  */
 export function buildWelcomeMessage(input: { level: HskLevel; subscribed: boolean }) {
+  if (!input.subscribed) return "LingoIsland: A subscription is required for Mandarin practice. Reply HELP for help, STOP to opt out.";
   const menu = input.subscribed
     ? `Reply a number for my style: ${PERSONAS.map((persona) => `${persona.number} ${persona.shortLabel}`).join(", ")}.`
     : "Text me back for a short practice chat.";
@@ -46,6 +46,7 @@ export async function sendHuahuaWelcome(
 ) {
   const now = clock(deps);
   const ctx = await loadHuahuaContext(deps, userId, now);
+  if (!ctx.subscribed) return { status: "skipped" as const, reason: "subscription_required" };
 
   if (!ctx.preferences.timezone) {
     await deps.rpc("sms_update_preferences", {

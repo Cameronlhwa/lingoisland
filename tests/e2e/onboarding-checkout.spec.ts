@@ -142,7 +142,7 @@ async function toCommitment(page: Page) {
   await page.getByTestId("minutes-10").click();
   await page.getByTestId("days-5").click();
   await page.getByTestId("continue").click();
-  await heading(page, /^From .+ in \d+ weeks$/);
+  await heading(page, /^(?:From .+ in \d+ weeks|Your path to .+)$/);
   await page.getByTestId("reflect-confirm").filter({ visible: true }).click();
   await finishFirstLesson(page);
   await heading(page, "Ready to continue your Mandarin journey?");

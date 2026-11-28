@@ -1,3 +1,4 @@
+import type { FirstLevelVariant } from "@/lib/onboarding/personalized/experiment";
 import { initialState, stepsFor, type OnboardingState } from "@/lib/onboarding/personalized/flow";
 import { DEFAULT_INTERESTS_BY_GOAL, type GoalKey } from "@/lib/onboarding/personalized/goals";
 import { levelForSelfReport, type SelfReportKey } from "@/lib/onboarding/personalized/levels";
@@ -12,9 +13,10 @@ export const MINI_COURSE_PREVIEWS: readonly { level: SelfReportKey; title: strin
 ];
 
 /** A fresh, local-only test profile. Normal onboarding never calls this shortcut. */
-export function miniCoursePreview(level: SelfReportKey, goal: GoalKey, now = new Date()): OnboardingState {
+export function miniCoursePreview(level: SelfReportKey, goal: GoalKey, now = new Date(), firstLevel: FirstLevelVariant = "control"): OnboardingState {
  const state = initialState(now, "test"), a = state.answers;
  a.goal.primary = goal;
+ a.firstLevelVariant = firstLevel;
  a.interests.keys = [...DEFAULT_INTERESTS_BY_GOAL[goal]];
  a.level.selfReport = level;
  a.estimatedLevel = levelForSelfReport(level);
@@ -25,7 +27,7 @@ export function miniCoursePreview(level: SelfReportKey, goal: GoalKey, now = new
  a.usingPain = { keys: ["want_to_improve"], timing: "ongoing", upcomingText: null };
  a.learningPain = { keys: ["not_relevant"], hesitations: ["dont_know_where_start"] };
  a.availability = { minutes: "10", days: "5", session: null };
- for (const step of stepsFor(a)) {
+ for (const step of stepsFor(a, true)) {
   if (step === "first_lesson") break;
   state.events[step] = { completed_at: state.updatedAt };
  }

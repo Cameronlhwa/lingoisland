@@ -2,7 +2,7 @@ import {placementFoundationIds} from "../../../lib/onboarding/personalized/first
 import {makeBudgetCourse,type CourseTier} from "../../../lib/onboarding/personalized/firstLesson/budgetCourseContent";
 import {grammarSteps} from "../../../lib/onboarding/personalized/firstLesson/grammarSequence";
 import {updatedFirstLesson} from "../../../lib/onboarding/personalized/firstLesson/curriculum";
-import {PREVIEW_STORAGE_KEY} from "../../../lib/testing/config";
+import {PREVIEW_STORAGE_KEY,previewStorageKey} from "../../../lib/testing/config";
 import { compileTemplate } from "../../../lib/onboarding/personalized/firstLesson/templates";
 import { personalizedLesson } from "../../../lib/onboarding/personalized/firstLesson/personalization";
 import { expect, type Page, type Locator } from "@playwright/test";
@@ -14,16 +14,16 @@ export async function advanceLesson(page: Page, until = "complete", press: (loca
   await expect(root.or(familiarity).or(placement)).toBeVisible({timeout:30000});
   if(await placement.isVisible()){
     const tier=Number(await placement.getAttribute("data-course-tier")) as CourseTier;
-    const storageKey=page.url().includes("/admin/testing")?PREVIEW_STORAGE_KEY:"lingo_onboarding_v2";
+    const storageKey=page.url().includes("/admin/testing")?previewStorageKey(await page.evaluate(()=>localStorage.getItem("lingo_testing_first_level_variant")==="test"?"test":"control")):"lingo_onboarding_v2";
     const answers=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).answers,storageKey);
-    const course=makeBudgetCourse(tier,answers.goal.primary??"other",Number(await placement.getAttribute("data-course-variant")));
+    const course=makeBudgetCourse(tier,answers.goal.primary??"other",Number(await placement.getAttribute("data-course-variant")),answers);
     await page.getByTestId("vocabulary-know-none").click();
     for(const id of placementFoundationIds(course)){const card=page.getByTestId(`known-word-${id}`);if(await card.isVisible())await card.click();}
     await page.getByTestId("course-placement-continue").click();
   }
   if(await familiarity.isVisible()) {await page.getByRole("button",{name:"I know all of these"}).click();await page.getByRole("button",{name:"Continue",exact:true}).click();}
   await expect(root).toBeVisible();
-  const storageKey = page.url().includes("/admin/testing") ? PREVIEW_STORAGE_KEY : "lingo_onboarding_v2";
+  const storageKey = page.url().includes("/admin/testing") ? previewStorageKey(await page.evaluate(()=>localStorage.getItem("lingo_testing_first_level_variant")==="test"?"test":"control")) : "lingo_onboarding_v2";
   const storedAnswers = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).answers, storageKey);
   const lesson = updatedFirstLesson(storedAnswers) ?? (storedAnswers.firstLesson.templatePlan ? compileTemplate(storedAnswers.firstLesson.templatePlan) : getLessonById((await root.getAttribute("data-lesson-id"))!) ?? (storedAnswers.firstLesson.generated ? personalizedLesson(storedAnswers.firstLesson.generated, storedAnswers) : null));
   if (!lesson) throw new Error("Missing authored lesson");
@@ -60,10 +60,10 @@ export async function advanceLesson(page: Page, until = "complete", press: (loca
       case "beginner_match": case "meaning":
         for (const p of lesson.match) { if (!await page.getByTestId(`match-tile-${p.id}`).isVisible()) continue; await press(page.getByTestId(`match-tile-${p.id}`)); await press(page.getByTestId(`match-slot-${p.id}`)); }
         await press(page.getByTestId("lesson-match-continue")); break;
-      case "frame":
+      case "short_question": case "frame":
         if(lesson.curriculum){
           const index=Number(await page.getByTestId("grammar-practice").getAttribute("data-grammar-index"));
-          const step=grammarSteps(lesson.curriculum)[index];
+          const step=grammarSteps(phase==="short_question"?{...lesson.curriculum,...lesson.curriculum.afterChat!}:lesson.curriculum)[index];
           if(step.kind==="teach"){await press(page.getByTestId("grammar-continue"));break;}
           const practice=step.practice;
           if(practice.kind==="build"){
@@ -98,8 +98,8 @@ export async function advanceLesson(page: Page, until = "complete", press: (loca
           await press(page.getByTestId("lesson-quiz-check")); await press(page.getByTestId("lesson-quiz-check"));
         }
         await press(page.getByTestId("lesson-start-chat")); break;
-      case "chat": case "discussion": {
-        const chat = phase === "discussion" ? lesson.curriculum!.discussion! : lesson.chat;
+      case "chat": case "follow_up": case "discussion": {
+        const chat = phase === "follow_up" ? lesson.curriculum!.followUp! : phase === "discussion" ? lesson.curriculum!.discussion! : lesson.chat;
         if (await page.getByTestId("lesson-chat-finish").isVisible()) { await press(page.getByTestId("lesson-chat-finish")); }
         else { await press(page.getByTestId(`lesson-choice-${chat.expectedChoiceId}`)); await press(page.getByTestId("lesson-chat-skip-speak")); await expect(page.getByTestId("lesson-chat-finish")).toBeEnabled(); await press(page.getByTestId("lesson-chat-finish")); }
         break;

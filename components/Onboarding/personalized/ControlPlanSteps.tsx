@@ -1,4 +1,6 @@
 "use client";
+import { MobilePlanPath } from "./MobilePlanPath";
+import { destinationFor } from "@/lib/onboarding/personalized/progress";
 
 // Production plan screens preserved from main at 230c81f for the control variant.
 
@@ -432,17 +434,11 @@ export function ReflectStep({ state, next, back, progress, track, jumpTo }: Step
   );
 
   return (
-    <StepFrame title={path_.headline} eyebrow="Your path" progress={progress} onBack={back}>
+    <StepFrame title={path_.headline} mobileTitle={`Your path to ${destinationFor(state.answers)}`} eyebrow="Your path" progress={progress} onBack={back}>
       <div data-testid="reflection" data-insight-source={insight.source}>
         {/* Phone (A1): chart card, then the reasons as a list. */}
         <div className="md:hidden" data-testid="reflect-mobile">
-          <div className="rounded-[22px] border px-3.5 pb-3 pt-4" style={{ borderColor: CARD_BORDER }}>
-            <ProgressChart progress={path_} showNumbers={showNumbers} />
-            <div className="mt-1 flex flex-col gap-2">
-              <MomentBubble text={path_.moment} />
-              {path_.event ? <EventNote event={path_.event} /> : null}
-            </div>
-          </div>
+          <MobilePlanPath roadmap={roadmap} minutes={plan.minutesPerDay} goal={goalLabel(state.answers.goal.primary ?? "other")}/>
           <details className="mt-4 rounded-xl border p-3" style={{borderColor:CARD_BORDER}}>
             <summary className="cursor-pointer text-sm font-semibold" style={{color:NAVY}}>Why this plan fits you</summary>
           <ul className="mt-3 flex flex-col gap-2.5" data-testid="reflect-fixes">

@@ -98,7 +98,7 @@ export default function ProofDemo() {
                 }}
                 className="hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(7,30,46,0.22)]"
               >
-                Build your first island — free
+                Build your learning plan
               </Link>
               <a
                 href="#topics"

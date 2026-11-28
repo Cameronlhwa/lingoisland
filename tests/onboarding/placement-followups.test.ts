@@ -51,3 +51,18 @@ test("an older saved fallback to a mastered course resumes the next course inste
  const restored=parseCoursePlacement(old)!;
  assert.equal(restored.tier,5);assert.equal(restored.status,"checking");
 });
+
+test("placement finishes after at most two word-check rounds across goals and levels",()=>{
+ for(const tier of [2,3,4,5,6] as CourseTier[])for(const goal of GOALS){
+  let p=beginPlacement(tier,goal.key);
+  p=recordWordCheck(p,[]);
+  if(p.status==="checking")p=recordWordCheck(parseCoursePlacement(JSON.parse(JSON.stringify(p)))!,[]);
+  assert.equal(p.status,"ready",`${tier}:${goal.key}`);
+  assert.ok((p.wordCheckRounds??0)<=2);
+  assert.equal(parseCoursePlacement(JSON.parse(JSON.stringify(p)))!.status,"ready");
+ }
+});
+test("saved placements already beyond two rounds proceed without another word screen",()=>{
+ const p=parseCoursePlacement({...beginPlacement(6,"heritage"),tier:3,visited:["6:0","5:0","4:0"],wordCheckRounds:undefined})!;
+ assert.equal(p.status,"ready");assert.equal(p.tier,1);
+});

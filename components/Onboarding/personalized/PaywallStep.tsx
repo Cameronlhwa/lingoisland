@@ -77,7 +77,7 @@ export function PaywallStep({
   );
 
   const [holdOpen, setHoldOpen] = useState(false);
-  // Signed-in learners in the app already have an account, so "Not now" just moves on.
+  // Saving for later can leave checkout, but never activates an unpaid plan.
   const openHold = () => {
     if (mode === "app") return onNotNow();
     track(ONBOARDING_EVENTS.holdPlanOpened);

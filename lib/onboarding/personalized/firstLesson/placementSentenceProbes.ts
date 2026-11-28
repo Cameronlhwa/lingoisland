@@ -11,7 +11,9 @@ const sentence = (hanzi: string, meaning: string): LessonPhrase => ({
 export function placementSentenceProbes(lesson: AuthoredLesson, tier: number): Probe[] {
   const build = lesson.build.result, transfer = lesson.transferBuild.result;
   let pairs: [LessonPhrase, LessonPhrase][];
-  if (tier === 1) {
+  if (tier === 1 && lesson.id.startsWith("likes-v1-")) {
+    pairs = [[build, transfer], [transfer, sentence(transfer.hanzi.replace("吗", "").replace("？", "。"), "The statement, not a question")]];
+  } else if (tier === 1) {
     pairs = [[build, transfer], [sentence("大家好！", "Hello, everyone!"), sentence("你好！", "Hello!")]];
   } else if (tier === 2 || tier === 3) {
     const modal = tier === 2 ? "会" : "能";

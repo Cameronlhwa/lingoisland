@@ -8,3 +8,9 @@
 .choice[aria-pressed="true"]::before { border-color: #20674f; }
 .choice[aria-pressed="true"]::after { content: ""; position: absolute; left: 20px; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; border-radius: 50%; background: #20674f; }
 @media (min-width: 480px) { .shortChoices { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+
+.emptyChat { margin-top: 16px; overflow: hidden; border: 1px solid #e2e9ec; border-radius: 18px; background: #f8fafb; }
+.emptyChatHeader { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #e2e9ec; background: #fff; color: #5f3119; font-size: 14px; font-weight: 700; }
+.emptyChatAvatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #e9dfd1; }
+.emptyChatSpace { min-height: 150px; }
+@media (max-width: 639px) { .emptyChatSpace { min-height: 110px; } }

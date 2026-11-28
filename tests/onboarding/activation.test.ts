@@ -122,3 +122,9 @@ describe("activation after checkout", () => {
     assert.equal(done.calls.generate + uncommitted.calls.generate, 0);
   });
 });
+
+it("unpaid activation stops before generating, completing, or recording progress", async () => {
+  const h = harness({starts:[{ok:false,status:403,data:{code:"PRODUCT_ACCESS_REQUIRED"}}]});
+  assert.equal(await runActivation(h.deps),"payment_required");
+  assert.equal(h.calls.generate,0);assert.deepEqual(h.calls.complete,[]);
+});

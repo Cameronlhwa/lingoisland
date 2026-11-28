@@ -6,7 +6,9 @@ import { isCompletelyNew } from "@/lib/onboarding/personalized/flow";
 import {
   getVocabWord,
   VOCAB_COUNT_DESKTOP,
-  VOCAB_COUNT_MOBILE,
+  VOCAB_ASSESSMENT_VERSION,
+  isCurrentVocabScreen,
+  type VocabScreenAnswer,
   wordsForScreen,
   type VocabBand,
   type VocabWord,
@@ -23,18 +25,6 @@ import {
   SKY_PALE,
   StepFrame,
 } from "./ui";
-
-function useVocabCount() {
-  const [count, setCount] = useState(VOCAB_COUNT_DESKTOP);
-  useEffect(() => {
-    const query = window.matchMedia("(max-width: 639px)");
-    const sync = () => setCount(query.matches ? VOCAB_COUNT_MOBILE : VOCAB_COUNT_DESKTOP);
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  }, []);
-  return count;
-}
 
 function WordChip({
   word,
@@ -80,30 +70,17 @@ export function VocabRecognitionStep({
   track,
 }: StepProps & { band: VocabBand }) {
   const existing = band === "basic" ? state.answers.vocabBasic : state.answers.vocabAdvanced;
-  const count = useVocabCount();
-  const seed = `${state.answers.goal.primary ?? "x"}:${state.answers.interests.keys.join(",")}:${band}:${count}`;
+  const count = VOCAB_COUNT_DESKTOP;
+  const seed = `${state.answers.goal.primary ?? "other"}:${band}`;
+  const canRestore = isCurrentVocabScreen(band, state.answers.goal.primary, existing, state.answers.firstLevelVariant);
   const words = useMemo(() => {
-    const fresh = wordsForScreen(band, state.answers.goal.primary, state.answers.interests.keys, seed, count);
-    if (existing.shownIds.length === 0) return fresh;
-    const restored = existing.shownIds
-      .map((id) => getVocabWord(id))
-      .filter((word): word is VocabWord => Boolean(word));
-    if (restored.length === count) return restored;
-    // Viewport changed or an older save had a different size: keep known picks, then fill.
-    const seen = new Set(restored.map((word) => word.id));
-    const filled = [...restored];
-    for (const word of fresh) {
-      if (filled.length >= count) break;
-      if (!seen.has(word.id)) {
-        seen.add(word.id);
-        filled.push(word);
-      }
+    if (isCurrentVocabScreen(band, state.answers.goal.primary, existing, state.answers.firstLevelVariant)) {
+      return existing.shownIds.map(id => getVocabWord(id)!);
     }
-    return filled.slice(0, count);
-  }, [band, count, existing.shownIds, seed, state.answers.goal.primary, state.answers.interests.keys]);
-
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(existing.selectedIds));
-  const [noneKnown, setNoneKnown] = useState(existing.noneKnown);
+    return wordsForScreen(band, state.answers.goal.primary, [], seed, count, state.answers.firstLevelVariant);
+  }, [band, existing.shownIds, existing.assessmentVersion, seed, state.answers.goal.primary, state.answers.firstLevelVariant]);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(canRestore ? existing.selectedIds : []));
+  const [noneKnown, setNoneKnown] = useState(canRestore && existing.noneKnown);
   const persistedKeyRef = useRef("");
   const beginner = isCompletelyNew(state.answers);
   const shownKey = words.map((word) => word.id).join(",");
@@ -117,16 +94,19 @@ export function VocabRecognitionStep({
         word_count: words.length,
       });
     }
-    const selectedIds = Array.from(selected).filter((id) => words.some((word) => word.id === id));
+    const selectedIds = canRestore ? existing.selectedIds.filter(id => words.some(word => word.id === id)) : [];
+    const restoredNone = canRestore && existing.noneKnown;
+    setNoneKnown(restoredNone);
     setSelected(new Set(selectedIds));
     const screen = {
       shownIds: words.map((word) => word.id),
-      selectedIds: noneKnown ? [] : selectedIds,
-      noneKnown,
+      assessmentVersion: VOCAB_ASSESSMENT_VERSION,
+      selectedIds: restoredNone ? [] : selectedIds,
+      noneKnown: restoredNone,
       skipped: false,
     };
     update(band === "basic" ? { vocabBasic: screen } : { vocabAdvanced: screen });
-    // Persist the visible set when count/viewport settles; selection state is owned locally until Continue.
+    // Persist the exact versioned pool; selection state is local until Continue.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when the shown word set changes
   }, [band, shownKey, track, update, words]);
 
@@ -155,7 +135,8 @@ export function VocabRecognitionStep({
     setNoneKnown(true);
   };
 
-  const persistAndNext = (screen: { shownIds: string[]; selectedIds: string[]; noneKnown: boolean; skipped?: boolean }) => {
+  const persistAndNext = (answer: VocabScreenAnswer) => {
+    const screen = { ...answer, assessmentVersion: VOCAB_ASSESSMENT_VERSION };
     track(band === "basic" ? ONBOARDING_EVENTS.vocabBasicCompleted : ONBOARDING_EVENTS.vocabAdvancedCompleted, {
       selected_count: screen.selectedIds.length,
       none_known: screen.noneKnown,

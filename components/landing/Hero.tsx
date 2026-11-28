@@ -758,7 +758,7 @@ export default function Hero() {
             }}
             className="hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(7,30,46,0.22)] active:translate-y-0 active:shadow-none"
           >
-            Try for free →
+            Get started →
           </Link>
           <Link
             href="/#demo"

@@ -1,9 +1,11 @@
 "use client";
+import type { FirstLevelVariant } from "@/lib/onboarding/personalized/experiment";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { GOALS, normalizeCustomText } from "@/lib/onboarding/personalized/goals";
 import { useAnalytics } from "@/lib/posthog/client";
+import { fetchIsPro } from "@/hooks/useSubscription";
 import { createClient } from "@/lib/supabase/browser";
 import { ONBOARDING_EVENTS, trackOnboarding, type OnboardingEventName } from "@/lib/onboarding/personalized/analytics";
 import {
@@ -41,8 +43,8 @@ import {
 import { CalibrationStep } from "./CalibrationStep";
 import { PronunciationStep } from "./PronunciationStep";
 import * as ControlPlanSteps from "./ControlPlanSteps";
-import { OnboardingExperiment, OnboardingPreview, useOnboardingVariant } from "./OnboardingExperiment";
-import {PREVIEW_STORAGE_KEY} from "@/lib/testing/config";
+import { OnboardingExperiment, OnboardingPreview, useOnboardingVariant, useFirstLevelVariant } from "./OnboardingExperiment";
+import {previewStorageKey} from "@/lib/testing/config";
 import { PreviewPaywall } from "./PreviewPaywall";
 import { FirstLessonStep } from "./FirstLessonStep";
 import { PaywallStep, type FlowMode } from "./PaywallStep";
@@ -64,11 +66,13 @@ const NAV_LOCK_MS = 450;
 
 type Account = { kind: AccountKind; firstName: string | null };
 
-export default function PersonalizedOnboardingFlow({ mode, preview = false }: { mode: FlowMode; preview?:boolean }) {
-  return preview ? <OnboardingPreview><PersonalizedOnboardingContent mode={mode} preview/></OnboardingPreview> : <OnboardingExperiment><PersonalizedOnboardingContent mode={mode}/></OnboardingExperiment>;
+export default function PersonalizedOnboardingFlow({ mode, preview = false, firstLevel = "control" }: { mode: FlowMode; preview?:boolean; firstLevel?:FirstLevelVariant }) {
+  return preview ? <OnboardingPreview firstLevel={firstLevel}><PersonalizedOnboardingContent mode={mode} preview/></OnboardingPreview> : <OnboardingExperiment><PersonalizedOnboardingContent mode={mode}/></OnboardingExperiment>;
 }
 function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMode; preview?:boolean }) {
   const variant = useOnboardingVariant();
+  const assignedFirstLevel = useFirstLevelVariant();
+  const previewKey = previewStorageKey(assignedFirstLevel);
   const BuildingStep = variant === "test" ? TestBuildingStep : ControlPlanSteps.BuildingStep;
   const CommitmentStep = variant === "test" ? TestCommitmentStep : ControlPlanSteps.CommitmentStep;
   const ReflectStep = variant === "test" ? TestReflectStep : ControlPlanSteps.ReflectStep;
@@ -105,17 +109,17 @@ function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMo
   }, [navReady, step]);
 
   const track = useCallback(
-    (event: OnboardingEventName, properties?: Record<string, unknown>) => {if (!preview) trackOnboarding(captureEvent, event, { ...properties, onboarding_variant: variant, "$feature/mini-lesson-onboarding": variant });},
-    [captureEvent, variant, preview],
+    (event: OnboardingEventName, properties?: Record<string, unknown>) => {if (!preview) trackOnboarding(captureEvent, event, { ...properties, onboarding_variant: variant, "$feature/mini-lesson-onboarding": variant, first_level_variant: stateRef.current?.answers.firstLevelVariant ?? assignedFirstLevel, "$feature/first-level-test": stateRef.current?.answers.firstLevelVariant ?? assignedFirstLevel });},
+    [captureEvent, variant, preview, assignedFirstLevel],
   );
 
   const commit = useCallback((next: OnboardingState) => {
     if (preview && unmountedRef.current) return;
-    next = {...next,answers:{...next.answers,onboardingVariant:variant}};
+    next = {...next,answers:{...next.answers,onboardingVariant:variant,firstLevelVariant:next.answers.firstLevelVariant??assignedFirstLevel}};
     stateRef.current = next;
     setState(next);
-    writeLocalState(next, preview ? PREVIEW_STORAGE_KEY : undefined);
-  }, [variant, preview]);
+    writeLocalState(next, preview ? previewKey : undefined);
+  }, [variant, preview, assignedFirstLevel, previewKey]);
 
   // ---------------------------------------------------------------------------
   // Server sync: debounced, one request at a time, merges on revision conflicts.
@@ -201,15 +205,15 @@ function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMo
         await resetRemoteProgress().catch(() => ({ status: "error" as const }));
         router.replace("/onboarding/journey");
       }
-      const local = restarting ? null : readLocalState(preview ? PREVIEW_STORAGE_KEY : undefined);
+      const local = restarting ? null : readLocalState(preview ? previewKey : undefined);
       const remote = preview ? null : await fetchRemoteProgress().catch(() => null);
       const nextAccount: Account = remote?.account ?? { kind: "guest", firstName: null };
-      if (remote?.activatedAt) {
+      if (remote?.activatedAt && await fetchIsPro()) {
         router.replace("/app");
         return;
       }
       const existing = mergeStates(local, remote?.state ?? null) ?? initialState(new Date(), variant);
-      let merged = {...existing,answers:{...existing.answers,onboardingVariant:variant}};
+      let merged: OnboardingState = {...existing,answers:{...existing.answers,onboardingVariant:variant,firstLevelVariant:preview?assignedFirstLevel:(existing.answers.firstLevelVariant??(existing.answers.firstLesson.lessonId?"control":assignedFirstLevel))}};
       // An explicit homepage chat handoff seeds the same interests used by the
       // assessment and plan, while preserving progress and the learner’s level.
       if (!preview && !restarting && searchParams.get("source") === "topic-chat") {
@@ -225,7 +229,7 @@ function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMo
         router.replace("/onboarding/journey");
       }
       const requested = preview ? null : searchParams.get("resume");
-      const resume = isStepId(requested) && canVisit(requested, merged) ? requested : resumeStep(merged);
+      const resume = isStepId(requested) && canVisit(requested, merged, preview) ? requested : resumeStep(merged, preview);
       const fresh = Object.keys(merged.events).length === 0;
 
       accountRef.current = nextAccount;
@@ -236,9 +240,16 @@ function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMo
       if (fresh) track(ONBOARDING_EVENTS.started, { mode });
       if (nextAccount.kind !== "guest") scheduleSave();
     })();
-  }, [commit, mode, router, scheduleSave, searchParams, track, preview]);
+  }, [commit, mode, router, scheduleSave, searchParams, track, preview, assignedFirstLevel, previewKey]);
 
   const loaded = state !== null;
+  const firstLevelExposure = useRef(false);
+  useEffect(() => {
+    if (preview || !state || firstLevelExposure.current || !["vocab_basic", "first_lesson"].includes(step)) return;
+    firstLevelExposure.current = true;
+    track(ONBOARDING_EVENTS.firstLevelAssigned);
+    captureEvent("$feature_flag_called", {"$feature_flag":"first-level-test", "$feature_flag_response":state.answers.firstLevelVariant??"control"});
+  }, [preview, state, step, captureEvent, track]);
   useEffect(() => {
     if (!loaded) return;
     track(ONBOARDING_EVENTS.stepViewed, { step });
@@ -303,21 +314,21 @@ function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMo
       const updated = markCompleted(patch ? updateAnswers(current, patch, now) : current, from, now);
       // Skip steps that are already answered (for example after "Change something"
       // on the reflection), so editing one answer doesn't mean re-walking the flow.
-      const steps = stepsFor(updated.answers);
+      const steps = stepsFor(updated.answers, preview);
       const ahead = steps.slice(steps.indexOf(from) + 1);
-      const target = ahead.find((candidate) => !isStepComplete(candidate, updated)) ?? nextStep(from, updated.answers) ?? "paywall";
+      const target = ahead.find((candidate) => !isStepComplete(candidate, updated)) ?? nextStep(from, updated.answers, preview) ?? "paywall";
       goTo(target, updated);
     },
-    [goTo],
+    [goTo, preview],
   );
 
   const back = useCallback(() => {
     if (Date.now() < navLockUntilRef.current) return;
     const current = stateRef.current;
     if (!current) return;
-    const target = previousStep(stepRef.current, current.answers);
+    const target = previousStep(stepRef.current, current.answers, preview);
     if (target) goTo(target, current);
-  }, [goTo]);
+  }, [goTo, preview]);
 
   const ensureSession = useCallback(async () => {
     if (preview) {const {data:{user}}=await createClient().auth.getUser();if(user)return true;const {error}=await createClient().auth.signInAnonymously();return !error;}
@@ -382,9 +393,9 @@ function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMo
   const jumpTo = useCallback(
     (target: StepId) => {
       const current = stateRef.current;
-      if (current && canVisit(target, current)) goTo(target, current);
+      if (current && canVisit(target, current, preview)) goTo(target, current);
     },
-    [goTo],
+    [goTo, preview],
   );
 
   if (!state) {
@@ -419,10 +430,10 @@ function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMo
           }
         }}
         onClose={() => {
-          void saveNow().finally(() => router.push(mode === "app" ? "/app" : "/"));
+          void saveNow().finally(() => router.push("/"));
         }}
         onNotNow={() => {
-          void saveNow().finally(() => router.push(mode === "app" ? "/app/onboarding?activate=1" : "/"));
+          void saveNow().finally(() => router.push("/"));
         }}
       />
     );
@@ -432,8 +443,8 @@ function PersonalizedOnboardingContent({ mode, preview = false }: { mode: FlowMo
     state,
     update,
     next: advance,
-    back: previousStep(step, state.answers) ? back : null,
-    progress: progressFor(step, state.answers),
+    back: previousStep(step, state.answers, preview) ? back : null,
+    progress: progressFor(step, state.answers, preview),
     track,
     announce,
     jumpTo,

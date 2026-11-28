@@ -10,13 +10,13 @@ import { beginPlacement, parseCoursePlacement, recordWordCheck, finishGrammarPro
 import { CARD_BORDER, GREEN, MUTED, NAVY, PrimaryButton, StepFrame, TextButton, SKY_PALE } from "../ui";
 
 export function CoursePlacementGate({answers,tier,onSave,onBack,children}:{answers:OnboardingAnswers;tier:CourseTier;onSave:(progress:FirstLessonProgress)=>void;onBack:(()=>void)|null;children:(course:BudgetCourse)=>ReactNode}) {
- const goal=answers.goal.primary??"other";
+ const goal=answers.goal.primary??"other", firstLevel=answers.firstLevelVariant??"control";
  const [placement,setPlacement]=useState<CoursePlacement>(()=>{
   const saved=parseCoursePlacement(answers.firstLesson.coursePlacement);
-  if(saved&&saved.goal===goal&&saved.requestedTier===tier)return saved;
+  if(saved&&saved.goal===goal&&saved.requestedTier===tier&&(saved.firstLevelVariant??"control")===firstLevel)return saved;
   const old=vocabularyEvidence(answers),evidence:Record<string,boolean>={};
   old.known.forEach(w=>{evidence[w]=true;});old.unknown.forEach(w=>{evidence[w]=false;});
-  return beginPlacement(tier,goal,{...evidence,...saved?.evidence});
+  return beginPlacement(tier,goal,{...evidence,...((saved?.firstLevelVariant??"control")===firstLevel?saved?.evidence:{})},firstLevel);
  });
  const course=makeBudgetCourse(placement.tier,goal,placement.variant,answers);
  const persist=(next:CoursePlacement)=>{

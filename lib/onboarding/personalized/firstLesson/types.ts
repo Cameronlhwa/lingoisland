@@ -92,6 +92,7 @@ export type LessonPhase =
   | "build"
   | "coach"
   | "chat"
+  | "follow_up" | "short_question"
   | "discussion"
   | "note"
   | "complete";
@@ -119,6 +120,9 @@ export type FirstLessonProgress = {
   grammarStepId?: string;
   writingResponses?: Record<string, string>;
   discussionReplyId?: string | null;
+  followUpReplyId?: string | null;
+  afterChatStepId?: string;
+  shortQuestionComplete?: boolean;
   matchRound?: number;
   selectionKey?: string;
   generated?: PersonalizedLesson | null;

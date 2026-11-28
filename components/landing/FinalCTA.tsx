@@ -17,10 +17,10 @@ export default function FinalCTA({
   heading = (
     <>Ready to build vocabulary you can actually use?</>
   ),
-  subline = "Create a Topic Island and start building vocabulary around topics that matter to your real life. Free to start — no account needed.",
+  subline = "Build a learning plan around topics that matter to your real life. Choose a subscription to start learning.",
   cardTitle = "Create Topic Island",
   cardBody = "Pick a topic → get 10–20 useful words with real-life sentences at your level. Free to start.",
-  ctaLabel = "Build your first island — free",
+  ctaLabel = "Build your learning plan",
   ctaHref = "/onboarding/journey",
 }: FinalCTAProps) {
   const prefersReducedMotion = useReducedMotion();

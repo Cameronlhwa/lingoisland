@@ -30,7 +30,7 @@ async function postActivate(body: Record<string, unknown>) {
 }
 
 /**
- * Runs after checkout (or "Not now" in the app): applies the saved plan,
+ * Runs after verified checkout: applies the saved plan,
  * generates the first Journey once, then opens it.
  */
 export default function ActivationScreen() {
@@ -49,10 +49,6 @@ export default function ActivationScreen() {
     setPhase("working");
     setMessage("Setting up your first Journey…");
     try {
-      if (searchParams.get("purchased") === "1" && !purchaseTrackedRef.current) {
-        purchaseTrackedRef.current = true;
-        trackOnboarding(captureEvent, ONBOARDING_EVENTS.purchaseCompleted);
-      }
       const local = readLocalState();
       const outcome = await runActivation({
         start: () => postActivate({ stage: "start", state: local ?? undefined }),
@@ -73,6 +69,14 @@ export default function ActivationScreen() {
         now: () => Date.now(),
         sleep: (ms) => new Promise((resolve) => window.setTimeout(resolve, ms)),
       });
+      if (outcome === "payment_required") {
+        router.replace("/onboarding/journey?resume=paywall");
+        return;
+      }
+      if (searchParams.get("purchased") === "1" && !purchaseTrackedRef.current) {
+        purchaseTrackedRef.current = true;
+        trackOnboarding(captureEvent, ONBOARDING_EVENTS.purchaseCompleted);
+      }
       if (outcome === "not_committed") {
         setPhase("not_committed");
         return;

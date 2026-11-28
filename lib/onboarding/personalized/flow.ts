@@ -1,5 +1,5 @@
 import { parseCoursePlacement } from "./firstLesson/coursePlacement";
-import { onboardingVariant, type OnboardingVariant } from "./experiment";
+import { onboardingVariant, firstLevelVariant, type FirstLevelVariant, type OnboardingVariant } from "./experiment";
 import { parsePronunciationPieces } from "./firstLesson/pronunciationResults";
 import { parseTemplatePlan } from "./firstLesson/templates";
 import { parsePersonalizedLesson } from "./firstLesson/personalization";
@@ -66,6 +66,8 @@ import { parseInsight, type InsightAnswer } from "./insightTypes";
 import type { PronunciationStatus, ToneSupport } from "./pronunciation";
 import {
   EMPTY_VOCAB_SCREEN,
+  hasCurrentVocabAssessment,
+  isCurrentVocabScreen,
   estimateLevelFromVocab,
   parseVocabScreen,
   type VocabScreenAnswer,
@@ -150,6 +152,8 @@ export type OnboardingAnswers = {
   vocabAdvanced: VocabScreenAnswer;
   /** Estimated level from self-report + recognition (conservative). */
   estimatedLevel: InternalLevel | null;
+  /** Locked first-level-test assignment, separate from the onboarding experiment. */
+  firstLevelVariant?: FirstLevelVariant;
   firstLesson: FirstLessonProgress;
   availability: { minutes: MinutesKey | null; days: DaysKey | null; session: SessionPreference | null };
   messaging: { channel: "sms" | "whatsapp" | "none" | null; status: MessagingStatus };
@@ -253,14 +257,14 @@ export function isBeginnerPath(answers: OnboardingAnswers): boolean {
 }
 
 /** Steps that apply to this learner, in order. */
-export function stepsFor(answers: OnboardingAnswers): StepId[] {
+export function stepsFor(answers: OnboardingAnswers, includeMiniCourse = false): StepId[] {
   if (answers.onboardingVariant !== "test") {
-    const hidden: StepId[] = ["vocab_basic", "vocab_advanced", "first_lesson", "huahua", "messaging", "huahua_prefs", "preview"];
+    const hidden: StepId[] = ["calibration", "pronunciation", "vocab_basic", "vocab_advanced", "first_lesson", "huahua", "messaging", "huahua_prefs", "preview"];
     if (isCompletelyNew(answers)) hidden.push("experience", "calibration");
     return STEP_ORDER.filter(step => !hidden.includes(step));
   }
   const skipped: StepId[] = isCompletelyNew(answers) ? ["experience"] : [];
-  return STEP_ORDER.filter((step) => !HIDDEN_STEPS.includes(step) && !skipped.includes(step));
+  return STEP_ORDER.filter((step) => (!HIDDEN_STEPS.includes(step) || (includeMiniCourse && step === "first_lesson")) && !skipped.includes(step));
 }
 
 export function isStepComplete(step: StepId, state: OnboardingState): boolean {
@@ -321,27 +325,27 @@ export function isStepComplete(step: StepId, state: OnboardingState): boolean {
 }
 
 /** The latest incomplete step: where a returning learner continues. */
-export function resumeStep(state: OnboardingState): StepId {
-  const steps = stepsFor(state.answers);
+export function resumeStep(state: OnboardingState, includeMiniCourse = false): StepId {
+  const steps = stepsFor(state.answers, includeMiniCourse);
   return steps.find((step) => !isStepComplete(step, state)) ?? "paywall";
 }
 
 /** A step can be visited when every applicable step before it is complete. */
-export function canVisit(step: StepId, state: OnboardingState) {
-  const steps = stepsFor(state.answers);
+export function canVisit(step: StepId, state: OnboardingState, includeMiniCourse = false) {
+  const steps = stepsFor(state.answers, includeMiniCourse);
   const index = steps.indexOf(step);
   if (index < 0) return false;
   return steps.slice(0, index).every((prior) => isStepComplete(prior, state));
 }
 
-export function previousStep(step: StepId, answers: OnboardingAnswers): StepId | null {
-  const steps: StepId[] = stepsFor(answers).filter((candidate) => candidate !== "building");
+export function previousStep(step: StepId, answers: OnboardingAnswers, includeMiniCourse = false): StepId | null {
+  const steps: StepId[] = stepsFor(answers, includeMiniCourse).filter((candidate) => candidate !== "building");
   const index = steps.indexOf(step);
   return index > 0 ? steps[index - 1] : null;
 }
 
-export function nextStep(step: StepId, answers: OnboardingAnswers): StepId | null {
-  const steps = stepsFor(answers);
+export function nextStep(step: StepId, answers: OnboardingAnswers, includeMiniCourse = false): StepId | null {
+  const steps = stepsFor(answers, includeMiniCourse);
   const index = steps.indexOf(step);
   return index >= 0 && index < steps.length - 1 ? steps[index + 1] : null;
 }
@@ -350,8 +354,8 @@ export function nextStep(step: StepId, answers: OnboardingAnswers): StepId | nul
  * Progress for the overall onboarding indicator.
  * Building folds into availability; the first lesson uses its own in-lesson meter.
  */
-export function progressFor(step: StepId, answers: OnboardingAnswers) {
-  const steps: StepId[] = stepsFor(answers).filter(
+export function progressFor(step: StepId, answers: OnboardingAnswers, includeMiniCourse = false) {
+  const steps: StepId[] = stepsFor(answers, includeMiniCourse).filter(
     (candidate) => candidate !== "building" && candidate !== "paywall" && candidate !== "first_lesson",
   );
   const current: StepId =
@@ -391,22 +395,25 @@ export function lastCompletedStep(state: OnboardingState): StepId | null {
 /** Applies an answer patch. Changing level or vocab resets the estimated placement. */
 export function updateAnswers(state: OnboardingState, patch: Partial<OnboardingAnswers>, now: Date): OnboardingState {
   const answers: OnboardingAnswers = { ...state.answers, ...patch };
-  if (patch.level && patch.level.selfReport !== state.answers.level.selfReport) {
+  const primaryChanged = (patch.goal && patch.goal.primary !== state.answers.goal.primary) || (patch.firstLevelVariant !== undefined && patch.firstLevelVariant !== state.answers.firstLevelVariant);
+  if (primaryChanged || (patch.level && patch.level.selfReport !== state.answers.level.selfReport)) {
     answers.calibration = { ...emptyAnswers().calibration, writingSystem: state.answers.calibration.writingSystem };
     answers.vocabBasic = { ...EMPTY_VOCAB_SCREEN };
     answers.vocabAdvanced = { ...EMPTY_VOCAB_SCREEN };
     answers.estimatedLevel = null;
     answers.firstLesson = { ...EMPTY_FIRST_LESSON };
-    if (patch.level.selfReport === "new") answers.experience = { key: null };
+    if (patch.level?.selfReport === "new") answers.experience = { key: null };
   }
-  if (patch.vocabBasic || patch.vocabAdvanced || (patch.level && patch.level.selfReport !== state.answers.level.selfReport)) {
+  if (patch.vocabBasic || patch.vocabAdvanced || primaryChanged || (patch.level && patch.level.selfReport !== state.answers.level.selfReport)) {
     const basic = answers.vocabBasic;
     const advanced = answers.vocabAdvanced;
     const basicDone = basic.shownIds.length > 0 && (basic.noneKnown || basic.selectedIds.length > 0);
     const advancedDone =
       advanced.skipped === true ||
       (advanced.shownIds.length > 0 && (advanced.noneKnown || advanced.selectedIds.length > 0));
-    if (basicDone && advancedDone && answers.level.selfReport) {
+    const versioned = basic.assessmentVersion === 2 || advanced.assessmentVersion === 2;
+    if (versioned) answers.estimatedLevel = null;
+    if (basicDone && advancedDone && answers.level.selfReport && (!versioned || hasCurrentVocabAssessment(basic, advanced))) {
       answers.estimatedLevel = estimateLevelFromVocab({
         selfReport: answers.level.selfReport,
         basic,
@@ -516,7 +523,7 @@ function parseResponses(value: unknown, items: AssessmentItem[]): AssessmentAnsw
 const PRONUNCIATION_STATUSES: PronunciationStatus[] = ["not_started", "skipped", "denied", "failed", "completed"];
 const MESSAGING_STATUSES: MessagingStatus[] = ["not_started", "skipped", "unavailable", "verified", "simulated"];
 const PREVIEW_STATUSES: PreviewStatus[] = ["not_started", "skipped", "sent", "completed", "declined", "simulated", "unavailable"];
-const LESSON_PHASES: LessonPhase[] = ["discussion","vocabulary", "note", "beginner_match", "beginner_recall", "teach_first", "recognize", "teach_second", "listen", "frame", "supported", "transfer", "prepare", "revisit", "intro", "baseline", "meaning", "build", "coach", "chat", "complete"];
+const LESSON_PHASES: LessonPhase[] = ["follow_up", "short_question", "discussion","vocabulary", "note", "beginner_match", "beginner_recall", "teach_first", "recognize", "teach_second", "listen", "frame", "supported", "transfer", "prepare", "revisit", "intro", "baseline", "meaning", "build", "coach", "chat", "complete"];
 const LESSON_XP_KEYS: LessonXpKey[] = ["meaning", "build", "speaking", "exchange"];
 
 function parseSpeakingAttempt(raw: unknown): SpeakingAttempt | null {
@@ -553,6 +560,9 @@ export function parseFirstLesson(raw: unknown): FirstLessonProgress {
     coursePlacement: parseCoursePlacement(value.coursePlacement),
     templatePlan: parseTemplatePlan(value.templatePlan),
     writingResponses: Object.fromEntries(Object.entries(obj(value.writingResponses)).filter(([k,v])=>/^[a-z0-9:-]{1,100}$/.test(k)&&typeof v==="string").slice(0,40).map(([k,v])=>[k,(v as string).slice(0,600)])),
+    followUpReplyId: typeof value.followUpReplyId === "string" ? value.followUpReplyId.slice(0,200) : null,
+    afterChatStepId: typeof value.afterChatStepId === "string" && /^[a-z0-9:-]{1,100}$/.test(value.afterChatStepId) ? value.afterChatStepId : undefined,
+    shortQuestionComplete: value.shortQuestionComplete === true,
     discussionReplyId: typeof value.discussionReplyId === "string" ? value.discussionReplyId.slice(0,200) : null,
     vocabularyKnownIds: Array.isArray(value.vocabularyKnownIds) ? Array.from(new Set(value.vocabularyKnownIds.filter((id): id is string => typeof id === "string" && id.length <= 80))).slice(0,30) : undefined,
     vocabularyChecked: value.vocabularyChecked === true,
@@ -600,6 +610,7 @@ export function lessonXpTotal(progress: FirstLessonProgress) {
 export function parseAnswers(input: unknown, timezone = "UTC"): OnboardingAnswers {
   const raw = obj(input);
   const base = emptyAnswers(onboardingVariant(raw.onboardingVariant));
+  if (raw.firstLevelVariant === "test" || raw.firstLevelVariant === "control") base.firstLevelVariant = firstLevelVariant(raw.firstLevelVariant);
 
   const goal = obj(raw.goal);
   const primary = isGoalKey(goal.primary) ? goal.primary : null;
@@ -667,6 +678,9 @@ export function parseAnswers(input: unknown, timezone = "UTC"): OnboardingAnswer
   base.vocabBasic = parseVocabScreen(raw.vocabBasic);
   base.vocabAdvanced = parseVocabScreen(raw.vocabAdvanced);
   base.firstLesson = parseFirstLesson(raw.firstLesson);
+  const versioned = base.vocabBasic.assessmentVersion === 2 || base.vocabAdvanced.assessmentVersion === 2;
+  if (base.vocabBasic.assessmentVersion === 2 && !isCurrentVocabScreen("basic", primary, base.vocabBasic, base.firstLevelVariant)) base.vocabBasic = { ...EMPTY_VOCAB_SCREEN };
+  if (base.vocabAdvanced.assessmentVersion === 2 && !isCurrentVocabScreen("advanced", primary, base.vocabAdvanced, base.firstLevelVariant)) base.vocabAdvanced = { ...EMPTY_VOCAB_SCREEN };
   if (raw.estimatedLevel === null || raw.estimatedLevel === undefined) {
     base.estimatedLevel = null;
   } else {
@@ -684,6 +698,12 @@ export function parseAnswers(input: unknown, timezone = "UTC"): OnboardingAnswer
       basic: base.vocabBasic,
       advanced: base.vocabAdvanced,
     });
+  }
+
+  if (versioned) {
+    base.estimatedLevel = hasCurrentVocabAssessment(base.vocabBasic, base.vocabAdvanced)
+      ? estimateLevelFromVocab({ selfReport: base.level.selfReport, basic: base.vocabBasic, advanced: base.vocabAdvanced })
+      : null;
   }
 
   const availability = obj(raw.availability);

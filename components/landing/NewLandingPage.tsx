@@ -905,7 +905,7 @@ export default function NewLandingPage() {
               exercises, have real conversations, and build your speaking
               confidence along the way.
             </p>
-            <PlanLink>Build My First Plan — Free</PlanLink>
+            <PlanLink>Build My Learning Plan</PlanLink>
           </div>
           <HeroArt />
         </section>

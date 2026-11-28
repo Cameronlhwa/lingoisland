@@ -912,15 +912,11 @@
   background-position: center 40%;
 }
 
-@media (max-width: 768px) {
+/* Mobile onboarding uses the plain cream shell instead of island artwork. */
+@media (max-width: 767px) {
   .hsk-onboarding-bg {
-    background-position: 32% 36%;
-  }
-}
-
-@media (max-width: 480px) {
-  .hsk-onboarding-bg {
-    background-position: 28% 34%;
+    display: none;
+    background-image: none !important;
   }
 }
 

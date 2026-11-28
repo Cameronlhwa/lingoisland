@@ -1,8 +1,10 @@
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
 import { getEntitlements } from "@/lib/entitlements";
+import { hasBlockingStripeSubscriptionStatus } from "@/lib/stripe/subscriptionLifecycle";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -105,6 +107,27 @@ export async function POST(request: Request) {
     let stripeCustomerId = profile?.stripe_customer_id ?? null;
     const stripe = getStripe();
 
+    // Block a second Checkout when Stripe already has a billable subscription
+    // for this customer (webhook lag or a second browser tab). Entitlements
+    // alone are not enough — access is only written after webhook verification.
+    if (stripeCustomerId) {
+      const existing = await stripe.subscriptions.list({
+        customer: stripeCustomerId,
+        status: "all",
+        limit: 20,
+      });
+      if (
+        existing.data.some((subscription) =>
+          hasBlockingStripeSubscriptionStatus(subscription.status),
+        )
+      ) {
+        return NextResponse.json(
+          { error: "Already subscribed to Islands" },
+          { status: 409 },
+        );
+      }
+    }
+
     if (!stripeCustomerId) {
       // Concurrent requests for the same new account get the same customer
       // instead of one each (Stripe keeps idempotency keys for 24 hours).
@@ -119,7 +142,7 @@ export async function POST(request: Request) {
       );
       stripeCustomerId = customer.id;
 
-      const { error: upsertError } = await supabase
+      const { error: upsertError } = await getSupabaseAdmin()
         .from("profiles")
         .upsert(
           { id: user.id, stripe_customer_id: stripeCustomerId },

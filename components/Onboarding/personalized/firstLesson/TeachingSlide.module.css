@@ -73,3 +73,32 @@
 
 .partHanzi, .fixedReading { color: #20674f; }
 .variablePart, .variableReading { color: #355c76; }
+
+.mobileProgress { display: none; }
+@media (max-width: 767px) {
+  .slide { display: flex; flex-direction: column; gap: 16px; }
+  .takeaway { order: -2; margin: 0; padding: 14px 16px; border-radius: 18px; background: #edf6e7; font-size: 20px; line-height: 1.4; }
+  .detail { margin-top: 5px; color: #4f6e83; font-size: 14px; line-height: 1.5; }
+  .mobileProgress { display: block; order: -1; margin: 0; text-align: center; color: #4f6e83; font-size: 12px; font-weight: 600; }
+  .lesson { display: block; padding: 0; }
+  .mascot { display: none; }
+  .examples { display: block; padding: 0 16px; border: 1px solid #c2dcf0; border-radius: 18px; background: #fff; }
+  .examples > div + div { border-top: 1px solid #c2dcf0; }
+  .bubble, .mintBubble, .reply { width: 100%; margin: 0; padding: 18px 0; border: 0; border-radius: 0; background: transparent; }
+  .bubble::before { display: none; }
+  .exampleHeader { margin: 0 0 6px; padding-right: 48px; min-height: 0; }
+  .exampleHeader button { position: absolute; top: 16px; right: -4px; width: 44px; height: 44px; padding: 0; font-size: 0; gap: 0; }
+  .exampleHeader button svg { width: 22px; height: 22px; }
+  .slide[data-teaching-format="pattern"] .label, .slide[data-teaching-format="change"] .label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .slide[data-teaching-format="pattern"] .exampleHeader, .slide[data-teaching-format="change"] .exampleHeader { margin: 0; }
+  .hanzi { padding-right: 44px; font-size: 25px; line-height: 1.5; }
+  .pinyin { margin-top: 3px; font-size: 14px; line-height: 1.5; }
+  .meaning { margin-top: 5px; font-size: 15px; line-height: 1.5; }
+  .context { padding-right: 44px; font-size: 14px; }
+  .connector { margin: 0; padding: 10px 0 0; font-size: 12px; }
+  .parts { display: flex; flex-wrap: wrap; padding-right: 40px; gap: 10px; }
+  .part { flex: 1 1 90px; }
+  .partHanzi { white-space: normal; font-size: 23px; }
+  .partPinyin, .partMeaning { font-size: 13px; }
+  .patternMeaning { font-size: 15px; }
+}
